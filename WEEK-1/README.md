@@ -35,6 +35,9 @@ The purpose of this repository is to keep a clear record of my internship work, 
 * Learned about cuDNN and how it provides optimized deep learning operations on NVIDIA GPUs.
 * Understood that PyTorch uses lower-level C++/CUDA backends for efficient tensor and neural network computations.
 
+##Purpose
+
+To understand how neural networks learn and how GPU acceleration improves deep learning computation.
 
 
 
