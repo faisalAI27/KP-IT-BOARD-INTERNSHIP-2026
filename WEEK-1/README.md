@@ -41,4 +41,4 @@ The purpose of this repository is to keep a clear record of my internship work, 
 ## Author
 
 **Faisal Imran**  
-AI Intern — KP IT Board
+AI Intern — KP IT Board.
