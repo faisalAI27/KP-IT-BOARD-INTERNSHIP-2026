@@ -35,7 +35,7 @@ Content type: `multipart/form-data`
 | `sentenceSource` | `provided` or `custom` | Yes |
 | `sentenceId` | UUID string | No |
 | `consent` | boolean string | Yes |
-| `audio` | WebM or OGG file | Yes |
+| `audio` | supported audio file | Yes |
 
 Successful guided submissions return `201 Created`. A provided sentence may include `sentenceId` for verification; custom sentences must omit it.
 
@@ -50,9 +50,12 @@ Content type: `multipart/form-data`
 | `contributorName` | string | Yes |
 | `language` | string | Yes |
 | `topic` | string | No |
-| `audio` | WebM or OGG file | Yes |
+| `consent` | boolean string | Yes |
+| `audio` | supported audio file | Yes |
 
-Successful submission response:
+Explicit consent is required for both guided and open recordings. Accepted true values are `true`, `1`, `yes`, and `on`, compared case-insensitively. Open-recording topics are optional; omitted or blank topics are stored as null.
+
+Successful submissions return `201 Created`:
 
 ```json
 {

@@ -13,7 +13,9 @@ from app.services.contribution_service import (
     ContributionCreationError,
     ContributionServiceError,
     GuidedContributionInput,
+    OpenRecordingInput,
     create_guided_contribution,
+    create_open_recording,
 )
 from app.utils.audio_validation import (
     AudioExtensionMismatchError,
@@ -122,5 +124,57 @@ async def submit_guided_voice_contribution(
     except Exception:
         database.rollback()
         return _safe_error_response(ContributionCreationError())
+
+    return ContributionCreatedResponse.model_validate(contribution)
+
+
+@router.post(
+    "/open-recording",
+    response_model=ContributionCreatedResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_open_recording(
+    database: Annotated[Session, Depends(get_db)],
+    contributorName: Annotated[str, Form()],
+    language: Annotated[str, Form()],
+    consent: Annotated[str, Form()],
+    audio: Annotated[UploadFile, File()],
+    topic: Annotated[str | None, Form()] = None,
+) -> ContributionCreatedResponse | JSONResponse:
+    """Accept one consented open recording with an optional topic."""
+
+    creation_error = ContributionCreationError(
+        "The open recording could not be completed."
+    )
+    try:
+        audio_content = await read_bounded_upload(
+            audio,
+            settings.max_open_audio_size_mb,
+        )
+    except Exception:
+        return _safe_error_response(creation_error)
+    finally:
+        try:
+            await audio.close()
+        except Exception:
+            pass
+
+    contribution_input = OpenRecordingInput(
+        contributor_name=contributorName,
+        language=language,
+        topic=topic,
+        consent=consent,
+        audio_filename=audio.filename or "",
+        audio_mime_type=audio.content_type or "",
+        audio_content=audio_content,
+    )
+
+    try:
+        contribution = create_open_recording(database, contribution_input)
+    except (ContributionServiceError, AudioValidationError) as error:
+        return _safe_error_response(error)
+    except Exception:
+        database.rollback()
+        return _safe_error_response(creation_error)
 
     return ContributionCreatedResponse.model_validate(contribution)

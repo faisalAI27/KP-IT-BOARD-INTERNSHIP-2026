@@ -13,7 +13,7 @@ from app.services.audio_storage import (
     delete_audio_file,
     save_audio_file,
 )
-from app.utils.audio_validation import validate_audio_upload
+from app.utils.audio_validation import ValidatedAudio, validate_audio_upload
 from app.utils.text_normalization import (
     clean_sentence_text,
     normalize_language_name,
@@ -49,6 +49,11 @@ class InvalidContributionLanguageError(ContributionServiceError):
 class InvalidContributionSentenceError(ContributionServiceError):
     code = "INVALID_CONTRIBUTION_SENTENCE"
     default_message = "The sentence must contain between 3 and 500 characters."
+
+
+class InvalidRecordingTopicError(ContributionServiceError):
+    code = "INVALID_RECORDING_TOPIC"
+    default_message = "Recording topic must contain between 2 and 200 characters."
 
 
 class InvalidSentenceSourceError(ContributionServiceError):
@@ -114,6 +119,19 @@ class GuidedContributionInput:
     audio_content: bytes
 
 
+@dataclass(frozen=True, slots=True)
+class OpenRecordingInput:
+    """Framework-independent input for one open recording."""
+
+    contributor_name: str
+    language: str
+    topic: str | None
+    consent: str | bool | None
+    audio_filename: str
+    audio_mime_type: str
+    audio_content: bytes
+
+
 def _validate_contributor_name(contributor_name: str) -> str:
     if not isinstance(contributor_name, str):
         raise InvalidContributorNameError()
@@ -141,6 +159,20 @@ def _validate_sentence(sentence: str) -> str:
     if not 3 <= len(cleaned_sentence) <= 500:
         raise InvalidContributionSentenceError()
     return cleaned_sentence
+
+
+def _validate_recording_topic(topic: str | None) -> str | None:
+    if topic is None:
+        return None
+    if not isinstance(topic, str):
+        raise InvalidRecordingTopicError()
+
+    cleaned_topic = topic.strip()
+    if not cleaned_topic:
+        return None
+    if not 2 <= len(cleaned_topic) <= 200:
+        raise InvalidRecordingTopicError()
+    return cleaned_topic
 
 
 def _validate_sentence_source(sentence_source: str) -> str:
@@ -196,6 +228,74 @@ def _validate_optional_sentence(
     return stored_sentence.id, stored_sentence.text
 
 
+def _persist_contribution(
+    database: Session,
+    *,
+    contribution_type: str,
+    contributor_name: str,
+    language: str,
+    sentence_id: str | None,
+    sentence_text: str | None,
+    sentence_source: str | None,
+    topic: str | None,
+    audio_content: bytes,
+    validated_audio: ValidatedAudio,
+    creation_failure_message: str | None = None,
+) -> Contribution:
+    """Store validated audio and atomically persist its contribution metadata."""
+
+    contribution_id = str(uuid4())
+    created_at = datetime.now(timezone.utc)
+    try:
+        storage_key = save_audio_file(
+            contribution_id=contribution_id,
+            extension=validated_audio.extension,
+            content=audio_content,
+            created_at=created_at,
+        )
+    except AudioStorageError as error:
+        database.rollback()
+        raise AudioStorageFailedError() from error
+
+    contribution = Contribution(
+        id=contribution_id,
+        contribution_type=contribution_type,
+        contributor_name=contributor_name,
+        language=language,
+        sentence_id=sentence_id,
+        sentence_text=sentence_text,
+        sentence_source=sentence_source,
+        topic=topic,
+        consent_given=True,
+        audio_storage_key=storage_key,
+        original_filename=validated_audio.original_filename,
+        mime_type=validated_audio.mime_type,
+        file_size=validated_audio.file_size,
+        duration_seconds=None,
+        status="queued",
+        created_at=created_at,
+        updated_at=created_at,
+    )
+
+    try:
+        database.add(contribution)
+        database.commit()
+    except Exception as error:
+        database.rollback()
+        try:
+            delete_audio_file(storage_key)
+        except AudioStorageError:
+            pass
+        raise ContributionCreationError(creation_failure_message) from error
+
+    try:
+        database.refresh(contribution)
+    except Exception:
+        # expire_on_commit=False keeps the committed response fields available.
+        pass
+    return contribution
+
+
 def create_guided_contribution(
     database: Session, contribution_input: GuidedContributionInput
 ) -> Contribution:
@@ -224,21 +324,8 @@ def create_guided_contribution(
         max_size_mb=settings.max_guided_audio_size_mb,
     )
 
-    contribution_id = str(uuid4())
-    created_at = datetime.now(timezone.utc)
-    try:
-        storage_key = save_audio_file(
-            contribution_id=contribution_id,
-            extension=validated_audio.extension,
-            content=contribution_input.audio_content,
-            created_at=created_at,
-        )
-    except AudioStorageError as error:
-        database.rollback()
-        raise AudioStorageFailedError() from error
-
-    contribution = Contribution(
-        id=contribution_id,
+    return _persist_contribution(
+        database,
         contribution_type="guided",
         contributor_name=contributor_name,
         language=language,
@@ -246,31 +333,39 @@ def create_guided_contribution(
         sentence_text=sentence_snapshot,
         sentence_source=sentence_source,
         topic=None,
-        consent_given=True,
-        audio_storage_key=storage_key,
-        original_filename=validated_audio.original_filename,
-        mime_type=validated_audio.mime_type,
-        file_size=validated_audio.file_size,
-        duration_seconds=None,
-        status="queued",
-        created_at=created_at,
-        updated_at=created_at,
+        audio_content=contribution_input.audio_content,
+        validated_audio=validated_audio,
     )
 
-    try:
-        database.add(contribution)
-        database.commit()
-    except Exception as error:
-        database.rollback()
-        try:
-            delete_audio_file(storage_key)
-        except AudioStorageError:
-            pass
-        raise ContributionCreationError() from error
 
-    try:
-        database.refresh(contribution)
-    except Exception:
-        # expire_on_commit=False keeps the committed response fields available.
-        pass
-    return contribution
+def create_open_recording(
+    database: Session, contribution_input: OpenRecordingInput
+) -> Contribution:
+    """Validate, store audio, and commit one open recording."""
+
+    contributor_name = _validate_contributor_name(
+        contribution_input.contributor_name
+    )
+    language = _validate_language(contribution_input.language)
+    topic = _validate_recording_topic(contribution_input.topic)
+    _require_consent(contribution_input.consent)
+    validated_audio = validate_audio_upload(
+        filename=contribution_input.audio_filename,
+        mime_type=contribution_input.audio_mime_type,
+        content=contribution_input.audio_content,
+        max_size_mb=settings.max_open_audio_size_mb,
+    )
+
+    return _persist_contribution(
+        database,
+        contribution_type="open_recording",
+        contributor_name=contributor_name,
+        language=language,
+        sentence_id=None,
+        sentence_text=None,
+        sentence_source=None,
+        topic=topic,
+        audio_content=contribution_input.audio_content,
+        validated_audio=validated_audio,
+        creation_failure_message="The open recording could not be completed.",
+    )
