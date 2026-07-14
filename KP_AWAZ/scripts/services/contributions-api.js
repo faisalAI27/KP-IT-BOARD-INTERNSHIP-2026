@@ -1,6 +1,17 @@
 import { appConfig } from "../config.js";
 import { pashtoSentences } from "../data/pashto-sentences.js";
 
+const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
+
+export class ApiError extends Error {
+  constructor(message, { code = "REQUEST_FAILED", status = 0 } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
 function createMockResponse(type) {
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `mock-${Date.now()}`,
@@ -11,7 +22,39 @@ function createMockResponse(type) {
 }
 
 function wait(milliseconds) {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+  return new Promise((resolve) => globalThis.setTimeout(resolve, milliseconds));
+}
+
+async function readJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function apiErrorFromResponse(response, body, fallbackMessage = SAFE_REQUEST_ERROR) {
+  const message =
+    typeof body?.message === "string" && body.message.trim()
+      ? body.message.trim()
+      : fallbackMessage;
+  const code =
+    typeof body?.code === "string" && body.code.trim()
+      ? body.code.trim()
+      : "REQUEST_FAILED";
+
+  return new ApiError(message, { code, status: response.status });
+}
+
+async function fetchApi(url, options) {
+  try {
+    return await fetch(url, options);
+  } catch {
+    throw new ApiError("The KP AWAZ backend could not be reached.", {
+      code: "NETWORK_ERROR",
+      status: 0,
+    });
+  }
 }
 
 async function postForm(path, formData, mockType) {
@@ -20,18 +63,25 @@ async function postForm(path, formData, mockType) {
     return createMockResponse(mockType);
   }
 
-  const response = await fetch(`${appConfig.api.baseUrl}${path}`, {
+  const response = await fetchApi(`${appConfig.api.baseUrl}${path}`, {
     method: "POST",
     body: formData,
     headers: { Accept: "application/json" },
   });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.message || `Submission failed (${response.status}).`);
+  const body = await readJson(response);
+  if (!response.ok || response.status !== 201) {
+    throw apiErrorFromResponse(response, body);
   }
 
-  return response.json();
+  if (!body || typeof body !== "object") {
+    throw new ApiError(SAFE_REQUEST_ERROR, {
+      code: "INVALID_API_RESPONSE",
+      status: response.status,
+    });
+  }
+
+  return body;
 }
 
 function appendAudio(formData, audioBlob) {
@@ -45,15 +95,42 @@ export async function getSentencePrompts(language = "Pashto") {
   }
 
   const query = new URLSearchParams({ language, limit: "20" });
-  const response = await fetch(`${appConfig.api.baseUrl}/sentences?${query}`, {
+  const response = await fetchApi(`${appConfig.api.baseUrl}/sentences?${query}`, {
     headers: { Accept: "application/json" },
   });
 
+  const body = await readJson(response);
   if (!response.ok) {
-    throw new Error(`Could not load sentence prompts (${response.status}).`);
+    throw apiErrorFromResponse(
+      response,
+      body,
+      "Sentence prompts could not be loaded.",
+    );
   }
 
-  const body = await response.json();
+  const hasValidData =
+    body &&
+    Array.isArray(body.data) &&
+    body.data.every(
+      (sentence) =>
+        sentence &&
+        typeof sentence === "object" &&
+        typeof sentence.id === "string" &&
+        sentence.id.trim() &&
+        typeof sentence.language === "string" &&
+        sentence.language.trim() &&
+        typeof sentence.text === "string" &&
+        sentence.text.trim() &&
+        (sentence.meaning === null || typeof sentence.meaning === "string"),
+    );
+
+  if (!hasValidData) {
+    throw new ApiError("The sentence service returned an invalid response.", {
+      code: "INVALID_SENTENCE_RESPONSE",
+      status: response.status,
+    });
+  }
+
   return body.data;
 }
 
@@ -62,6 +139,7 @@ export function submitVoiceDonation({
   language,
   sentence,
   sentenceSource,
+  sentenceId,
   consent,
   audioBlob,
 }) {
@@ -70,17 +148,27 @@ export function submitVoiceDonation({
   formData.append("language", language);
   formData.append("sentence", sentence);
   formData.append("sentenceSource", sentenceSource);
+  if (typeof sentenceId === "string" && sentenceId.trim()) {
+    formData.append("sentenceId", sentenceId.trim());
+  }
   formData.append("consent", String(consent));
   appendAudio(formData, audioBlob);
 
   return postForm("/contributions/voice", formData, "voice-donation");
 }
 
-export function submitOpenRecording({ contributorName, language, topic, audioBlob }) {
+export function submitOpenRecording({
+  contributorName,
+  language,
+  topic,
+  consent,
+  audioBlob,
+}) {
   const formData = new FormData();
   formData.append("contributorName", contributorName);
   formData.append("language", language);
   formData.append("topic", topic);
+  formData.append("consent", String(consent));
   appendAudio(formData, audioBlob);
 
   return postForm("/contributions/open-recording", formData, "open-recording");

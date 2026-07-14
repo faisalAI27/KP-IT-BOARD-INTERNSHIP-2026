@@ -5,11 +5,14 @@ import {
 } from "../services/contributions-api.js";
 import { createRecorder } from "./recorder.js";
 
+const SENTENCE_LOAD_ERROR =
+  "Sentence prompts could not be loaded. Make sure the KP AWAZ backend is running, then try again.";
+const NO_SENTENCE_PROMPTS =
+  "No sentence prompts are currently available. You may write your own sentence or try again later.";
+
 export async function initContributions() {
   const contributionPanel = document.getElementById("contribution-panel");
   if (!contributionPanel) return;
-
-  const pashtoSentences = await getSentencePrompts("Pashto");
 
   const featureTabs = document.querySelectorAll("[data-feature]");
   const featurePanels = document.querySelectorAll("[data-feature-panel]");
@@ -20,15 +23,31 @@ export async function initContributions() {
   const flowProgress = document.querySelector(".flow-progress");
   const flowScreens = document.querySelectorAll("[data-flow-step]");
   const stepIndicators = document.querySelectorAll("[data-step-indicator]");
-  const sentenceSourceInputs = document.querySelectorAll('input[name="sentence-source"]');
-  const providedSentenceSource = document.getElementById("providedSentenceSource");
+  const sentenceSourceInputs = document.querySelectorAll(
+    'input[name="sentence-source"]',
+  );
+  const providedSentenceInput = document.querySelector(
+    'input[name="sentence-source"][value="provided"]',
+  );
+  const customSentenceInput = document.querySelector(
+    'input[name="sentence-source"][value="custom"]',
+  );
+  const providedSentenceSource = document.getElementById(
+    "providedSentenceSource",
+  );
   const customSentenceSource = document.getElementById("customSentenceSource");
   const providedSentence = document.getElementById("providedSentence");
   const providedMeaning = document.getElementById("providedMeaning");
+  const nextSentenceButton = document.getElementById("nextSentenceBtn");
+  const sentencePromptStatus = document.getElementById("sentencePromptStatus");
+  const sentencePromptMessage = document.getElementById("sentencePromptMessage");
+  const retrySentencePrompts = document.getElementById("retrySentencePrompts");
   const customSentence = document.getElementById("custom-sentence");
   const sentenceCount = document.getElementById("sentenceCount");
   const donorName = document.getElementById("donor-name");
   const donorLanguage = document.getElementById("donor-language");
+  const donorLanguageHint = document.getElementById("donorLanguageHint");
+  const toRecordButton = document.getElementById("toRecordBtn");
   const recordSentence = document.getElementById("recordSentence");
   const recordLanguage = document.getElementById("recordLanguage");
   const reviewName = document.getElementById("reviewName");
@@ -39,12 +58,20 @@ export async function initContributions() {
   const toReviewButton = document.getElementById("toReviewBtn");
   const donationConsent = document.getElementById("donation-consent");
   const submitDonationButton = document.getElementById("submitDonation");
-  const submitOpenRecordingButton = document.getElementById("submitOpenRecording");
+  const submitOpenRecordingButton = document.getElementById(
+    "submitOpenRecording",
+  );
   const recordSoundForm = document.getElementById("recordSoundForm");
+  const openRecordingConsent = document.getElementById(
+    "open-recording-consent",
+  );
   const recordSuccess = document.getElementById("success-record");
   const recordError = document.getElementById("recordError");
 
+  let pashtoSentences = [];
   let sentenceIndex = 0;
+  let sentencePromptsReady = false;
+  let sentencePromptsLoading = false;
 
   const donateRecorder = createRecorder({
     buttonId: "donateRecBtn",
@@ -85,12 +112,20 @@ export async function initContributions() {
   function getSelectedSentence() {
     if (selectedSentenceSource() === "custom") {
       return {
+        id: null,
+        language: donorLanguage.value,
         text: customSentence.value.trim(),
         meaning: "Contributor-written sentence",
       };
     }
 
-    return pashtoSentences[sentenceIndex];
+    return pashtoSentences[sentenceIndex] ?? null;
+  }
+
+  function renderProvidedSentence() {
+    const sentence = pashtoSentences[sentenceIndex];
+    providedSentence.textContent = sentence?.text ?? "";
+    providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
   }
 
   function updateSentenceSource() {
@@ -100,19 +135,99 @@ export async function initContributions() {
     customSentence.disabled = !useCustomSentence;
     customSentence.required = useCustomSentence;
     donorLanguage.disabled = !useCustomSentence;
+    toRecordButton.disabled = !useCustomSentence && !sentencePromptsReady;
 
     if (!useCustomSentence) donorLanguage.value = "Pashto";
 
-    document.getElementById("donorLanguageHint").textContent = useCustomSentence
+    donorLanguageHint.textContent = useCustomSentence
       ? "Choose the language you wrote in"
       : "Provided prompts are in Pashto";
+  }
+
+  function showSentencePromptStatus(message, { retry = true } = {}) {
+    sentencePromptMessage.textContent = message;
+    retrySentencePrompts.hidden = !retry;
+    retrySentencePrompts.disabled = !retry;
+    sentencePromptStatus.hidden = false;
+  }
+
+  function hideSentencePromptStatus() {
+    sentencePromptStatus.hidden = true;
+    retrySentencePrompts.hidden = false;
+    retrySentencePrompts.disabled = false;
+  }
+
+  function beginSentencePromptLoading() {
+    sentencePromptsLoading = true;
+    sentencePromptsReady = false;
+    providedSentenceInput.disabled = true;
+    nextSentenceButton.disabled = true;
+    providedSentence.textContent = "";
+    providedMeaning.textContent = "Loading sentence prompts…";
+    showSentencePromptStatus("Loading sentence prompts…", { retry: false });
+    updateSentenceSource();
+  }
+
+  function makeCustomSentenceAvailable(message) {
+    pashtoSentences = [];
+    sentenceIndex = 0;
+    sentencePromptsReady = false;
+    providedSentenceInput.disabled = true;
+    nextSentenceButton.disabled = true;
+    providedSentence.textContent = "";
+    providedMeaning.textContent = "";
+
+    if (providedSentenceInput.checked) {
+      providedSentenceInput.checked = false;
+      customSentenceInput.checked = true;
+    }
+
+    showSentencePromptStatus(message);
+    updateSentenceSource();
+  }
+
+  function useLoadedSentencePrompts(prompts) {
+    pashtoSentences = prompts;
+    sentenceIndex = 0;
+    sentencePromptsReady = true;
+    providedSentenceInput.disabled = false;
+    nextSentenceButton.disabled = prompts.length < 2;
+    renderProvidedSentence();
+    hideSentencePromptStatus();
+    updateSentenceSource();
+  }
+
+  async function loadSentencePrompts() {
+    if (sentencePromptsLoading) return;
+
+    beginSentencePromptLoading();
+    try {
+      const prompts = await getSentencePrompts("Pashto");
+      if (prompts.length === 0) makeCustomSentenceAvailable(NO_SENTENCE_PROMPTS);
+      else useLoadedSentencePrompts(prompts);
+    } catch (error) {
+      console.error("Could not load contribution sentence prompts.", error);
+      makeCustomSentenceAvailable(SENTENCE_LOAD_ERROR);
+    } finally {
+      sentencePromptsLoading = false;
+    }
   }
 
   function validateFirstStep() {
     if (!donorName.reportValidity() || !donorLanguage.reportValidity()) return false;
 
-    if (selectedSentenceSource() === "custom" && customSentence.value.trim().length < 3) {
-      customSentence.setCustomValidity("Please enter a sentence before continuing.");
+    if (selectedSentenceSource() === "provided" && !getSelectedSentence()) {
+      showSentencePromptStatus(SENTENCE_LOAD_ERROR);
+      return false;
+    }
+
+    if (
+      selectedSentenceSource() === "custom" &&
+      customSentence.value.trim().length < 3
+    ) {
+      customSentence.setCustomValidity(
+        "Please enter a sentence before continuing.",
+      );
       customSentence.reportValidity();
       return false;
     }
@@ -123,6 +238,8 @@ export async function initContributions() {
 
   function updateReadingPrompt() {
     const sentence = getSelectedSentence();
+    if (!sentence) return;
+
     const language = donorLanguage.value;
     const isPashto = language === "Pashto";
 
@@ -134,11 +251,17 @@ export async function initContributions() {
 
   function contributorInitials(name) {
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "KA";
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "KA";
   }
 
   function updateReview() {
     const sentence = getSelectedSentence();
+    if (!sentence) return;
+
     const isPashto = donorLanguage.value === "Pashto";
 
     reviewName.textContent = donorName.value.trim();
@@ -186,7 +309,8 @@ export async function initContributions() {
   }
 
   function showError(element, error) {
-    element.textContent = error.message || "Something went wrong. Please try again.";
+    element.textContent =
+      error.message || "Something went wrong. Please try again.";
     element.hidden = false;
   }
 
@@ -194,14 +318,21 @@ export async function initContributions() {
     donateForm.reset();
     donateRecorder.reset();
     sentenceIndex = 0;
-    providedSentence.textContent = pashtoSentences[0].text;
-    providedMeaning.textContent = pashtoSentences[0].meaning;
     sentenceCount.textContent = "0 characters";
     donationError.hidden = true;
-    updateSentenceSource();
     donateSuccess.hidden = true;
     donateFlowContent.hidden = false;
     flowProgress.hidden = false;
+
+    if (sentencePromptsReady) {
+      providedSentenceInput.disabled = false;
+      renderProvidedSentence();
+    } else {
+      providedSentenceInput.checked = false;
+      customSentenceInput.checked = true;
+    }
+
+    updateSentenceSource();
     showDonateStep(1);
   }
 
@@ -230,24 +361,31 @@ export async function initContributions() {
   });
 
   sentenceSourceInputs.forEach((input) => {
-    input.addEventListener("change", updateSentenceSource);
+    input.addEventListener("change", () => {
+      donateRecorder.reset();
+      updateSentenceSource();
+    });
   });
 
-  updateSentenceSource();
+  nextSentenceButton.addEventListener("click", () => {
+    if (!sentencePromptsReady || pashtoSentences.length === 0) return;
 
-  document.getElementById("nextSentenceBtn").addEventListener("click", () => {
+    donateRecorder.reset();
     sentenceIndex = (sentenceIndex + 1) % pashtoSentences.length;
-    const sentence = pashtoSentences[sentenceIndex];
-    providedSentence.textContent = sentence.text;
-    providedMeaning.textContent = sentence.meaning;
+    renderProvidedSentence();
   });
+
+  retrySentencePrompts.addEventListener("click", loadSentencePrompts);
 
   customSentence.addEventListener("input", () => {
+    if (donateRecorder.hasRecording() || donateRecorder.isRecording()) {
+      donateRecorder.reset();
+    }
     sentenceCount.textContent = `${customSentence.value.length} characters`;
     customSentence.setCustomValidity("");
   });
 
-  document.getElementById("toRecordBtn").addEventListener("click", () => {
+  toRecordButton.addEventListener("click", () => {
     if (validateFirstStep()) showDonateStep(2);
   });
 
@@ -272,14 +410,19 @@ export async function initContributions() {
 
     if (!donationConsent.reportValidity()) return;
 
+    const sentenceSource = selectedSentenceSource();
+    const sentence = getSelectedSentence();
+    if (!sentence) return;
+
     setPending(submitDonationButton, true, "Submitting…");
 
     try {
       const result = await submitVoiceDonation({
         contributorName: donorName.value.trim(),
         language: donorLanguage.value,
-        sentence: getSelectedSentence().text,
-        sentenceSource: selectedSentenceSource(),
+        sentence: sentence.text,
+        sentenceSource,
+        sentenceId: sentenceSource === "provided" ? sentence.id : undefined,
         consent: donationConsent.checked,
         audioBlob: donateRecorder.getBlob(),
       });
@@ -294,12 +437,20 @@ export async function initContributions() {
     }
   });
 
-  document.getElementById("donateAgainBtn").addEventListener("click", resetDonationFlow);
+  document
+    .getElementById("donateAgainBtn")
+    .addEventListener("click", resetDonationFlow);
 
   recordSoundForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     recordError.hidden = true;
+
     if (!openRecorder.hasRecording()) return;
+    if (!recordSoundForm.reportValidity()) return;
+    if (!openRecordingConsent.checked) {
+      openRecordingConsent.reportValidity();
+      return;
+    }
 
     setPending(submitOpenRecordingButton, true, "Submitting…");
 
@@ -308,6 +459,7 @@ export async function initContributions() {
         contributorName: document.getElementById("record-name").value.trim(),
         language: document.getElementById("record-language-select").value,
         topic: document.getElementById("record-topic").value.trim(),
+        consent: openRecordingConsent.checked,
         audioBlob: openRecorder.getBlob(),
       });
 
@@ -322,8 +474,11 @@ export async function initContributions() {
   });
 
   recordSoundForm.addEventListener("reset", () => {
+    openRecordingConsent.checked = false;
+    delete recordSoundForm.dataset.submissionId;
     if (submitOpenRecordingButton.dataset.originalContent) {
-      submitOpenRecordingButton.innerHTML = submitOpenRecordingButton.dataset.originalContent;
+      submitOpenRecordingButton.innerHTML =
+        submitOpenRecordingButton.dataset.originalContent;
       submitOpenRecordingButton.removeAttribute("aria-busy");
     }
     openRecorder.reset();
@@ -335,4 +490,7 @@ export async function initContributions() {
     donateRecorder.reset();
     openRecorder.reset();
   });
+
+  updateSentenceSource();
+  await loadSentencePrompts();
 }

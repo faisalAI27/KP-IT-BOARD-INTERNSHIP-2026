@@ -4,13 +4,28 @@ The frontend is organized so visual sections, interaction logic, data, and backe
 
 ## Run locally
 
-From this directory:
+The frontend now uses the real FastAPI backend. Start both applications in separate terminals.
+
+### Terminal 1 — Backend
 
 ```bash
+cd KP_AWAZ/backend
+source .venv/bin/activate
+uvicorn app.main:app --reload
+```
+
+### Terminal 2 — Frontend
+
+```bash
+cd KP_AWAZ
 python3 -m http.server 4173
 ```
 
-Then open `http://localhost:4173`.
+Then open `http://127.0.0.1:4173`.
+
+Backend Swagger is available at `http://127.0.0.1:8000/docs`, and backend health is available at `http://127.0.0.1:8000/api/health`.
+
+The backend must be running for real sentence prompts and recording submissions to work. Frontend mock mode is disabled in `scripts/config.js`.
 
 Do not open `index.html` directly. The development page loads HTML section partials over HTTP.
 
@@ -40,11 +55,8 @@ npm run build
 
 This creates `dist/`, assembles all HTML partials into one production page, and copies the runtime assets. Development stays modular while production avoids client-side partial requests.
 
-## Connecting a backend
+## Backend connection
 
-1. Implement the endpoints in [docs/backend-contract.md](docs/backend-contract.md).
-2. Change `useMock` to `false` in `scripts/config.js`.
-3. Set `baseUrl` if the API is hosted somewhere other than `/api`.
+The active API URL and mock-mode switch are centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
-

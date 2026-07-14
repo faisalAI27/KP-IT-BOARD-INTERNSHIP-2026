@@ -362,6 +362,22 @@ input[type="text"]:focus {
   font-weight: 700;
 }
 
+.sentence-prompt-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 18px;
+  gap: 12px;
+}
+
+.sentence-prompt-status[hidden] {
+  display: none;
+}
+
+.sentence-prompt-status .btn {
+  flex: 0 0 auto;
+}
+
 .rec-box {
   padding: 25px 22px;
   border: 1.5px dashed rgba(62, 98, 89, 0.24);

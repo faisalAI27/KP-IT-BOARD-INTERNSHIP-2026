@@ -1,8 +1,7 @@
 export const appConfig = Object.freeze({
   api: Object.freeze({
-    baseUrl: "/api",
-    useMock: true,
+    baseUrl: "http://127.0.0.1:8000/api",
+    useMock: false,
     mockDelayMs: 450,
   }),
 });
-

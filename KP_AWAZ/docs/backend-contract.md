@@ -1,6 +1,6 @@
-# Proposed backend contract
+# Backend contract
 
-The frontend currently uses mock responses from `scripts/services/contributions-api.js`. The following contract is ready to implement on the backend.
+The frontend uses the following implemented FastAPI contract through `scripts/services/contributions-api.js`.
 
 ## Get sentence prompts
 

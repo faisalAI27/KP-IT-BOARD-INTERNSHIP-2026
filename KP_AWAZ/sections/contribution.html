@@ -145,6 +145,18 @@
                   </div>
                 </fieldset>
 
+                <div
+                  class="submission-error sentence-prompt-status"
+                  id="sentencePromptStatus"
+                  role="alert"
+                  hidden
+                >
+                  <span id="sentencePromptMessage"></span>
+                  <button class="btn btn-quiet btn-sm" id="retrySentencePrompts" type="button">
+                    Try again
+                  </button>
+                </div>
+
                 <div class="sentence-source" id="providedSentenceSource">
                   <div class="provided-sentence-card">
                     <div class="sentence-card-top">
@@ -370,6 +382,14 @@
                 <div class="rec-status" id="openRecStatus">Tap when you are ready to speak</div>
                 <audio id="openRecPlayback" controls hidden></audio>
               </div>
+              <label class="consent-check">
+                <input id="open-recording-consent" type="checkbox" required />
+                <span aria-hidden="true">✓</span>
+                <small>
+                  I consent to this recording being stored and used for
+                  language-data and research purposes.
+                </small>
+              </label>
               <div class="form-foot">
                 <button class="btn btn-quiet btn-sm" type="reset">Reset</button>
                 <button class="btn btn-primary btn-sm" id="submitOpenRecording" type="submit" disabled>
