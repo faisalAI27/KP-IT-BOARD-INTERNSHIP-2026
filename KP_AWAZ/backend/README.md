@@ -116,6 +116,12 @@ The development key comes from `ADMIN_API_KEY` in `.env`. Replace the example ke
 
 This API key is temporary internal authentication. A complete authentication system may replace it as the administration features grow.
 
+## TXT import format
+
+Future sentence imports will accept UTF-8 files with a `.txt` extension. Each nonblank line represents one phrase; blank lines are ignored. Duplicate phrases are detected using normalized text.
+
+The default maximum file size is 5 MB, and valid phrases must contain between 3 and 500 characters. The upload endpoint will be implemented separately.
+
 ## Run tests
 
 ```bash

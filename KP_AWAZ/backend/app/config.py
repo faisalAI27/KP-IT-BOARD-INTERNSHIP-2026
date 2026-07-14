@@ -1,8 +1,9 @@
 """Environment-based application settings."""
 
 from pathlib import Path
+from typing import Self
 
-from pydantic import field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +22,9 @@ class Settings(BaseSettings):
     ]
     storage_root: Path = Path("storage")
     max_audio_size_mb: int = 15
+    max_import_file_size_mb: int = Field(default=5, gt=0)
+    min_imported_sentence_length: int = Field(default=3, gt=0)
+    max_imported_sentence_length: int = Field(default=500, gt=0)
     admin_api_key: str = "dev-change-this-key"
 
     model_config = SettingsConfigDict(
@@ -40,6 +44,16 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
+    @model_validator(mode="after")
+    def validate_imported_sentence_length_range(self) -> Self:
+        """Ensure the configured import length range is usable."""
+
+        if self.min_imported_sentence_length > self.max_imported_sentence_length:
+            raise ValueError(
+                "MIN_IMPORTED_SENTENCE_LENGTH must not be greater than "
+                "MAX_IMPORTED_SENTENCE_LENGTH"
+            )
+        return self
+
 
 settings = Settings()
-
