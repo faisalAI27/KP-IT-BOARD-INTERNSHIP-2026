@@ -147,6 +147,25 @@ The database import is committed only after every source file is stored successf
 
 The development admin key must be changed outside local development.
 
+## Audio storage foundation
+
+The backend recognizes these audio MIME types and safe storage extensions:
+
+| MIME type | Stored extension |
+| --- | --- |
+| `audio/webm` | `.webm` |
+| `audio/ogg` | `.ogg` |
+| `audio/wav` | `.wav` |
+| `audio/x-wav` | `.wav` |
+| `audio/mpeg` | `.mp3` |
+| `audio/mp4` | `.m4a` |
+
+An incoming `audio/mp4` filename may use `.m4a` or `.mp4`; storage consistently uses `.m4a`. A missing original extension is allowed when the MIME type and basic signature are valid.
+
+Guided recordings default to a 15 MB maximum, while open recordings default to 50 MB. Files are stored using contribution UUIDs under date-based directories such as `storage/audio/2026/07/14/`. The database stores only a relative key such as `audio/2026/07/14/<contribution-id>.webm`; the safe original filename is metadata only. Timezone-aware timestamps are converted to UTC for directory selection, and naïve timestamps are treated as UTC.
+
+Audio headers receive basic WebM, OGG, WAV, MP3, or MP4/M4A signature checks. These checks do not provide complete media validation, malware scanning, or proof that a file is decodable. FFmpeg is not required in this phase. Guided and open-recording contribution endpoints will be implemented separately.
+
 ## Run tests
 
 ```bash

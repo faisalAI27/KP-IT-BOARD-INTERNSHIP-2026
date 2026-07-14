@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     ]
     storage_root: Path = Path("storage")
     max_audio_size_mb: int = 15
+    max_guided_audio_size_mb: int = Field(default=15, gt=0)
+    max_open_audio_size_mb: int = Field(default=50, gt=0)
+    audio_storage_subdirectory: str = "audio"
     max_import_file_size_mb: int = Field(default=5, gt=0)
     min_imported_sentence_length: int = Field(default=3, gt=0)
     max_imported_sentence_length: int = Field(default=500, gt=0)
@@ -43,6 +46,23 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("audio_storage_subdirectory")
+    @classmethod
+    def validate_audio_storage_subdirectory(cls, value: str) -> str:
+        """Require one safe relative directory name beneath storage root."""
+
+        cleaned_value = value.strip()
+        directory = Path(cleaned_value)
+        if (
+            not cleaned_value
+            or directory.is_absolute()
+            or len(directory.parts) != 1
+            or cleaned_value in {".", ".."}
+            or "\\" in cleaned_value
+        ):
+            raise ValueError("AUDIO_STORAGE_SUBDIRECTORY must be a directory name")
+        return cleaned_value
 
     @model_validator(mode="after")
     def validate_imported_sentence_length_range(self) -> Self:

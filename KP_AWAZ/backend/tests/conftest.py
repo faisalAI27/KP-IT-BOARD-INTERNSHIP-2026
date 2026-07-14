@@ -60,7 +60,7 @@ def clean_database(database_schema: None) -> Generator[None, None, None]:
 
 @pytest.fixture(autouse=True)
 def clean_test_storage() -> Generator[None, None, None]:
-    """Keep every test's import files inside an empty temporary storage root."""
+    """Keep every test's import and audio files in temporary storage."""
 
     shutil.rmtree(TEST_STORAGE, ignore_errors=True)
     TEST_STORAGE.mkdir(parents=True, exist_ok=True)
