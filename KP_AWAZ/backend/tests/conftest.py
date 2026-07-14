@@ -58,6 +58,23 @@ def clean_database(database_schema: None) -> Generator[None, None, None]:
     remove_all_records()
 
 
+@pytest.fixture(autouse=True)
+def clean_test_storage() -> Generator[None, None, None]:
+    """Keep every test's import files inside an empty temporary storage root."""
+
+    shutil.rmtree(TEST_STORAGE, ignore_errors=True)
+    TEST_STORAGE.mkdir(parents=True, exist_ok=True)
+    yield
+    shutil.rmtree(TEST_STORAGE, ignore_errors=True)
+
+
+@pytest.fixture()
+def test_storage_root() -> Path:
+    """Expose the configured temporary storage root for assertions."""
+
+    return TEST_STORAGE
+
+
 @pytest.fixture()
 def db_session(database_schema: None) -> Generator[Session, None, None]:
     """Provide a direct session connected only to the temporary test database."""

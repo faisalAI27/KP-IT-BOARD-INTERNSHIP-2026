@@ -118,9 +118,34 @@ This API key is temporary internal authentication. A complete authentication sys
 
 ## TXT import format
 
-Future sentence imports will accept UTF-8 files with a `.txt` extension. Each nonblank line represents one phrase; blank lines are ignored. Duplicate phrases are detected using normalized text.
+Sentence imports accept UTF-8 files with a `.txt` extension. Each nonblank line represents one phrase; blank lines are ignored. Duplicate phrases are detected using normalized text.
 
-The default maximum file size is 5 MB, and valid phrases must contain between 3 and 500 characters. The upload endpoint will be implemented separately.
+The default maximum file size is 5 MB, and valid phrases must contain between 3 and 500 characters.
+
+## Import multiple TXT files
+
+Use the protected multipart endpoint:
+
+```http
+POST /api/admin/sentences/import
+```
+
+It requires the `X-Admin-Key` header, a `language` form field, and one or more `files` fields:
+
+```bash
+curl -X POST \
+  -H "X-Admin-Key: dev-change-this-key" \
+  -F "language=Pashto" \
+  -F "files=@phrases-one.txt;type=text/plain" \
+  -F "files=@phrases-two.txt;type=text/plain" \
+  http://127.0.0.1:8000/api/admin/sentences/import
+```
+
+Multiple UTF-8 TXT files are allowed. Blank lines are ignored, upload-level and existing-database duplicates are skipped, and invalid lines are counted. Accepted source files are stored under their batch directory using generated safe filenames.
+
+The database import is committed only after every source file is stored successfully. On failure, database changes are rolled back and that batch's storage directory is removed; a separate failed `ImportBatch` record is not retained.
+
+The development admin key must be changed outside local development.
 
 ## Run tests
 
