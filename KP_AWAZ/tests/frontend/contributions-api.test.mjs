@@ -3,8 +3,11 @@ import { afterEach, test } from "node:test";
 
 import { appConfig } from "../../scripts/config.js";
 import {
+  AUDIO_MIME_EXTENSION_MAP,
   ApiError,
+  extensionForAudioMimeType,
   getSentencePrompts,
+  normalizeAudioMimeType,
   submitOpenRecording,
   submitVoiceDonation,
 } from "../../scripts/services/contributions-api.js";
@@ -262,4 +265,87 @@ test("multipart requests do not set a manual Content-Type header", async () => {
   const headers = new Headers(request().options.headers);
   assert.equal(headers.has("Content-Type"), false);
   assert.equal(headers.get("Accept"), "application/json");
+});
+
+
+test("audio/webm maps to webm", () => {
+  assert.equal(extensionForAudioMimeType("audio/webm"), "webm");
+});
+
+
+test("WebM codec parameters normalize and map to webm", () => {
+  assert.equal(
+    normalizeAudioMimeType(" audio/webm;codecs=opus "),
+    "audio/webm",
+  );
+  assert.equal(extensionForAudioMimeType("audio/webm;codecs=opus"), "webm");
+});
+
+
+test("audio/ogg maps to ogg", () => {
+  assert.equal(extensionForAudioMimeType("audio/ogg"), "ogg");
+});
+
+
+test("OGG codec parameters normalize and map to ogg", () => {
+  assert.equal(extensionForAudioMimeType("audio/ogg; codecs=opus"), "ogg");
+});
+
+
+test("WAV MIME variants map to wav", () => {
+  assert.equal(extensionForAudioMimeType("audio/wav"), "wav");
+  assert.equal(extensionForAudioMimeType("audio/x-wav"), "wav");
+});
+
+
+test("audio/mpeg maps to mp3", () => {
+  assert.equal(extensionForAudioMimeType("audio/mpeg"), "mp3");
+});
+
+
+test("audio/mp4 maps to m4a", () => {
+  assert.equal(extensionForAudioMimeType("audio/mp4"), "m4a");
+});
+
+
+test("audio MIME casing and whitespace are normalized", () => {
+  assert.equal(normalizeAudioMimeType("  Audio/MP4  "), "audio/mp4");
+  assert.equal(extensionForAudioMimeType("Audio/MP4"), "m4a");
+});
+
+
+test("missing audio MIME uses the documented webm fallback", () => {
+  assert.equal(extensionForAudioMimeType(""), "webm");
+  assert.equal(extensionForAudioMimeType(undefined), "webm");
+});
+
+
+test("known unsupported audio MIME throws a clear error", () => {
+  assert.throws(
+    () => extensionForAudioMimeType("audio/aac"),
+    /Unsupported audio MIME type: audio\/aac/,
+  );
+  assert.equal(Object.isFrozen(AUDIO_MIME_EXTENSION_MAP), true);
+});
+
+
+test("guided FormData filename matches the Blob MIME type", async () => {
+  const request = installJsonFetch(successBody, { status: 201 });
+
+  await submitVoiceDonation(
+    voiceInput({ audioBlob: new Blob(["mp3"], { type: "audio/mpeg" }) }),
+  );
+
+  assert.equal(request().options.body.get("audio").name, "recording.mp3");
+});
+
+
+test("open FormData filename matches the Blob MIME type", async () => {
+  const request = installJsonFetch(successBody, { status: 201 });
+
+  await submitOpenRecording(
+    openInput({ audioBlob: new Blob(["m4a"], { type: "audio/mp4" }) }),
+  );
+
+  assert.equal(request().options.body.get("audio").name, "recording.m4a");
 });

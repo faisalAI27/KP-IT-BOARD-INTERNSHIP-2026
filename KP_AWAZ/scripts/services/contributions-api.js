@@ -2,6 +2,14 @@ import { appConfig } from "../config.js";
 import { pashtoSentences } from "../data/pashto-sentences.js";
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
+export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({
+  "audio/webm": "webm",
+  "audio/ogg": "ogg",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/mpeg": "mp3",
+  "audio/mp4": "m4a",
+});
 
 export class ApiError extends Error {
   constructor(message, { code = "REQUEST_FAILED", status = 0 } = {}) {
@@ -10,6 +18,25 @@ export class ApiError extends Error {
     this.code = code;
     this.status = status;
   }
+}
+
+export function normalizeAudioMimeType(mimeType) {
+  if (mimeType === undefined || mimeType === null || mimeType === "") return "";
+  if (typeof mimeType !== "string") {
+    throw new TypeError("Audio MIME type must be a string.");
+  }
+  return mimeType.trim().split(";", 1)[0].trim().toLowerCase();
+}
+
+export function extensionForAudioMimeType(mimeType) {
+  const normalizedMimeType = normalizeAudioMimeType(mimeType);
+  if (!normalizedMimeType) return "webm";
+
+  const extension = AUDIO_MIME_EXTENSION_MAP[normalizedMimeType];
+  if (!extension) {
+    throw new Error(`Unsupported audio MIME type: ${normalizedMimeType}`);
+  }
+  return extension;
 }
 
 function createMockResponse(type) {
@@ -85,7 +112,7 @@ async function postForm(path, formData, mockType) {
 }
 
 function appendAudio(formData, audioBlob) {
-  const extension = audioBlob.type.includes("ogg") ? "ogg" : "webm";
+  const extension = extensionForAudioMimeType(audioBlob.type);
   formData.append("audio", audioBlob, `recording.${extension}`);
 }
 

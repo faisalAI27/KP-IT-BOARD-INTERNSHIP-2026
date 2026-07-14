@@ -60,3 +60,11 @@ This creates `dist/`, assembles all HTML partials into one production page, and 
 The active API URL and mock-mode switch are centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
+
+## Recording behavior
+
+Guided recordings have a maximum duration of 60 seconds. Open recordings have a maximum duration of 5 minutes. Recording stops automatically at the configured limit, and the completed recording remains available for playback and submission.
+
+Available recording formats depend on the browser's `MediaRecorder` support. The frontend prefers WebM with Opus, followed by WebM, OGG with Opus, OGG, and MP4. It uses the recorder's actual Blob MIME type to generate matching upload filenames such as `recording.webm`, `recording.ogg`, `recording.wav`, `recording.mp3`, or `recording.m4a`.
+
+No client-side audio conversion is performed.

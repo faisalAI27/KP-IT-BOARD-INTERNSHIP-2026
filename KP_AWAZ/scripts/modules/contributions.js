@@ -3,7 +3,7 @@ import {
   submitOpenRecording,
   submitVoiceDonation,
 } from "../services/contributions-api.js";
-import { createRecorder } from "./recorder.js";
+import { createRecorder, stopRecorderIfActive } from "./recorder.js";
 
 const SENTENCE_LOAD_ERROR =
   "Sentence prompts could not be loaded. Make sure the KP AWAZ backend is running, then try again.";
@@ -73,13 +73,20 @@ export async function initContributions() {
   let sentencePromptsReady = false;
   let sentencePromptsLoading = false;
 
-  const donateRecorder = createRecorder({
+  let donateRecorder;
+  let openRecorder;
+
+  donateRecorder = createRecorder({
     buttonId: "donateRecBtn",
     timerId: "donateRecTimer",
     statusId: "donateRecStatus",
     playbackId: "donateRecPlayback",
     calloutId: "donateRecCallout",
     idleStatus: "Tap the microphone when you are ready",
+    maxDurationSeconds: 60,
+    maxDurationMessage:
+      "The 60-second recording limit was reached. Listen back or record again.",
+    onStart: () => stopRecorderIfActive(openRecorder),
     onCapture: () => {
       toReviewButton.disabled = false;
     },
@@ -90,13 +97,17 @@ export async function initContributions() {
     },
   });
 
-  const openRecorder = createRecorder({
+  openRecorder = createRecorder({
     buttonId: "openRecBtn",
     timerId: "openRecTimer",
     statusId: "openRecStatus",
     playbackId: "openRecPlayback",
     calloutId: "openRecCallout",
     idleStatus: "Tap when you are ready to speak",
+    maxDurationSeconds: 300,
+    maxDurationMessage:
+      "The 5-minute recording limit was reached. Listen back or record again.",
+    onStart: () => stopRecorderIfActive(donateRecorder),
     onCapture: () => {
       submitOpenRecordingButton.disabled = false;
     },
@@ -317,6 +328,13 @@ export async function initContributions() {
   function resetDonationFlow() {
     donateForm.reset();
     donateRecorder.reset();
+    delete donateForm.dataset.submissionId;
+    if (submitDonationButton.dataset.originalContent) {
+      submitDonationButton.innerHTML =
+        submitDonationButton.dataset.originalContent;
+    }
+    submitDonationButton.disabled = false;
+    submitDonationButton.removeAttribute("aria-busy");
     sentenceIndex = 0;
     sentenceCount.textContent = "0 characters";
     donationError.hidden = true;
@@ -487,8 +505,8 @@ export async function initContributions() {
   });
 
   window.addEventListener("beforeunload", () => {
-    donateRecorder.reset();
-    openRecorder.reset();
+    donateRecorder.destroy();
+    openRecorder.destroy();
   });
 
   updateSentenceSource();

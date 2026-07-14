@@ -1,3 +1,37 @@
+export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/ogg;codecs=opus",
+  "audio/ogg",
+  "audio/mp4",
+]);
+
+const RECORDING_FAILURE_MESSAGE =
+  "The browser could not complete the recording. Please try again.";
+
+export function selectSupportedRecordingMimeType(
+  mediaRecorderClass = globalThis.MediaRecorder,
+) {
+  if (typeof mediaRecorderClass?.isTypeSupported !== "function") return "";
+
+  return (
+    RECORDING_MIME_TYPE_PREFERENCES.find((mimeType) =>
+      mediaRecorderClass.isTypeSupported(mimeType),
+    ) ?? ""
+  );
+}
+
+export function validateMaxDurationSeconds(maxDurationSeconds) {
+  if (!Number.isInteger(maxDurationSeconds) || maxDurationSeconds <= 0) {
+    throw new TypeError("maxDurationSeconds must be a positive integer.");
+  }
+  return maxDurationSeconds;
+}
+
+export function stopRecorderIfActive(recorder) {
+  if (recorder?.isRecording?.()) recorder.stop();
+}
+
 export function createRecorder({
   buttonId,
   timerId,
@@ -5,24 +39,32 @@ export function createRecorder({
   playbackId,
   calloutId,
   idleStatus,
+  maxDurationSeconds,
+  maxDurationMessage,
+  onStart,
   onCapture,
   onReset,
 }) {
+  const durationLimit = validateMaxDurationSeconds(maxDurationSeconds);
+  const durationMessage =
+    typeof maxDurationMessage === "string" && maxDurationMessage.trim()
+      ? maxDurationMessage.trim()
+      : `The ${durationLimit}-second recording limit was reached.`;
   const button = document.getElementById(buttonId);
   const timer = document.getElementById(timerId);
   const status = document.getElementById(statusId);
   const playback = document.getElementById(playbackId);
   const callout = document.getElementById(calloutId);
 
-  let mediaRecorder = null;
-  let micStream = null;
-  let recordedChunks = [];
+  let activeSession = null;
   let timerHandle = null;
   let secondsElapsed = 0;
   let recording = false;
+  let starting = false;
   let playbackUrl = null;
   let audioBlob = null;
-  let discardRecording = false;
+  let sessionId = 0;
+  let destroyed = false;
 
   function renderTimer() {
     const minutes = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
@@ -30,119 +72,285 @@ export function createRecorder({
     timer.textContent = `${minutes}:${seconds}`;
   }
 
-  function releaseMicrophone() {
-    if (!micStream) return;
-    micStream.getTracks().forEach((track) => track.stop());
-    micStream = null;
+  function clearTimer() {
+    if (timerHandle === null) return;
+    window.clearInterval(timerHandle);
+    timerHandle = null;
   }
 
-  function stop(shouldDiscard = false) {
-    if (!recording || !mediaRecorder) return;
-
-    discardRecording = shouldDiscard;
-    mediaRecorder.stop();
-    clearInterval(timerHandle);
-    timerHandle = null;
+  function setIdleButton() {
     recording = false;
     button.classList.remove("recording");
     button.setAttribute("aria-label", "Start recording");
+  }
 
-    if (!shouldDiscard) {
+  function releaseStream(stream) {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => track.stop());
+    if (activeSession?.stream === stream) activeSession.stream = null;
+  }
+
+  function revokePlaybackUrl() {
+    if (!playbackUrl) return;
+    URL.revokeObjectURL(playbackUrl);
+    playbackUrl = null;
+  }
+
+  function clearPlayback() {
+    revokePlaybackUrl();
+    audioBlob = null;
+    playback.removeAttribute("src");
+    playback.hidden = true;
+    playback.load();
+  }
+
+  function showRecordingFailure(session, error) {
+    if (session.id !== sessionId || activeSession !== session) {
+      releaseStream(session.stream);
+      return;
+    }
+
+    console.error("MediaRecorder failed.", error);
+    sessionId += 1;
+    clearTimer();
+    setIdleButton();
+    session.chunks.length = 0;
+    releaseStream(session.stream);
+    activeSession = null;
+    callout.textContent = "Recording failed";
+    status.textContent = RECORDING_FAILURE_MESSAGE;
+    onReset?.();
+  }
+
+  function finishRecording(session) {
+    releaseStream(session.stream);
+    if (session.id !== sessionId || activeSession !== session) return;
+
+    clearTimer();
+    setIdleButton();
+    activeSession = null;
+
+    if (session.chunks.length === 0) {
+      callout.textContent = "Recording failed";
+      status.textContent = RECORDING_FAILURE_MESSAGE;
+      onReset?.();
+      return;
+    }
+
+    const mimeType =
+      session.recorder.mimeType || session.selectedMimeType || "audio/webm";
+    audioBlob = new Blob(session.chunks, { type: mimeType });
+    revokePlaybackUrl();
+    playbackUrl = URL.createObjectURL(audioBlob);
+    playback.src = playbackUrl;
+    playback.hidden = false;
+
+    if (session.stopReason === "automatic") {
+      callout.textContent = "Recording stopped automatically";
+      status.textContent = durationMessage;
+    } else {
+      callout.textContent = "Recording ready";
+      status.textContent = "Listen back, or record again if needed.";
+    }
+
+    onCapture?.({ blob: audioBlob, url: playbackUrl });
+  }
+
+  function requestStop(reason = "manual") {
+    const session = activeSession;
+    if (!recording || !session || session.stopRequested) return;
+
+    session.stopRequested = true;
+    session.stopReason = reason;
+    clearTimer();
+    setIdleButton();
+
+    if (reason === "automatic") {
+      callout.textContent = "Recording stopped automatically";
+      status.textContent = durationMessage;
+    } else {
       callout.textContent = "Processing recording";
       status.textContent = "One moment while we prepare your audio…";
     }
+
+    try {
+      session.recorder.stop();
+    } catch (error) {
+      showRecordingFailure(session, error);
+    }
+  }
+
+  function discardActiveSession() {
+    const session = activeSession;
+    sessionId += 1;
+    starting = false;
+    clearTimer();
+    setIdleButton();
+    activeSession = null;
+
+    if (!session) return;
+    session.chunks.length = 0;
+    if (!session.stopRequested && session.recorder.state !== "inactive") {
+      session.stopRequested = true;
+      try {
+        session.recorder.stop();
+      } catch {
+        // Reset and destroy still release the stream below.
+      }
+    }
+    releaseStream(session.stream);
   }
 
   function reset() {
-    stop(true);
-    releaseMicrophone();
-    recordedChunks = [];
-    audioBlob = null;
+    if (destroyed) return;
+    discardActiveSession();
+    clearPlayback();
     secondsElapsed = 0;
     renderTimer();
     callout.textContent = "Start recording";
     status.textContent = idleStatus;
-
-    if (playbackUrl) URL.revokeObjectURL(playbackUrl);
-
-    playbackUrl = null;
-    playback.removeAttribute("src");
-    playback.hidden = true;
-    playback.load();
     onReset?.();
   }
 
   async function start() {
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    if (destroyed || recording || starting || activeSession) return;
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
       callout.textContent = "Recording unavailable";
       status.textContent = "Audio recording is not supported in this browser.";
       return;
     }
 
+    starting = true;
+    onStart?.();
+    clearTimer();
+    const currentSessionId = ++sessionId;
+    let stream;
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      if (currentSessionId !== sessionId || destroyed) return;
+      starting = false;
       callout.textContent = "Microphone unavailable";
-      status.textContent = "Allow microphone access in your browser, then try again.";
+      status.textContent =
+        "Allow microphone access in your browser, then try again.";
       return;
     }
 
-    if (playbackUrl) URL.revokeObjectURL(playbackUrl);
+    if (currentSessionId !== sessionId || destroyed) {
+      releaseStream(stream);
+      return;
+    }
 
-    playbackUrl = null;
-    audioBlob = null;
+    starting = false;
+
+    const selectedMimeType = selectSupportedRecordingMimeType();
+    let recorder;
+    try {
+      recorder = selectedMimeType
+        ? new MediaRecorder(stream, { mimeType: selectedMimeType })
+        : new MediaRecorder(stream);
+    } catch (error) {
+      releaseStream(stream);
+      callout.textContent = "Recording failed";
+      status.textContent = RECORDING_FAILURE_MESSAGE;
+      console.error("Could not construct MediaRecorder.", error);
+      return;
+    }
+
+    clearPlayback();
     onReset?.();
-    playback.hidden = true;
-    recordedChunks = [];
-    discardRecording = false;
-    mediaRecorder = new MediaRecorder(micStream);
+    const session = {
+      id: currentSessionId,
+      recorder,
+      stream,
+      chunks: [],
+      selectedMimeType,
+      stopReason: null,
+      stopRequested: false,
+    };
+    activeSession = session;
 
-    mediaRecorder.addEventListener("dataavailable", (event) => {
-      if (event.data.size > 0) recordedChunks.push(event.data);
+    recorder.addEventListener("dataavailable", (event) => {
+      if (session.id !== sessionId || activeSession !== session) return;
+      if (event.data.size > 0) session.chunks.push(event.data);
     });
+    recorder.addEventListener("stop", () => finishRecording(session));
+    recorder.addEventListener("error", (event) =>
+      showRecordingFailure(session, event.error),
+    );
 
-    mediaRecorder.addEventListener("stop", () => {
-      if (!discardRecording && recordedChunks.length > 0) {
-        const mimeType = mediaRecorder.mimeType || "audio/webm";
-        audioBlob = new Blob(recordedChunks, { type: mimeType });
-        playbackUrl = URL.createObjectURL(audioBlob);
-        playback.src = playbackUrl;
-        playback.hidden = false;
-        callout.textContent = "Recording ready";
-        status.textContent = "Listen back, or record again if needed.";
-        onCapture?.({ blob: audioBlob, url: playbackUrl });
-      }
+    try {
+      recorder.start();
+    } catch (error) {
+      showRecordingFailure(session, error);
+      return;
+    }
 
-      releaseMicrophone();
-    });
-
-    mediaRecorder.start();
     recording = true;
     secondsElapsed = 0;
     renderTimer();
     button.classList.add("recording");
     button.setAttribute("aria-label", "Stop recording");
     callout.textContent = "Recording now";
-    status.textContent = "Read the sentence, then tap to stop";
+    status.textContent = "Speak naturally, then tap to stop";
 
     timerHandle = window.setInterval(() => {
-      secondsElapsed += 1;
+      if (session.id !== sessionId || activeSession !== session) {
+        clearTimer();
+        return;
+      }
+
+      secondsElapsed = Math.min(secondsElapsed + 1, durationLimit);
       renderTimer();
+      if (secondsElapsed >= durationLimit) requestStop("automatic");
     }, 1000);
   }
 
-  button.addEventListener("click", () => {
-    if (recording) stop();
+  function stop() {
+    if (starting && !activeSession) {
+      sessionId += 1;
+      starting = false;
+      clearTimer();
+      setIdleButton();
+      if (audioBlob) {
+        callout.textContent = "Recording ready";
+        status.textContent = "Listen back, or record again if needed.";
+      } else {
+        callout.textContent = "Start recording";
+        status.textContent = idleStatus;
+      }
+      return;
+    }
+    requestStop("manual");
+  }
+
+  function destroy() {
+    if (destroyed) return;
+    discardActiveSession();
+    clearPlayback();
+    destroyed = true;
+    button.removeEventListener("click", handleButtonClick);
+  }
+
+  function handleButtonClick() {
+    if (recording || starting) stop();
     else start();
-  });
+  }
+
+  button.addEventListener("click", handleButtonClick);
+  renderTimer();
 
   return {
+    start,
+    stop,
+    reset,
+    destroy,
     getBlob: () => audioBlob,
     getUrl: () => playbackUrl,
     hasRecording: () => Boolean(audioBlob),
-    isRecording: () => recording,
-    reset,
-    stop,
+    isRecording: () => recording || starting,
   };
 }
-
