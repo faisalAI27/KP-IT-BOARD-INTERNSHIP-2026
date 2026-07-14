@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">KP Awaz</title>
+  <desc id="logo-desc">A mountain sunrise shaped around a voice waveform</desc>
+  <circle cx="64" cy="64" r="61" fill="#faf6ef"/>
+  <circle cx="64" cy="64" r="55" fill="#2a4740" stroke="#c1613d" stroke-width="6"/>
+  <circle cx="91" cy="36" r="11" fill="#e7a94c"/>
+  <path d="M12 91 43 43l18 24 13-18 42 50v15H12Z" fill="#f1eadb"/>
+  <path d="m12 101 27-31 17 20 15-18 45 38v4H12Z" fill="#c1613d"/>
+  <path d="m19 94 20-24 17 20 15-18 36 31" fill="none" stroke="#faf6ef" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".72"/>
+  <g fill="#faf6ef">
+    <rect x="45" y="96" width="4" height="9" rx="2"/>
+    <rect x="52" y="91" width="4" height="19" rx="2"/>
+    <rect x="59" y="86" width="4" height="29" rx="2"/>
+    <rect x="66" y="92" width="4" height="17" rx="2"/>
+    <rect x="73" y="89" width="4" height="23" rx="2"/>
+    <rect x="80" y="95" width="4" height="11" rx="2"/>
+  </g>
+</svg>
+
