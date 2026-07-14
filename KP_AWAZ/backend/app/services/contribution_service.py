@@ -1,0 +1,276 @@
+"""Validation and transactional creation for voice contributions."""
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
+
+from sqlalchemy.orm import Session
+
+from app.config import settings
+from app.models import Contribution, Sentence
+from app.services.audio_storage import (
+    AudioStorageError,
+    delete_audio_file,
+    save_audio_file,
+)
+from app.utils.audio_validation import validate_audio_upload
+from app.utils.text_normalization import (
+    clean_sentence_text,
+    normalize_language_name,
+    normalize_sentence_text,
+)
+
+
+TRUE_CONSENT_VALUES = frozenset({"true", "1", "yes", "on"})
+
+
+class ContributionServiceError(Exception):
+    """Base contribution error with safe API metadata."""
+
+    code = "CONTRIBUTION_SERVICE_ERROR"
+    default_message = "The voice contribution could not be processed."
+    http_status = 400
+
+    def __init__(self, message: str | None = None) -> None:
+        self.message = message or self.default_message
+        super().__init__(self.message)
+
+
+class InvalidContributorNameError(ContributionServiceError):
+    code = "INVALID_CONTRIBUTOR_NAME"
+    default_message = "Contributor name must contain between 2 and 100 characters."
+
+
+class InvalidContributionLanguageError(ContributionServiceError):
+    code = "INVALID_CONTRIBUTION_LANGUAGE"
+    default_message = "A valid contribution language is required."
+
+
+class InvalidContributionSentenceError(ContributionServiceError):
+    code = "INVALID_CONTRIBUTION_SENTENCE"
+    default_message = "The sentence must contain between 3 and 500 characters."
+
+
+class InvalidSentenceSourceError(ContributionServiceError):
+    code = "INVALID_SENTENCE_SOURCE"
+    default_message = "Sentence source must be provided or custom."
+
+
+class ConsentRequiredError(ContributionServiceError):
+    code = "CONSENT_REQUIRED"
+    default_message = "Consent is required to submit a voice contribution."
+
+
+class InvalidSentenceIdError(ContributionServiceError):
+    code = "INVALID_SENTENCE_ID"
+    default_message = "The sentence ID is invalid."
+
+
+class SentenceNotFoundError(ContributionServiceError):
+    code = "SENTENCE_NOT_FOUND"
+    default_message = "The requested active sentence was not found."
+    http_status = 404
+
+
+class SentenceLanguageMismatchError(ContributionServiceError):
+    code = "SENTENCE_LANGUAGE_MISMATCH"
+    default_message = "The sentence language does not match the contribution language."
+
+
+class SentenceTextMismatchError(ContributionServiceError):
+    code = "SENTENCE_TEXT_MISMATCH"
+    default_message = "The submitted sentence does not match the requested sentence."
+
+
+class CustomSentenceIdNotAllowedError(ContributionServiceError):
+    code = "CUSTOM_SENTENCE_ID_NOT_ALLOWED"
+    default_message = "A custom sentence must not include a sentence ID."
+
+
+class AudioStorageFailedError(ContributionServiceError):
+    code = "AUDIO_STORAGE_FAILED"
+    default_message = "The contribution audio could not be stored."
+    http_status = 500
+
+
+class ContributionCreationError(ContributionServiceError):
+    code = "CONTRIBUTION_CREATION_FAILED"
+    default_message = "The voice contribution could not be completed."
+    http_status = 500
+
+
+@dataclass(frozen=True, slots=True)
+class GuidedContributionInput:
+    """Framework-independent input for one guided voice contribution."""
+
+    contributor_name: str
+    language: str
+    sentence: str
+    sentence_source: str
+    sentence_id: str | None
+    consent: str | bool | None
+    audio_filename: str
+    audio_mime_type: str
+    audio_content: bytes
+
+
+def _validate_contributor_name(contributor_name: str) -> str:
+    if not isinstance(contributor_name, str):
+        raise InvalidContributorNameError()
+    cleaned_name = contributor_name.strip()
+    if not 2 <= len(cleaned_name) <= 100:
+        raise InvalidContributorNameError()
+    return cleaned_name
+
+
+def _validate_language(language: str) -> str:
+    try:
+        normalized_language = normalize_language_name(language)
+    except (TypeError, ValueError) as error:
+        raise InvalidContributionLanguageError() from error
+    if len(normalized_language) > 100:
+        raise InvalidContributionLanguageError()
+    return normalized_language
+
+
+def _validate_sentence(sentence: str) -> str:
+    try:
+        cleaned_sentence = clean_sentence_text(sentence)
+    except TypeError as error:
+        raise InvalidContributionSentenceError() from error
+    if not 3 <= len(cleaned_sentence) <= 500:
+        raise InvalidContributionSentenceError()
+    return cleaned_sentence
+
+
+def _validate_sentence_source(sentence_source: str) -> str:
+    if not isinstance(sentence_source, str):
+        raise InvalidSentenceSourceError()
+    normalized_source = sentence_source.strip().lower()
+    if normalized_source not in {"provided", "custom"}:
+        raise InvalidSentenceSourceError()
+    return normalized_source
+
+
+def _require_consent(consent: str | bool | None) -> None:
+    if consent is True:
+        return
+    if isinstance(consent, str) and consent.strip().lower() in TRUE_CONSENT_VALUES:
+        return
+    raise ConsentRequiredError()
+
+
+def _validate_optional_sentence(
+    database: Session,
+    *,
+    sentence_id: str | None,
+    sentence_source: str,
+    language: str,
+    submitted_sentence: str,
+) -> tuple[str | None, str]:
+    cleaned_sentence_id = sentence_id.strip() if isinstance(sentence_id, str) else ""
+
+    if sentence_source == "custom":
+        if cleaned_sentence_id:
+            raise CustomSentenceIdNotAllowedError()
+        return None, submitted_sentence
+
+    if not cleaned_sentence_id:
+        return None, submitted_sentence
+
+    try:
+        canonical_sentence_id = str(UUID(cleaned_sentence_id))
+    except (ValueError, TypeError, AttributeError) as error:
+        raise InvalidSentenceIdError() from error
+
+    stored_sentence = database.get(Sentence, canonical_sentence_id)
+    if stored_sentence is None or not stored_sentence.is_active:
+        raise SentenceNotFoundError()
+    if normalize_language_name(stored_sentence.language) != language:
+        raise SentenceLanguageMismatchError()
+    if normalize_sentence_text(stored_sentence.text) != normalize_sentence_text(
+        submitted_sentence
+    ):
+        raise SentenceTextMismatchError()
+
+    return stored_sentence.id, stored_sentence.text
+
+
+def create_guided_contribution(
+    database: Session, contribution_input: GuidedContributionInput
+) -> Contribution:
+    """Validate, store audio, and commit one guided contribution."""
+
+    contributor_name = _validate_contributor_name(
+        contribution_input.contributor_name
+    )
+    language = _validate_language(contribution_input.language)
+    sentence = _validate_sentence(contribution_input.sentence)
+    sentence_source = _validate_sentence_source(
+        contribution_input.sentence_source
+    )
+    _require_consent(contribution_input.consent)
+    verified_sentence_id, sentence_snapshot = _validate_optional_sentence(
+        database,
+        sentence_id=contribution_input.sentence_id,
+        sentence_source=sentence_source,
+        language=language,
+        submitted_sentence=sentence,
+    )
+    validated_audio = validate_audio_upload(
+        filename=contribution_input.audio_filename,
+        mime_type=contribution_input.audio_mime_type,
+        content=contribution_input.audio_content,
+        max_size_mb=settings.max_guided_audio_size_mb,
+    )
+
+    contribution_id = str(uuid4())
+    created_at = datetime.now(timezone.utc)
+    try:
+        storage_key = save_audio_file(
+            contribution_id=contribution_id,
+            extension=validated_audio.extension,
+            content=contribution_input.audio_content,
+            created_at=created_at,
+        )
+    except AudioStorageError as error:
+        database.rollback()
+        raise AudioStorageFailedError() from error
+
+    contribution = Contribution(
+        id=contribution_id,
+        contribution_type="guided",
+        contributor_name=contributor_name,
+        language=language,
+        sentence_id=verified_sentence_id,
+        sentence_text=sentence_snapshot,
+        sentence_source=sentence_source,
+        topic=None,
+        consent_given=True,
+        audio_storage_key=storage_key,
+        original_filename=validated_audio.original_filename,
+        mime_type=validated_audio.mime_type,
+        file_size=validated_audio.file_size,
+        duration_seconds=None,
+        status="queued",
+        created_at=created_at,
+        updated_at=created_at,
+    )
+
+    try:
+        database.add(contribution)
+        database.commit()
+    except Exception as error:
+        database.rollback()
+        try:
+            delete_audio_file(storage_key)
+        except AudioStorageError:
+            pass
+        raise ContributionCreationError() from error
+
+    try:
+        database.refresh(contribution)
+    except Exception:
+        # expire_on_commit=False keeps the committed response fields available.
+        pass
+    return contribution

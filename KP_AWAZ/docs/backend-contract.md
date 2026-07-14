@@ -33,8 +33,11 @@ Content type: `multipart/form-data`
 | `language` | string | Yes |
 | `sentence` | string | Yes |
 | `sentenceSource` | `provided` or `custom` | Yes |
+| `sentenceId` | UUID string | No |
 | `consent` | boolean string | Yes |
 | `audio` | WebM or OGG file | Yes |
+
+Successful guided submissions return `201 Created`. A provided sentence may include `sentenceId` for verification; custom sentences must omit it.
 
 ## Submit an open recording
 
@@ -63,7 +66,8 @@ Error response:
 
 ```json
 {
-  "message": "A user-friendly validation or server error message."
+  "message": "A user-friendly validation or server error message.",
+  "code": "MACHINE_READABLE_CODE"
 }
 ```
 
@@ -75,4 +79,3 @@ Error response:
 - Store consent, sentence metadata, review status, and the audio storage key in the database.
 - Return safe error messages without exposing internal details.
 - Add authentication, rate limiting, moderation, and malware scanning as the platform grows.
-

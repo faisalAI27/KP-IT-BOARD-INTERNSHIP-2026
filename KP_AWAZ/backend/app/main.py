@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.models import ImportBatch, Sentence  # noqa: F401 - registers metadata
-from app.routes import admin, health, sentence_imports, sentences
+from app.routes import admin, contributions, health, sentence_imports, sentences
 
 
 @asynccontextmanager
@@ -34,3 +34,4 @@ app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(sentences.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(sentence_imports.router, prefix=settings.api_prefix)
+app.include_router(contributions.router, prefix=settings.api_prefix)

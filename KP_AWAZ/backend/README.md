@@ -166,6 +166,31 @@ Guided recordings default to a 15 MB maximum, while open recordings default to 5
 
 Audio headers receive basic WebM, OGG, WAV, MP3, or MP4/M4A signature checks. These checks do not provide complete media validation, malware scanning, or proof that a file is decodable. FFmpeg is not required in this phase. Guided and open-recording contribution endpoints will be implemented separately.
 
+## Submit a guided voice contribution
+
+Submit a guided recording with:
+
+```http
+POST /api/contributions/voice
+```
+
+The multipart fields are `contributorName`, `language`, `sentence`, `sentenceSource`, optional `sentenceId`, `consent`, and `audio`.
+
+```bash
+curl -X POST \
+  -F "contributorName=Faisal Imran" \
+  -F "language=Pashto" \
+  -F "sentence=هر غږ ارزښت لري." \
+  -F "sentenceSource=provided" \
+  -F "consent=true" \
+  -F "audio=@recording.webm;type=audio/webm" \
+  http://127.0.0.1:8000/api/contributions/voice
+```
+
+`sentenceId` is currently optional for provided prompts. Custom sentences must not include it, and custom text is stored only as a contribution snapshot. Consent must resolve to true.
+
+Audio is checked for supported MIME type, filename-extension consistency, guided size limit, and a basic matching signature. Successful submissions return HTTP 201. Audio uses the contribution UUID as its filename, while the database stores only a relative storage key.
+
 ## Run tests
 
 ```bash
