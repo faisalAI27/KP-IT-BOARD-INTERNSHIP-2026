@@ -102,6 +102,20 @@ python -m scripts.seed_sentences
 
 The seed script is safe to run multiple times and skips duplicate sentences. Seed data is not inserted automatically when the API starts.
 
+## Admin API authentication
+
+Internal admin endpoints require the configured API key in the `X-Admin-Key` header. For local development, call the protected health check with:
+
+```bash
+curl \
+  -H "X-Admin-Key: dev-change-this-key" \
+  http://127.0.0.1:8000/api/admin/health
+```
+
+The development key comes from `ADMIN_API_KEY` in `.env`. Replace the example key outside local development and never commit a real API key to Git.
+
+This API key is temporary internal authentication. A complete authentication system may replace it as the administration features grow.
+
 ## Run tests
 
 ```bash
