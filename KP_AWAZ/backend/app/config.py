@@ -10,12 +10,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 
 
+def build_default_database_url(backend_root: Path = BACKEND_ROOT) -> str:
+    """Return a SQLite URL anchored to the backend instead of the process CWD."""
+
+    database_path = (backend_root / "kp_awaz.db").resolve()
+    return f"sqlite:///{database_path.as_posix()}"
+
+
+DEFAULT_DATABASE_URL = build_default_database_url()
+
+
 class Settings(BaseSettings):
     """Configuration shared across the backend application."""
 
     app_name: str = "KP AWAZ API"
     api_prefix: str = "/api"
-    database_url: str = "sqlite:///./kp_awaz.db"
+    database_url: str = DEFAULT_DATABASE_URL
     frontend_origins: list[str] = [
         "http://localhost:4173",
         "http://127.0.0.1:4173",

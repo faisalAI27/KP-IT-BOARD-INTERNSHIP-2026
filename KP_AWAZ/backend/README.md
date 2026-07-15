@@ -67,6 +67,19 @@ Expected response:
 }
 ```
 
+## Database storage
+
+KP Awaz uses one active SQLite database at `backend/kp_awaz.db`. The default
+database URL is resolved from the backend source directory, so starting Uvicorn
+from `KP_AWAZ`, `KP_AWAZ/backend`, or the repository root does not create a
+second database in the launch directory. An explicit `DATABASE_URL` environment
+value still overrides this default.
+
+User profiles, sentence data, import history, and contribution metadata are
+stored in separate tables inside this single database. Recorded audio is not
+stored in SQLite; audio files remain under backend storage while the database
+holds only their relative storage keys and metadata.
+
 ## Sentence API
 
 Retrieve up to 20 random, active Pashto sentence prompts:
