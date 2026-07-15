@@ -281,6 +281,36 @@ test("signed-in state handles null email and provider", () => {
 });
 
 
+test("verified profile display name replaces and safely truncates header label", () => {
+  const fixture = createFixture(
+    authState("signed_in", { backendUser: VERIFIED_USER }),
+  );
+
+  fixture.ui.setProfileDisplayName(VERIFIED_USER.id, "Faisal Imran");
+  assert.equal(element(fixture, "authHeaderButtonLabel").textContent, "Faisal Imran");
+
+  fixture.ui.setProfileDisplayName(
+    VERIFIED_USER.id,
+    "A profile display name that is too long",
+  );
+  assert.equal(element(fixture, "authHeaderButtonLabel").textContent, "A profile display…");
+});
+
+
+test("profile header label cannot cross verified users or survive sign-out", () => {
+  const fixture = createFixture(
+    authState("signed_in", { backendUser: VERIFIED_USER }),
+  );
+
+  fixture.ui.setProfileDisplayName("another-user", "Wrong User");
+  assert.equal(element(fixture, "authHeaderButtonLabel").textContent, "person");
+
+  fixture.ui.setProfileDisplayName(VERIFIED_USER.id, "Correct User");
+  fixture.authApi.emit(authState("signed_out"));
+  assert.equal(element(fixture, "authHeaderButtonLabel").textContent, "Sign in");
+});
+
+
 test("rendered view model never includes tokens or raw metadata", () => {
   const token = "private-token-must-not-render";
   const state = authState("signed_in", {

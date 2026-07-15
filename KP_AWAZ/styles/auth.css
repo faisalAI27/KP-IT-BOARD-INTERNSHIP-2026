@@ -309,6 +309,144 @@
   font-size: 0.68rem;
 }
 
+.profile-settings {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.profile-settings-heading h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.22rem;
+  line-height: 1.25;
+}
+
+.profile-settings-heading .auth-kicker {
+  margin-bottom: 4px;
+}
+
+.profile-loading,
+.profile-load-error {
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid rgba(62, 98, 89, 0.15);
+  border-radius: 13px;
+  background: rgba(62, 98, 89, 0.07);
+  color: var(--pine-dark);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.profile-load-error {
+  display: grid;
+  border-color: rgba(193, 97, 61, 0.18);
+  background: rgba(193, 97, 61, 0.07);
+  color: var(--terracotta-dark);
+  gap: 11px;
+}
+
+.profile-load-error[hidden] {
+  display: none;
+}
+
+.profile-load-error .btn {
+  width: 100%;
+}
+
+.profile-form {
+  display: grid;
+  margin-top: 16px;
+  gap: 14px;
+}
+
+.profile-form[hidden] {
+  display: none;
+}
+
+.profile-field {
+  display: grid;
+  gap: 7px;
+}
+
+.profile-field label {
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.profile-field input,
+.profile-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1.5px solid rgba(46, 38, 32, 0.14);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.profile-field input:focus,
+.profile-field select:focus {
+  border-color: var(--pine);
+  outline: 0;
+  background: var(--card);
+  box-shadow: 0 0 0 4px rgba(62, 98, 89, 0.09);
+}
+
+.profile-field input:disabled,
+.profile-field select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.profile-privacy-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper-soft);
+  cursor: pointer;
+}
+
+.profile-privacy-choice input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+  accent-color: var(--pine);
+}
+
+.profile-privacy-choice span,
+.profile-privacy-choice strong,
+.profile-privacy-choice small {
+  display: block;
+  min-width: 0;
+}
+
+.profile-privacy-choice strong {
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.profile-privacy-choice small {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.profile-save-button {
+  width: 100%;
+}
+
+.profile-status {
+  margin-top: 0;
+}
+
 .auth-account-actions {
   display: grid;
   margin-top: 20px;

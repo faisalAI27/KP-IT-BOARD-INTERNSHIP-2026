@@ -3,6 +3,7 @@ import { initFaq } from "./modules/faq.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js";
 import { destroyAuthUI, initAuthUI } from "./modules/auth-ui.js";
+import { destroyProfileUI, initProfileUI } from "./modules/profile-ui.js";
 import {
   destroyAuthService,
   initializeAuthService,
@@ -23,21 +24,32 @@ function showBootError(error) {
 async function initializeAuthentication() {
   try {
     const state = await initializeAuthService();
-    initAuthUI();
+    initializeAuthenticationInterfaces();
     if (state.error?.code === "AUTH_NOT_CONFIGURED") {
       console.info("Authentication is not configured.");
     }
   } catch {
     console.warn("Authentication could not be initialized.");
-    try {
-      initAuthUI();
-    } catch {
-      // Authentication UI failures remain isolated from the rest of the page.
-    }
+    initializeAuthenticationInterfaces();
+  }
+}
+
+function initializeAuthenticationInterfaces() {
+  try {
+    initAuthUI();
+  } catch {
+    // Authentication UI failures remain isolated from the rest of the page.
+  }
+
+  try {
+    initProfileUI();
+  } catch {
+    // Profile UI failures remain isolated from authentication and the page.
   }
 }
 
 function cleanupAuthentication() {
+  destroyProfileUI();
   destroyAuthUI();
   destroyAuthService();
 }

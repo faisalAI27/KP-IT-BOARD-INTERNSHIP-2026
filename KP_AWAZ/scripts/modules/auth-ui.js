@@ -62,6 +62,13 @@ function compactAccountLabel(email) {
 }
 
 
+function compactProfileLabel(displayName) {
+  if (typeof displayName !== "string" || !displayName.trim()) return null;
+  const cleaned = displayName.trim();
+  return cleaned.length > 18 ? `${cleaned.slice(0, 17)}…` : cleaned;
+}
+
+
 export function getAuthViewModel(state) {
   const normalizedState = state && typeof state === "object" ? state : {};
   const error =
@@ -209,6 +216,7 @@ export class AuthUI {
     this._initialized = false;
     this._destroyed = false;
     this._pendingAction = null;
+    this._profileIdentity = null;
     this._signInMessage = null;
     this._accountMessage = null;
     this._state = {
@@ -232,11 +240,32 @@ export class AuthUI {
     this._unsubscribe = this._auth.subscribeToAuthChanges((state) => {
       if (this._destroyed) return;
       this._state = state;
+      if (
+        state.status !== "signed_in" ||
+        state.backendUser?.id !== this._profileIdentity?.userId
+      ) {
+        this._profileIdentity = null;
+      }
       if (state.status === "signed_in") this._signInMessage = null;
       if (state.status === "signed_out") this._accountMessage = null;
       this._render();
     });
     return true;
+  }
+
+  setProfileDisplayName(userId, displayName) {
+    if (!this._initialized || this._destroyed) return;
+    const cleanedUserId = typeof userId === "string" ? userId.trim() : "";
+    const cleanedDisplayName = compactProfileLabel(displayName);
+    const verifiedUserId = this._state.backendUser?.id;
+    this._profileIdentity =
+      cleanedUserId &&
+      cleanedDisplayName &&
+      this._state.status === "signed_in" &&
+      cleanedUserId === verifiedUserId
+        ? { userId: cleanedUserId, displayName: cleanedDisplayName }
+        : null;
+    this._render();
   }
 
   openDialog() {
@@ -269,6 +298,7 @@ export class AuthUI {
     this._destroyed = true;
     this._initialized = false;
     this._pendingAction = null;
+    this._profileIdentity = null;
     this._unsubscribe?.();
     this._unsubscribe = null;
     for (const { element, type, listener } of this._bindings) {
@@ -468,7 +498,12 @@ export class AuthUI {
     const model = getAuthViewModel(this._state);
     const pending = this._pendingAction;
 
-    this._elements.headerLabel.textContent = model.headerLabel;
+    const profileHeaderLabel =
+      model.headerKind === "account" &&
+      this._profileIdentity?.userId === this._state.backendUser?.id
+        ? this._profileIdentity.displayName
+        : null;
+    this._elements.headerLabel.textContent = profileHeaderLabel ?? model.headerLabel;
     this._elements.headerButton.dataset.authKind = model.headerKind;
     this._elements.headerButton.disabled = model.headerDisabled;
     this._elements.title.textContent = model.title;
@@ -519,3 +554,5 @@ const authUI = new AuthUI();
 
 export const initAuthUI = () => authUI.initAuthUI();
 export const destroyAuthUI = () => authUI.destroyAuthUI();
+export const setAuthProfileDisplayName = (userId, displayName) =>
+  authUI.setProfileDisplayName(userId, displayName);

@@ -82,6 +82,83 @@
         hidden
       ></div>
 
+      <section
+        class="profile-settings"
+        id="profileSettings"
+        aria-labelledby="profileSettingsTitle"
+        hidden
+      >
+        <div class="profile-settings-heading">
+          <div>
+            <span class="auth-kicker">Your preferences</span>
+            <h3 id="profileSettingsTitle">Profile settings</h3>
+          </div>
+        </div>
+
+        <div class="profile-loading" id="profileLoading" role="status" aria-live="polite">
+          Loading profile…
+        </div>
+
+        <div class="profile-load-error" id="profileLoadError" role="alert" hidden>
+          <span id="profileLoadErrorMessage">Profile settings could not be loaded.</span>
+          <button class="btn btn-quiet btn-sm" id="retryProfileButton" type="button">
+            Retry profile
+          </button>
+        </div>
+
+        <form class="profile-form" id="profileForm" hidden>
+          <div class="profile-field">
+            <label for="profileDisplayName">Display name</label>
+            <input
+              id="profileDisplayName"
+              name="displayName"
+              type="text"
+              autocomplete="name"
+              minlength="2"
+              maxlength="80"
+              required
+            />
+          </div>
+
+          <div class="profile-field">
+            <label for="profilePreferredLanguage">Preferred language</label>
+            <select id="profilePreferredLanguage" name="preferredLanguage" required>
+              <option value="Pashto">Pashto</option>
+              <option value="Urdu">Urdu</option>
+              <option value="English">English</option>
+            </select>
+          </div>
+
+          <label class="profile-privacy-choice" for="profileLeaderboardOptIn">
+            <input
+              id="profileLeaderboardOptIn"
+              name="leaderboardOptIn"
+              type="checkbox"
+            />
+            <span>
+              <strong>Show my display name on the public leaderboard</strong>
+              <small>
+                When disabled, your name will not be shown publicly on future contributor
+                rankings.
+              </small>
+            </span>
+          </label>
+
+          <button class="btn btn-primary profile-save-button" id="profileSaveButton" type="submit">
+            <span id="profileSaveButtonLabel">Save profile</span>
+          </button>
+
+          <div
+            class="auth-message profile-status"
+            id="profileStatus"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            hidden
+          ></div>
+        </form>
+      </section>
+
       <div class="auth-account-actions">
         <button class="btn btn-primary" id="authRetryButton" type="button" hidden>
           <span id="authRetryButtonLabel">Retry verification</span>

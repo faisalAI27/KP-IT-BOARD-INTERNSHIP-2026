@@ -10,8 +10,17 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import Base, engine
 from app.dependencies import AuthenticationRequiredError
-from app.models import ImportBatch, Sentence  # noqa: F401 - registers metadata
-from app.routes import admin, auth, contributions, health, sentence_imports, sentences
+from app.models import ImportBatch, Profile, Sentence  # noqa: F401 - registers metadata
+from app.routes import (
+    admin,
+    auth,
+    contributions,
+    health,
+    profiles,
+    sentence_imports,
+    sentences,
+)
+from app.services.profile_service import ProfileServiceError
 from app.services.supabase_auth import SupabaseAuthError
 
 
@@ -51,6 +60,19 @@ async def supabase_auth_error_handler(
         content={"message": error.message, "code": error.code},
     )
 
+
+@app.exception_handler(ProfileServiceError)
+async def profile_service_error_handler(
+    _: Request,
+    error: ProfileServiceError,
+) -> JSONResponse:
+    """Return a safe profile error without leaking persistence details."""
+
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.frontend_origins,
@@ -65,3 +87,4 @@ app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(sentence_imports.router, prefix=settings.api_prefix)
 app.include_router(contributions.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
+app.include_router(profiles.router, prefix=settings.api_prefix)

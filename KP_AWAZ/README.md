@@ -97,6 +97,16 @@ When `redirectUrl` is blank, the application uses the current website origin and
 
 Contribution endpoints remain public during this phase, and contribution requests do not include authentication headers. Users can still record and submit guided, custom-sentence, and open contributions while signed out.
 
+## Profile settings
+
+After Supabase restores or creates a session, FastAPI verifies the signed-in user before the frontend requests profile data. The first authenticated `GET /api/profile/me` automatically creates that user's local application profile when one does not already exist.
+
+Profile settings are available inside the signed-in account dialog. Users can edit their display name, preferred language, and whether their display name may appear on a future public leaderboard. Leaderboard visibility is private by default. The profile form includes loading, retry, validation, save, and no-change feedback without blocking the rest of the site.
+
+Supabase remains responsible for authentication and browser session management. FastAPI stores only application-specific profile preferences and the safe identity metadata needed to associate the profile with the verified Supabase user. Access tokens are not stored in the profile table or in profile UI state.
+
+Contributions remain public and are not linked to profiles in this phase. Profile preferences do not add authorization headers, user IDs, or ownership information to recording submissions.
+
 ## Recording behavior
 
 Guided recordings have a maximum duration of 60 seconds. Open recordings have a maximum duration of 5 minutes. Recording stops automatically at the configured limit, and the completed recording remains available for playback and submission.

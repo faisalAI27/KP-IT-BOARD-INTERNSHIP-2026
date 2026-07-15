@@ -118,7 +118,7 @@ This API key is temporary internal authentication. A complete authentication sys
 
 ## Supabase authentication foundation
 
-Supabase Auth will manage Google and email login. The frontend login interface is not part of this phase; after it is added, the frontend will send the current Supabase access token to FastAPI as:
+Supabase Auth manages Google and email login. The frontend sends the current Supabase access token to FastAPI as:
 
 ```http
 Authorization: Bearer <access-token>
@@ -150,7 +150,41 @@ curl \
   http://127.0.0.1:8000/api/auth/me
 ```
 
-A real token will become straightforward to obtain after the frontend login UI is implemented in Phase 5A-2. In this subphase, `/api/auth/me` is the only Supabase-protected endpoint. Existing sentence and contribution endpoints remain public, and existing admin endpoints continue to use `X-Admin-Key`.
+A real token is obtained through the frontend login interface. Existing sentence and contribution endpoints remain public, and existing admin endpoints continue to use `X-Admin-Key`.
+
+## Local authenticated user profiles
+
+Supabase remains responsible for authentication, session handling, and verified identity. FastAPI stores only application-specific profile preferences in the local `profiles` table. Each profile ID is exactly the verified Supabase user ID; it is never accepted from a profile request body or URL parameter.
+
+The verified email and authentication provider are synchronized from Supabase whenever the profile is accessed. Users can edit their display name, preferred language, and future leaderboard visibility. Leaderboard visibility defaults to private (`false`). Contributions are not connected to profiles and remain public during this phase.
+
+Retrieve or automatically create the authenticated user's profile with:
+
+```http
+GET /api/profile/me
+```
+
+Update profile preferences with:
+
+```http
+PATCH /api/profile/me
+```
+
+For example:
+
+```bash
+curl -X PATCH \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "Faisal Imran",
+    "preferredLanguage": "Pashto",
+    "leaderboardOptIn": true
+  }' \
+  http://127.0.0.1:8000/api/profile/me
+```
+
+Profile responses contain the verified ID, email, provider, preferences, and timestamps. Supabase access, refresh, and provider tokens are neither stored in the profile table nor returned by these endpoints.
 
 ## TXT import format
 
