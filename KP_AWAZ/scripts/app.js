@@ -2,6 +2,10 @@ import { initContributions } from "./modules/contributions.js";
 import { initFaq } from "./modules/faq.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js";
+import {
+  destroyAuthService,
+  initializeAuthService,
+} from "./services/auth-service.js";
 
 function showBootError(error) {
   const message = document.createElement("div");
@@ -15,12 +19,24 @@ function showBootError(error) {
   document.body.append(message);
 }
 
+async function initializeAuthentication() {
+  try {
+    const state = await initializeAuthService();
+    if (state.error?.code === "AUTH_NOT_CONFIGURED") {
+      console.info("Authentication is not configured.");
+    }
+  } catch {
+    console.warn("Authentication could not be initialized.");
+  }
+}
+
 async function bootstrap() {
   try {
     await loadPartials();
     initNavigation();
     initFaq();
     await initContributions();
+    void initializeAuthentication();
     restoreHashPosition();
     document.body.dataset.appState = "ready";
   } catch (error) {
@@ -30,4 +46,5 @@ async function bootstrap() {
   }
 }
 
+window.addEventListener("beforeunload", destroyAuthService, { once: true });
 bootstrap();

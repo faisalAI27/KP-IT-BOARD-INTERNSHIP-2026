@@ -1,6 +1,8 @@
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { buildSupabaseVendorBundle } from "./build-supabase-vendor.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "dist");
@@ -30,7 +32,8 @@ async function copyRuntimeAssets() {
   }
 }
 
+await rm(outputRoot, { recursive: true, force: true });
+await buildSupabaseVendorBundle();
 await assemblePage();
 await copyRuntimeAssets();
 console.log(`Production files created in ${outputRoot}`);
-

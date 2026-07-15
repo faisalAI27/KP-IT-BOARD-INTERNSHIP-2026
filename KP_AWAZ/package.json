@@ -5,6 +5,14 @@
   "type": "module",
   "scripts": {
     "build": "node tools/build.mjs",
+    "build:supabase": "node tools/build-supabase-vendor.mjs",
+    "postinstall": "npm run build:supabase",
     "test": "node --test tests/frontend/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
   }
 }

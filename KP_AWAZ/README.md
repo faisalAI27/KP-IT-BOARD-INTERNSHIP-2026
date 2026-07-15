@@ -6,6 +6,12 @@ The frontend is organized so visual sections, interaction logic, data, and backe
 
 The frontend now uses the real FastAPI backend. Start both applications in separate terminals.
 
+Install the frontend packages first. This also generates the local Supabase browser vendor module:
+
+```bash
+npm install
+```
+
 ### Terminal 1 — Backend
 
 ```bash
@@ -44,7 +50,7 @@ KP_AWAZ/
 │   └── services/              # All backend communication
 ├── assets/images/             # Logos and future images
 ├── docs/                      # Architecture and API contracts
-└── tools/build.mjs            # Dependency-free production build
+└── tools/                     # Production and Supabase vendor build scripts
 ```
 
 ## Production build
@@ -53,13 +59,39 @@ KP_AWAZ/
 npm run build
 ```
 
-This creates `dist/`, assembles all HTML partials into one production page, and copies the runtime assets. Development stays modular while production avoids client-side partial requests.
+This creates `dist/`, assembles all HTML partials into one production page, generates the browser-compatible Supabase vendor module, and copies the runtime assets. Development stays modular while production avoids client-side partial requests.
+
+The focused vendor bundle can also be regenerated directly with:
+
+```bash
+npm run build:supabase
+```
+
+It is generated from the installed official `@supabase/supabase-js` package. The generated source vendor directory and `node_modules` are not committed.
 
 ## Backend connection
 
 The active API URL and mock-mode switch are centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
+
+## Frontend authentication foundation
+
+The frontend authentication service supports Supabase Google OAuth and email magic-link login without adding visible sign-in controls yet. Supabase manages browser session persistence, URL-session detection, and token refresh. The frontend keeps the complete session internal and sends only its access token to FastAPI for verification through `GET /api/auth/me`.
+
+Frontend authentication uses only the Supabase project URL and publishable key. A service-role key must never appear in frontend configuration, browser code, logs, or production files.
+
+Authentication configuration is centralized under `appConfig.auth` in `scripts/config.js` with these fields:
+
+```text
+supabaseUrl
+supabasePublishableKey
+redirectUrl
+```
+
+When `redirectUrl` is blank, the application uses the current website origin and application root. Empty Supabase configuration is allowed and does not stop navigation, FAQ, recording, or contribution features from initializing.
+
+Contribution endpoints remain public and contribution requests do not include authentication headers in this subphase. The visible header controls, Google button, email form, account state, and sign-out button will be added in Phase 5A-2B.
 
 ## Recording behavior
 

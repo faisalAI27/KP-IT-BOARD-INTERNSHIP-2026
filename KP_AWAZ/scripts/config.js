@@ -4,4 +4,9 @@ export const appConfig = Object.freeze({
     useMock: false,
     mockDelayMs: 450,
   }),
+  auth: Object.freeze({
+    supabaseUrl: "",
+    supabasePublishableKey: "",
+    redirectUrl: "",
+  }),
 });
