@@ -75,9 +75,13 @@ The active API URL and mock-mode switch are centralized in `scripts/config.js`. 
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
 
-## Frontend authentication foundation
+## Authentication interface
 
-The frontend authentication service supports Supabase Google OAuth and email magic-link login without adding visible sign-in controls yet. Supabase manages browser session persistence, URL-session detection, and token refresh. The frontend keeps the complete session internal and sends only its access token to FastAPI for verification through `GET /api/auth/me`.
+The header provides a visible account control. Signed-out users can continue with Google or request an email magic link from the authentication dialog. Email authentication does not use or request a password.
+
+Supabase manages browser session persistence, URL-session detection, and token refresh. Returning from a Google or email redirect uses the same startup flow to restore the session. The frontend keeps the complete session internal and sends only its access token to FastAPI for identity verification through `GET /api/auth/me`. The account interface is displayed as fully signed in only after that backend verification succeeds.
+
+Google sign-in requires the Google provider to be enabled and configured in the Supabase dashboard before live use. Email magic links require the frontend return address to be present in the project's allowed redirect URLs. For local development, the configured redirect is `http://127.0.0.1:4173/`.
 
 Frontend authentication uses only the Supabase project URL and publishable key. A service-role key must never appear in frontend configuration, browser code, logs, or production files.
 
@@ -91,7 +95,7 @@ redirectUrl
 
 When `redirectUrl` is blank, the application uses the current website origin and application root. Empty Supabase configuration is allowed and does not stop navigation, FAQ, recording, or contribution features from initializing.
 
-Contribution endpoints remain public and contribution requests do not include authentication headers in this subphase. The visible header controls, Google button, email form, account state, and sign-out button will be added in Phase 5A-2B.
+Contribution endpoints remain public during this phase, and contribution requests do not include authentication headers. Users can still record and submit guided, custom-sentence, and open contributions while signed out.
 
 ## Recording behavior
 

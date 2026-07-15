@@ -242,6 +242,34 @@
     display: none;
   }
 
+  .nav-cta > a.btn-primary {
+    display: none;
+  }
+
+  .nav-cta .auth-header-button {
+    min-width: 96px;
+    min-height: 42px;
+    max-width: 128px;
+  }
+
+  .auth-dialog {
+    width: min(100% - 20px, 500px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .auth-dialog-shell {
+    max-height: calc(100dvh - 20px);
+    padding: 32px 22px 24px;
+    border-radius: 22px;
+  }
+
+  .auth-dialog-close {
+    top: 13px;
+    right: 13px;
+    width: 42px;
+    height: 42px;
+  }
+
   .menu-toggle {
     width: 38px;
     height: 38px;
@@ -460,15 +488,22 @@
 
 @media (max-width: 430px) {
   .nav-cta {
-    display: none;
+    display: flex;
   }
 
   .nav-inner {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto auto 1fr;
+    gap: 8px;
+  }
+
+  .nav-cta .auth-header-button {
+    min-width: 88px;
+    max-width: 92px;
+    padding-inline: 10px;
   }
 
   .menu-toggle {
-    grid-column: 2;
+    grid-column: 3;
   }
 
   .hero-cta .btn {
