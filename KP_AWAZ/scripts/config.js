@@ -5,8 +5,8 @@ export const appConfig = Object.freeze({
     mockDelayMs: 450,
   }),
   auth: Object.freeze({
-    supabaseUrl: "",
-    supabasePublishableKey: "",
-    redirectUrl: "",
+    supabaseUrl: "https://hiaaggzinpancamdjryx.supabase.co",
+    supabasePublishableKey: "sb_publishable_n1UnKIc041PaXgmZM-hRpw_f60XCkxE",
+    redirectUrl: "http://127.0.0.1:4173/",
   }),
 });
