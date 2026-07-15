@@ -4,6 +4,7 @@ import { afterEach, test } from "node:test";
 import {
   RECORDING_MIME_TYPE_PREFERENCES,
   createRecorder,
+  getRecordingCapability,
   selectSupportedRecordingMimeType,
   stopRecorderIfActive,
   validateMaxDurationSeconds,
@@ -335,6 +336,38 @@ test("supported recording MIME selection follows the preference order", () => {
 
 test("missing MIME support checker allows the browser default", () => {
   assert.equal(selectSupportedRecordingMimeType({}), "");
+});
+
+
+test("recording capability explains insecure and embedded previews", () => {
+  const insecure = getRecordingCapability({
+    isSecureContext: false,
+    mediaDevices: { getUserMedia() {} },
+    mediaRecorderClass: FakeMediaRecorder,
+  });
+  const embedded = getRecordingCapability({
+    isSecureContext: true,
+    mediaDevices: undefined,
+    mediaRecorderClass: FakeMediaRecorder,
+  });
+
+  assert.equal(insecure.supported, false);
+  assert.match(insecure.message, /http:\/\/127\.0\.0\.1:4173/);
+  assert.equal(embedded.supported, false);
+  assert.match(embedded.message, /File and embedded previews/);
+});
+
+
+test("recording capability distinguishes missing MediaRecorder support", () => {
+  const capability = getRecordingCapability({
+    isSecureContext: true,
+    mediaDevices: { getUserMedia() {} },
+    mediaRecorderClass: undefined,
+  });
+
+  assert.equal(capability.supported, false);
+  assert.equal(capability.callout, "Recording unavailable");
+  assert.match(capability.message, /current version/);
 });
 
 

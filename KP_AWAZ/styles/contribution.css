@@ -561,6 +561,10 @@ audio {
   display: none;
 }
 
+.donate-flow-content {
+  overflow-anchor: none;
+}
+
 .flow-screen.active {
   display: block;
   animation: form-in 0.24s ease both;

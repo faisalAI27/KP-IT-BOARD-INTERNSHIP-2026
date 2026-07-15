@@ -286,6 +286,10 @@ export async function initContributions() {
   }
 
   function showDonateStep(step) {
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    document.activeElement?.blur?.();
+
     flowScreens.forEach((screen) => {
       const isSelected = Number(screen.dataset.flowStep) === step;
       screen.hidden = !isSelected;
@@ -303,6 +307,13 @@ export async function initContributions() {
 
     if (step === 2) updateReadingPrompt();
     if (step === 3) updateReview();
+
+    window.requestAnimationFrame(() => {
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(scrollX, scrollY);
+      document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    });
   }
 
   function setPending(button, isPending, pendingLabel) {

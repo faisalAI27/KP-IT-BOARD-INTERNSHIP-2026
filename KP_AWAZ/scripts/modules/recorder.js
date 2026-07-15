@@ -9,6 +9,57 @@ export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
 const RECORDING_FAILURE_MESSAGE =
   "The browser could not complete the recording. Please try again.";
 
+export function getRecordingCapability({
+  isSecureContext = globalThis.isSecureContext,
+  mediaDevices = globalThis.navigator?.mediaDevices,
+  mediaRecorderClass = globalThis.MediaRecorder,
+} = {}) {
+  if (isSecureContext === false) {
+    return {
+      supported: false,
+      callout: "Secure page required",
+      message:
+        "Open KP AWAZ at http://127.0.0.1:4173, or use HTTPS after deployment, to enable microphone access.",
+    };
+  }
+
+  if (typeof mediaDevices?.getUserMedia !== "function") {
+    return {
+      supported: false,
+      callout: "Microphone unavailable",
+      message:
+        "Open KP AWAZ directly in a current browser at http://127.0.0.1:4173. File and embedded previews may block microphone access.",
+    };
+  }
+
+  if (typeof mediaRecorderClass !== "function") {
+    return {
+      supported: false,
+      callout: "Recording unavailable",
+      message:
+        "This browser cannot create audio recordings. Try a current version of Chrome, Edge, Firefox, or Safari.",
+    };
+  }
+
+  return { supported: true };
+}
+
+function microphoneFailureMessage(error) {
+  if (error?.name === "NotAllowedError") {
+    return "Microphone permission was blocked. Allow it in your browser's site settings, then try again.";
+  }
+  if (error?.name === "NotFoundError") {
+    return "No microphone was found. Connect or enable a microphone, then try again.";
+  }
+  if (error?.name === "NotReadableError") {
+    return "The microphone is busy or unavailable. Close other recording apps, then try again.";
+  }
+  if (error?.name === "SecurityError") {
+    return "This page is not allowed to use the microphone. Open it directly at http://127.0.0.1:4173.";
+  }
+  return "Allow microphone access in your browser, then try again.";
+}
+
 export function selectSupportedRecordingMimeType(
   mediaRecorderClass = globalThis.MediaRecorder,
 ) {
@@ -214,12 +265,10 @@ export function createRecorder({
 
   async function start() {
     if (destroyed || recording || starting || activeSession) return;
-    if (
-      !navigator.mediaDevices?.getUserMedia ||
-      typeof MediaRecorder === "undefined"
-    ) {
-      callout.textContent = "Recording unavailable";
-      status.textContent = "Audio recording is not supported in this browser.";
+    const capability = getRecordingCapability();
+    if (!capability.supported) {
+      callout.textContent = capability.callout;
+      status.textContent = capability.message;
       return;
     }
 
@@ -230,12 +279,11 @@ export function createRecorder({
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
+    } catch (error) {
       if (currentSessionId !== sessionId || destroyed) return;
       starting = false;
       callout.textContent = "Microphone unavailable";
-      status.textContent =
-        "Allow microphone access in your browser, then try again.";
+      status.textContent = microphoneFailureMessage(error);
       return;
     }
 
