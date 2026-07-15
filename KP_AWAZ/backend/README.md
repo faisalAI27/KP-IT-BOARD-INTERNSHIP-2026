@@ -116,6 +116,42 @@ The development key comes from `ADMIN_API_KEY` in `.env`. Replace the example ke
 
 This API key is temporary internal authentication. A complete authentication system may replace it as the administration features grow.
 
+## Supabase authentication foundation
+
+Supabase Auth will manage Google and email login. The frontend login interface is not part of this phase; after it is added, the frontend will send the current Supabase access token to FastAPI as:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+FastAPI validates that token against the Supabase Auth user endpoint and uses only the verified user ID, email, and provider. The backend does not trust user IDs or email addresses supplied in form fields, and it does not log or store access tokens.
+
+Configure the direct Auth client in `.env`:
+
+```env
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_AUTH_TIMEOUT_SECONDS=5
+```
+
+Use only a Supabase publishable key for this flow. A service-role key must never be placed in frontend code or exposed to the browser.
+
+The protected foundation endpoint is:
+
+```http
+GET /api/auth/me
+```
+
+With a real Supabase access token, it can be called with:
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_SUPABASE_ACCESS_TOKEN" \
+  http://127.0.0.1:8000/api/auth/me
+```
+
+A real token will become straightforward to obtain after the frontend login UI is implemented in Phase 5A-2. In this subphase, `/api/auth/me` is the only Supabase-protected endpoint. Existing sentence and contribution endpoints remain public, and existing admin endpoints continue to use `X-Admin-Key`.
+
 ## TXT import format
 
 Sentence imports accept UTF-8 files with a `.txt` extension. Each nonblank line represents one phrase; blank lines are ignored. Duplicate phrases are detected using normalized text.

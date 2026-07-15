@@ -3,13 +3,16 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import Base, engine
+from app.dependencies import AuthenticationRequiredError
 from app.models import ImportBatch, Sentence  # noqa: F401 - registers metadata
-from app.routes import admin, contributions, health, sentence_imports, sentences
+from app.routes import admin, auth, contributions, health, sentence_imports, sentences
+from app.services.supabase_auth import SupabaseAuthError
 
 
 @asynccontextmanager
@@ -21,6 +24,32 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+
+@app.exception_handler(AuthenticationRequiredError)
+async def authentication_required_handler(
+    _: Request,
+    error: AuthenticationRequiredError,
+) -> JSONResponse:
+    """Return the auth error envelope without FastAPI's default detail wrapper."""
+
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
+
+@app.exception_handler(SupabaseAuthError)
+async def supabase_auth_error_handler(
+    _: Request,
+    error: SupabaseAuthError,
+) -> JSONResponse:
+    """Map only Supabase Auth failures to the public safe error envelope."""
+
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,3 +64,4 @@ app.include_router(sentences.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(sentence_imports.router, prefix=settings.api_prefix)
 app.include_router(contributions.router, prefix=settings.api_prefix)
+app.include_router(auth.router, prefix=settings.api_prefix)

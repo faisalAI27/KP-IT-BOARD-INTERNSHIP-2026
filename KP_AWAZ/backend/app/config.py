@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     min_imported_sentence_length: int = Field(default=3, gt=0)
     max_imported_sentence_length: int = Field(default=500, gt=0)
     admin_api_key: str = "dev-change-this-key"
+    supabase_url: str = ""
+    supabase_publishable_key: str = ""
+    supabase_auth_timeout_seconds: float = Field(default=5, gt=0)
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",
@@ -46,6 +49,20 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("supabase_url")
+    @classmethod
+    def normalize_supabase_url(cls, value: str) -> str:
+        """Keep an optional Auth base URL free of whitespace and trailing slashes."""
+
+        return value.strip().rstrip("/")
+
+    @field_validator("supabase_publishable_key")
+    @classmethod
+    def normalize_supabase_publishable_key(cls, value: str) -> str:
+        """Normalize optional development configuration without requiring it."""
+
+        return value.strip()
 
     @field_validator("audio_storage_subdirectory")
     @classmethod

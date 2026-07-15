@@ -4,11 +4,27 @@ import secrets
 from collections.abc import Generator
 from typing import Annotated
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import SessionLocal
+from app.services.supabase_auth import AuthenticatedUser, SupabaseAuthClient
+
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+class AuthenticationRequiredError(Exception):
+    """Safe request error raised when no usable bearer token was supplied."""
+
+    code = "AUTHENTICATION_REQUIRED"
+    message = "Authentication is required."
+    http_status = status.HTTP_401_UNAUTHORIZED
+
+    def __init__(self) -> None:
+        super().__init__(self.message)
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -41,3 +57,28 @@ def require_admin_api_key(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid admin API key.",
         )
+
+
+def get_supabase_auth_client() -> SupabaseAuthClient:
+    """Build the small Supabase Auth client from validated application settings."""
+
+    return SupabaseAuthClient()
+
+
+async def require_authenticated_user(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(bearer_scheme),
+    ],
+    auth_client: Annotated[SupabaseAuthClient, Depends(get_supabase_auth_client)],
+) -> AuthenticatedUser:
+    """Validate one required Supabase bearer token and return its verified user."""
+
+    if (
+        credentials is None
+        or credentials.scheme.lower() != "bearer"
+        or not credentials.credentials.strip()
+    ):
+        raise AuthenticationRequiredError()
+
+    return await auth_client.get_user(credentials.credentials)
