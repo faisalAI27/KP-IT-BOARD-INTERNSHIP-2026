@@ -21,6 +21,7 @@ from app.routes import (
     sentences,
 )
 from app.services.profile_service import ProfileServiceError
+from app.services.schema_compatibility import ensure_contribution_ownership_schema
 from app.services.supabase_auth import SupabaseAuthError
 
 
@@ -29,6 +30,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Prepare database tables when the application starts."""
 
     Base.metadata.create_all(bind=engine)
+    ensure_contribution_ownership_schema(engine)
     yield
 
 

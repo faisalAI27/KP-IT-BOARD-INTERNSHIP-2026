@@ -3,13 +3,28 @@
 from uuid import UUID
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models import Contribution, Sentence
+from app.models import Contribution, Profile, Sentence
 from app.schemas import ContributionCreatedResponse
 from app.utils.text_normalization import normalize_sentence_text
+
+
+USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
+
+
+def store_profile(database: Session) -> Profile:
+    profile = Profile(
+        id=USER_ID,
+        email="person@example.com",
+        auth_provider="google",
+        display_name="Person",
+    )
+    database.add(profile)
+    database.commit()
+    return profile
 
 
 def make_contribution(**values: object) -> Contribution:
@@ -153,6 +168,43 @@ def test_negative_duration_fails_constraint(db_session: Session) -> None:
 
 def test_sentence_id_may_be_null(db_session: Session) -> None:
     assert store_contribution(db_session, sentence_id=None).sentence_id is None
+
+
+def test_legacy_contribution_owner_may_be_null(db_session: Session) -> None:
+    assert store_contribution(db_session, user_id=None).user_id is None
+
+
+def test_contribution_may_reference_profile(db_session: Session) -> None:
+    profile = store_profile(db_session)
+    contribution = store_contribution(db_session, user_id=profile.id)
+
+    assert contribution.user_id == USER_ID
+    assert contribution.profile is profile
+    assert profile.contributions == [contribution]
+
+
+def test_user_id_is_nullable_indexed_uuid_length_column(
+    db_session: Session,
+) -> None:
+    column = Contribution.__table__.columns.user_id
+    indexes = inspect(db_session.get_bind()).get_indexes("contributions")
+
+    assert column.nullable is True
+    assert column.type.length == 36
+    assert any(index["column_names"] == ["user_id"] for index in indexes)
+
+
+def test_deleting_profile_does_not_delete_contribution(
+    db_session: Session,
+) -> None:
+    profile = store_profile(db_session)
+    contribution = store_contribution(db_session, user_id=profile.id)
+    contribution_id = contribution.id
+
+    db_session.delete(profile)
+    db_session.commit()
+
+    assert db_session.get(Contribution, contribution_id) is not None
 
 
 def test_sentence_snapshot_is_independent_from_related_sentence(

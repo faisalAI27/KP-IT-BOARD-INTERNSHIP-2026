@@ -93,9 +93,7 @@ supabasePublishableKey
 redirectUrl
 ```
 
-When `redirectUrl` is blank, the application uses the current website origin and application root. Empty Supabase configuration is allowed and does not stop navigation, FAQ, recording, or contribution features from initializing.
-
-Contribution endpoints remain public during this phase, and contribution requests do not include authentication headers. Users can still record and submit guided, custom-sentence, and open contributions while signed out.
+When `redirectUrl` is blank, the application uses the current website origin and application root. Empty Supabase configuration does not stop navigation or FAQ features from initializing, but recording remains unavailable until authentication is configured and the user is verified.
 
 ## Profile settings
 
@@ -105,7 +103,13 @@ Profile settings are available inside the signed-in account dialog. Users can ed
 
 Supabase remains responsible for authentication and browser session management. FastAPI stores only application-specific profile preferences and the safe identity metadata needed to associate the profile with the verified Supabase user. Access tokens are not stored in the profile table or in profile UI state.
 
-Contributions remain public and are not linked to profiles in this phase. Profile preferences do not add authorization headers, user IDs, or ownership information to recording submissions.
+## Authenticated contributions
+
+Guided and open contribution recording now requires a signed-in user whose Supabase session has been verified by FastAPI. Signed-out users see a sign-in prompt, recording controls remain unavailable, and microphone permission is not requested. Signing out during a recording releases the microphone and discards unsent audio.
+
+Uploads send the current access token only in the `Authorization: Bearer` header. The frontend never sends a user ID or profile ID. FastAPI derives ownership exclusively from the verified token, creates or synchronizes the local profile when needed, and stores the verified profile ID with new contribution metadata. The two contributions created before ownership support remain unowned legacy records.
+
+The API foundation for authenticated history is available at `GET /api/contributions/me`, but a visual My Contributions page has not been implemented yet. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
 
 ## Recording behavior
 

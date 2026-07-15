@@ -29,7 +29,7 @@ from app.services.contribution_service import (
     SentenceLanguageMismatchError,
     SentenceNotFoundError,
     SentenceTextMismatchError,
-    create_guided_contribution,
+    create_guided_contribution as create_owned_guided_contribution,
 )
 from app.utils.audio_validation import (
     AudioFileTooLargeError,
@@ -43,6 +43,20 @@ WEBM_BYTES = b"\x1a\x45\xdf\xa3guided-webm"
 OGG_BYTES = b"OggSguided-ogg"
 MP3_BYTES = b"ID3guided-mp3"
 M4A_BYTES = b"\x00\x00\x00\x18ftypM4A guided-m4a"
+OWNER_USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
+
+
+def create_guided_contribution(
+    database: Session,
+    contribution_input: GuidedContributionInput,
+) -> Contribution:
+    """Exercise the service with ownership trusted separately from form data."""
+
+    return create_owned_guided_contribution(
+        database,
+        contribution_input,
+        owner_user_id=OWNER_USER_ID,
+    )
 
 
 def guided_input(**values: object) -> GuidedContributionInput:

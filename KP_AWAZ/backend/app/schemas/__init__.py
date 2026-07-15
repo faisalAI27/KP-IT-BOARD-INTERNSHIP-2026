@@ -2,7 +2,11 @@
 
 from app.schemas.admin import AdminHealthResponse
 from app.schemas.auth import AuthenticatedUserResponse
-from app.schemas.contribution import ContributionCreatedResponse
+from app.schemas.contribution import (
+    ContributionCreatedResponse,
+    MyContributionListResponse,
+    MyContributionResponse,
+)
 from app.schemas.profile import ProfileResponse, ProfileUpdateRequest
 from app.schemas.sentence import SentenceListResponse, SentenceResponse
 from app.schemas.sentence_import import (
@@ -16,6 +20,8 @@ __all__ = [
     "AuthenticatedUserResponse",
     "ContributionCreatedResponse",
     "ImportFileResultResponse",
+    "MyContributionListResponse",
+    "MyContributionResponse",
     "ProfileResponse",
     "ProfileUpdateRequest",
     "SentenceImportResponse",

@@ -3,6 +3,7 @@ import {
   submitOpenRecording,
   submitVoiceDonation,
 } from "../services/contributions-api.js";
+import { ContributionAuthController } from "./contribution-auth.js";
 import { createRecorder, stopRecorderIfActive } from "./recorder.js";
 
 const SENTENCE_LOAD_ERROR =
@@ -10,9 +11,17 @@ const SENTENCE_LOAD_ERROR =
 const NO_SENTENCE_PROMPTS =
   "No sentence prompts are currently available. You may write your own sentence or try again later.";
 
+let activeContributionCleanup = null;
+
+
+export function destroyContributions() {
+  activeContributionCleanup?.();
+}
+
 export async function initContributions() {
+  if (activeContributionCleanup) return true;
   const contributionPanel = document.getElementById("contribution-panel");
-  if (!contributionPanel) return;
+  if (!contributionPanel) return false;
 
   const featureTabs = document.querySelectorAll("[data-feature]");
   const featurePanels = document.querySelectorAll("[data-feature-panel]");
@@ -67,14 +76,28 @@ export async function initContributions() {
   );
   const recordSuccess = document.getElementById("success-record");
   const recordError = document.getElementById("recordError");
+  const contributionAuthStatus = document.getElementById(
+    "contributionAuthStatus",
+  );
+  const contributionAuthMessage = document.getElementById(
+    "contributionAuthMessage",
+  );
+  const contributionSignInButton = document.getElementById(
+    "contributionSignInButton",
+  );
+  const donateRecordButton = document.getElementById("donateRecBtn");
+  const openRecordButton = document.getElementById("openRecBtn");
 
   let pashtoSentences = [];
   let sentenceIndex = 0;
   let sentencePromptsReady = false;
   let sentencePromptsLoading = false;
+  let authVerified = false;
+  let destroyed = false;
 
   let donateRecorder;
   let openRecorder;
+  let accessController;
 
   donateRecorder = createRecorder({
     buttonId: "donateRecBtn",
@@ -86,9 +109,10 @@ export async function initContributions() {
     maxDurationSeconds: 60,
     maxDurationMessage:
       "The 60-second recording limit was reached. Listen back or record again.",
+    canStart: () => accessController?.canContribute() ?? false,
     onStart: () => stopRecorderIfActive(openRecorder),
     onCapture: () => {
-      toReviewButton.disabled = false;
+      toReviewButton.disabled = !authVerified;
     },
     onReset: () => {
       toReviewButton.disabled = true;
@@ -107,9 +131,10 @@ export async function initContributions() {
     maxDurationSeconds: 300,
     maxDurationMessage:
       "The 5-minute recording limit was reached. Listen back or record again.",
+    canStart: () => accessController?.canContribute() ?? false,
     onStart: () => stopRecorderIfActive(donateRecorder),
     onCapture: () => {
-      submitOpenRecordingButton.disabled = false;
+      submitOpenRecordingButton.disabled = !authVerified;
     },
     onReset: () => {
       submitOpenRecordingButton.disabled = true;
@@ -146,7 +171,8 @@ export async function initContributions() {
     customSentence.disabled = !useCustomSentence;
     customSentence.required = useCustomSentence;
     donorLanguage.disabled = !useCustomSentence;
-    toRecordButton.disabled = !useCustomSentence && !sentencePromptsReady;
+    toRecordButton.disabled =
+      !authVerified || (!useCustomSentence && !sentencePromptsReady);
 
     if (!useCustomSentence) donorLanguage.value = "Pashto";
 
@@ -209,14 +235,16 @@ export async function initContributions() {
   }
 
   async function loadSentencePrompts() {
-    if (sentencePromptsLoading) return;
+    if (destroyed || sentencePromptsLoading) return;
 
     beginSentencePromptLoading();
     try {
       const prompts = await getSentencePrompts("Pashto");
+      if (destroyed) return;
       if (prompts.length === 0) makeCustomSentenceAvailable(NO_SENTENCE_PROMPTS);
       else useLoadedSentencePrompts(prompts);
     } catch (error) {
+      if (destroyed) return;
       console.error("Could not load contribution sentence prompts.", error);
       makeCustomSentenceAvailable(SENTENCE_LOAD_ERROR);
     } finally {
@@ -325,7 +353,9 @@ export async function initContributions() {
       return;
     }
 
-    button.innerHTML = button.dataset.originalContent;
+    if (button.dataset.originalContent) {
+      button.innerHTML = button.dataset.originalContent;
+    }
     button.disabled = false;
     button.removeAttribute("aria-busy");
   }
@@ -344,7 +374,7 @@ export async function initContributions() {
       submitDonationButton.innerHTML =
         submitDonationButton.dataset.originalContent;
     }
-    submitDonationButton.disabled = false;
+    submitDonationButton.disabled = !authVerified;
     submitDonationButton.removeAttribute("aria-busy");
     sentenceIndex = 0;
     sentenceCount.textContent = "0 characters";
@@ -363,6 +393,31 @@ export async function initContributions() {
 
     updateSentenceSource();
     showDonateStep(1);
+  }
+
+  function clearContributionSession() {
+    resetDonationFlow();
+    recordSoundForm.reset();
+    openRecorder.reset();
+    delete recordSoundForm.dataset.submissionId;
+    recordSuccess.classList.remove("show");
+    recordError.hidden = true;
+    donationError.hidden = true;
+    submitDonationButton.disabled = true;
+    submitOpenRecordingButton.disabled = true;
+    submitDonationButton.removeAttribute("aria-busy");
+    submitOpenRecordingButton.removeAttribute("aria-busy");
+  }
+
+  function updateContributionAccess({ verified }) {
+    authVerified = verified;
+    donateRecordButton.disabled = !verified;
+    openRecordButton.disabled = !verified;
+    toReviewButton.disabled = !verified || !donateRecorder.hasRecording();
+    submitDonationButton.disabled = !verified;
+    submitOpenRecordingButton.disabled =
+      !verified || !openRecorder.hasRecording();
+    updateSentenceSource();
   }
 
   featureTabs.forEach((tab) => {
@@ -415,6 +470,7 @@ export async function initContributions() {
   });
 
   toRecordButton.addEventListener("click", () => {
+    if (!accessController.canContribute()) return;
     if (validateFirstStep()) showDonateStep(2);
   });
 
@@ -432,6 +488,11 @@ export async function initContributions() {
     event.preventDefault();
     donationError.hidden = true;
 
+    if (!accessController.canContribute()) {
+      contributionAuthStatus.hidden = false;
+      return;
+    }
+
     if (!donateRecorder.hasRecording()) {
       showDonateStep(2);
       return;
@@ -442,6 +503,9 @@ export async function initContributions() {
     const sentenceSource = selectedSentenceSource();
     const sentence = getSelectedSentence();
     if (!sentence) return;
+
+    const submission = accessController.beginSubmission("guided");
+    if (!submission) return;
 
     setPending(submitDonationButton, true, "Submitting…");
 
@@ -456,11 +520,14 @@ export async function initContributions() {
         audioBlob: donateRecorder.getBlob(),
       });
 
+      if (!accessController.finishSubmission(submission)) return;
+
       donateForm.dataset.submissionId = result.id;
       donateFlowContent.hidden = true;
       flowProgress.hidden = true;
       donateSuccess.hidden = false;
     } catch (error) {
+      if (!accessController.finishSubmission(submission)) return;
       showError(donationError, error);
       setPending(submitDonationButton, false);
     }
@@ -474,12 +541,20 @@ export async function initContributions() {
     event.preventDefault();
     recordError.hidden = true;
 
+    if (!accessController.canContribute()) {
+      contributionAuthStatus.hidden = false;
+      return;
+    }
+
     if (!openRecorder.hasRecording()) return;
     if (!recordSoundForm.reportValidity()) return;
     if (!openRecordingConsent.checked) {
       openRecordingConsent.reportValidity();
       return;
     }
+
+    const submission = accessController.beginSubmission("open");
+    if (!submission) return;
 
     setPending(submitOpenRecordingButton, true, "Submitting…");
 
@@ -492,11 +567,14 @@ export async function initContributions() {
         audioBlob: openRecorder.getBlob(),
       });
 
+      if (!accessController.finishSubmission(submission)) return;
+
       recordSoundForm.dataset.submissionId = result.id;
       recordSuccess.classList.add("show");
       submitOpenRecordingButton.textContent = "Submitted";
       submitOpenRecordingButton.removeAttribute("aria-busy");
     } catch (error) {
+      if (!accessController.finishSubmission(submission)) return;
       showError(recordError, error);
       setPending(submitOpenRecordingButton, false);
     }
@@ -515,11 +593,24 @@ export async function initContributions() {
     recordError.hidden = true;
   });
 
-  window.addEventListener("beforeunload", () => {
+  accessController = new ContributionAuthController({
+    recorders: [donateRecorder, openRecorder],
+    statusElement: contributionAuthStatus,
+    messageElement: contributionAuthMessage,
+    signInButton: contributionSignInButton,
+    onAccessChange: updateContributionAccess,
+    onSessionInvalidated: clearContributionSession,
+  });
+  activeContributionCleanup = () => {
+    if (destroyed) return;
+    destroyed = true;
+    accessController.destroy();
     donateRecorder.destroy();
     openRecorder.destroy();
-  });
+    activeContributionCleanup = null;
+  };
+  accessController.init();
 
-  updateSentenceSource();
   await loadSentencePrompts();
+  return true;
 }

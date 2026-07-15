@@ -1,4 +1,7 @@
-import { initContributions } from "./modules/contributions.js";
+import {
+  destroyContributions,
+  initContributions,
+} from "./modules/contributions.js";
 import { initFaq } from "./modules/faq.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js";
@@ -48,7 +51,8 @@ function initializeAuthenticationInterfaces() {
   }
 }
 
-function cleanupAuthentication() {
+function cleanupApplication() {
+  destroyContributions();
   destroyProfileUI();
   destroyAuthUI();
   destroyAuthService();
@@ -70,5 +74,5 @@ async function bootstrap() {
   }
 }
 
-window.addEventListener("beforeunload", cleanupAuthentication, { once: true });
+window.addEventListener("beforeunload", cleanupApplication, { once: true });
 bootstrap();

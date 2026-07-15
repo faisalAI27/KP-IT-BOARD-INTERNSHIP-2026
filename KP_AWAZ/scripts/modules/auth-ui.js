@@ -554,5 +554,6 @@ const authUI = new AuthUI();
 
 export const initAuthUI = () => authUI.initAuthUI();
 export const destroyAuthUI = () => authUI.destroyAuthUI();
+export const openAuthDialog = () => authUI.openDialog();
 export const setAuthProfileDisplayName = (userId, displayName) =>
   authUI.setProfileDisplayName(userId, displayName);

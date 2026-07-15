@@ -143,6 +143,32 @@
   box-shadow: var(--shadow-md);
 }
 
+.contribution-auth-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(62, 98, 89, 0.14);
+  background: rgba(62, 98, 89, 0.07);
+  color: var(--pine-dark);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.contribution-auth-status[hidden] {
+  display: none;
+}
+
+.contribution-auth-status span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contribution-auth-status .btn {
+  flex: 0 0 auto;
+}
+
 .feature-panel {
   display: none;
 }

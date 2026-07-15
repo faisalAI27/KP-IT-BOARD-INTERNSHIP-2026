@@ -5,15 +5,19 @@ import { appConfig } from "../../scripts/config.js";
 import {
   AUDIO_MIME_EXTENSION_MAP,
   ApiError,
+  ContributionsApi,
   extensionForAudioMimeType,
-  getSentencePrompts,
   normalizeAudioMimeType,
-  submitOpenRecording,
-  submitVoiceDonation,
+  validateMyContributionsResponse,
 } from "../../scripts/services/contributions-api.js";
 
 
 const originalFetch = globalThis.fetch;
+const ACCESS_TOKEN = "private-access-token";
+const REFRESH_TOKEN = "private-refresh-token";
+const contributionApi = new ContributionsApi({
+  getAccessToken: () => ACCESS_TOKEN,
+});
 const sentence = {
   id: "11111111-1111-4111-8111-111111111111",
   language: "Pashto",
@@ -24,6 +28,25 @@ const successBody = {
   id: "22222222-2222-4222-8222-222222222222",
   status: "queued",
   createdAt: "2026-07-14T12:00:00Z",
+};
+const historyItem = {
+  id: successBody.id,
+  contributionType: "guided",
+  sentenceId: sentence.id,
+  sentenceText: sentence.text,
+  topic: null,
+  language: "Pashto",
+  originalFilename: "recording.webm",
+  mimeType: "audio/webm",
+  durationSeconds: 4.2,
+  status: "queued",
+  createdAt: successBody.createdAt,
+};
+const historyBody = {
+  items: [historyItem],
+  total: 1,
+  limit: 20,
+  offset: 0,
 };
 
 
@@ -74,7 +97,7 @@ function openInput(overrides = {}) {
 test("getSentencePrompts preserves sentence IDs", async () => {
   installJsonFetch({ data: [sentence] });
 
-  const prompts = await getSentencePrompts("Pashto");
+  const prompts = await contributionApi.getSentencePrompts("Pashto");
 
   assert.equal(prompts[0].id, sentence.id);
 });
@@ -83,7 +106,7 @@ test("getSentencePrompts preserves sentence IDs", async () => {
 test("getSentencePrompts returns the complete body.data array", async () => {
   installJsonFetch({ data: [sentence] });
 
-  const prompts = await getSentencePrompts("Pashto");
+  const prompts = await contributionApi.getSentencePrompts("Pashto");
 
   assert.deepEqual(prompts, [sentence]);
 });
@@ -92,7 +115,7 @@ test("getSentencePrompts returns the complete body.data array", async () => {
 test("getSentencePrompts rejects a malformed response", async () => {
   installJsonFetch({ results: [sentence] });
 
-  await assert.rejects(getSentencePrompts(), (error) => {
+  await assert.rejects(contributionApi.getSentencePrompts(), (error) => {
     assert.ok(error instanceof ApiError);
     assert.equal(error.code, "INVALID_SENTENCE_RESPONSE");
     return true;
@@ -103,7 +126,7 @@ test("getSentencePrompts rejects a malformed response", async () => {
 test("guided provided submission sends sentenceId", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(voiceInput());
+  await contributionApi.submitVoiceDonation(voiceInput());
 
   assert.equal(request().options.body.get("sentenceId"), sentence.id);
 });
@@ -112,7 +135,7 @@ test("guided provided submission sends sentenceId", async () => {
 test("guided custom submission omits sentenceId", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(
+  await contributionApi.submitVoiceDonation(
     voiceInput({ sentenceSource: "custom", sentenceId: undefined }),
   );
 
@@ -123,7 +146,7 @@ test("guided custom submission omits sentenceId", async () => {
 test("guided submission sends consent", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(voiceInput());
+  await contributionApi.submitVoiceDonation(voiceInput());
 
   assert.equal(request().options.body.get("consent"), "true");
 });
@@ -132,7 +155,7 @@ test("guided submission sends consent", async () => {
 test("open recording sends consent", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(openInput());
+  await contributionApi.submitOpenRecording(openInput());
 
   assert.equal(request().options.body.get("consent"), "true");
 });
@@ -141,7 +164,7 @@ test("open recording sends consent", async () => {
 test("open recording sends topic", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(openInput());
+  await contributionApi.submitOpenRecording(openInput());
 
   assert.equal(request().options.body.get("topic"), "زما د کلي یوه کیسه");
 });
@@ -150,7 +173,7 @@ test("open recording sends topic", async () => {
 test("open recording permits an empty topic field", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(openInput({ topic: "" }));
+  await contributionApi.submitOpenRecording(openInput({ topic: "" }));
 
   assert.equal(request().options.body.has("topic"), true);
   assert.equal(request().options.body.get("topic"), "");
@@ -160,7 +183,7 @@ test("open recording permits an empty topic field", async () => {
 test("guided FormData includes the audio blob", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(voiceInput());
+  await contributionApi.submitVoiceDonation(voiceInput());
 
   const audio = request().options.body.get("audio");
   assert.ok(audio instanceof Blob);
@@ -171,7 +194,7 @@ test("guided FormData includes the audio blob", async () => {
 test("open-recording FormData includes the audio blob", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(openInput());
+  await contributionApi.submitOpenRecording(openInput());
 
   const audio = request().options.body.get("audio");
   assert.ok(audio instanceof Blob);
@@ -182,7 +205,7 @@ test("open-recording FormData includes the audio blob", async () => {
 test("successful HTTP 201 JSON is returned", async () => {
   installJsonFetch(successBody, { status: 201 });
 
-  const result = await submitOpenRecording(openInput());
+  const result = await contributionApi.submitOpenRecording(openInput());
 
   assert.deepEqual(result, successBody);
 });
@@ -194,7 +217,7 @@ test("backend error message is preserved", async () => {
     { status: 400 },
   );
 
-  await assert.rejects(submitOpenRecording(openInput()), (error) => {
+  await assert.rejects(contributionApi.submitOpenRecording(openInput()), (error) => {
     assert.equal(error.message, "Consent is required.");
     return true;
   });
@@ -207,7 +230,7 @@ test("backend error code is preserved", async () => {
     { status: 400 },
   );
 
-  await assert.rejects(submitOpenRecording(openInput()), (error) => {
+  await assert.rejects(contributionApi.submitOpenRecording(openInput()), (error) => {
     assert.equal(error.code, "CONSENT_REQUIRED");
     return true;
   });
@@ -220,7 +243,7 @@ test("backend HTTP status is preserved", async () => {
     { status: 413 },
   );
 
-  await assert.rejects(submitOpenRecording(openInput()), (error) => {
+  await assert.rejects(contributionApi.submitOpenRecording(openInput()), (error) => {
     assert.equal(error.status, 413);
     return true;
   });
@@ -234,7 +257,7 @@ test("malformed error JSON uses a safe fallback message", async () => {
       headers: { "Content-Type": "text/html" },
     });
 
-  await assert.rejects(submitOpenRecording(openInput()), (error) => {
+  await assert.rejects(contributionApi.submitOpenRecording(openInput()), (error) => {
     assert.equal(
       error.message,
       "The request could not be completed. Please try again.",
@@ -248,7 +271,7 @@ test("malformed error JSON uses a safe fallback message", async () => {
 test("requests use the configured base URL", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(openInput());
+  await contributionApi.submitOpenRecording(openInput());
 
   assert.equal(
     request().url,
@@ -260,11 +283,205 @@ test("requests use the configured base URL", async () => {
 test("multipart requests do not set a manual Content-Type header", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(voiceInput());
+  await contributionApi.submitVoiceDonation(voiceInput());
 
   const headers = new Headers(request().options.headers);
   assert.equal(headers.has("Content-Type"), false);
   assert.equal(headers.get("Accept"), "application/json");
+  assert.equal(headers.get("Authorization"), `Bearer ${ACCESS_TOKEN}`);
+});
+
+
+test("guided and open uploads send the current bearer token", async () => {
+  const guidedRequest = installJsonFetch(successBody, { status: 201 });
+  await contributionApi.submitVoiceDonation(voiceInput());
+  assert.equal(
+    new Headers(guidedRequest().options.headers).get("Authorization"),
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+
+  const openRequest = installJsonFetch(successBody, { status: 201 });
+  await contributionApi.submitOpenRecording(openInput());
+  assert.equal(
+    new Headers(openRequest().options.headers).get("Authorization"),
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+});
+
+
+test("upload tokens stay out of URLs and multipart form data", async () => {
+  const request = installJsonFetch(successBody, { status: 201 });
+
+  await contributionApi.submitVoiceDonation(
+    voiceInput({
+      accessToken: ACCESS_TOKEN,
+      refreshToken: REFRESH_TOKEN,
+      userId: "another-user",
+      profileId: "another-profile",
+    }),
+  );
+
+  assert.equal(request().url.includes(ACCESS_TOKEN), false);
+  const serializedValues = [...request().options.body.entries()]
+    .map(([key, value]) => `${key}:${value instanceof Blob ? value.name : value}`)
+    .join("|");
+  for (const forbidden of [
+    ACCESS_TOKEN,
+    REFRESH_TOKEN,
+    "accessToken",
+    "refreshToken",
+    "userId",
+    "profileId",
+    "another-user",
+    "another-profile",
+  ]) {
+    assert.equal(serializedValues.includes(forbidden), false);
+  }
+});
+
+
+test("missing session fails safely before upload fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => null,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  await assert.rejects(api.submitVoiceDonation(voiceInput()), (error) => {
+    assert.equal(error.code, "AUTHENTICATION_REQUIRED");
+    assert.equal(error.status, 401);
+    return true;
+  });
+  assert.equal(fetchCalls, 0);
+});
+
+
+test("blank access token fails safely before upload fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => "   ",
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  await assert.rejects(api.submitOpenRecording(openInput()), (error) => {
+    assert.equal(error.code, "AUTHENTICATION_REQUIRED");
+    return true;
+  });
+  assert.equal(fetchCalls, 0);
+});
+
+
+test("backend errors cannot echo the bearer token", async () => {
+  installJsonFetch(
+    { message: `Rejected ${ACCESS_TOKEN}`, code: `BAD_${ACCESS_TOKEN}` },
+    { status: 401 },
+  );
+
+  await assert.rejects(contributionApi.submitOpenRecording(openInput()), (error) => {
+    assert.equal(error.message.includes(ACCESS_TOKEN), false);
+    assert.equal(error.code.includes(ACCESS_TOKEN), false);
+    return true;
+  });
+});
+
+
+test("getMyContributions sends bearer token and validated pagination", async () => {
+  const request = installJsonFetch(historyBody);
+
+  const result = await contributionApi.getMyContributions({ limit: 20, offset: 0 });
+
+  assert.deepEqual(result, historyBody);
+  assert.equal(
+    request().url,
+    `${appConfig.api.baseUrl}/contributions/me?limit=20&offset=0`,
+  );
+  assert.equal(request().url.includes(ACCESS_TOKEN), false);
+  assert.equal(request().options.method, "GET");
+  assert.equal(
+    new Headers(request().options.headers).get("Authorization"),
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+});
+
+
+test("getMyContributions rejects invalid pagination before fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  for (const pagination of [
+    { limit: 0 },
+    { limit: 101 },
+    { limit: 1.5 },
+    { offset: -1 },
+    { offset: "0" },
+  ]) {
+    await assert.rejects(api.getMyContributions(pagination), (error) => {
+      assert.equal(error.code, "INVALID_PAGINATION");
+      return true;
+    });
+  }
+  assert.equal(fetchCalls, 0);
+});
+
+
+test("getMyContributions preserves safe backend errors", async () => {
+  installJsonFetch(
+    { message: "Authentication is required.", code: "AUTHENTICATION_REQUIRED" },
+    { status: 401 },
+  );
+
+  await assert.rejects(contributionApi.getMyContributions(), (error) => {
+    assert.equal(error.message, "Authentication is required.");
+    assert.equal(error.code, "AUTHENTICATION_REQUIRED");
+    assert.equal(error.status, 401);
+    return true;
+  });
+});
+
+
+test("contribution history response is reduced to safe fields", () => {
+  const result = validateMyContributionsResponse({
+    ...historyBody,
+    accessToken: ACCESS_TOKEN,
+    items: [{ ...historyItem, userId: "private-user", storagePath: "/private" }],
+  });
+
+  assert.deepEqual(result, historyBody);
+  assert.equal(JSON.stringify(result).includes("private-user"), false);
+  assert.equal(JSON.stringify(result).includes(ACCESS_TOKEN), false);
+});
+
+
+test("malformed contribution history responses are rejected", async (context) => {
+  for (const body of [
+    null,
+    {},
+    { ...historyBody, items: {} },
+    { ...historyBody, total: -1 },
+    { ...historyBody, limit: 101 },
+    { ...historyBody, offset: -1 },
+    { ...historyBody, items: [{ ...historyItem, createdAt: "invalid" }] },
+    { ...historyBody, items: [{ ...historyItem, durationSeconds: -1 }] },
+  ]) {
+    await context.test(JSON.stringify(body), () => {
+      assert.throws(
+        () => validateMyContributionsResponse(body),
+        (error) => error.code === "INVALID_CONTRIBUTION_HISTORY_RESPONSE",
+      );
+    });
+  }
 });
 
 
@@ -332,7 +549,7 @@ test("known unsupported audio MIME throws a clear error", () => {
 test("guided FormData filename matches the Blob MIME type", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitVoiceDonation(
+  await contributionApi.submitVoiceDonation(
     voiceInput({ audioBlob: new Blob(["mp3"], { type: "audio/mpeg" }) }),
   );
 
@@ -343,7 +560,7 @@ test("guided FormData filename matches the Blob MIME type", async () => {
 test("open FormData filename matches the Blob MIME type", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
-  await submitOpenRecording(
+  await contributionApi.submitOpenRecording(
     openInput({ audioBlob: new Blob(["m4a"], { type: "audio/mp4" }) }),
   );
 

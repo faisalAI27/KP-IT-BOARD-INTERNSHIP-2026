@@ -410,6 +410,21 @@ test("starting requests microphone, selects MIME, and updates button state", asy
 });
 
 
+test("recording access guard blocks microphone permission requests", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "guarded", {
+    canStart: () => false,
+  });
+
+  fixture.element("buttonId").dispatch("click");
+  await Promise.resolve();
+
+  assert.equal(environment.microphoneRequests, 0);
+  assert.equal(FakeMediaRecorder.instances.length, 0);
+  assert.equal(fixture.recorder.isRecording(), false);
+});
+
+
 test("a pending microphone request can be cancelled without creating a recorder", async () => {
   const environment = installEnvironment();
   const pendingStream = new FakeStream();

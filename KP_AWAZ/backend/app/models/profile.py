@@ -1,11 +1,16 @@
 """Local application profile for one Supabase-authenticated user."""
 
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+
+if TYPE_CHECKING:
+    from app.models.contribution import Contribution
 
 
 def utc_now() -> datetime:
@@ -49,4 +54,9 @@ class Profile(Base):
     )
     last_login_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    contributions: Mapped[list["Contribution"]] = relationship(
+        back_populates="profile",
+        passive_deletes=True,
     )

@@ -22,6 +22,7 @@ from app.utils.text_normalization import normalize_language_name
 
 
 if TYPE_CHECKING:
+    from app.models.profile import Profile
     from app.models.sentence import Sentence
 
 
@@ -58,6 +59,12 @@ class Contribution(Base):
     contribution_type: Mapped[str] = mapped_column(String(30), nullable=False)
     contributor_name: Mapped[str] = mapped_column(String(100), nullable=False)
     language: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    user_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("profiles.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     sentence_id: Mapped[str | None] = mapped_column(
         String(36),
         ForeignKey("sentences.id", ondelete="SET NULL"),
@@ -90,6 +97,10 @@ class Contribution(Base):
     )
 
     sentence: Mapped["Sentence | None"] = relationship()
+    profile: Mapped["Profile | None"] = relationship(
+        back_populates="contributions",
+        passive_deletes=True,
+    )
 
 
 @event.listens_for(Contribution, "before_insert")

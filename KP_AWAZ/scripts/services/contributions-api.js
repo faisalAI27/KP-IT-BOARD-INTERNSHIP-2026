@@ -1,5 +1,6 @@
 import { appConfig } from "../config.js";
 import { pashtoSentences } from "../data/pashto-sentences.js";
+import { getCurrentAccessToken } from "./auth-service.js";
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({
@@ -60,55 +61,159 @@ async function readJson(response) {
   }
 }
 
-function apiErrorFromResponse(response, body, fallbackMessage = SAFE_REQUEST_ERROR) {
-  const message =
+function apiErrorFromResponse(
+  response,
+  body,
+  fallbackMessage = SAFE_REQUEST_ERROR,
+  accessToken = "",
+) {
+  const rawMessage =
     typeof body?.message === "string" && body.message.trim()
       ? body.message.trim()
       : fallbackMessage;
-  const code =
+  const message =
+    accessToken && rawMessage.includes(accessToken) ? fallbackMessage : rawMessage;
+  const rawCode =
     typeof body?.code === "string" && body.code.trim()
       ? body.code.trim()
       : "REQUEST_FAILED";
+  const code = accessToken && rawCode.includes(accessToken) ? "REQUEST_FAILED" : rawCode;
 
   return new ApiError(message, { code, status: response.status });
 }
 
-async function fetchApi(url, options) {
+function requiredAccessToken(getAccessToken) {
+  let token;
   try {
-    return await fetch(url, options);
+    token = getAccessToken();
   } catch {
-    throw new ApiError("The KP AWAZ backend could not be reached.", {
-      code: "NETWORK_ERROR",
-      status: 0,
+    token = null;
+  }
+  const accessToken = typeof token === "string" ? token.trim() : "";
+  if (!accessToken) {
+    throw new ApiError("Authentication is required.", {
+      code: "AUTHENTICATION_REQUIRED",
+      status: 401,
     });
   }
+  return accessToken;
 }
 
-async function postForm(path, formData, mockType) {
-  if (appConfig.api.useMock) {
-    await wait(appConfig.api.mockDelayMs);
-    return createMockResponse(mockType);
-  }
-
-  const response = await fetchApi(`${appConfig.api.baseUrl}${path}`, {
-    method: "POST",
-    body: formData,
-    headers: { Accept: "application/json" },
-  });
-
-  const body = await readJson(response);
-  if (!response.ok || response.status !== 201) {
-    throw apiErrorFromResponse(response, body);
-  }
-
-  if (!body || typeof body !== "object") {
+function validateCreatedContribution(body, status) {
+  const valid =
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    typeof body.id === "string" &&
+    body.id.trim() &&
+    typeof body.status === "string" &&
+    body.status.trim() &&
+    typeof body.createdAt === "string" &&
+    !Number.isNaN(Date.parse(body.createdAt));
+  if (!valid) {
     throw new ApiError(SAFE_REQUEST_ERROR, {
       code: "INVALID_API_RESPONSE",
-      status: response.status,
+      status,
     });
   }
+  return {
+    id: body.id.trim(),
+    status: body.status.trim(),
+    createdAt: body.createdAt,
+  };
+}
 
-  return body;
+function optionalString(value) {
+  if (value === null) return null;
+  if (typeof value !== "string") return undefined;
+  return value;
+}
+
+function safeContributionItem(item) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+  const sentenceId = optionalString(item.sentenceId);
+  const sentenceText = optionalString(item.sentenceText);
+  const topic = optionalString(item.topic);
+  const valid =
+    typeof item.id === "string" &&
+    item.id.trim() &&
+    typeof item.contributionType === "string" &&
+    item.contributionType.trim() &&
+    sentenceId !== undefined &&
+    sentenceText !== undefined &&
+    topic !== undefined &&
+    typeof item.language === "string" &&
+    item.language.trim() &&
+    typeof item.originalFilename === "string" &&
+    item.originalFilename.trim() &&
+    typeof item.mimeType === "string" &&
+    item.mimeType.trim() &&
+    (item.durationSeconds === null ||
+      (typeof item.durationSeconds === "number" && item.durationSeconds >= 0)) &&
+    typeof item.status === "string" &&
+    item.status.trim() &&
+    typeof item.createdAt === "string" &&
+    !Number.isNaN(Date.parse(item.createdAt));
+  if (!valid) return null;
+  return {
+    id: item.id.trim(),
+    contributionType: item.contributionType.trim(),
+    sentenceId,
+    sentenceText,
+    topic,
+    language: item.language.trim(),
+    originalFilename: item.originalFilename.trim(),
+    mimeType: item.mimeType.trim(),
+    durationSeconds: item.durationSeconds,
+    status: item.status.trim(),
+    createdAt: item.createdAt,
+  };
+}
+
+export function validateMyContributionsResponse(body, status = 200) {
+  const items = Array.isArray(body?.items)
+    ? body.items.map((item) => safeContributionItem(item))
+    : null;
+  const valid =
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    items &&
+    items.every(Boolean) &&
+    Number.isInteger(body.total) &&
+    body.total >= 0 &&
+    Number.isInteger(body.limit) &&
+    body.limit >= 1 &&
+    body.limit <= 100 &&
+    Number.isInteger(body.offset) &&
+    body.offset >= 0 &&
+    items.length <= body.limit;
+  if (!valid) {
+    throw new ApiError("Contribution history returned an invalid response.", {
+      code: "INVALID_CONTRIBUTION_HISTORY_RESPONSE",
+      status,
+    });
+  }
+  return {
+    items,
+    total: body.total,
+    limit: body.limit,
+    offset: body.offset,
+  };
+}
+
+function paginationValue(value, { name, defaultValue, minimum, maximum }) {
+  const candidate = value === undefined ? defaultValue : value;
+  if (
+    !Number.isInteger(candidate) ||
+    candidate < minimum ||
+    (maximum !== undefined && candidate > maximum)
+  ) {
+    throw new ApiError(`${name} is outside the allowed range.`, {
+      code: "INVALID_PAGINATION",
+    });
+  }
+  return candidate;
 }
 
 function appendAudio(formData, audioBlob) {
@@ -116,87 +221,179 @@ function appendAudio(formData, audioBlob) {
   formData.append("audio", audioBlob, `recording.${extension}`);
 }
 
-export async function getSentencePrompts(language = "Pashto") {
-  if (appConfig.api.useMock) {
-    return language === "Pashto" ? [...pashtoSentences] : [];
+export class ContributionsApi {
+  constructor({
+    apiBaseUrl = appConfig.api.baseUrl,
+    fetchImpl = (...args) => globalThis.fetch(...args),
+    getAccessToken = getCurrentAccessToken,
+    useMock = appConfig.api.useMock,
+    mockDelayMs = appConfig.api.mockDelayMs,
+  } = {}) {
+    this._apiBaseUrl =
+      typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
+    this._fetch = fetchImpl;
+    this._getAccessToken = getAccessToken;
+    this._useMock = useMock;
+    this._mockDelayMs = mockDelayMs;
   }
 
-  const query = new URLSearchParams({ language, limit: "20" });
-  const response = await fetchApi(`${appConfig.api.baseUrl}/sentences?${query}`, {
-    headers: { Accept: "application/json" },
-  });
-
-  const body = await readJson(response);
-  if (!response.ok) {
-    throw apiErrorFromResponse(
-      response,
-      body,
-      "Sentence prompts could not be loaded.",
-    );
+  async _fetchApi(url, options) {
+    try {
+      return await this._fetch(url, options);
+    } catch {
+      throw new ApiError("The KP AWAZ backend could not be reached.", {
+        code: "NETWORK_ERROR",
+        status: 0,
+      });
+    }
   }
 
-  const hasValidData =
-    body &&
-    Array.isArray(body.data) &&
-    body.data.every(
-      (sentence) =>
-        sentence &&
-        typeof sentence === "object" &&
-        typeof sentence.id === "string" &&
-        sentence.id.trim() &&
-        typeof sentence.language === "string" &&
-        sentence.language.trim() &&
-        typeof sentence.text === "string" &&
-        sentence.text.trim() &&
-        (sentence.meaning === null || typeof sentence.meaning === "string"),
-    );
+  async _postForm(path, formData, mockType) {
+    const accessToken = requiredAccessToken(this._getAccessToken);
+    if (this._useMock) {
+      await wait(this._mockDelayMs);
+      return createMockResponse(mockType);
+    }
 
-  if (!hasValidData) {
-    throw new ApiError("The sentence service returned an invalid response.", {
-      code: "INVALID_SENTENCE_RESPONSE",
-      status: response.status,
+    const response = await this._fetchApi(`${this._apiBaseUrl}${path}`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
+    const body = await readJson(response);
+    if (!response.ok || response.status !== 201) {
+      throw apiErrorFromResponse(response, body, SAFE_REQUEST_ERROR, accessToken);
+    }
+    return validateCreatedContribution(body, response.status);
   }
 
-  return body.data;
-}
+  async getSentencePrompts(language = "Pashto") {
+    if (this._useMock) {
+      return language === "Pashto" ? [...pashtoSentences] : [];
+    }
 
-export function submitVoiceDonation({
-  contributorName,
-  language,
-  sentence,
-  sentenceSource,
-  sentenceId,
-  consent,
-  audioBlob,
-}) {
-  const formData = new FormData();
-  formData.append("contributorName", contributorName);
-  formData.append("language", language);
-  formData.append("sentence", sentence);
-  formData.append("sentenceSource", sentenceSource);
-  if (typeof sentenceId === "string" && sentenceId.trim()) {
-    formData.append("sentenceId", sentenceId.trim());
+    const query = new URLSearchParams({ language, limit: "20" });
+    const response = await this._fetchApi(`${this._apiBaseUrl}/sentences?${query}`, {
+      headers: { Accept: "application/json" },
+    });
+
+    const body = await readJson(response);
+    if (!response.ok) {
+      throw apiErrorFromResponse(
+        response,
+        body,
+        "Sentence prompts could not be loaded.",
+      );
+    }
+
+    const hasValidData =
+      body &&
+      Array.isArray(body.data) &&
+      body.data.every(
+        (sentence) =>
+          sentence &&
+          typeof sentence === "object" &&
+          typeof sentence.id === "string" &&
+          sentence.id.trim() &&
+          typeof sentence.language === "string" &&
+          sentence.language.trim() &&
+          typeof sentence.text === "string" &&
+          sentence.text.trim() &&
+          (sentence.meaning === null || typeof sentence.meaning === "string"),
+      );
+
+    if (!hasValidData) {
+      throw new ApiError("The sentence service returned an invalid response.", {
+        code: "INVALID_SENTENCE_RESPONSE",
+        status: response.status,
+      });
+    }
+    return body.data;
   }
-  formData.append("consent", String(consent));
-  appendAudio(formData, audioBlob);
 
-  return postForm("/contributions/voice", formData, "voice-donation");
+  submitVoiceDonation({
+    contributorName,
+    language,
+    sentence,
+    sentenceSource,
+    sentenceId,
+    consent,
+    audioBlob,
+  }) {
+    const formData = new FormData();
+    formData.append("contributorName", contributorName);
+    formData.append("language", language);
+    formData.append("sentence", sentence);
+    formData.append("sentenceSource", sentenceSource);
+    if (typeof sentenceId === "string" && sentenceId.trim()) {
+      formData.append("sentenceId", sentenceId.trim());
+    }
+    formData.append("consent", String(consent));
+    appendAudio(formData, audioBlob);
+    return this._postForm("/contributions/voice", formData, "voice-donation");
+  }
+
+  submitOpenRecording({ contributorName, language, topic, consent, audioBlob }) {
+    const formData = new FormData();
+    formData.append("contributorName", contributorName);
+    formData.append("language", language);
+    formData.append("topic", topic);
+    formData.append("consent", String(consent));
+    appendAudio(formData, audioBlob);
+    return this._postForm(
+      "/contributions/open-recording",
+      formData,
+      "open-recording",
+    );
+  }
+
+  async getMyContributions({ limit = 20, offset = 0 } = {}) {
+    const safeLimit = paginationValue(limit, {
+      name: "Limit",
+      defaultValue: 20,
+      minimum: 1,
+      maximum: 100,
+    });
+    const safeOffset = paginationValue(offset, {
+      name: "Offset",
+      defaultValue: 0,
+      minimum: 0,
+    });
+    const accessToken = requiredAccessToken(this._getAccessToken);
+    const query = new URLSearchParams({
+      limit: String(safeLimit),
+      offset: String(safeOffset),
+    });
+    const response = await this._fetchApi(
+      `${this._apiBaseUrl}/contributions/me?${query}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const body = await readJson(response);
+    if (!response.ok) {
+      throw apiErrorFromResponse(response, body, SAFE_REQUEST_ERROR, accessToken);
+    }
+    return validateMyContributionsResponse(body, response.status);
+  }
 }
 
-export function submitOpenRecording({
-  contributorName,
-  language,
-  topic,
-  consent,
-  audioBlob,
-}) {
-  const formData = new FormData();
-  formData.append("contributorName", contributorName);
-  formData.append("language", language);
-  formData.append("topic", topic);
-  formData.append("consent", String(consent));
-  appendAudio(formData, audioBlob);
 
-  return postForm("/contributions/open-recording", formData, "open-recording");
-}
+const contributionsApi = new ContributionsApi();
+
+
+export const getSentencePrompts = (language = "Pashto") =>
+  contributionsApi.getSentencePrompts(language);
+export const submitVoiceDonation = (input) =>
+  contributionsApi.submitVoiceDonation(input);
+export const submitOpenRecording = (input) =>
+  contributionsApi.submitOpenRecording(input);
+export const getMyContributions = (pagination) =>
+  contributionsApi.getMyContributions(pagination);

@@ -2,13 +2,13 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.dependencies import get_db
-from app.schemas import ContributionCreatedResponse
+from app.dependencies import get_db, require_authenticated_user
+from app.schemas import ContributionCreatedResponse, MyContributionListResponse
 from app.services.contribution_service import (
     ContributionCreationError,
     ContributionServiceError,
@@ -16,7 +16,10 @@ from app.services.contribution_service import (
     OpenRecordingInput,
     create_guided_contribution,
     create_open_recording,
+    get_user_contributions,
 )
+from app.services.profile_service import ProfileServiceError, get_or_create_profile
+from app.services.supabase_auth import AuthenticatedUser
 from app.utils.audio_validation import (
     AudioExtensionMismatchError,
     AudioFileTooLargeError,
@@ -80,6 +83,7 @@ def _safe_error_response(error: ContributionServiceError | AudioValidationError)
     status_code=status.HTTP_201_CREATED,
 )
 async def submit_guided_voice_contribution(
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
     database: Annotated[Session, Depends(get_db)],
     contributor_name: Annotated[str, Form(alias="contributorName")],
     language: Annotated[str, Form()],
@@ -118,7 +122,17 @@ async def submit_guided_voice_contribution(
     )
 
     try:
-        contribution = create_guided_contribution(database, contribution_input)
+        profile = get_or_create_profile(
+            database=database,
+            authenticated_user=user,
+        )
+        contribution = create_guided_contribution(
+            database,
+            contribution_input,
+            owner_user_id=profile.id,
+        )
+    except ProfileServiceError:
+        raise
     except (ContributionServiceError, AudioValidationError) as error:
         return _safe_error_response(error)
     except Exception:
@@ -134,6 +148,7 @@ async def submit_guided_voice_contribution(
     status_code=status.HTTP_201_CREATED,
 )
 async def submit_open_recording(
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
     database: Annotated[Session, Depends(get_db)],
     contributorName: Annotated[str, Form()],
     language: Annotated[str, Form()],
@@ -170,7 +185,17 @@ async def submit_open_recording(
     )
 
     try:
-        contribution = create_open_recording(database, contribution_input)
+        profile = get_or_create_profile(
+            database=database,
+            authenticated_user=user,
+        )
+        contribution = create_open_recording(
+            database,
+            contribution_input,
+            owner_user_id=profile.id,
+        )
+    except ProfileServiceError:
+        raise
     except (ContributionServiceError, AudioValidationError) as error:
         return _safe_error_response(error)
     except Exception:
@@ -178,3 +203,32 @@ async def submit_open_recording(
         return _safe_error_response(creation_error)
 
     return ContributionCreatedResponse.model_validate(contribution)
+
+
+@router.get("/me", response_model=MyContributionListResponse)
+def get_my_contributions(
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    database: Annotated[Session, Depends(get_db)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> MyContributionListResponse | JSONResponse:
+    """Return only the verified caller's contribution history."""
+
+    try:
+        items, total = get_user_contributions(
+            database=database,
+            owner_user_id=user.id,
+            limit=limit,
+            offset=offset,
+        )
+    except ContributionServiceError as error:
+        return _safe_error_response(error)
+
+    return MyContributionListResponse.model_validate(
+        {
+            "items": items,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )

@@ -188,16 +188,16 @@ def test_existing_health_and_sentence_routes_remain_public(
     assert client.get("/api/sentences").status_code == 200
 
 
-def test_contribution_routes_do_not_require_authentication(
+def test_contribution_routes_require_authentication(
     client: TestClient,
 ) -> None:
     guided_response = client.post("/api/contributions/voice")
     open_response = client.post("/api/contributions/open-recording")
 
-    assert guided_response.status_code == 422
-    assert open_response.status_code == 422
-    assert guided_response.json().get("code") != "AUTHENTICATION_REQUIRED"
-    assert open_response.json().get("code") != "AUTHENTICATION_REQUIRED"
+    assert guided_response.status_code == 401
+    assert open_response.status_code == 401
+    assert guided_response.json()["code"] == "AUTHENTICATION_REQUIRED"
+    assert open_response.json()["code"] == "AUTHENTICATION_REQUIRED"
 
 
 def test_admin_routes_continue_using_admin_api_key(client: TestClient) -> None:

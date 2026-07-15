@@ -280,14 +280,14 @@ def test_auth_me_still_works(client: TestClient) -> None:
     assert response.json()["id"] == USER_ID
 
 
-def test_contribution_endpoints_remain_public(client: TestClient) -> None:
+def test_contribution_endpoints_require_verified_login(client: TestClient) -> None:
     for path in [
         "/api/contributions/voice",
         "/api/contributions/open-recording",
     ]:
         response = client.post(path)
-        assert response.status_code == 422
-        assert response.json().get("code") != "AUTHENTICATION_REQUIRED"
+        assert response.status_code == 401
+        assert response.json()["code"] == "AUTHENTICATION_REQUIRED"
 
 
 def test_admin_endpoints_still_use_admin_key(client: TestClient) -> None:

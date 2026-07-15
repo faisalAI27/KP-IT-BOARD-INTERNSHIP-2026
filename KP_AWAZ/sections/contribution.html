@@ -58,6 +58,23 @@
         role="tabpanel"
         aria-labelledby="tabBtn-donate"
       >
+        <div
+          class="contribution-auth-status"
+          id="contributionAuthStatus"
+          role="status"
+          aria-live="polite"
+        >
+          <span id="contributionAuthMessage">Verifying your account before recording…</span>
+          <button
+            class="btn btn-primary btn-sm"
+            id="contributionSignInButton"
+            type="button"
+            hidden
+          >
+            Sign in
+          </button>
+        </div>
+
         <section
           class="feature-panel active"
           id="donate-panel"

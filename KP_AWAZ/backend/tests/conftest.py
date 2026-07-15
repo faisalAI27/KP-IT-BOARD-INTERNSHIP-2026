@@ -26,8 +26,61 @@ os.environ["SUPABASE_PUBLISHABLE_KEY"] = TEST_SUPABASE_PUBLISHABLE_KEY
 os.environ["SUPABASE_AUTH_TIMEOUT_SECONDS"] = "1"
 
 from app.database import Base, engine  # noqa: E402
-from app.dependencies import get_db  # noqa: E402
+from app.dependencies import get_db, get_supabase_auth_client  # noqa: E402
 from app.main import app  # noqa: E402
+from app.services.supabase_auth import (  # noqa: E402
+    AuthenticatedUser,
+    InvalidAccessTokenError,
+)
+
+
+TEST_USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
+TEST_AUTHORIZATION = {"Authorization": "Bearer test-access-token"}
+
+
+class StubAuthClient:
+    """Network-free Supabase dependency for authenticated endpoint tests."""
+
+    def __init__(
+        self,
+        *,
+        user: AuthenticatedUser | None = None,
+        invalid: bool = False,
+    ) -> None:
+        self.user = user
+        self.invalid = invalid
+
+    async def get_user(self, _access_token: str) -> AuthenticatedUser:
+        if self.invalid:
+            raise InvalidAccessTokenError()
+        if self.user is None:
+            raise AssertionError("A test authenticated user is required")
+        return self.user
+
+
+def authenticate_test_user(
+    user_id: str = TEST_USER_ID,
+    *,
+    email: str | None = "person@example.com",
+    provider: str | None = "google",
+) -> AuthenticatedUser:
+    """Configure one verified user without accepting identity from a request."""
+
+    authenticated_user = AuthenticatedUser(
+        id=user_id,
+        email=email,
+        provider=provider,
+    )
+    stub = StubAuthClient(user=authenticated_user)
+    app.dependency_overrides[get_supabase_auth_client] = lambda: stub
+    return authenticated_user
+
+
+def reject_test_access_token() -> None:
+    """Configure the Supabase dependency to reject the supplied bearer token."""
+
+    stub = StubAuthClient(invalid=True)
+    app.dependency_overrides[get_supabase_auth_client] = lambda: stub
 
 
 TestingSessionLocal = sessionmaker(

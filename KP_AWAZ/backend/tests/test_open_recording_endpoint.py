@@ -13,11 +13,17 @@ import app.services.contribution_service as contribution_service_module
 from app.config import settings
 from app.models import Contribution
 from app.services.audio_storage import AudioStorageError, resolve_audio_storage_path
+from tests.conftest import TEST_AUTHORIZATION, authenticate_test_user
 
 
 ENDPOINT = "/api/contributions/open-recording"
 GUIDED_ENDPOINT = "/api/contributions/voice"
 WEBM_BYTES = b"\x1a\x45\xdf\xa3open-webm"
+
+
+@pytest.fixture(autouse=True)
+def authenticated_contributor() -> None:
+    authenticate_test_user()
 
 
 def valid_form_data() -> dict[str, str]:
@@ -41,6 +47,7 @@ def post_open(
     files = {"audio": (filename, content, mime_type)} if include_audio else None
     return client.post(
         ENDPOINT,
+        headers=TEST_AUTHORIZATION,
         data=valid_form_data() if data is None else data,
         files=files,
     )
@@ -316,6 +323,7 @@ def test_guided_and_open_endpoints_use_independent_size_limits(
     )
     guided_response = client.post(
         GUIDED_ENDPOINT,
+        headers=TEST_AUTHORIZATION,
         data={
             "contributorName": "Faisal Imran",
             "language": "Pashto",
@@ -396,6 +404,7 @@ def test_existing_routes_continue_working(client: TestClient) -> None:
     assert (
         client.post(
             GUIDED_ENDPOINT,
+            headers=TEST_AUTHORIZATION,
             data={
                 "contributorName": "Faisal Imran",
                 "language": "Pashto",
@@ -407,4 +416,3 @@ def test_existing_routes_continue_working(client: TestClient) -> None:
         ).status_code
         == 201
     )
-

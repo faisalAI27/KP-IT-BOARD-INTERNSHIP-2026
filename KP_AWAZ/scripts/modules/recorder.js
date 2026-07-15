@@ -92,6 +92,7 @@ export function createRecorder({
   idleStatus,
   maxDurationSeconds,
   maxDurationMessage,
+  canStart = () => true,
   onStart,
   onCapture,
   onReset,
@@ -265,6 +266,7 @@ export function createRecorder({
 
   async function start() {
     if (destroyed || recording || starting || activeSession) return;
+    if (!canStart()) return;
     const capability = getRecordingCapability();
     if (!capability.supported) {
       callout.textContent = capability.callout;

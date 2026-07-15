@@ -163,13 +163,13 @@ curl \
   http://127.0.0.1:8000/api/auth/me
 ```
 
-A real token is obtained through the frontend login interface. Existing sentence and contribution endpoints remain public, and existing admin endpoints continue to use `X-Admin-Key`.
+A real token is obtained through the frontend login interface. Sentence endpoints remain public, contribution submission requires verified Supabase authentication, and existing admin endpoints continue to use `X-Admin-Key`.
 
 ## Local authenticated user profiles
 
 Supabase remains responsible for authentication, session handling, and verified identity. FastAPI stores only application-specific profile preferences in the local `profiles` table. Each profile ID is exactly the verified Supabase user ID; it is never accepted from a profile request body or URL parameter.
 
-The verified email and authentication provider are synchronized from Supabase whenever the profile is accessed. Users can edit their display name, preferred language, and future leaderboard visibility. Leaderboard visibility defaults to private (`false`). Contributions are not connected to profiles and remain public during this phase.
+The verified email and authentication provider are synchronized from Supabase whenever the profile is accessed. Users can edit their display name, preferred language, and future leaderboard visibility. Leaderboard visibility defaults to private (`false`). New contributions reference this profile using only the user ID derived from verified authentication.
 
 Retrieve or automatically create the authenticated user's profile with:
 
@@ -261,6 +261,7 @@ The multipart fields are `contributorName`, `language`, `sentence`, `sentenceSou
 
 ```bash
 curl -X POST \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "contributorName=Faisal Imran" \
   -F "language=Pashto" \
   -F "sentence=هر غږ ارزښت لري." \
@@ -272,7 +273,7 @@ curl -X POST \
 
 `sentenceId` is currently optional for provided prompts. Custom sentences must not include it, and custom text is stored only as a contribution snapshot. Consent must resolve to true.
 
-Audio is checked for supported MIME type, filename-extension consistency, guided size limit, and a basic matching signature. Successful submissions return HTTP 201. Audio uses the contribution UUID as its filename, while the database stores only a relative storage key.
+Audio is checked for supported MIME type, filename-extension consistency, guided size limit, and a basic matching signature. Successful submissions return HTTP 201. Audio uses the contribution UUID as its filename, while the database stores only a relative storage key. Ownership is taken exclusively from the verified Bearer token; multipart user or profile IDs are never trusted.
 
 ## Submit an open recording
 
@@ -286,6 +287,7 @@ The required multipart fields are `contributorName`, `language`, `consent`, and 
 
 ```bash
 curl -X POST \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "contributorName=Faisal Imran" \
   -F "language=Pashto" \
   -F "topic=زما د کلي یوه کیسه" \
@@ -295,6 +297,24 @@ curl -X POST \
 ```
 
 Explicit consent is required. Open recordings use the configured larger open-recording size limit and the same MIME, filename-extension, size, and basic signature checks as guided recordings. Audio is stored privately using the contribution UUID, and the database stores only its relative storage key. Successful submissions return HTTP 201 with the public contribution ID, queued status, and UTC creation time.
+
+## My Contributions API foundation
+
+Return the verified caller's contributions with:
+
+```http
+GET /api/contributions/me?limit=20&offset=0
+```
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  "http://127.0.0.1:8000/api/contributions/me?limit=20&offset=0"
+```
+
+The endpoint filters ownership in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. It never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no storage keys, absolute paths, tokens, or owner IDs.
+
+SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. A visual My Contributions interface has not been implemented yet.
 
 ## Run tests
 

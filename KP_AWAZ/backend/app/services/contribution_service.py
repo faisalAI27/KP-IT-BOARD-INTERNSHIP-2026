@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -101,6 +103,12 @@ class AudioStorageFailedError(ContributionServiceError):
 class ContributionCreationError(ContributionServiceError):
     code = "CONTRIBUTION_CREATION_FAILED"
     default_message = "The voice contribution could not be completed."
+    http_status = 500
+
+
+class ContributionQueryError(ContributionServiceError):
+    code = "CONTRIBUTION_QUERY_FAILED"
+    default_message = "Contribution history could not be loaded."
     http_status = 500
 
 
@@ -231,6 +239,7 @@ def _validate_optional_sentence(
 def _persist_contribution(
     database: Session,
     *,
+    owner_user_id: str,
     contribution_type: str,
     contributor_name: str,
     language: str,
@@ -259,6 +268,7 @@ def _persist_contribution(
 
     contribution = Contribution(
         id=contribution_id,
+        user_id=owner_user_id,
         contribution_type=contribution_type,
         contributor_name=contributor_name,
         language=language,
@@ -297,7 +307,10 @@ def _persist_contribution(
 
 
 def create_guided_contribution(
-    database: Session, contribution_input: GuidedContributionInput
+    database: Session,
+    contribution_input: GuidedContributionInput,
+    *,
+    owner_user_id: str,
 ) -> Contribution:
     """Validate, store audio, and commit one guided contribution."""
 
@@ -326,6 +339,7 @@ def create_guided_contribution(
 
     return _persist_contribution(
         database,
+        owner_user_id=owner_user_id,
         contribution_type="guided",
         contributor_name=contributor_name,
         language=language,
@@ -339,7 +353,10 @@ def create_guided_contribution(
 
 
 def create_open_recording(
-    database: Session, contribution_input: OpenRecordingInput
+    database: Session,
+    contribution_input: OpenRecordingInput,
+    *,
+    owner_user_id: str,
 ) -> Contribution:
     """Validate, store audio, and commit one open recording."""
 
@@ -358,6 +375,7 @@ def create_open_recording(
 
     return _persist_contribution(
         database,
+        owner_user_id=owner_user_id,
         contribution_type="open_recording",
         contributor_name=contributor_name,
         language=language,
@@ -369,3 +387,32 @@ def create_open_recording(
         validated_audio=validated_audio,
         creation_failure_message="The open recording could not be completed.",
     )
+
+
+def get_user_contributions(
+    *,
+    database: Session,
+    owner_user_id: str,
+    limit: int,
+    offset: int,
+) -> tuple[list[Contribution], int]:
+    """Return one owner's page using ownership filtering in the database."""
+
+    ownership_filter = Contribution.user_id == owner_user_id
+    try:
+        total = database.scalar(
+            select(func.count()).select_from(Contribution).where(ownership_filter)
+        )
+        items = list(
+            database.scalars(
+                select(Contribution)
+                .where(ownership_filter)
+                .order_by(Contribution.created_at.desc(), Contribution.id.desc())
+                .limit(limit)
+                .offset(offset)
+            ).all()
+        )
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise ContributionQueryError() from error
+    return items, int(total or 0)

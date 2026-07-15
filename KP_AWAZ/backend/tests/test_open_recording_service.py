@@ -22,7 +22,7 @@ from app.services.contribution_service import (
     InvalidContributorNameError,
     InvalidRecordingTopicError,
     OpenRecordingInput,
-    create_open_recording,
+    create_open_recording as create_owned_open_recording,
 )
 from app.utils.audio_validation import (
     AudioExtensionMismatchError,
@@ -37,6 +37,20 @@ WEBM_BYTES = b"\x1a\x45\xdf\xa3open-webm"
 OGG_BYTES = b"OggSopen-ogg"
 MP3_BYTES = b"ID3open-mp3"
 M4A_BYTES = b"\x00\x00\x00\x18ftypM4A open-m4a"
+OWNER_USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
+
+
+def create_open_recording(
+    database: Session,
+    contribution_input: OpenRecordingInput,
+) -> Contribution:
+    """Exercise the service with ownership trusted separately from form data."""
+
+    return create_owned_open_recording(
+        database,
+        contribution_input,
+        owner_user_id=OWNER_USER_ID,
+    )
 
 
 def open_input(**values: object) -> OpenRecordingInput:
@@ -271,4 +285,3 @@ def test_public_response_uses_only_safe_camel_case_fields(
     assert set(response) == {"id", "status", "createdAt"}
     assert response["createdAt"].endswith("Z")
     assert "audio_storage_key" not in response
-
