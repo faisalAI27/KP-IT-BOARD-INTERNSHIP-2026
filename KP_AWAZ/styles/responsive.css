@@ -180,6 +180,12 @@
     max-width: 600px;
   }
 
+  .leaderboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .why-grid {
     grid-template-columns: 1fr;
   }
@@ -283,6 +289,18 @@
   .my-contribution-meta-row {
     grid-template-columns: 68px minmax(0, 1fr);
     gap: 8px;
+  }
+
+  .leaderboard-heading {
+    gap: 20px;
+  }
+
+  .leaderboard-refresh {
+    min-height: 42px;
+  }
+
+  .leaderboard-panel {
+    border-radius: 22px;
   }
 
   .menu-toggle {
@@ -545,6 +563,41 @@
   .my-contribution-meta-row {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .leaderboard-refresh {
+    width: 100%;
+  }
+
+  .leaderboard-privacy-note {
+    align-items: flex-start;
+  }
+
+  .leaderboard-panel {
+    padding: 15px;
+    border-radius: 19px;
+  }
+
+  .leaderboard-entry {
+    padding: 12px;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .leaderboard-rank {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px 15px 15px 6px;
+    font-size: 1rem;
+  }
+
+  .leaderboard-error {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .leaderboard-error .btn {
+    width: 100%;
   }
 
   .menu-toggle {

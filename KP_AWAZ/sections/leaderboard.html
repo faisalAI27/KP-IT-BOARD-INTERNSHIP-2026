@@ -1,0 +1,94 @@
+<section
+  class="section-pad leaderboard-section"
+  id="leaderboard"
+  aria-labelledby="leaderboardTitle"
+>
+  <div class="wrap">
+    <div class="leaderboard-heading">
+      <div class="leaderboard-heading-copy">
+        <span class="eyebrow-line">Community recognition</span>
+        <h2 id="leaderboardTitle">Top Contributors</h2>
+        <p>
+          Celebrating contributors whose approved voice recordings help build KP AWAZ.
+        </p>
+      </div>
+      <button
+        class="btn btn-quiet leaderboard-refresh"
+        id="refreshLeaderboardButton"
+        type="button"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M16 7a7 7 0 1 0 .4 5M16 3v4h-4" />
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+    <div class="leaderboard-privacy-note">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3 5 6v5c0 4.8 2.8 8.1 7 10 4.2-1.9 7-5.2 7-10V6l-7-3Z" />
+        <path d="m9 12 2 2 4-5" />
+      </svg>
+      <p>
+        Only contributors who choose public leaderboard visibility and have approved
+        recordings are shown.
+      </p>
+    </div>
+
+    <div class="leaderboard-panel" id="leaderboardSection">
+      <div
+        class="leaderboard-status"
+        id="leaderboardStatus"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        Loading leaderboard…
+      </div>
+
+      <p class="leaderboard-summary" id="leaderboardSummary" hidden></p>
+
+      <div class="leaderboard-error" id="leaderboardError" role="alert" hidden>
+        <div>
+          <strong>Leaderboard unavailable</strong>
+          <span id="leaderboardErrorMessage">We could not load the leaderboard.</span>
+        </div>
+        <button class="btn btn-quiet" id="retryLeaderboardButton" type="button">
+          Retry
+        </button>
+      </div>
+
+      <div class="leaderboard-empty" id="leaderboardEmpty" hidden>
+        <strong>No contributors have qualified for the public leaderboard yet.</strong>
+        <span>
+          Contributors appear after opting in and having at least one voice recording
+          approved.
+        </span>
+      </div>
+
+      <ol
+        class="leaderboard-list"
+        id="leaderboardList"
+        aria-label="Public contributor rankings"
+        hidden
+      ></ol>
+
+      <div class="leaderboard-pagination">
+        <p
+          class="leaderboard-load-more-error"
+          id="leaderboardLoadMoreError"
+          role="alert"
+          hidden
+        ></p>
+        <button
+          class="btn btn-quiet leaderboard-load-more"
+          id="loadMoreLeaderboardButton"
+          type="button"
+          hidden
+        >
+          Load more
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

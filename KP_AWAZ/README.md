@@ -164,8 +164,31 @@ statistics.
 
 Counts are aggregated from the contribution rows on every request; mutable
 counter columns are not stored in profiles. The public leaderboard continues to
-rank approved contribution counts rather than points. A public leaderboard
-frontend and rewards are not implemented yet.
+rank approved contribution counts rather than points.
+
+### Public Leaderboard
+
+The contributor website includes a public **Leaderboard** section that requires
+no login. It loads 20 eligible contributors at a time and provides loading,
+empty, safe error, retry, refresh, and Load more states. Manual refresh reflects
+recent profile-privacy or administrator-review changes without continuous
+polling.
+
+Each public row displays only:
+
+- Rank
+- Display name
+- Approved contribution count
+
+The frontend respects the dense rank returned by FastAPI, including tied ranks,
+and keeps duplicate display names as separate entries. Only contributors who
+opt into leaderboard visibility and own at least one approved recording appear.
+No user/profile identifiers, email, provider, review history, audio metadata, or
+private contribution points are displayed.
+
+Private point balances remain available only to their signed-in owners through
+**My Points**. Public ranking is based solely on currently approved contribution
+count. Rewards are not implemented.
 
 ## Private contribution points
 
@@ -241,8 +264,8 @@ selection, disconnecting, or destroying the page module. There is no public
 audio URL or download action, and rejected recordings remain stored.
 
 This is temporary internal API-key administration, not an admin-account system.
-The public leaderboard currently has a backend endpoint only; no public
-leaderboard interface exists yet.
+The public leaderboard is available only on the contributor website and does
+not initialize or share state with this administrator page.
 
 ## Recording behavior
 

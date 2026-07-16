@@ -3,6 +3,10 @@ import {
   initContributions,
 } from "./modules/contributions.js";
 import { initFaq } from "./modules/faq.js";
+import {
+  destroyLeaderboard,
+  initializeLeaderboard,
+} from "./modules/leaderboard.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js";
 import { destroyAuthUI, initAuthUI } from "./modules/auth-ui.js";
@@ -70,6 +74,7 @@ function initializeAuthenticationInterfaces() {
 
 function cleanupApplication() {
   destroyContributions();
+  destroyLeaderboard();
   destroyMyContributions();
   destroyMyPoints();
   destroyProfileUI();
@@ -82,6 +87,11 @@ async function bootstrap() {
     await loadPartials();
     initNavigation();
     initFaq();
+    try {
+      initializeLeaderboard();
+    } catch {
+      // The public leaderboard remains isolated from all other page features.
+    }
     await initContributions();
     void initializeAuthentication();
     restoreHashPosition();
