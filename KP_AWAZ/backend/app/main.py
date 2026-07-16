@@ -3,7 +3,8 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -35,6 +36,27 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_error_handler(
+    _: Request,
+    error: RequestValidationError,
+) -> JSONResponse:
+    """Return validation locations and messages without echoing supplied secrets."""
+
+    safe_errors = [
+        {
+            "type": item.get("type", "validation_error"),
+            "loc": item.get("loc", ()),
+            "msg": item.get("msg", "Invalid request value."),
+        }
+        for item in error.errors()
+    ]
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": safe_errors},
+    )
 
 
 @app.exception_handler(AuthenticationRequiredError)

@@ -51,6 +51,14 @@ class Contribution(Base):
             "status IN ('queued', 'approved', 'rejected', 'needs_review')",
             name="ck_contribution_status_valid",
         ),
+        CheckConstraint(
+            "review_status IN ('pending', 'approved', 'rejected')",
+            name="ck_contribution_review_status_valid",
+        ),
+        CheckConstraint(
+            "rejection_reason IS NULL OR length(rejection_reason) <= 500",
+            name="ck_contribution_rejection_reason_length",
+        ),
     )
 
     id: Mapped[str] = mapped_column(
@@ -84,6 +92,15 @@ class Contribution(Base):
     status: Mapped[str] = mapped_column(
         String(30), nullable=False, default="queued"
     )
+    review_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending", index=True
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(
+        String(500), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -111,3 +128,15 @@ def normalize_contribution_language(
     """Store contribution language names consistently with sentences."""
 
     contribution.language = normalize_language_name(contribution.language)
+    review_status = contribution.review_status
+    contribution.review_status = (
+        review_status.strip().lower()
+        if isinstance(review_status, str) and review_status.strip()
+        else "pending"
+    )
+    rejection_reason = contribution.rejection_reason
+    if isinstance(rejection_reason, str):
+        rejection_reason = rejection_reason.strip() or None
+    contribution.rejection_reason = (
+        rejection_reason if contribution.review_status == "rejected" else None
+    )

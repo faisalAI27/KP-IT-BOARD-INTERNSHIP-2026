@@ -129,6 +129,32 @@ def test_database_record_is_created(client: TestClient, db_session: Session) -> 
     assert contribution is not None
     assert contribution.contribution_type == "guided"
     assert contribution.consent_given is True
+    assert contribution.review_status == "pending"
+    assert contribution.reviewed_at is None
+    assert contribution.rejection_reason is None
+
+
+def test_public_form_cannot_control_review_fields(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    data = valid_form_data()
+    data.update(
+        {
+            "reviewStatus": "approved",
+            "reviewedAt": "2020-01-01T00:00:00Z",
+            "rejectionReason": "client supplied",
+        }
+    )
+
+    response = post_guided(client, data=data)
+    contribution = db_session.get(Contribution, response.json()["id"])
+
+    assert response.status_code == 201
+    assert contribution is not None
+    assert contribution.review_status == "pending"
+    assert contribution.reviewed_at is None
+    assert contribution.rejection_reason is None
 
 
 def test_audio_file_is_created(client: TestClient, db_session: Session) -> None:

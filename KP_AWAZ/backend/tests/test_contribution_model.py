@@ -1,5 +1,6 @@
-"""Database constraints and public schema tests for contributions."""
+"""Database constraints and public/admin schema tests for contributions."""
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
@@ -8,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Contribution, Profile, Sentence
-from app.schemas import ContributionCreatedResponse
+from app.schemas import AdminContributionResponse, ContributionCreatedResponse
 from app.utils.text_normalization import normalize_sentence_text
 
 
@@ -85,6 +86,60 @@ def test_valid_open_recording_can_be_created(db_session: Session) -> None:
 
 def test_status_defaults_to_queued(db_session: Session) -> None:
     assert store_contribution(db_session).status == "queued"
+
+
+def test_review_fields_default_to_pending_and_null(db_session: Session) -> None:
+    contribution = store_contribution(db_session)
+
+    assert contribution.review_status == "pending"
+    assert contribution.reviewed_at is None
+    assert contribution.rejection_reason is None
+
+
+def test_review_status_is_required_indexed_string(db_session: Session) -> None:
+    column = Contribution.__table__.columns.review_status
+    indexes = inspect(db_session.get_bind()).get_indexes("contributions")
+
+    assert column.nullable is False
+    assert column.type.length == 20
+    assert any(index["column_names"] == ["review_status"] for index in indexes)
+
+
+def test_review_values_are_normalized_before_persistence(
+    db_session: Session,
+) -> None:
+    contribution = store_contribution(
+        db_session,
+        review_status=" REJECTED ",
+        rejection_reason="  Audio is too noisy.  ",
+    )
+
+    assert contribution.review_status == "rejected"
+    assert contribution.rejection_reason == "Audio is too noisy."
+
+
+def test_approved_review_clears_rejection_reason(db_session: Session) -> None:
+    contribution = store_contribution(
+        db_session,
+        review_status="approved",
+        rejection_reason="old reason",
+    )
+
+    assert contribution.rejection_reason is None
+
+
+def test_invalid_review_status_fails_constraint(db_session: Session) -> None:
+    assert_constraint_failure(db_session, review_status="invalid")
+
+
+def test_rejection_reason_over_500_characters_fails_constraint(
+    db_session: Session,
+) -> None:
+    assert_constraint_failure(
+        db_session,
+        review_status="rejected",
+        rejection_reason="x" * 501,
+    )
 
 
 def test_consent_defaults_to_false(db_session: Session) -> None:
@@ -249,3 +304,56 @@ def test_public_response_uses_created_at_alias_only(db_session: Session) -> None
     assert set(serialized) == {"id", "status", "createdAt"}
     assert "created_at" not in serialized
     assert "audio_storage_key" not in serialized
+
+
+def test_approved_admin_response_uses_safe_camel_case_fields(
+    db_session: Session,
+) -> None:
+    profile = store_profile(db_session)
+    reviewed_at = datetime(2026, 7, 16, 12, 30, tzinfo=timezone.utc)
+    contribution = store_contribution(
+        db_session,
+        user_id=profile.id,
+        review_status="approved",
+        reviewed_at=reviewed_at,
+    )
+
+    serialized = AdminContributionResponse.from_contribution(
+        contribution
+    ).model_dump(mode="json")
+
+    assert serialized["reviewStatus"] == "approved"
+    assert serialized["reviewedAt"].endswith("Z")
+    assert serialized["rejectionReason"] is None
+    assert serialized["hasOwner"] is True
+    assert serialized["ownerDisplayName"] == "Person"
+
+
+def test_rejected_admin_response_is_safe_and_excludes_secrets(
+    db_session: Session,
+) -> None:
+    contribution = store_contribution(
+        db_session,
+        review_status="rejected",
+        reviewed_at=datetime(2026, 7, 16, 12, 30),
+        rejection_reason="Audio is too noisy.",
+    )
+
+    serialized = AdminContributionResponse.from_contribution(
+        contribution
+    ).model_dump(mode="json")
+    serialized_text = str(serialized).lower()
+
+    assert serialized["reviewStatus"] == "rejected"
+    assert serialized["reviewedAt"].endswith("Z")
+    assert serialized["rejectionReason"] == "Audio is too noisy."
+    assert serialized["hasOwner"] is False
+    for forbidden in [
+        "audio_storage_key",
+        "audio/2026",
+        "access_token",
+        "refresh_token",
+        "admin_api_key",
+        "_sa_instance_state",
+    ]:
+        assert forbidden not in serialized_text

@@ -167,8 +167,36 @@ def test_response_uses_safe_camel_case_fields(
         "access_token",
         "refresh_token",
         "_sa_instance_state",
+        "reviewstatus",
+        "reviewedat",
+        "rejectionreason",
     ]:
         assert forbidden not in serialized
+
+
+def test_rejection_reason_remains_admin_only(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, TEST_USER_ID)
+    contribution = add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=datetime.now(timezone.utc),
+    )
+    contribution.review_status = "rejected"
+    contribution.reviewed_at = datetime.now(timezone.utc)
+    contribution.rejection_reason = "Administrative reason"
+    db_session.commit()
+
+    response = get_mine(client)
+
+    assert response.status_code == 200
+    assert "Administrative reason" not in response.text
+    assert "rejectionReason" not in response.text
+    assert "reviewStatus" not in response.text
 
 
 def test_limit_offset_total_and_newest_first(

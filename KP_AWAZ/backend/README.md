@@ -316,6 +316,59 @@ The endpoint filters ownership in the database query, orders newest records firs
 
 SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. The frontend account dialog uses this private endpoint for its My Contributions interface and does not provide audio playback because the response has no playable URL.
 
+## Admin contribution review
+
+Every new guided or open-recording contribution begins with a separate `pending` review status. The SQLite compatibility step assigns the same pending status to existing contributions without changing their ownership, audio keys, submission metadata, or user-facing `queued` upload status. Legacy contributions whose `user_id` is null remain reviewable and are not assigned to an account.
+
+All review routes require the configured admin key in the `X-Admin-Key` header:
+
+```http
+GET /api/admin/contributions?status=pending&limit=20&offset=0
+GET /api/admin/contributions/{contribution_id}
+GET /api/admin/contributions/{contribution_id}/audio
+PATCH /api/admin/contributions/{contribution_id}/review
+```
+
+List filters support `pending`, `approved`, `rejected`, and `all`. Results are newest first and contain only safe review metadata. Owner UUIDs, email addresses, storage keys, absolute paths, and authentication secrets are excluded. The protected audio route validates the stored canonical audio key and serves the file inline only when it remains inside the configured private audio root; no public static audio route is enabled.
+
+Use placeholder values when testing locally:
+
+```bash
+curl \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
+  "http://127.0.0.1:8000/api/admin/contributions?status=pending&limit=20&offset=0"
+
+curl \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
+  "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID"
+
+curl \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
+  "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID/audio"
+```
+
+Approval sets `reviewStatus` to `approved`, records the current UTC review time, and clears any earlier rejection reason:
+
+```bash
+curl -X PATCH \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"approved"}' \
+  "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID/review"
+```
+
+Rejection requires a trimmed reason of at most 500 characters:
+
+```bash
+curl -X PATCH \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"rejected","rejectionReason":"Audio is too noisy to use."}' \
+  "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID/review"
+```
+
+Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. The public leaderboard, approved-contribution public counts, points, rewards, and an admin frontend are not implemented in this phase.
+
 ## Run tests
 
 ```bash
