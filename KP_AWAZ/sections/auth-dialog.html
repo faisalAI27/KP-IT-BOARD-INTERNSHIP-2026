@@ -160,6 +160,83 @@
       </section>
 
       <section
+        class="my-points"
+        id="myPointsSection"
+        aria-labelledby="myPointsTitle"
+        hidden
+      >
+        <div class="my-points-heading">
+          <div>
+            <span class="auth-kicker">Your contribution points</span>
+            <h3 id="myPointsTitle">My Points</h3>
+          </div>
+          <button
+            class="btn btn-quiet btn-sm my-points-refresh"
+            id="refreshPointsButton"
+            type="button"
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div class="my-points-balance-card">
+          <span>Current balance</span>
+          <strong id="myPointsBalance">0 points</strong>
+          <p>Points are awarded when your voice contributions are approved.</p>
+          <small>
+            If an approval is reversed, its point reversal remains in your history.
+          </small>
+        </div>
+
+        <div
+          class="my-points-status"
+          id="myPointsStatus"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          hidden
+        ></div>
+
+        <div class="my-points-error" id="myPointsError" role="alert" hidden>
+          <span id="myPointsErrorMessage">We could not load your points.</span>
+          <button class="btn btn-quiet btn-sm" id="retryPointsButton" type="button">
+            Retry
+          </button>
+        </div>
+
+        <div class="my-points-empty" id="myPointsEmpty" hidden>
+          <strong>You do not have any point activity yet.</strong>
+          <span>
+            Points will appear here after one of your voice contributions is approved.
+          </span>
+        </div>
+
+        <ol
+          class="my-points-history"
+          id="myPointsHistory"
+          aria-label="Your private point history"
+          hidden
+        ></ol>
+
+        <div class="my-points-pagination">
+          <p
+            class="my-points-load-more-error"
+            id="myPointsLoadMoreError"
+            role="alert"
+            hidden
+          ></p>
+          <button
+            class="btn btn-quiet my-points-load-more"
+            id="loadMorePointsButton"
+            type="button"
+            hidden
+          >
+            Load more
+          </button>
+        </div>
+      </section>
+
+      <section
         class="my-contributions"
         id="myContributionsSection"
         aria-labelledby="myContributionsTitle"

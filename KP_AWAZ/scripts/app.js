@@ -10,6 +10,7 @@ import {
   destroyMyContributions,
   initializeMyContributions,
 } from "./modules/my-contributions.js";
+import { destroyMyPoints, initializeMyPoints } from "./modules/my-points.js";
 import { destroyProfileUI, initProfileUI } from "./modules/profile-ui.js";
 import {
   destroyAuthService,
@@ -55,6 +56,12 @@ function initializeAuthenticationInterfaces() {
   }
 
   try {
+    initializeMyPoints();
+  } catch {
+    // Point history failures remain isolated from other account features.
+  }
+
+  try {
     initializeMyContributions();
   } catch {
     // Contribution history failures remain isolated from account settings.
@@ -64,6 +71,7 @@ function initializeAuthenticationInterfaces() {
 function cleanupApplication() {
   destroyContributions();
   destroyMyContributions();
+  destroyMyPoints();
   destroyProfileUI();
   destroyAuthUI();
   destroyAuthService();

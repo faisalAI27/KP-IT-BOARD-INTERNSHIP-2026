@@ -270,10 +270,12 @@
     height: 42px;
   }
 
+  .my-points-heading,
   .my-contributions-heading {
     align-items: flex-start;
   }
 
+  .my-points-refresh,
   .my-contributions-refresh {
     min-height: 40px;
   }
@@ -524,13 +526,20 @@
     padding-inline: 10px;
   }
 
+  .my-points-heading,
   .my-contributions-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .my-points-refresh,
   .my-contributions-refresh {
     width: 100%;
+  }
+
+  .my-points-entry-top {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .my-contribution-meta-row {

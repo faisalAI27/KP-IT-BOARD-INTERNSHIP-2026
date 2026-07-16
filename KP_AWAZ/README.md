@@ -194,9 +194,29 @@ curl \
 review reasons, or audio paths.
 
 The stored event types are represented by the API as `approvalAward`,
-`approvalReversal`, and `approvedBackfill`. Points have no monetary or cash
-value. There is no points frontend, reward system, withdrawal, payment, or
-redemption feature in this phase.
+`approvalReversal`, and `approvedBackfill`.
+
+### My Points
+
+Signed-in users can view their private current balance and append-only point
+history in the **My Points** area of the account dialog. History entries explain
+approval awards, approval reversals, and the initial credit for contributions
+that were already approved when the ledger was introduced. The interface loads
+20 entries at a time and provides safe loading, empty, error, retry, refresh,
+and Load more states. Refresh can be used to see point changes after a recent
+administrator review.
+
+One currently approved, owned contribution equals one point. Pending, rejected,
+and legacy unowned contributions do not award points. The balance is always
+calculated from immutable ledger entries rather than a mutable profile total,
+so approval reversals remain visible in history even after a contribution is
+approved again.
+
+Point totals and history are private during this phase. The public leaderboard
+continues to rank contributors by approved contribution count, not point
+balance. Points currently have no monetary value. Rewards and redemption are
+not implemented; there is no withdrawal, payment, transfer, or cash-value
+feature.
 
 ## Administrator contribution review
 
