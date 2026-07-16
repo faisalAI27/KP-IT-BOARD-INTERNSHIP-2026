@@ -29,6 +29,11 @@ python3 -m http.server 4173
 
 Then open `http://127.0.0.1:4173`.
 
+The separate administrator review page is available at
+`http://127.0.0.1:4173/admin.html`. Enter the value configured as
+`ADMIN_API_KEY` in the running backend; never place a real key in source code or
+documentation.
+
 Backend Swagger is available at `http://127.0.0.1:8000/docs`, and backend health is available at `http://127.0.0.1:8000/api/health`.
 
 The backend must be running for real sentence prompts and recording submissions to work. Frontend mock mode is disabled in `scripts/config.js`.
@@ -40,6 +45,7 @@ Do not open `index.html` directly. The development page loads HTML section parti
 ```text
 KP_AWAZ/
 ├── index.html                 # Small page shell
+├── admin.html                 # Isolated contribution-review page
 ├── sections/                  # One HTML partial per visible section
 ├── styles/                    # Foundation, section and responsive CSS
 ├── scripts/
@@ -59,7 +65,10 @@ KP_AWAZ/
 npm run build
 ```
 
-This creates `dist/`, assembles all HTML partials into one production page, generates the browser-compatible Supabase vendor module, and copies the runtime assets. Development stays modular while production avoids client-side partial requests.
+This creates `dist/`, assembles all contributor HTML partials, includes the
+standalone `admin.html`, generates the browser-compatible Supabase vendor
+module, and copies the runtime assets. Development stays modular while
+production avoids client-side partial requests.
 
 The focused vendor bundle can also be regenerated directly with:
 
@@ -109,11 +118,39 @@ Guided and open contribution recording now requires a signed-in user whose Supab
 
 Uploads send the current access token only in the `Authorization: Bearer` header. The frontend never sends a user ID or profile ID. FastAPI derives ownership exclusively from the verified token, creates or synchronizes the local profile when needed, and stores the verified profile ID with new contribution metadata. The two contributions created before ownership support remain unowned legacy records.
 
-New submissions enter a private pending-review queue. Review actions are protected by the backend admin key; an admin review interface, public approved counts, leaderboard eligibility, points, and rewards are not implemented yet.
+New submissions enter a private pending-review queue. Review actions are
+protected by the backend admin key and are available only through the separate
+administrator page described below. Public approved counts, leaderboard
+eligibility, points, and rewards are not implemented yet.
 
 Signed-in users can view their private submission history in the **My Contributions** area of the account dialog. The interface loads ten results at a time from `GET /api/contributions/me`, supports refresh, retry, and Load more, and refreshes the first page automatically after a successful guided or open-recording upload. History is requested only after FastAPI verifies the current Supabase session.
 
 The backend filters history by the identity derived from the bearer token. The frontend neither sends nor accepts a user ID for history requests, so one account cannot select or view another account's contributions. The two legacy unowned contributions do not appear in any user's history. Audio playback is not included because the history response does not provide a safe playable URL. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
+
+## Administrator contribution review
+
+The administrator interface is intentionally separate from the contributor
+application and does not initialize Supabase login, profile settings, My
+Contributions, or either recorder. To use it locally:
+
+1. Start FastAPI and the frontend server using the commands above.
+2. Open `http://127.0.0.1:4173/admin.html`.
+3. Enter the backend's configured admin key at runtime.
+
+The key is sent only in the `X-Admin-Key` request header and is kept only in the
+admin module's memory for the current page session. It is not written to browser
+storage, cookies, configuration, request URLs, or request JSON. Disconnecting,
+refreshing, or closing the page clears it and requires entry again.
+
+The workspace supports backend-filtered pending, approved, rejected, and all
+queues; 20-item page navigation; safe contribution metadata; protected Blob
+audio playback; approval; rejection with a required reason; and correction of
+earlier decisions. Audio object URLs are revoked when changing or closing the
+selection, disconnecting, or destroying the page module. There is no public
+audio URL or download action, and rejected recordings remain stored.
+
+This is temporary internal API-key administration, not an admin-account system.
+No public leaderboard exists yet.
 
 ## Recording behavior
 

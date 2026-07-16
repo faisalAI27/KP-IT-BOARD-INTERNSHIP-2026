@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Private KP Awaz contribution review workspace."
+    />
+    <title>Contribution review | KP Awaz</title>
+    <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/admin.css" />
+  </head>
+  <body class="admin-page">
+    <a class="skip-link" href="#adminMain">Skip to review workspace</a>
+
+    <header class="admin-header">
+      <div class="admin-header__inner">
+        <a class="admin-brand" href="/" aria-label="KP Awaz home">
+          <img src="assets/images/logo.svg" alt="" width="48" height="48" />
+          <span>
+            <strong>KP Awaz</strong>
+            <small>Private administration</small>
+          </span>
+        </a>
+        <span class="admin-header__badge">Contribution review</span>
+      </div>
+    </header>
+
+    <main id="adminMain" class="admin-main">
+      <section id="adminConnectionView" class="admin-connect" aria-labelledby="adminConnectTitle">
+        <div class="admin-connect__copy">
+          <span class="admin-eyebrow">Restricted workspace</span>
+          <h1 id="adminConnectTitle">Review donated voices</h1>
+          <p>
+            Connect with the temporary backend admin key to inspect recordings and
+            record review decisions. The key stays in this page's memory only and is
+            cleared when you disconnect or close the page.
+          </p>
+        </div>
+
+        <form id="adminConnectionForm" class="admin-connect__form" novalidate>
+          <label for="adminKeyInput">Admin API key</label>
+          <p id="adminKeyHelp" class="admin-field-help">
+            Use the value configured as <code>ADMIN_API_KEY</code> on the backend.
+          </p>
+          <input
+            id="adminKeyInput"
+            name="adminKey"
+            type="password"
+            required
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            aria-describedby="adminKeyHelp adminConnectionStatus"
+          />
+          <button id="adminConnectButton" class="btn btn-primary" type="submit">
+            Connect securely
+          </button>
+          <p id="adminConnectionStatus" class="admin-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="adminDashboard" class="admin-dashboard" aria-labelledby="adminDashboardTitle" hidden>
+        <div class="admin-dashboard__heading">
+          <div>
+            <span class="admin-eyebrow">Review workspace</span>
+            <h1 id="adminDashboardTitle">Voice contributions</h1>
+          </div>
+          <button id="adminDisconnectButton" class="btn btn-secondary" type="button">
+            Disconnect
+          </button>
+        </div>
+
+        <div class="admin-filters" aria-label="Filter contributions by review status">
+          <span>Show</span>
+          <div class="admin-filter-list" role="group">
+            <button class="admin-filter is-active" type="button" data-admin-filter="pending" aria-pressed="true">
+              Pending
+            </button>
+            <button class="admin-filter" type="button" data-admin-filter="approved" aria-pressed="false">
+              Approved
+            </button>
+            <button class="admin-filter" type="button" data-admin-filter="rejected" aria-pressed="false">
+              Rejected
+            </button>
+            <button class="admin-filter" type="button" data-admin-filter="all" aria-pressed="false">
+              All
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-workspace">
+          <section class="admin-queue" aria-labelledby="adminQueueTitle">
+            <div class="admin-panel-heading">
+              <div>
+                <h2 id="adminQueueTitle">Review queue</h2>
+                <p id="adminQueueSummary" class="admin-panel-summary"></p>
+              </div>
+            </div>
+
+            <p id="adminQueueStatus" class="admin-status" role="status" aria-live="polite"></p>
+
+            <div id="adminQueueError" class="admin-message admin-message--error" role="alert" hidden>
+              <p id="adminQueueErrorMessage"></p>
+              <button id="adminRetryQueueButton" class="btn btn-secondary btn-small" type="button">
+                Try again
+              </button>
+            </div>
+
+            <div id="adminQueueEmpty" class="admin-empty" hidden>
+              <strong>No contributions in this view</strong>
+              <p>Choose another status or check again later.</p>
+            </div>
+
+            <ul id="adminContributionList" class="admin-contribution-list"></ul>
+
+            <nav class="admin-pagination" aria-label="Contribution queue pages">
+              <button id="adminPreviousPageButton" class="btn btn-secondary btn-small" type="button">
+                Previous
+              </button>
+              <span id="adminPaginationStatus" aria-live="polite"></span>
+              <button id="adminNextPageButton" class="btn btn-secondary btn-small" type="button">
+                Next
+              </button>
+            </nav>
+          </section>
+
+          <section
+            id="adminDetailPanel"
+            class="admin-detail"
+            aria-labelledby="adminDetailTitle"
+            tabindex="-1"
+            hidden
+          >
+            <div class="admin-panel-heading admin-panel-heading--detail">
+              <div>
+                <span class="admin-eyebrow">Selected contribution</span>
+                <h2 id="adminDetailTitle">Recording details</h2>
+              </div>
+              <button id="adminCloseDetailButton" class="admin-icon-button" type="button" aria-label="Close contribution details">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+
+            <p id="adminDetailStatus" class="admin-status" role="status" aria-live="polite"></p>
+            <div id="adminDetailError" class="admin-message admin-message--error" role="alert" hidden>
+              <p id="adminDetailErrorMessage"></p>
+              <button id="adminRetryDetailButton" class="btn btn-secondary btn-small" type="button">
+                Retry details
+              </button>
+            </div>
+
+            <div id="adminDetailContent" class="admin-detail__content" hidden></div>
+
+            <div id="adminAudioPanel" class="admin-audio" hidden>
+              <div>
+                <h3>Protected recording</h3>
+                <p id="adminAudioStatus" class="admin-field-help" role="status" aria-live="polite"></p>
+              </div>
+              <audio
+                id="adminAudioPlayer"
+                controls
+                controlslist="nodownload"
+                disablepictureinpicture
+                preload="metadata"
+                hidden
+              ></audio>
+              <button id="adminRetryAudioButton" class="btn btn-secondary btn-small" type="button" hidden>
+                Retry audio
+              </button>
+            </div>
+
+            <form id="adminReviewForm" class="admin-review" novalidate hidden>
+              <div class="admin-review__heading">
+                <div>
+                  <h3>Record a decision</h3>
+                  <p id="adminReviewNotice" class="admin-field-help"></p>
+                </div>
+                <span id="adminReviewBadge" class="admin-status-badge"></span>
+              </div>
+
+              <label for="adminRejectionReason">Rejection reason</label>
+              <textarea
+                id="adminRejectionReason"
+                rows="4"
+                maxlength="500"
+                aria-describedby="adminRejectionHelp adminRejectionCount adminReviewStatus"
+                placeholder="Explain what should be corrected before resubmission."
+              ></textarea>
+              <div class="admin-field-meta">
+                <span id="adminRejectionHelp">Required only when rejecting.</span>
+                <span id="adminRejectionCount">0 / 500</span>
+              </div>
+
+              <div class="admin-review__actions">
+                <button id="adminApproveButton" class="btn btn-success" type="button">
+                  Approve recording
+                </button>
+                <button id="adminRejectButton" class="btn btn-danger" type="button">
+                  Reject recording
+                </button>
+              </div>
+              <p id="adminReviewStatus" class="admin-status" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <aside id="adminSelectionPrompt" class="admin-selection-prompt">
+            <div aria-hidden="true" class="admin-selection-prompt__icon">▶</div>
+            <h2>Select a contribution</h2>
+            <p>Choose an item from the queue to inspect its metadata and protected audio.</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="scripts/admin-app.js"></script>
+  </body>
+</html>

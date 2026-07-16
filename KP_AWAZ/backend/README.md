@@ -367,7 +367,29 @@ curl -X PATCH \
   "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID/review"
 ```
 
-Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. The public leaderboard, approved-contribution public counts, points, rewards, and an admin frontend are not implemented in this phase.
+Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. The public leaderboard, approved-contribution public counts, points, and rewards are not implemented in this phase.
+
+### Local review interface
+
+With this backend and the frontend server running, open:
+
+```text
+http://127.0.0.1:4173/admin.html
+```
+
+Enter the configured `ADMIN_API_KEY` at runtime. The frontend keeps it only in
+memory, sends it only through `X-Admin-Key`, and clears it on disconnect or page
+refresh. It is never stored in browser storage, placed in request URLs or JSON,
+or added to frontend configuration.
+
+The interface uses the protected routes above for backend-filtered queues,
+pagination, safe contribution detail, Blob-based audio playback, approval,
+rejection, and correction of a previous decision. Rejected audio remains stored.
+The page does not expose owner IDs, emails, storage keys, filesystem paths, or a
+public audio URL. Do not include a real admin key in documentation or source.
+
+Public approved-contribution counts, leaderboard eligibility, a privacy-safe
+public leaderboard, points, and rewards remain unimplemented.
 
 ## Run tests
 

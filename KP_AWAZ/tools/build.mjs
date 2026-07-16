@@ -7,8 +7,8 @@ import { buildSupabaseVendorBundle } from "./build-supabase-vendor.mjs";
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "dist");
 
-async function assemblePage() {
-  const templatePath = resolve(projectRoot, "index.html");
+async function assemblePage(pageName) {
+  const templatePath = resolve(projectRoot, pageName);
   let html = await readFile(templatePath, "utf8");
   const partialPattern = /<div data-partial="([^"]+)"><\/div>/g;
   const partials = [...html.matchAll(partialPattern)];
@@ -20,7 +20,7 @@ async function assemblePage() {
   }
 
   await mkdir(outputRoot, { recursive: true });
-  await writeFile(resolve(outputRoot, "index.html"), html, "utf8");
+  await writeFile(resolve(outputRoot, pageName), html, "utf8");
 }
 
 async function copyRuntimeAssets() {
@@ -34,6 +34,7 @@ async function copyRuntimeAssets() {
 
 await rm(outputRoot, { recursive: true, force: true });
 await buildSupabaseVendorBundle();
-await assemblePage();
+await assemblePage("index.html");
+await assemblePage("admin.html");
 await copyRuntimeAssets();
 console.log(`Production files created in ${outputRoot}`);
