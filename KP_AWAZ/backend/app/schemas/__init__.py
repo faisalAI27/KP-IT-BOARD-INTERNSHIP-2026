@@ -11,6 +11,7 @@ from app.schemas.contribution import (
     MyContributionResponse,
 )
 from app.schemas.profile import ProfileResponse, ProfileUpdateRequest
+from app.schemas.points import PersonalPointsResponse, PointLedgerItemResponse
 from app.schemas.sentence import SentenceListResponse, SentenceResponse
 from app.schemas.sentence_import import (
     ImportFileResultResponse,
@@ -33,6 +34,8 @@ __all__ = [
     "ImportFileResultResponse",
     "MyContributionListResponse",
     "MyContributionResponse",
+    "PersonalPointsResponse",
+    "PointLedgerItemResponse",
     "ProfileResponse",
     "ProfileContributionStatisticsResponse",
     "ProfileUpdateRequest",

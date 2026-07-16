@@ -5,11 +5,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import func, select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import Contribution
 from app.services.audio_storage import AudioStorageError, resolve_audio_storage_path
+from app.services.points_ledger_service import (
+    PointsLedgerError,
+    create_review_point_entry,
+)
 from app.utils.audio_validation import (
     AUDIO_MIME_FILENAME_EXTENSIONS,
     AudioValidationError,
@@ -70,6 +74,12 @@ class UnsafeContributionAudioPathError(AdminContributionReviewError):
 class ContributionReviewPersistenceError(AdminContributionReviewError):
     code = "CONTRIBUTION_REVIEW_PERSISTENCE_FAILED"
     default_message = "The contribution review could not be saved."
+    http_status = 500
+
+
+class ContributionPointsPersistenceError(AdminContributionReviewError):
+    code = "POINTS_LEDGER_PERSISTENCE_FAILED"
+    default_message = "Contribution points could not be saved."
     http_status = 500
 
 
@@ -225,11 +235,33 @@ def apply_contribution_review(
     ):
         return contribution
 
+    previous_status = contribution.review_status
+    contribution.review_revision += 1
     contribution.review_status = normalized_status
     contribution.reviewed_at = datetime.now(timezone.utc)
     contribution.rejection_reason = normalized_reason
     try:
+        create_review_point_entry(
+            database=database,
+            contribution=contribution,
+            previous_status=previous_status,
+        )
         database.commit()
+    except PointsLedgerError as error:
+        database.rollback()
+        raise ContributionPointsPersistenceError() from error
+    except IntegrityError:
+        database.rollback()
+        current = get_admin_contribution(
+            database=database,
+            contribution_id=contribution_id,
+        )
+        if (
+            current.review_status == normalized_status
+            and current.rejection_reason == normalized_reason
+        ):
+            return current
+        raise ContributionReviewPersistenceError()
     except Exception as error:
         database.rollback()
         raise ContributionReviewPersistenceError() from error

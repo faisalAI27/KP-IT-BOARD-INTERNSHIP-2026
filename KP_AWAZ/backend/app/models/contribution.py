@@ -23,6 +23,7 @@ from app.utils.text_normalization import normalize_language_name
 
 
 if TYPE_CHECKING:
+    from app.models.point_ledger_entry import PointLedgerEntry
     from app.models.profile import Profile
     from app.models.sentence import Sentence
 
@@ -59,6 +60,10 @@ class Contribution(Base):
         CheckConstraint(
             "rejection_reason IS NULL OR length(rejection_reason) <= 500",
             name="ck_contribution_rejection_reason_length",
+        ),
+        CheckConstraint(
+            "review_revision >= 0",
+            name="ck_contribution_review_revision_nonnegative",
         ),
         Index(
             "ix_contributions_review_status_user_id",
@@ -107,6 +112,11 @@ class Contribution(Base):
     rejection_reason: Mapped[str | None] = mapped_column(
         String(500), nullable=True
     )
+    review_revision: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -122,6 +132,10 @@ class Contribution(Base):
     sentence: Mapped["Sentence | None"] = relationship()
     profile: Mapped["Profile | None"] = relationship(
         back_populates="contributions",
+        passive_deletes=True,
+    )
+    point_ledger_entries: Mapped[list["PointLedgerEntry"]] = relationship(
+        back_populates="contribution",
         passive_deletes=True,
     )
 

@@ -3,6 +3,11 @@
 from sqlalchemy import Engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.models import PointLedgerEntry
+from app.services.points_ledger_service import (
+    backfill_approved_contribution_points_connection,
+)
+
 
 class SchemaCompatibilityError(RuntimeError):
     """Safe startup error raised when a required compatibility update fails."""
@@ -47,6 +52,11 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                     "ALTER TABLE contributions "
                     "ADD COLUMN rejection_reason VARCHAR(500)"
                 )
+            if "review_revision" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE contributions "
+                    "ADD COLUMN review_revision INTEGER NOT NULL DEFAULT 0"
+                )
 
             connection.exec_driver_sql(
                 "UPDATE contributions SET review_status = 'pending' "
@@ -57,6 +67,16 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                 "WHERE lower(trim(review_status)) "
                 "IN ('pending', 'approved', 'rejected') "
                 "AND review_status != lower(trim(review_status))"
+            )
+            connection.exec_driver_sql(
+                "UPDATE contributions SET review_revision = CASE "
+                "WHEN review_status IN ('approved', 'rejected') THEN 1 ELSE 0 END "
+                "WHERE review_revision IS NULL"
+            )
+            connection.exec_driver_sql(
+                "UPDATE contributions SET review_revision = 1 "
+                "WHERE review_status IN ('approved', 'rejected') "
+                "AND review_revision = 0"
             )
 
             indexes = inspect(connection).get_indexes("contributions")
@@ -88,5 +108,63 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                     "ix_contributions_review_status_user_id "
                     "ON contributions (review_status, user_id)"
                 )
+
+            PointLedgerEntry.__table__.create(
+                bind=connection,
+                checkfirst=True,
+            )
+            ledger_indexes = inspect(connection).get_indexes(
+                "point_ledger_entries"
+            )
+            if not any(
+                index.get("column_names") == ["user_id"]
+                for index in ledger_indexes
+            ):
+                connection.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS ix_point_ledger_entries_user_id "
+                    "ON point_ledger_entries (user_id)"
+                )
+            if not any(
+                index.get("column_names") == ["contribution_id"]
+                for index in ledger_indexes
+            ):
+                connection.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "ix_point_ledger_entries_contribution_id "
+                    "ON point_ledger_entries (contribution_id)"
+                )
+            if not any(
+                index.get("column_names") == ["user_id", "created_at", "id"]
+                for index in ledger_indexes
+            ):
+                connection.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS ix_point_ledger_user_created_id "
+                    "ON point_ledger_entries (user_id, created_at, id)"
+                )
+
+            ledger_schema = inspect(connection)
+            unique_constraints = ledger_schema.get_unique_constraints(
+                "point_ledger_entries"
+            )
+            ledger_indexes = ledger_schema.get_indexes("point_ledger_entries")
+            has_revision_uniqueness = any(
+                constraint.get("column_names")
+                == ["contribution_id", "review_revision"]
+                for constraint in unique_constraints
+            ) or any(
+                index.get("unique")
+                and index.get("column_names")
+                == ["contribution_id", "review_revision"]
+                for index in ledger_indexes
+            )
+            if not has_revision_uniqueness:
+                connection.exec_driver_sql(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS "
+                    "uq_point_ledger_contribution_revision "
+                    "ON point_ledger_entries "
+                    "(contribution_id, review_revision)"
+                )
+
+            backfill_approved_contribution_points_connection(connection)
     except SQLAlchemyError as error:
         raise SchemaCompatibilityError() from error

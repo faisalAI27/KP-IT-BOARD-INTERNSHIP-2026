@@ -11,6 +11,7 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.contribution import Contribution
+    from app.models.point_ledger_entry import PointLedgerEntry
 
 
 def utc_now() -> datetime:
@@ -57,6 +58,10 @@ class Profile(Base):
     )
 
     contributions: Mapped[list["Contribution"]] = relationship(
+        back_populates="profile",
+        passive_deletes=True,
+    )
+    point_ledger_entries: Mapped[list["PointLedgerEntry"]] = relationship(
         back_populates="profile",
         passive_deletes=True,
     )

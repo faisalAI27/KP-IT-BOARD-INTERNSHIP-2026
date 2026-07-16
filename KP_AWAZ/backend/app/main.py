@@ -11,7 +11,12 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import Base, engine
 from app.dependencies import AuthenticationRequiredError
-from app.models import ImportBatch, Profile, Sentence  # noqa: F401 - registers metadata
+from app.models import (  # noqa: F401 - registers metadata
+    ImportBatch,
+    PointLedgerEntry,
+    Profile,
+    Sentence,
+)
 from app.routes import (
     admin,
     auth,
@@ -24,6 +29,7 @@ from app.routes import (
 )
 from app.services.contribution_statistics_service import ContributionStatisticsError
 from app.services.profile_service import ProfileServiceError
+from app.services.points_ledger_service import PointsLedgerError
 from app.services.schema_compatibility import ensure_contribution_ownership_schema
 from app.services.supabase_auth import SupabaseAuthError
 
@@ -106,6 +112,19 @@ async def contribution_statistics_error_handler(
     error: ContributionStatisticsError,
 ) -> JSONResponse:
     """Return database-query failures without SQL or filesystem details."""
+
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
+
+@app.exception_handler(PointsLedgerError)
+async def points_ledger_error_handler(
+    _: Request,
+    error: PointsLedgerError,
+) -> JSONResponse:
+    """Return point persistence and query failures without internal details."""
 
     return JSONResponse(
         status_code=error.http_status,

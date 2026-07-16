@@ -122,7 +122,8 @@ New submissions enter a private pending-review queue. Review actions are
 protected by the backend admin key and are available only through the separate
 administrator page described below. Approved contribution statistics and the
 privacy-safe public leaderboard are calculated dynamically by the backend.
-Points and rewards are not implemented yet.
+Approved owned contributions also receive private append-only points. Rewards
+are not implemented yet.
 
 Signed-in users can view their private submission history in the **My Contributions** area of the account dialog. The interface loads ten results at a time from `GET /api/contributions/me`, supports refresh, retry, and Load more, and refreshes the first page automatically after a successful guided or open-recording upload. History is requested only after FastAPI verifies the current Supabase session.
 
@@ -162,8 +163,40 @@ request without changing its recordings, ownership, review decisions, or private
 statistics.
 
 Counts are aggregated from the contribution rows on every request; mutable
-counter columns are not stored in profiles. A public leaderboard frontend,
-points, and rewards are not implemented yet.
+counter columns are not stored in profiles. The public leaderboard continues to
+rank approved contribution counts rather than points. A public leaderboard
+frontend and rewards are not implemented yet.
+
+## Private contribution points
+
+One approved contribution owned by a verified profile equals one private point.
+Pending and rejected contributions award no points, and legacy unowned
+contributions are excluded. Leaderboard opt-out does not remove privately owned
+points.
+
+Points are recorded as immutable ledger events. Approval creates a `+1` award,
+removing approval creates a `-1` reversal, and reapproval creates another `+1`
+award. Existing approved owned contributions receive one idempotent backfill
+event. Earlier entries are never edited or deleted, and balances are calculated
+with `SUM(points_delta)` rather than stored on profiles.
+
+Authenticated users can retrieve only their own balance and ledger history:
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  "http://127.0.0.1:8000/api/profile/me/points?limit=20&offset=0"
+```
+
+`GET /api/profile/me/points` returns `balance`, paginated `items`, `total`,
+`limit`, and `offset`. Items contain `id`, `entryType`, `pointsDelta`,
+`contributionId`, and `createdAt`. They do not expose user IDs, emails, tokens,
+review reasons, or audio paths.
+
+The stored event types are represented by the API as `approvalAward`,
+`approvalReversal`, and `approvedBackfill`. Points have no monetary or cash
+value. There is no points frontend, reward system, withdrawal, payment, or
+redemption feature in this phase.
 
 ## Administrator contribution review
 

@@ -388,7 +388,7 @@ rejection, and correction of a previous decision. Rejected audio remains stored.
 The page does not expose owner IDs, emails, storage keys, filesystem paths, or a
 public audio URL. Do not include a real admin key in documentation or source.
 
-Points and rewards remain unimplemented.
+Rewards remain unimplemented.
 
 ## Personal contribution statistics
 
@@ -460,8 +460,95 @@ ordering without exposing that ID.
 
 Counts and eligibility are calculated dynamically with SQL aggregation; profiles
 do not store mutable contribution counters. The composite
-`(review_status, user_id)` contribution index supports these filters. Points,
-rewards, and the public leaderboard frontend are not implemented yet.
+`(review_status, user_id)` contribution index supports these filters. The public
+leaderboard remains based on approved contribution counts and does not expose
+the private points ledger. Rewards and the public leaderboard frontend are not
+implemented yet.
+
+## Append-only contribution points
+
+The current point rule is fixed:
+
+```text
+1 approved owned contribution = 1 point
+```
+
+Pending, rejected, legacy unowned, and orphaned contributions receive no points.
+Leaderboard privacy does not affect private point ownership. Points always use
+the profile ID stored on the contribution; display names and emails are never
+used as ownership.
+
+The `point_ledger_entries` table stores immutable positive and negative events.
+Its internal entry types are:
+
+| Entry type | Delta | Meaning |
+| --- | ---: | --- |
+| `approval_award` | `+1` | A non-approved contribution became approved |
+| `approval_reversal` | `-1` | Approval was removed |
+| `approved_backfill` | `+1` | One-time migration of an existing approved owned contribution |
+
+Every entry references its contribution and the contribution's internal review
+revision. A uniqueness rule on `(contribution_id, review_revision)` prevents a
+retry from recording the same event twice. Review changes and their required
+point entry commit in one transaction; a point failure rolls back the review.
+Existing ledger rows are never updated or deleted.
+
+Existing pending contributions initialize at review revision `0`. Existing
+approved and rejected contributions initialize at revision `1`. Meaningful
+review changes increment the revision; exact repeated decisions do not. The
+startup compatibility process safely backfills one event for every existing
+approved owned contribution and may be run repeatedly without duplication.
+
+Balances are calculated dynamically with:
+
+```text
+SUM(point_ledger_entries.points_delta)
+```
+
+No point balance or total-points counter is stored in `profiles`.
+
+### Personal points endpoint
+
+Retrieve only the verified caller's private balance and paginated history with:
+
+```http
+GET /api/profile/me/points?limit=20&offset=0
+```
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  "http://127.0.0.1:8000/api/profile/me/points?limit=20&offset=0"
+```
+
+Example response:
+
+```json
+{
+  "balance": 2,
+  "items": [
+    {
+      "id": "LEDGER_ENTRY_ID",
+      "entryType": "approvalAward",
+      "pointsDelta": 1,
+      "contributionId": "OWNED_CONTRIBUTION_ID",
+      "createdAt": "2026-07-16T10:00:00Z"
+    }
+  ],
+  "total": 2,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+API entry types are `approvalAward`, `approvalReversal`, and
+`approvedBackfill`. The response excludes user IDs, emails, authentication
+providers, admin credentials, tokens, audio metadata, rejection reasons, and raw
+review metadata. There are no point mutation routes or public point endpoints.
+
+The public leaderboard still ranks by approved contribution count. Points have
+no monetary value, and no points frontend, rewards, payments, withdrawals, or
+redemption features are implemented in this phase.
 
 ## Run tests
 

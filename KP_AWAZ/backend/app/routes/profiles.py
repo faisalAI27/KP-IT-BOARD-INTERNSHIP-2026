@@ -2,12 +2,13 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_authenticated_user
 from app.schemas import (
     ProfileContributionStatisticsResponse,
+    PersonalPointsResponse,
     ProfileResponse,
     ProfileUpdateRequest,
 )
@@ -15,10 +16,34 @@ from app.services.contribution_statistics_service import (
     get_profile_contribution_statistics,
 )
 from app.services.profile_service import get_or_create_profile, update_profile
+from app.services.points_ledger_service import get_personal_points
 from app.services.supabase_auth import AuthenticatedUser
 
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
+
+
+@router.get("/me/points", response_model=PersonalPointsResponse)
+def get_current_profile_points(
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    database: Annotated[Session, Depends(get_db)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> PersonalPointsResponse:
+    """Return only the verified caller's private balance and ledger events."""
+
+    profile = get_or_create_profile(
+        database=database,
+        authenticated_user=user,
+    )
+    return PersonalPointsResponse.model_validate(
+        get_personal_points(
+            database=database,
+            owner_user_id=profile.id,
+            limit=limit,
+            offset=offset,
+        )
+    )
 
 
 @router.get(
