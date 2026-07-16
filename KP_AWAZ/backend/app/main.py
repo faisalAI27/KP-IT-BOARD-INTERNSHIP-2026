@@ -17,10 +17,12 @@ from app.routes import (
     auth,
     contributions,
     health,
+    leaderboard,
     profiles,
     sentence_imports,
     sentences,
 )
+from app.services.contribution_statistics_service import ContributionStatisticsError
 from app.services.profile_service import ProfileServiceError
 from app.services.schema_compatibility import ensure_contribution_ownership_schema
 from app.services.supabase_auth import SupabaseAuthError
@@ -97,6 +99,20 @@ async def profile_service_error_handler(
         content={"message": error.message, "code": error.code},
     )
 
+
+@app.exception_handler(ContributionStatisticsError)
+async def contribution_statistics_error_handler(
+    _: Request,
+    error: ContributionStatisticsError,
+) -> JSONResponse:
+    """Return database-query failures without SQL or filesystem details."""
+
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.frontend_origins,
@@ -106,6 +122,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router, prefix=settings.api_prefix)
+app.include_router(leaderboard.router, prefix=settings.api_prefix)
 app.include_router(sentences.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(sentence_imports.router, prefix=settings.api_prefix)

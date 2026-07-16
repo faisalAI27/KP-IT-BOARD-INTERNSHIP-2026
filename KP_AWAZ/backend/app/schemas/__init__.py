@@ -16,6 +16,11 @@ from app.schemas.sentence_import import (
     ImportFileResultResponse,
     SentenceImportResponse,
 )
+from app.schemas.statistics import (
+    ProfileContributionStatisticsResponse,
+    PublicLeaderboardItem,
+    PublicLeaderboardResponse,
+)
 
 
 __all__ = [
@@ -29,7 +34,10 @@ __all__ = [
     "MyContributionListResponse",
     "MyContributionResponse",
     "ProfileResponse",
+    "ProfileContributionStatisticsResponse",
     "ProfileUpdateRequest",
+    "PublicLeaderboardItem",
+    "PublicLeaderboardResponse",
     "SentenceImportResponse",
     "SentenceListResponse",
     "SentenceResponse",

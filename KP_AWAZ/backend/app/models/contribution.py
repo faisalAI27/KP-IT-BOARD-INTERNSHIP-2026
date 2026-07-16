@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -58,6 +59,11 @@ class Contribution(Base):
         CheckConstraint(
             "rejection_reason IS NULL OR length(rejection_reason) <= 500",
             name="ck_contribution_rejection_reason_length",
+        ),
+        Index(
+            "ix_contributions_review_status_user_id",
+            "review_status",
+            "user_id",
         ),
     )
 

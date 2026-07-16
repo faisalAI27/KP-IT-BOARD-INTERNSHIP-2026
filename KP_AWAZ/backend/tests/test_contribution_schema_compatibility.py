@@ -215,6 +215,10 @@ def test_review_compatibility_adds_all_fields_and_index(tmp_path: Path) -> None:
     assert columns["reviewed_at"]["nullable"] is True
     assert columns["rejection_reason"]["nullable"] is True
     assert any(index["column_names"] == ["review_status"] for index in indexes)
+    assert any(
+        index["column_names"] == ["review_status", "user_id"]
+        for index in indexes
+    )
     engine.dispose()
 
 
@@ -293,10 +297,16 @@ def test_review_compatibility_is_idempotent(tmp_path: Path) -> None:
         for index in inspect(engine).get_indexes("contributions")
         if index["column_names"] == ["review_status"]
     ]
+    aggregate_indexes = [
+        index
+        for index in inspect(engine).get_indexes("contributions")
+        if index["column_names"] == ["review_status", "user_id"]
+    ]
     assert columns.count("review_status") == 1
     assert columns.count("reviewed_at") == 1
     assert columns.count("rejection_reason") == 1
     assert len(review_indexes) == 1
+    assert len(aggregate_indexes) == 1
     engine.dispose()
 
 

@@ -77,5 +77,16 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                     "CREATE INDEX IF NOT EXISTS ix_contributions_review_status "
                     "ON contributions (review_status)"
                 )
+            indexes = inspect(connection).get_indexes("contributions")
+            has_review_owner_index = any(
+                index.get("column_names") == ["review_status", "user_id"]
+                for index in indexes
+            )
+            if not has_review_owner_index:
+                connection.exec_driver_sql(
+                    "CREATE INDEX IF NOT EXISTS "
+                    "ix_contributions_review_status_user_id "
+                    "ON contributions (review_status, user_id)"
+                )
     except SQLAlchemyError as error:
         raise SchemaCompatibilityError() from error

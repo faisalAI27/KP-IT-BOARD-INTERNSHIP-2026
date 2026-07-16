@@ -306,8 +306,11 @@ def test_only_current_user_profile_routes_are_registered() -> None:
         if route.path.startswith("/api/profile")
     ]
 
-    assert len(profile_routes) == 2
-    assert {path for path, _methods in profile_routes} == {"/api/profile/me"}
+    assert len(profile_routes) == 3
+    assert {path for path, _methods in profile_routes} == {
+        "/api/profile/me",
+        "/api/profile/me/statistics",
+    }
     methods = {method for _path, route_methods in profile_routes for method in route_methods}
     assert methods == {"GET", "PATCH"}
-    assert not any(route.path.startswith("/api/leaderboard") for route in app.routes)
+    assert any(route.path == "/api/leaderboard" for route in app.routes)

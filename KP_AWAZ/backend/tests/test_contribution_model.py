@@ -103,6 +103,10 @@ def test_review_status_is_required_indexed_string(db_session: Session) -> None:
     assert column.nullable is False
     assert column.type.length == 20
     assert any(index["column_names"] == ["review_status"] for index in indexes)
+    assert any(
+        index["column_names"] == ["review_status", "user_id"]
+        for index in indexes
+    )
 
 
 def test_review_values_are_normalized_before_persistence(

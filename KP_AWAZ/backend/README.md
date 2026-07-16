@@ -367,7 +367,7 @@ curl -X PATCH \
   "http://127.0.0.1:8000/api/admin/contributions/CONTRIBUTION_ID/review"
 ```
 
-Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. The public leaderboard, approved-contribution public counts, points, and rewards are not implemented in this phase.
+Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. Review changes are reflected immediately in the dynamic statistics and public leaderboard described below.
 
 ### Local review interface
 
@@ -388,8 +388,80 @@ rejection, and correction of a previous decision. Rejected audio remains stored.
 The page does not expose owner IDs, emails, storage keys, filesystem paths, or a
 public audio URL. Do not include a real admin key in documentation or source.
 
-Public approved-contribution counts, leaderboard eligibility, a privacy-safe
-public leaderboard, points, and rewards remain unimplemented.
+Points and rewards remain unimplemented.
+
+## Personal contribution statistics
+
+Return dynamic statistics belonging only to the verified caller with:
+
+```http
+GET /api/profile/me/statistics
+```
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  "http://127.0.0.1:8000/api/profile/me/statistics"
+```
+
+The response fields are:
+
+```json
+{
+  "totalContributions": 3,
+  "pendingContributions": 1,
+  "approvedContributions": 2,
+  "rejectedContributions": 0,
+  "leaderboardOptIn": true,
+  "leaderboardEligible": true,
+  "publicRank": 1
+}
+```
+
+The endpoint creates or synchronizes the local profile through the existing
+profile service, then filters contributions by the verified Supabase user ID in
+SQL. It never accepts a user ID from a URL, query, body, or custom header.
+Opted-out users and users with zero approved contributions receive a null public
+rank while retaining all private counts.
+
+## Privacy-safe public leaderboard
+
+The public endpoint requires no authentication:
+
+```http
+GET /api/leaderboard?limit=20&offset=0
+```
+
+```bash
+curl "http://127.0.0.1:8000/api/leaderboard?limit=20&offset=0"
+```
+
+Eligibility requires both an opted-in profile and at least one approved
+contribution owned by that profile. Pending and rejected contributions, legacy
+rows without an owner, and opted-out profiles are excluded in the database
+aggregation. Changing `leaderboardOptIn` takes effect on the next request without
+altering ownership, audio, or review state.
+
+Public items contain exactly:
+
+```json
+{
+  "rank": 1,
+  "displayName": "Faisal Imran",
+  "approvedContributions": 3
+}
+```
+
+No profile IDs, emails, authentication providers, preferred languages,
+contribution IDs, or audio metadata are public. Results are ordered by approved
+contribution count descending. Equal counts share the same dense rank, and
+normalized display name plus an internal profile-ID tiebreaker provide stable
+ordering without exposing that ID.
+
+Counts and eligibility are calculated dynamically with SQL aggregation; profiles
+do not store mutable contribution counters. The composite
+`(review_status, user_id)` contribution index supports these filters. Points,
+rewards, and the public leaderboard frontend are not implemented yet.
 
 ## Run tests
 

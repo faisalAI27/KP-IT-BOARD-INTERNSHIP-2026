@@ -108,7 +108,7 @@ When `redirectUrl` is blank, the application uses the current website origin and
 
 After Supabase restores or creates a session, FastAPI verifies the signed-in user before the frontend requests profile data. The first authenticated `GET /api/profile/me` automatically creates that user's local application profile when one does not already exist.
 
-Profile settings are available inside the signed-in account dialog. Users can edit their display name, preferred language, and whether their display name may appear on a future public leaderboard. Leaderboard visibility is private by default. The profile form includes loading, retry, validation, save, and no-change feedback without blocking the rest of the site.
+Profile settings are available inside the signed-in account dialog. Users can edit their display name, preferred language, and whether their display name may appear on the public leaderboard. Leaderboard visibility is private by default. The profile form includes loading, retry, validation, save, and no-change feedback without blocking the rest of the site.
 
 Supabase remains responsible for authentication and browser session management. FastAPI stores only application-specific profile preferences and the safe identity metadata needed to associate the profile with the verified Supabase user. Access tokens are not stored in the profile table or in profile UI state.
 
@@ -120,12 +120,50 @@ Uploads send the current access token only in the `Authorization: Bearer` header
 
 New submissions enter a private pending-review queue. Review actions are
 protected by the backend admin key and are available only through the separate
-administrator page described below. Public approved counts, leaderboard
-eligibility, points, and rewards are not implemented yet.
+administrator page described below. Approved contribution statistics and the
+privacy-safe public leaderboard are calculated dynamically by the backend.
+Points and rewards are not implemented yet.
 
 Signed-in users can view their private submission history in the **My Contributions** area of the account dialog. The interface loads ten results at a time from `GET /api/contributions/me`, supports refresh, retry, and Load more, and refreshes the first page automatically after a successful guided or open-recording upload. History is requested only after FastAPI verifies the current Supabase session.
 
 The backend filters history by the identity derived from the bearer token. The frontend neither sends nor accepts a user ID for history requests, so one account cannot select or view another account's contributions. The two legacy unowned contributions do not appear in any user's history. Audio playback is not included because the history response does not provide a safe playable URL. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
+
+## Contribution statistics and public leaderboard
+
+Authenticated users can retrieve only their own dynamic review counts with:
+
+```bash
+curl \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  "http://127.0.0.1:8000/api/profile/me/statistics"
+```
+
+`GET /api/profile/me/statistics` returns total, pending, approved, and rejected
+contribution counts together with the current leaderboard opt-in choice,
+eligibility, and public rank. FastAPI derives ownership from the verified token;
+the endpoint does not accept a user ID.
+
+The public backend leaderboard requires no login:
+
+```bash
+curl "http://127.0.0.1:8000/api/leaderboard?limit=20&offset=0"
+```
+
+A profile is eligible only when it has opted in and owns at least one currently
+approved contribution. Pending, rejected, opted-out, and legacy unowned
+contributions are excluded by the database query. Entries are ordered by
+approved contribution count descending, with dense ranks for ties and a stable
+display-name order within each tie.
+
+Only `rank`, `displayName`, and `approvedContributions` are public. Profile IDs,
+emails, authentication providers, audio metadata, and private review counts are
+never returned. Disabling leaderboard visibility removes the profile on the next
+request without changing its recordings, ownership, review decisions, or private
+statistics.
+
+Counts are aggregated from the contribution rows on every request; mutable
+counter columns are not stored in profiles. A public leaderboard frontend,
+points, and rewards are not implemented yet.
 
 ## Administrator contribution review
 
@@ -150,7 +188,8 @@ selection, disconnecting, or destroying the page module. There is no public
 audio URL or download action, and rejected recordings remain stored.
 
 This is temporary internal API-key administration, not an admin-account system.
-No public leaderboard exists yet.
+The public leaderboard currently has a backend endpoint only; no public
+leaderboard interface exists yet.
 
 ## Recording behavior
 
