@@ -66,12 +66,18 @@
         </span>
       </div>
 
-      <ol
-        class="leaderboard-list"
-        id="leaderboardList"
-        aria-label="Public contributor rankings"
-        hidden
-      ></ol>
+      <div class="leaderboard-table-wrapper">
+        <table class="leaderboard-table" aria-label="Public contributor rankings">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Contributor</th>
+              <th scope="col">Approved contributions</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardList" hidden></tbody>
+        </table>
+      </div>
 
       <div class="leaderboard-pagination">
         <p

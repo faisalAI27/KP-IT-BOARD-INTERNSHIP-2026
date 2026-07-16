@@ -9,7 +9,7 @@
       class="auth-dialog-close"
       id="authDialogClose"
       type="button"
-      aria-label="Close account dialog"
+      aria-label="Close sign-in dialog"
     >
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <path d="m5 5 10 10M15 5 5 15" />
@@ -19,37 +19,79 @@
     <span class="auth-kicker">Community account</span>
     <h2 id="authDialogTitle">Sign in to KP AWAZ</h2>
     <p class="auth-dialog-description" id="authDialogDescription">
-      Save your place in the community using Google or a secure email link.
+      Continue with Google or use a six-digit code sent to your email.
     </p>
 
     <section class="auth-sign-in-view" id="authSignInView">
-      <button class="auth-google-button" id="authGoogleButton" type="button">
-        <span class="google-mark" aria-hidden="true">G</span>
-        <span id="authGoogleButtonLabel">Continue with Google</span>
-      </button>
-
-      <div class="auth-divider" aria-hidden="true"><span>or</span></div>
-
-      <form class="auth-email-form" id="authEmailForm" novalidate>
-        <label for="authEmailInput">Email address</label>
-        <input
-          id="authEmailInput"
-          name="email"
-          type="email"
-          inputmode="email"
-          autocomplete="email"
-          maxlength="254"
-          placeholder="you@example.com"
-          required
-        />
-        <button class="btn btn-primary auth-email-submit" id="authEmailSubmit" type="submit">
-          <span id="authEmailSubmitLabel">Send sign-in link</span>
+      <div id="authEmailStep">
+        <button class="auth-google-button" id="authGoogleButton" type="button">
+          <span class="google-mark" aria-hidden="true">G</span>
+          <span id="authGoogleButtonLabel">Continue with Google</span>
         </button>
-      </form>
 
-      <p class="auth-privacy-note">
-        No password is needed. We will email you a one-time sign-in link.
-      </p>
+        <div class="auth-divider" aria-hidden="true"><span>or</span></div>
+
+        <form class="auth-email-form" id="authEmailForm" novalidate>
+          <label for="authEmailInput">Email address</label>
+          <input
+            id="authEmailInput"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            maxlength="254"
+            placeholder="you@example.com"
+            required
+          />
+          <button class="btn btn-primary auth-email-submit" id="authEmailSubmit" type="submit">
+            <span id="authEmailSubmitLabel">Send sign-in code</span>
+          </button>
+        </form>
+
+        <p class="auth-privacy-note">
+          We will send a six-digit sign-in code to your email.
+        </p>
+      </div>
+
+      <div class="auth-otp-step" id="authOtpStep" hidden>
+        <p class="auth-otp-recipient">
+          We sent a six-digit code to:
+          <strong id="authOtpEmail">user@example.com</strong>
+        </p>
+
+        <form class="auth-otp-form" id="authOtpForm" novalidate>
+          <label for="authOtpInput">Sign-in code</label>
+          <input
+            id="authOtpInput"
+            name="otp"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="000000"
+            aria-describedby="authOtpHint"
+            required
+          />
+          <span class="auth-otp-hint" id="authOtpHint">Enter all six digits.</span>
+          <button class="btn btn-primary auth-email-submit" id="authOtpSubmit" type="submit">
+            <span id="authOtpSubmitLabel">Verify and sign in</span>
+          </button>
+        </form>
+
+        <div class="auth-otp-actions">
+          <button class="auth-text-button" id="authOtpResend" type="button">
+            <span id="authOtpResendLabel">Resend code in 60s</span>
+          </button>
+          <button class="auth-text-button" id="authOtpChangeEmail" type="button">
+            Use a different email
+          </button>
+          <button class="auth-text-button auth-cancel-button" id="authOtpCancel" type="button">
+            Cancel
+          </button>
+        </div>
+      </div>
+
       <div
         class="auth-message"
         id="authSignInStatus"
@@ -68,8 +110,8 @@
           </svg>
         </span>
         <div class="auth-account-copy">
-          <strong id="authAccountEmail">Email not available</strong>
-          <span id="authAccountProvider">Verified account</span>
+          <strong id="authAccountEmail">Account not verified</strong>
+          <span id="authAccountProvider">Verification unavailable</span>
         </div>
       </div>
 
@@ -81,230 +123,6 @@
         aria-atomic="true"
         hidden
       ></div>
-
-      <section
-        class="profile-settings"
-        id="profileSettings"
-        aria-labelledby="profileSettingsTitle"
-        hidden
-      >
-        <div class="profile-settings-heading">
-          <div>
-            <span class="auth-kicker">Your preferences</span>
-            <h3 id="profileSettingsTitle">Profile settings</h3>
-          </div>
-        </div>
-
-        <div class="profile-loading" id="profileLoading" role="status" aria-live="polite">
-          Loading profile…
-        </div>
-
-        <div class="profile-load-error" id="profileLoadError" role="alert" hidden>
-          <span id="profileLoadErrorMessage">Profile settings could not be loaded.</span>
-          <button class="btn btn-quiet btn-sm" id="retryProfileButton" type="button">
-            Retry profile
-          </button>
-        </div>
-
-        <form class="profile-form" id="profileForm" hidden>
-          <div class="profile-field">
-            <label for="profileDisplayName">Display name</label>
-            <input
-              id="profileDisplayName"
-              name="displayName"
-              type="text"
-              autocomplete="name"
-              minlength="2"
-              maxlength="80"
-              required
-            />
-          </div>
-
-          <div class="profile-field">
-            <label for="profilePreferredLanguage">Preferred language</label>
-            <select id="profilePreferredLanguage" name="preferredLanguage" required>
-              <option value="Pashto">Pashto</option>
-              <option value="Urdu">Urdu</option>
-              <option value="English">English</option>
-            </select>
-          </div>
-
-          <label class="profile-privacy-choice" for="profileLeaderboardOptIn">
-            <input
-              id="profileLeaderboardOptIn"
-              name="leaderboardOptIn"
-              type="checkbox"
-            />
-            <span>
-              <strong>Show my display name on the public leaderboard</strong>
-              <small>
-                When disabled, your name will not be shown publicly on future contributor
-                rankings.
-              </small>
-            </span>
-          </label>
-
-          <button class="btn btn-primary profile-save-button" id="profileSaveButton" type="submit">
-            <span id="profileSaveButtonLabel">Save profile</span>
-          </button>
-
-          <div
-            class="auth-message profile-status"
-            id="profileStatus"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            hidden
-          ></div>
-        </form>
-      </section>
-
-      <section
-        class="my-points"
-        id="myPointsSection"
-        aria-labelledby="myPointsTitle"
-        hidden
-      >
-        <div class="my-points-heading">
-          <div>
-            <span class="auth-kicker">Your contribution points</span>
-            <h3 id="myPointsTitle">My Points</h3>
-          </div>
-          <button
-            class="btn btn-quiet btn-sm my-points-refresh"
-            id="refreshPointsButton"
-            type="button"
-          >
-            Refresh
-          </button>
-        </div>
-
-        <div class="my-points-balance-card">
-          <span>Current balance</span>
-          <strong id="myPointsBalance">0 points</strong>
-          <p>Points are awarded when your voice contributions are approved.</p>
-          <small>
-            If an approval is reversed, its point reversal remains in your history.
-          </small>
-        </div>
-
-        <div
-          class="my-points-status"
-          id="myPointsStatus"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          hidden
-        ></div>
-
-        <div class="my-points-error" id="myPointsError" role="alert" hidden>
-          <span id="myPointsErrorMessage">We could not load your points.</span>
-          <button class="btn btn-quiet btn-sm" id="retryPointsButton" type="button">
-            Retry
-          </button>
-        </div>
-
-        <div class="my-points-empty" id="myPointsEmpty" hidden>
-          <strong>You do not have any point activity yet.</strong>
-          <span>
-            Points will appear here after one of your voice contributions is approved.
-          </span>
-        </div>
-
-        <ol
-          class="my-points-history"
-          id="myPointsHistory"
-          aria-label="Your private point history"
-          hidden
-        ></ol>
-
-        <div class="my-points-pagination">
-          <p
-            class="my-points-load-more-error"
-            id="myPointsLoadMoreError"
-            role="alert"
-            hidden
-          ></p>
-          <button
-            class="btn btn-quiet my-points-load-more"
-            id="loadMorePointsButton"
-            type="button"
-            hidden
-          >
-            Load more
-          </button>
-        </div>
-      </section>
-
-      <section
-        class="my-contributions"
-        id="myContributionsSection"
-        aria-labelledby="myContributionsTitle"
-        hidden
-      >
-        <div class="my-contributions-heading">
-          <div>
-            <span class="auth-kicker">Your voice history</span>
-            <h3 id="myContributionsTitle">My Contributions</h3>
-          </div>
-          <button
-            class="btn btn-quiet btn-sm my-contributions-refresh"
-            id="refreshContributionsButton"
-            type="button"
-          >
-            Refresh
-          </button>
-        </div>
-
-        <div
-          class="my-contributions-status"
-          id="myContributionsStatus"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          hidden
-        ></div>
-
-        <div class="my-contributions-error" id="myContributionsError" role="alert" hidden>
-          <span id="myContributionsErrorMessage">
-            We could not load your contributions.
-          </span>
-          <button class="btn btn-quiet btn-sm" id="retryContributionsButton" type="button">
-            Retry
-          </button>
-        </div>
-
-        <div class="my-contributions-empty" id="myContributionsEmpty" hidden>
-          <strong>You have not submitted any voice contributions yet.</strong>
-          <span>
-            Record your first Pashto voice contribution to help improve KP AWAZ.
-          </span>
-        </div>
-
-        <ol
-          class="my-contributions-list"
-          id="myContributionsList"
-          aria-label="Your submitted voice contributions"
-          hidden
-        ></ol>
-
-        <div class="my-contributions-pagination">
-          <p
-            class="my-contributions-load-more-error"
-            id="myContributionsLoadMoreError"
-            role="alert"
-            hidden
-          ></p>
-          <button
-            class="btn btn-quiet my-contributions-load-more"
-            id="loadMoreContributionsButton"
-            type="button"
-            hidden
-          >
-            Load more
-          </button>
-        </div>
-      </section>
 
       <div class="auth-account-actions">
         <button class="btn btn-primary" id="authRetryButton" type="button" hidden>

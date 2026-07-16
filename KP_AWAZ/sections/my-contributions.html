@@ -1,0 +1,75 @@
+<section
+  class="section-pad my-contributions-page private-page-section"
+  id="myContributionsPageSection"
+  aria-labelledby="myContributionsPageTitle"
+  hidden
+>
+  <div class="wrap">
+    <div class="my-contributions-page-heading">
+      <span class="eyebrow-line">Private voice history</span>
+      <h2 id="myContributionsPageTitle" tabindex="-1">My Contributions</h2>
+      <p>Review the recordings submitted by your verified account.</p>
+    </div>
+
+    <div class="my-contributions-panel">
+      <div class="my-contributions-heading">
+        <div>
+          <span class="auth-kicker">Your submitted recordings</span>
+          <h3>Contribution history</h3>
+        </div>
+        <button
+          class="btn btn-quiet btn-sm my-contributions-refresh"
+          id="refreshContributionsButton"
+          type="button"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div
+        class="my-contributions-status"
+        id="myContributionsStatus"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        hidden
+      ></div>
+
+      <div class="my-contributions-error" id="myContributionsError" role="alert" hidden>
+        <span id="myContributionsErrorMessage">We could not load your contributions.</span>
+        <button class="btn btn-quiet btn-sm" id="retryContributionsButton" type="button">
+          Retry
+        </button>
+      </div>
+
+      <div class="my-contributions-empty" id="myContributionsEmpty" hidden>
+        <strong>You have not submitted any voice contributions yet.</strong>
+        <span>Record your first contribution to help improve KP AWAZ.</span>
+      </div>
+
+      <ol
+        class="my-contributions-list"
+        id="myContributionsList"
+        aria-label="Your submitted voice contributions"
+        hidden
+      ></ol>
+
+      <div class="my-contributions-pagination">
+        <p
+          class="my-contributions-load-more-error"
+          id="myContributionsLoadMoreError"
+          role="alert"
+          hidden
+        ></p>
+        <button
+          class="btn btn-quiet my-contributions-load-more"
+          id="loadMoreContributionsButton"
+          type="button"
+          hidden
+        >
+          Load more
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

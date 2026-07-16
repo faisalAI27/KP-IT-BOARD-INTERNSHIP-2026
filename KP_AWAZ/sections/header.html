@@ -18,28 +18,36 @@
     </button>
 
     <nav class="links" id="primary-navigation" aria-label="Primary">
-      <a href="#mission">Mission</a>
-      <a href="#languages">Languages</a>
-      <a href="#how">How it works</a>
-      <a href="#contribute">Contribute</a>
-      <a href="#leaderboard">Leaderboard</a>
-      <a href="#faq">FAQ</a>
+      <a href="#top" data-public-nav>Home</a>
+      <a href="#contribute" data-public-nav>Contribute</a>
+      <a href="#leaderboard" data-public-nav>Leaderboard</a>
+      <button
+        class="nav-private-link"
+        id="myContributionsNavButton"
+        type="button"
+        data-nav-target="my-contributions"
+        aria-controls="myContributionsPageSection"
+        hidden
+      >
+        My Contributions
+      </button>
     </nav>
 
     <div class="nav-cta">
-      <a class="nav-text-link" href="#mission">Our story</a>
-      <button
-        class="btn btn-quiet btn-sm auth-header-button"
-        id="authHeaderButton"
-        type="button"
-        data-auth-kind="loading"
-        aria-haspopup="dialog"
-        aria-controls="authDialog"
-        disabled
-      >
-        <span class="auth-status-dot" aria-hidden="true"></span>
-        <span id="authHeaderButtonLabel">Checking account…</span>
-      </button>
+      <div class="account-control">
+        <button
+          class="btn btn-quiet btn-sm auth-header-button"
+          id="authHeaderButton"
+          type="button"
+          data-auth-kind="loading"
+          aria-haspopup="dialog"
+          aria-controls="authDialog"
+          disabled
+        >
+          <span class="auth-status-dot" aria-hidden="true"></span>
+          <span id="authHeaderButtonLabel">Checking account…</span>
+        </button>
+      </div>
       <a class="btn btn-primary btn-sm" href="#contribute">
         Start contributing
         <svg viewBox="0 0 20 20" aria-hidden="true">

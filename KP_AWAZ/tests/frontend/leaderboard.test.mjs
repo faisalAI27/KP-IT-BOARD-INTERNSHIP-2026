@@ -171,10 +171,14 @@ test("leaderboard partial is public, semantic, and accessible", async () => {
     readFile(new URL("../../sections/header.html", import.meta.url), "utf8"),
   ]);
   assert.match(html, /<section[\s\S]*id="leaderboard"/);
-  assert.match(html, /<ol[\s\S]*id="leaderboardList"/);
+  assert.match(html, /<table class="leaderboard-table"/);
+  assert.match(html, /<thead>[\s\S]*<th scope="col">Rank<\/th>/);
+  assert.match(html, /<th scope="col">Contributor<\/th>/);
+  assert.match(html, /<th scope="col">Approved contributions<\/th>/);
+  assert.match(html, /<tbody id="leaderboardList"/);
   assert.match(html, /id="leaderboardStatus"[\s\S]*aria-live="polite"/);
   assert.match(index, /sections\/leaderboard\.html/);
-  assert.match(header, /href="#leaderboard">Leaderboard/);
+  assert.match(header, /href="#leaderboard"[^>]*>Leaderboard/);
   assert.equal(html.includes("authDialog"), false);
 });
 
@@ -200,6 +204,7 @@ test("valid public leaderboard entries render", async () => {
   const fixture = createFixture({ get: () => leaderboardPage([ENTRY_A, ENTRY_B]) });
   await settle();
   assert.equal(element(fixture, "leaderboardList").children.length, 2);
+  assert.equal(element(fixture, "leaderboardList").children[0].tagName, "TR");
   assert.match(renderedText(fixture), /Faisal Imran/);
   assert.match(renderedText(fixture), /Another Contributor/);
 });
@@ -230,6 +235,22 @@ test("tied backend ranks render correctly", async () => {
     (entry) => entry.children[0].textContent,
   );
   assert.deepEqual(ranks, ["#1", "#1", "#2"]);
+});
+
+
+test("leaderboard rows use compact badges and bold contributor-name cells", async () => {
+  const fixture = createFixture({ get: () => leaderboardPage([ENTRY_A]) });
+  await settle();
+  const row = element(fixture, "leaderboardList").children[0];
+  assert.equal(row.children[0].tagName, "TD");
+  assert.equal(row.children[0].children[0].className, "leaderboard-rank-badge");
+  assert.equal(row.children[1].tagName, "TD");
+  assert.equal(
+    row.children[1].children[0].className,
+    "leaderboard-contributor-name",
+  );
+  assert.equal(row.children[2].tagName, "TD");
+  assert.equal(row.children[2].className, "leaderboard-approved-count");
 });
 
 
@@ -567,8 +588,26 @@ test("leaderboard mobile styles prevent horizontal overflow", async () => {
     readFile(new URL("../../styles/leaderboard.css", import.meta.url), "utf8"),
     readFile(new URL("../../styles/responsive.css", import.meta.url), "utf8"),
   ]);
-  assert.match(css, /\.leaderboard-panel[\s\S]*min-width:\s*0/);
-  assert.match(css, /\.leaderboard-contributor h3[\s\S]*overflow-wrap:\s*anywhere/);
-  assert.match(css, /grid-template-columns:\s*74px minmax\(0, 1fr\)/);
-  assert.match(responsive, /\.leaderboard-entry[\s\S]*grid-template-columns:\s*54px minmax\(0, 1fr\)/);
+  assert.match(css, /\.leaderboard-table-wrapper[\s\S]*overflow-x:\s*auto/);
+  assert.match(css, /\.leaderboard-contributor-name[\s\S]*font-weight:\s*700/);
+  assert.match(css, /\.leaderboard-contributor-name[\s\S]*overflow-wrap:\s*anywhere/);
+  assert.match(css, /\.leaderboard-rank-badge[\s\S]*width:\s*36px/);
+  assert.match(css, /\.leaderboard-rank-badge[\s\S]*max-width:\s*36px/);
+  assert.match(responsive, /\.leaderboard-rank-badge[\s\S]*width:\s*28px/);
+});
+
+
+test("leaderboard loading empty and error states keep valid table markup", async () => {
+  const html = await readFile(
+    new URL("../../sections/leaderboard.html", import.meta.url),
+    "utf8",
+  );
+  const table = html.match(/<table class="leaderboard-table"[\s\S]*?<\/table>/)?.[0];
+  assert.ok(table);
+  assert.match(table, /<thead>[\s\S]*<\/thead>/);
+  assert.match(table, /<tbody id="leaderboardList" hidden><\/tbody>/);
+  assert.equal(/<div[^>]*>[^<]*<tr/i.test(table), false);
+  assert.match(html, /id="leaderboardStatus"/);
+  assert.match(html, /id="leaderboardEmpty"/);
+  assert.match(html, /id="leaderboardError"/);
 });

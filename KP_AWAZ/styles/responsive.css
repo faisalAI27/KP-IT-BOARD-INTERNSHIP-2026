@@ -13,7 +13,7 @@
     min-height: 540px;
   }
 
-  .art-frame {
+  .hero-cultural-frame {
     right: 0;
     height: 510px;
   }
@@ -107,16 +107,20 @@
     display: flex;
   }
 
-  .links a {
+  .links a,
+  .nav-private-link {
     padding: 11px 12px;
     border-radius: 8px;
+    text-align: left;
   }
 
-  .links a:hover {
+  .links a:hover,
+  .nav-private-link:hover {
     background: var(--paper-soft);
   }
 
-  .links a::after {
+  .links a::after,
+  .nav-private-link::after {
     display: none;
   }
 
@@ -138,7 +142,7 @@
   }
 
   .hero h1 {
-    font-size: clamp(3.4rem, 10vw, 5rem);
+    font-size: clamp(3.25rem, 8vw, 4.5rem);
   }
 
   .hero-art {
@@ -147,7 +151,7 @@
     margin: 10px auto 0;
   }
 
-  .art-frame {
+  .hero-cultural-frame {
     right: 50%;
     width: 445px;
     height: 540px;
@@ -276,21 +280,6 @@
     height: 42px;
   }
 
-  .my-points-heading,
-  .my-contributions-heading {
-    align-items: flex-start;
-  }
-
-  .my-points-refresh,
-  .my-contributions-refresh {
-    min-height: 40px;
-  }
-
-  .my-contribution-meta-row {
-    grid-template-columns: 68px minmax(0, 1fr);
-    gap: 8px;
-  }
-
   .leaderboard-heading {
     gap: 20px;
   }
@@ -301,6 +290,14 @@
 
   .leaderboard-panel {
     border-radius: 22px;
+  }
+
+  .leaderboard-rank-badge {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    max-height: 32px;
   }
 
   .menu-toggle {
@@ -342,20 +339,13 @@
     min-height: 505px;
   }
 
-  .art-frame {
+  .hero-cultural-frame {
     width: min(92%, 395px);
     height: 465px;
   }
 
-  .sound-core {
-    top: 180px;
-  }
-
-  .art-sun {
-    top: 68px;
-    right: 65px;
-    width: 85px;
-    height: 85px;
+  .hero-cultural-caption {
+    padding: 64px 20px 20px;
   }
 
   .chip-top {
@@ -544,25 +534,14 @@
     padding-inline: 10px;
   }
 
-  .my-points-heading,
-  .my-contributions-heading {
+  .auth-otp-actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .my-points-refresh,
-  .my-contributions-refresh {
-    width: 100%;
-  }
-
-  .my-points-entry-top {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .my-contribution-meta-row {
-    grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .auth-text-button {
+    width: 100%;
   }
 
   .leaderboard-refresh {
@@ -578,17 +557,36 @@
     border-radius: 19px;
   }
 
-  .leaderboard-entry {
-    padding: 12px;
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 11px;
+  .leaderboard-table th,
+  .leaderboard-entry td {
+    padding: 10px 8px;
   }
 
-  .leaderboard-rank {
+  .leaderboard-table th:first-child,
+  .leaderboard-rank-cell {
     width: 48px;
-    height: 48px;
-    border-radius: 15px 15px 15px 6px;
-    font-size: 1rem;
+  }
+
+  .leaderboard-table th:last-child {
+    width: 112px;
+  }
+
+  .leaderboard-rank-badge {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    max-height: 28px;
+    font-size: 0.62rem;
+  }
+
+  .leaderboard-contributor-name {
+    font-size: 0.82rem;
+  }
+
+  .leaderboard-approved-count span {
+    display: block;
+    font-size: 0.63rem;
   }
 
   .leaderboard-error {
@@ -618,16 +616,19 @@
     min-height: 445px;
   }
 
-  .art-frame {
+  .hero-cultural-frame {
     width: 100%;
     height: 420px;
     border-width: 6px;
   }
 
-  .sound-core {
-    top: 160px;
-    width: 84px;
-    height: 84px;
+  .hero-cultural-frame img {
+    object-position: center 55%;
+  }
+
+  .hero-cultural-caption {
+    padding: 58px 18px 18px;
+    font-size: 0.96rem;
   }
 
   .art-chip {

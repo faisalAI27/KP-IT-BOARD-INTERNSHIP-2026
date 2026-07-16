@@ -1,5 +1,5 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-email-otp";
 
 
 const POINTS_PATH = "/profile/me/points";

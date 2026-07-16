@@ -83,6 +83,7 @@ const ELEMENT_IDS = [
   "retryProfileButton",
   "profileForm",
   "profileDisplayName",
+  "profileVerifiedEmail",
   "profilePreferredLanguage",
   "profileLeaderboardOptIn",
   "profileSaveButton",
@@ -202,12 +203,14 @@ async function settle() {
 
 test("profile partial has associated fields, privacy copy, and live status", async () => {
   const html = await readFile(
-    new URL("../../sections/auth-dialog.html", import.meta.url),
+    new URL("../../sections/account.html", import.meta.url),
     "utf8",
   );
 
   assert.match(html, /<label for="profileDisplayName">Display name<\/label>/);
   assert.match(html, /id="profileDisplayName"[\s\S]*minlength="2"[\s\S]*maxlength="80"/);
+  assert.match(html, /<label for="profileVerifiedEmail">Verified email<\/label>/);
+  assert.match(html, /id="profileVerifiedEmail"[\s\S]*readonly/);
   assert.match(html, /<label for="profilePreferredLanguage">Preferred language<\/label>/);
   assert.match(html, /id="profilePreferredLanguage"[\s\S]*<option value="Pashto">/);
   assert.match(html, /id="profileLeaderboardOptIn"[\s\S]*type="checkbox"/);
@@ -255,6 +258,7 @@ test("loaded profile renders all preferences and updates the header", async () =
   await settle();
 
   assert.equal(element(fixture, "profileDisplayName").value, "Faisal Imran");
+  assert.equal(element(fixture, "profileVerifiedEmail").value, "person@example.com");
   assert.equal(element(fixture, "profilePreferredLanguage").value, "Pashto");
   assert.equal(element(fixture, "profileLeaderboardOptIn").checked, false);
   assert.equal(element(fixture, "profileForm").hidden, false);
@@ -290,6 +294,7 @@ test("null email and provider do not affect profile rendering", async () => {
   await settle();
 
   assert.equal(fixture.ui.getProfileState().profile.email, null);
+  assert.equal(element(fixture, "profileVerifiedEmail").value, "");
   assert.equal(element(fixture, "profileDisplayName").value, "Faisal Imran");
 });
 

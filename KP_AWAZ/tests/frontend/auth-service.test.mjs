@@ -84,17 +84,27 @@ function createFakeSupabase({
   sessionError = null,
   googleError = null,
   emailError = null,
+  otpError = null,
+  otpSession = session({
+    user: {
+      id: USER_ID,
+      email: "person@example.com",
+      app_metadata: { provider: "email" },
+    },
+  }),
   signOutError = null,
 } = {}) {
   const calls = {
     getSession: 0,
     google: [],
     email: [],
+    otp: [],
     signOut: 0,
     subscriptions: 0,
     unsubscriptions: 0,
   };
   let authCallback = null;
+  let currentSession = initialSession;
 
   const client = {
     auth: {
@@ -102,7 +112,7 @@ function createFakeSupabase({
         calls.getSession += 1;
         if (sessionError instanceof Error) throw sessionError;
         return {
-          data: { session: initialSession },
+          data: { session: currentSession },
           error: sessionError,
         };
       },
@@ -114,8 +124,17 @@ function createFakeSupabase({
         calls.email.push(input);
         return { data: {}, error: emailError };
       },
+      async verifyOtp(input) {
+        calls.otp.push(input);
+        if (!otpError) currentSession = otpSession;
+        return {
+          data: { session: otpError ? null : otpSession },
+          error: otpError,
+        };
+      },
       async signOut() {
         calls.signOut += 1;
+        if (!signOutError) currentSession = null;
         return { error: signOutError };
       },
       onAuthStateChange(callback) {
@@ -139,6 +158,7 @@ function createFakeSupabase({
     calls,
     client,
     emit(event, nextSession) {
+      currentSession = nextSession;
       authCallback?.(event, nextSession);
     },
   };
@@ -315,26 +335,22 @@ test("Google sign-in does not store provider tokens in public state", async () =
 });
 
 
-test("valid trimmed email starts a magic-link request", async () => {
+test("valid normalized email requests a six-digit sign-in code", async () => {
   const fake = createFakeSupabase();
   const service = createService(fake);
 
-  const result = await service.signInWithEmail("  person@example.com  ");
+  const result = await service.requestEmailOtp("  Person@Example.com  ");
 
   assert.deepEqual(fake.calls.email, [
     {
       email: "person@example.com",
       options: {
-        emailRedirectTo: REDIRECT_URL,
         shouldCreateUser: true,
       },
     },
   ]);
-  assert.deepEqual(result, {
-    ok: true,
-    message: "Check your email for the sign-in link.",
-  });
-  assert.equal(JSON.stringify(result).includes("existing"), false);
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.equal("emailRedirectTo" in fake.calls.email[0].options, false);
 });
 
 
@@ -342,7 +358,7 @@ test("blank and clearly malformed email addresses are rejected", async (context)
   for (const email of ["", "   ", "missing-at.example.com", "person@example"]) {
     await context.test(email || "blank", async () => {
       const service = createService(createFakeSupabase());
-      await assert.rejects(service.signInWithEmail(email), (error) => {
+      await assert.rejects(service.requestEmailOtp(email), (error) => {
         assert.equal(error.code, "INVALID_EMAIL");
         return true;
       });
@@ -351,17 +367,120 @@ test("blank and clearly malformed email addresses are rejected", async (context)
 });
 
 
-test("Supabase email error becomes a safe frontend error", async () => {
+test("Supabase code-request error becomes a safe frontend error", async () => {
   const fake = createFakeSupabase({
     emailError: new Error(`raw ${ACCESS_TOKEN}`),
   });
   const service = createService(fake);
 
-  await assert.rejects(service.signInWithEmail("person@example.com"), (error) => {
-    assert.equal(error.code, "EMAIL_SIGN_IN_FAILED");
+  await assert.rejects(service.requestEmailOtp("person@example.com"), (error) => {
+    assert.equal(error.code, "EMAIL_OTP_SEND_FAILED");
     assert.equal(error.message.includes(ACCESS_TOKEN), false);
     return true;
   });
+});
+
+
+test("six-digit email OTP verifies with type email and enters signed-in state", async () => {
+  const fake = createFakeSupabase();
+  const backendRequests = [];
+  const service = createService(fake, {
+    fetchImpl: async (url, options) => {
+      backendRequests.push({ url, options });
+      return jsonResponse(verifiedUser({ provider: "email" }));
+    },
+  });
+
+  const result = await service.verifyEmailOtp(
+    "  Person@Example.com ",
+    " 12 34 56 ",
+  );
+
+  assert.deepEqual(fake.calls.otp, [
+    {
+      email: "person@example.com",
+      token: "123456",
+      type: "email",
+    },
+  ]);
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.equal(fake.calls.getSession, 1);
+  assert.equal(service.getCurrentAuthState().status, "signed_in");
+  assert.deepEqual(
+    service.getCurrentAuthState().backendUser,
+    verifiedUser({ provider: "email" }),
+  );
+  assert.equal(backendRequests.length, 1);
+  assert.equal(backendRequests[0].url, `${API_BASE_URL}/auth/me`);
+  assert.equal(
+    backendRequests[0].options.headers.Authorization,
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+  assert.equal(JSON.stringify(backendRequests).includes("123456"), false);
+});
+
+
+test("incomplete and nonnumeric OTP values are rejected before Supabase", async (context) => {
+  for (const otp of ["", "12345", "1234567", "12a456"]) {
+    await context.test(otp || "blank", async () => {
+      const fake = createFakeSupabase();
+      const service = createService(fake);
+
+      await assert.rejects(
+        service.verifyEmailOtp("person@example.com", otp),
+        (error) => {
+          assert.equal(error.code, "INVALID_EMAIL_OTP");
+          return true;
+        },
+      );
+      assert.equal(fake.calls.otp.length, 0);
+    });
+  }
+});
+
+
+test("invalid or expired Supabase OTP returns only the safe fixed error", async () => {
+  const fake = createFakeSupabase({
+    otpError: new Error(`expired 123456 ${ACCESS_TOKEN}`),
+  });
+  const service = createService(fake);
+
+  await assert.rejects(
+    service.verifyEmailOtp("person@example.com", "123456"),
+    (error) => {
+      assert.equal(error.code, "INVALID_OR_EXPIRED_EMAIL_OTP");
+      assert.equal(
+        error.message,
+        "Invalid or expired code. Request a new code and try again.",
+      );
+      assert.equal(error.message.includes("123456"), false);
+      assert.equal(error.message.includes(ACCESS_TOKEN), false);
+      return true;
+    },
+  );
+});
+
+
+test("OTP verification failure never exposes raw Supabase secrets", async () => {
+  const fake = createFakeSupabase();
+  fake.client.auth.verifyOtp = async () => {
+    throw new Error(`network 123456 ${REFRESH_TOKEN}`);
+  };
+  const service = createService(fake);
+
+  await assert.rejects(
+    service.verifyEmailOtp("person@example.com", "123456"),
+    (error) => {
+      assert.equal(error.code, "EMAIL_OTP_VERIFY_FAILED");
+      assert.equal(
+        error.message,
+        "We could not verify the code. Please try again.",
+      );
+      assert.equal(error.message.includes("123456"), false);
+      assert.equal(error.message.includes(REFRESH_TOKEN), false);
+      return true;
+    },
+  );
 });
 
 

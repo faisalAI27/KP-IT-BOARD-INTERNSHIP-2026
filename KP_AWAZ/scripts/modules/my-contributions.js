@@ -2,8 +2,12 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js";
+} from "../services/auth-service.js?v=20260717-email-otp";
 import { getMyContributions } from "../services/contributions-api.js";
+import {
+  MY_CONTRIBUTIONS_SECTION,
+  PRIVATE_SECTION_CHANGED_EVENT,
+} from "./private-navigation.js";
 
 
 export const CONTRIBUTION_CREATED_EVENT = "kp-awaz:contribution-created";
@@ -196,15 +200,31 @@ export class MyContributions {
     this._generation = 0;
     this._lifecycleId = 0;
     this._activeUserId = null;
+    this._sectionOpen = false;
+    this._needsRefresh = false;
     this._refreshQueued = false;
     this._state = emptyState();
     this._handleContributionCreated = () => {
       if (this._destroyed || !this._activeUserId) return;
+      this._needsRefresh = true;
+      if (!this._sectionOpen) return;
       if (this._state.status === "loading" || this._state.status === "loading-more") {
         this._refreshQueued = true;
         return;
       }
       void this.refresh();
+    };
+    this._handlePrivateSectionChanged = (event) => {
+      const open = event?.detail?.section === MY_CONTRIBUTIONS_SECTION;
+      this._sectionOpen = Boolean(this._activeUserId) && open;
+      this._render();
+      if (
+        this._sectionOpen &&
+        verifiedUserId(this._auth.getCurrentAuthState()) === this._activeUserId &&
+        (this._needsRefresh || this._state.status === "idle")
+      ) {
+        void this.refresh();
+      }
     };
   }
 
@@ -242,6 +262,7 @@ export class MyContributions {
     const lifecycleId = this._lifecycleId;
     const userId = this._activeUserId;
     const hadItems = this._state.items.length > 0;
+    this._needsRefresh = false;
     this._state = {
       ...this._state,
       status: "loading",
@@ -345,6 +366,8 @@ export class MyContributions {
     this._generation += 1;
     this._lifecycleId += 1;
     this._activeUserId = null;
+    this._sectionOpen = false;
+    this._needsRefresh = false;
     this._refreshQueued = false;
     this._unsubscribe?.();
     this._unsubscribe = null;
@@ -359,7 +382,7 @@ export class MyContributions {
   _resolveElements() {
     if (!this._root?.getElementById) return null;
     const ids = {
-      section: "myContributionsSection",
+      section: "myContributionsPageSection",
       status: "myContributionsStatus",
       list: "myContributionsList",
       empty: "myContributionsEmpty",
@@ -392,6 +415,11 @@ export class MyContributions {
         CONTRIBUTION_CREATED_EVENT,
         this._handleContributionCreated,
       );
+      this._listen(
+        this._eventTarget,
+        PRIVATE_SECTION_CHANGED_EVENT,
+        this._handlePrivateSectionChanged,
+      );
     }
   }
 
@@ -406,19 +434,17 @@ export class MyContributions {
       this._resetHistory();
       return;
     }
-    if (
-      nextUserId === this._activeUserId &&
-      this._state.status !== "idle"
-    ) {
-      return;
-    }
+    if (nextUserId === this._activeUserId) return;
 
+    const sectionOpen = !this._elements.section.hidden;
     this._generation += 1;
     this._activeUserId = nextUserId;
+    this._sectionOpen = sectionOpen;
+    this._needsRefresh = true;
     this._refreshQueued = false;
     this._state = emptyState();
     this._render();
-    void this.refresh();
+    if (this._sectionOpen) void this.refresh();
   }
 
   _resetHistory() {
@@ -428,6 +454,8 @@ export class MyContributions {
       this._state.items.length === 0;
     if (!alreadyReset) this._generation += 1;
     this._activeUserId = null;
+    this._sectionOpen = false;
+    this._needsRefresh = false;
     this._refreshQueued = false;
     this._state = emptyState();
     this._render();
@@ -461,9 +489,18 @@ export class MyContributions {
       return;
     }
     this._refreshQueued = false;
-    queueMicrotask(() => {
-      if (!this._destroyed && userId === this._activeUserId) void this.refresh();
-    });
+    this._needsRefresh = true;
+    if (this._sectionOpen) {
+      queueMicrotask(() => {
+        if (
+          !this._destroyed &&
+          this._sectionOpen &&
+          userId === this._activeUserId
+        ) {
+          void this.refresh();
+        }
+      });
+    }
   }
 
   _createMetadataRow(label, value, { language = null } = {}) {
@@ -533,7 +570,7 @@ export class MyContributions {
     const loadMoreError = this._state.error?.scope === "load-more";
     const hasMore = hasItems && this._state.items.length < this._state.total;
 
-    this._elements.section.hidden = !active;
+    this._elements.section.hidden = !active || !this._sectionOpen;
     this._elements.status.hidden = !loading;
     this._elements.status.textContent = loading
       ? hasItems

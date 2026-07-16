@@ -4,7 +4,7 @@ export async function loadPartials(root = document) {
   await Promise.all(
     slots.map(async (slot) => {
       const partialPath = slot.dataset.partial;
-      const response = await fetch(partialPath);
+      const response = await fetch(partialPath, { cache: "no-store" });
 
       if (!response.ok) {
         throw new Error(`Could not load ${partialPath} (${response.status}).`);
@@ -23,4 +23,3 @@ export function restoreHashPosition() {
   const target = document.querySelector(window.location.hash);
   if (target) requestAnimationFrame(() => target.scrollIntoView());
 }
-

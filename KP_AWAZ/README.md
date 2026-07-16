@@ -54,10 +54,15 @@ KP_AWAZ/
 │   ├── data/                  # Temporary frontend datasets
 │   ├── modules/               # Navigation, FAQ, recorder and contribution UI
 │   └── services/              # All backend communication
-├── assets/images/             # Logos and future images
+├── assets/images/             # Brand and culturally rooted page imagery
 ├── docs/                      # Architecture and API contracts
 └── tools/                     # Production and Supabase vendor build scripts
 ```
+
+The main-page hero uses the locally stored, optimized
+`assets/images/kp-community-voice-hero.jpg` illustration. Its arched responsive
+crop connects community voice recording with the people, landscape, materials,
+and warmth of Khyber Pakhtunkhwa while keeping the existing earthy palette.
 
 ## Production build
 
@@ -86,11 +91,28 @@ UI modules must not call `fetch` directly. Add or update calls in `scripts/servi
 
 ## Authentication interface
 
-The header provides a visible account control. Signed-out users can continue with Google or request an email magic link from the authentication dialog. Email authentication does not use or request a password.
+The header provides a visible account control. Signed-out users can continue
+with Google or request a six-digit email sign-in code from the authentication
+dialog. Email authentication does not use or request a password.
 
-Supabase manages browser session persistence, URL-session detection, and token refresh. Returning from a Google or email redirect uses the same startup flow to restore the session. The frontend keeps the complete session internal and sends only its access token to FastAPI for identity verification through `GET /api/auth/me`. The account interface is displayed as fully signed in only after that backend verification succeeds.
+Supabase manages browser session persistence, Google URL-session detection, and
+token refresh. The email template must render `{{ .Token }}` so the user can
+enter the delivered code in the second dialog step. The frontend requests codes
+with `shouldCreateUser: true`, verifies them with OTP type `email`, reloads the
+resulting Supabase session, and then runs the existing FastAPI `GET /api/auth/me`
+verification. The account interface is displayed as fully signed in only after
+that backend verification succeeds.
 
-Google sign-in requires the Google provider to be enabled and configured in the Supabase dashboard before live use. Email magic links require the frontend return address to be present in the project's allowed redirect URLs. For local development, the configured redirect is `http://127.0.0.1:4173/`.
+Email codes are held only by the OTP input while needed. They are cleared after
+success, cancellation, sign-out, email changes, and UI destruction; they are
+never written to browser storage, URLs, logs, or FastAPI requests. Resending
+uses the same normalized email and becomes available after a 60-second
+cooldown.
+
+Google sign-in requires the Google provider to be enabled and configured in the
+Supabase dashboard before live use. Its redirect behavior is unchanged. For
+local development, the configured Google redirect is
+`http://127.0.0.1:4173/`.
 
 Frontend authentication uses only the Supabase project URL and publishable key. A service-role key must never appear in frontend configuration, browser code, logs, or production files.
 
@@ -102,13 +124,35 @@ supabasePublishableKey
 redirectUrl
 ```
 
-When `redirectUrl` is blank, the application uses the current website origin and application root. Empty Supabase configuration does not stop navigation or FAQ features from initializing, but recording remains unavailable until authentication is configured and the user is verified.
+When `redirectUrl` is blank, Google OAuth uses the current website origin and
+application root. Empty Supabase configuration does not stop navigation or FAQ
+features from initializing, but recording remains unavailable until
+authentication is configured and the user is verified.
+
+### Header private navigation
+
+Signed-out visitors see Home, Contribute, Leaderboard, and Sign in. After
+FastAPI verifies the session, the header adds a separate **My Contributions**
+control and changes Sign in to the user's compact profile name. The profile-name
+control opens the dedicated Account section; My Contributions opens only the
+private recording history. Both use the existing single-page navigation and do
+not open a new browser tab.
+
+Sign-out hides both private destinations, clears their data, and returns the
+website to a public section. Long profile names are truncated in the header
+without changing the full saved display name.
 
 ## Profile settings
 
 After Supabase restores or creates a session, FastAPI verifies the signed-in user before the frontend requests profile data. The first authenticated `GET /api/profile/me` automatically creates that user's local application profile when one does not already exist.
 
-Profile settings are available inside the signed-in account dialog. Users can edit their display name, preferred language, and whether their display name may appear on the public leaderboard. Leaderboard visibility is private by default. The profile form includes loading, retry, validation, save, and no-change feedback without blocking the rest of the site.
+Profile settings are available in the dedicated signed-in **My Account**
+section alongside the verified email when available, current score, and Sign
+out. Users can edit their display name, preferred language, and whether their
+display name may appear on the public leaderboard. Leaderboard visibility is
+private by default. Contribution history is not rendered inside Account. The
+profile form includes loading, retry, validation, save, and no-change feedback
+without blocking the rest of the site.
 
 Supabase remains responsible for authentication and browser session management. FastAPI stores only application-specific profile preferences and the safe identity metadata needed to associate the profile with the verified Supabase user. Access tokens are not stored in the profile table or in profile UI state.
 
@@ -125,7 +169,13 @@ privacy-safe public leaderboard are calculated dynamically by the backend.
 Approved owned contributions also receive private append-only points. Rewards
 are not implemented yet.
 
-Signed-in users can view their private submission history in the **My Contributions** area of the account dialog. The interface loads ten results at a time from `GET /api/contributions/me`, supports refresh, retry, and Load more, and refreshes the first page automatically after a successful guided or open-recording upload. History is requested only after FastAPI verifies the current Supabase session.
+Signed-in users can view their private submission history in its own **My
+Contributions** section using the separate header control. The interface loads
+ten results at a time from `GET /api/contributions/me` and preserves loading,
+empty, safe error, retry, refresh, and Load more states. It does not preload the
+history merely because a user signs in. A successful guided or open-recording
+upload marks closed history as needing refresh, or refreshes it when the section
+is already open.
 
 The backend filters history by the identity derived from the bearer token. The frontend neither sends nor accepts a user ID for history requests, so one account cannot select or view another account's contributions. The two legacy unowned contributions do not appear in any user's history. Audio playback is not included because the history response does not provide a safe playable URL. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
 
@@ -169,10 +219,12 @@ rank approved contribution counts rather than points.
 ### Public Leaderboard
 
 The contributor website includes a public **Leaderboard** section that requires
-no login. It loads 20 eligible contributors at a time and provides loading,
-empty, safe error, retry, refresh, and Load more states. Manual refresh reflects
-recent profile-privacy or administrator-review changes without continuous
-polling.
+no login. It uses a structured semantic table with Rank, a bold Contributor
+name, and Approved contributions columns. Compact rank badges are consistently
+sized on desktop and mobile. The table loads 20 eligible contributors at a time
+and provides loading, empty, safe error, retry, refresh, and Load more states.
+Manual refresh reflects recent profile-privacy or administrator-review changes
+without continuous polling.
 
 Each public row displays only:
 
@@ -186,8 +238,8 @@ opt into leaderboard visibility and own at least one approved recording appear.
 No user/profile identifiers, email, provider, review history, audio metadata, or
 private contribution points are displayed.
 
-Private point balances remain available only to their signed-in owners through
-**My Points**. Public ranking is based solely on currently approved contribution
+Private scores remain available only to their signed-in owners in **My
+Account**. Public ranking is based solely on currently approved contribution
 count. Rewards are not implemented.
 
 ## Private contribution points
@@ -203,7 +255,7 @@ award. Existing approved owned contributions receive one idempotent backfill
 event. Earlier entries are never edited or deleted, and balances are calculated
 with `SUM(points_delta)` rather than stored on profiles.
 
-Authenticated users can retrieve only their own balance and ledger history:
+Authenticated users can retrieve only their own balance and ledger data:
 
 ```bash
 curl \
@@ -219,27 +271,20 @@ review reasons, or audio paths.
 The stored event types are represented by the API as `approvalAward`,
 `approvalReversal`, and `approvedBackfill`.
 
-### My Points
+### Account score
 
-Signed-in users can view their private current balance and append-only point
-history in the **My Points** area of the account dialog. History entries explain
-approval awards, approval reversals, and the initial credit for contributions
-that were already approved when the ledger was introduced. The interface loads
-20 entries at a time and provides safe loading, empty, error, retry, refresh,
-and Load more states. Refresh can be used to see point changes after a recent
-administrator review.
+The contributor interface displays only the top-level backend `balance` in a
+compact **Current score** card inside My Account. It requests the points endpoint
+with `limit=1&offset=0`, does not calculate the score from the returned page,
+and never renders or stores ledger items in UI state. The card provides loading,
+safe error, retry, and refresh behavior with correct `point`/`points` wording.
 
-One currently approved, owned contribution equals one point. Pending, rejected,
-and legacy unowned contributions do not award points. The balance is always
-calculated from immutable ledger entries rather than a mutable profile total,
-so approval reversals remain visible in history even after a contribution is
-approved again.
-
-Point totals and history are private during this phase. The public leaderboard
-continues to rank contributors by approved contribution count, not point
-balance. Points currently have no monetary value. Rewards and redemption are
-not implemented; there is no withdrawal, payment, transfer, or cash-value
-feature.
+The backend append-only ledger remains unchanged as the internal accounting
+mechanism, but contributor-facing approval, reversal, backfill, date, delta,
+and pagination cards are intentionally not displayed. One currently approved,
+owned contribution equals one point; pending, rejected, and legacy unowned
+contributions do not award points. Scores are private, have no monetary value,
+and do not affect the public approved-contribution leaderboard.
 
 ## Administrator contribution review
 

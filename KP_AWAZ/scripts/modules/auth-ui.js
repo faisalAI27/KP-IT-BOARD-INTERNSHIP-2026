@@ -1,17 +1,30 @@
 import {
   getCurrentAuthState,
-  signInWithEmail,
+  requestEmailOtp,
   signInWithGoogle,
   signOut,
   subscribeToAuthChanges,
+  verifyEmailOtp,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js";
+} from "../services/auth-service.js?v=20260717-email-otp";
 
 
+const EMAIL_OTP_COOLDOWN_MS = 60_000;
+const EMAIL_OTP_ACTIONS = new Set([
+  "email_request",
+  "otp_resend",
+  "otp_verify",
+]);
+const SIGN_IN_DESCRIPTION =
+  "Continue with Google or use a six-digit code sent to your email.";
 const UI_ERROR_MESSAGES = Object.freeze({
   AUTH_NOT_CONFIGURED: "Account sign-in is not configured.",
   GOOGLE_SIGN_IN_FAILED: "Google sign-in could not be started. Please try again.",
-  EMAIL_SIGN_IN_FAILED: "The sign-in email could not be sent. Please try again.",
+  EMAIL_OTP_SEND_FAILED: "We could not send the sign-in code. Please try again.",
+  EMAIL_OTP_VERIFY_FAILED: "We could not verify the code. Please try again.",
+  INVALID_OR_EXPIRED_EMAIL_OTP:
+    "Invalid or expired code. Request a new code and try again.",
+  INVALID_EMAIL_OTP: "Enter the complete six-digit code.",
   INVALID_EMAIL: "Enter a valid email address.",
   SIGN_OUT_FAILED: "Sign-out could not be completed. Please try again.",
   AUTHENTICATION_REQUIRED: "Your session has expired. Sign out, then sign in again.",
@@ -49,8 +62,18 @@ function safeUiErrorMessage(error, fallback = "Authentication could not be compl
 
 function providerLabel(provider) {
   if (provider === "google") return "Signed in with Google";
-  if (provider === "email") return "Signed in with an email magic link";
+  if (provider === "email") return "Signed in with an email code";
   return "Verified account";
+}
+
+
+function normalizeEmail(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+
+function normalizeOtp(otp) {
+  return typeof otp === "string" ? otp.replace(/\s+/g, "") : "";
 }
 
 
@@ -83,8 +106,7 @@ export function getAuthViewModel(state) {
       headerDisabled: true,
       dialogMode: "sign_in",
       title: "Sign in to KP AWAZ",
-      description:
-        "Save your place in the community using Google or a secure email link.",
+      description: SIGN_IN_DESCRIPTION,
       signInMessage: "",
       accountEmail: "Account not verified",
       accountProvider: "Verification in progress",
@@ -127,8 +149,7 @@ export function getAuthViewModel(state) {
       headerDisabled: true,
       dialogMode: "sign_in",
       title: "Sign in to KP AWAZ",
-      description:
-        "Save your place in the community using Google or a secure email link.",
+      description: SIGN_IN_DESCRIPTION,
       signInMessage: safeUiErrorMessage(error),
       accountEmail: "Account not verified",
       accountProvider: "Verification unavailable",
@@ -167,8 +188,7 @@ export function getAuthViewModel(state) {
       headerDisabled: false,
       dialogMode: "sign_in",
       title: "Sign in to KP AWAZ",
-      description:
-        "Save your place in the community using Google or a secure email link.",
+      description: SIGN_IN_DESCRIPTION,
       signInMessage: safeUiErrorMessage(error),
       accountEmail: "Account not verified",
       accountProvider: "Verification unavailable",
@@ -184,8 +204,7 @@ export function getAuthViewModel(state) {
     headerDisabled: false,
     dialogMode: "sign_in",
     title: "Sign in to KP AWAZ",
-    description:
-      "Save your place in the community using Google or a secure email link.",
+    description: SIGN_IN_DESCRIPTION,
     signInMessage: "",
     accountEmail: "Account not verified",
     accountProvider: "Verified account",
@@ -198,16 +217,23 @@ export function getAuthViewModel(state) {
 
 const defaultAuthApi = Object.freeze({
   getCurrentAuthState,
-  signInWithEmail,
+  requestEmailOtp,
   signInWithGoogle,
   signOut,
   subscribeToAuthChanges,
+  verifyEmailOtp,
   verifyCurrentUserWithBackend,
 });
 
 
 export class AuthUI {
-  constructor({ root = globalThis.document, authApi = defaultAuthApi } = {}) {
+  constructor({
+    root = globalThis.document,
+    authApi = defaultAuthApi,
+    clock = () => Date.now(),
+    setIntervalImpl = (...args) => globalThis.setInterval(...args),
+    clearIntervalImpl = (timer) => globalThis.clearInterval(timer),
+  } = {}) {
     this._root = root;
     this._auth = authApi;
     this._elements = null;
@@ -216,6 +242,14 @@ export class AuthUI {
     this._initialized = false;
     this._destroyed = false;
     this._pendingAction = null;
+    this._activeEmail = "";
+    this._emailFlowEpoch = 0;
+    this._emailStep = "email";
+    this._resendAvailableAt = 0;
+    this._resendTimer = null;
+    this._clock = clock;
+    this._setInterval = setIntervalImpl;
+    this._clearInterval = clearIntervalImpl;
     this._profileIdentity = null;
     this._signInMessage = null;
     this._accountMessage = null;
@@ -246,8 +280,14 @@ export class AuthUI {
       ) {
         this._profileIdentity = null;
       }
-      if (state.status === "signed_in") this._signInMessage = null;
-      if (state.status === "signed_out") this._accountMessage = null;
+      if (state.status === "signed_in") {
+        this._signInMessage = null;
+        this._clearOtpInput();
+      }
+      if (state.status === "signed_out") {
+        this._accountMessage = null;
+        this._resetEmailOtp({ clearEmail: true });
+      }
       this._render();
     });
     return true;
@@ -257,13 +297,19 @@ export class AuthUI {
     if (!this._initialized || this._destroyed) return;
     const cleanedUserId = typeof userId === "string" ? userId.trim() : "";
     const cleanedDisplayName = compactProfileLabel(displayName);
+    const fullDisplayName =
+      typeof displayName === "string" ? displayName.trim().slice(0, 80) : "";
     const verifiedUserId = this._state.backendUser?.id;
     this._profileIdentity =
       cleanedUserId &&
       cleanedDisplayName &&
       this._state.status === "signed_in" &&
       cleanedUserId === verifiedUserId
-        ? { userId: cleanedUserId, displayName: cleanedDisplayName }
+        ? {
+            userId: cleanedUserId,
+            displayName: cleanedDisplayName,
+            fullDisplayName,
+          }
         : null;
     this._render();
   }
@@ -290,11 +336,13 @@ export class AuthUI {
 
   closeDialog() {
     if (!this._initialized || !this._elements.dialog.open) return;
+    this._resetEmailOtp({ clearEmail: true });
     this._elements.dialog.close();
   }
 
   destroyAuthUI() {
     if (this._destroyed) return;
+    this._resetEmailOtp({ clearEmail: true });
     this._destroyed = true;
     this._initialized = false;
     this._pendingAction = null;
@@ -322,10 +370,21 @@ export class AuthUI {
       accountView: "authAccountView",
       googleButton: "authGoogleButton",
       googleLabel: "authGoogleButtonLabel",
+      emailStep: "authEmailStep",
       emailForm: "authEmailForm",
       emailInput: "authEmailInput",
       emailSubmit: "authEmailSubmit",
       emailSubmitLabel: "authEmailSubmitLabel",
+      otpStep: "authOtpStep",
+      otpEmail: "authOtpEmail",
+      otpForm: "authOtpForm",
+      otpInput: "authOtpInput",
+      otpSubmit: "authOtpSubmit",
+      otpSubmitLabel: "authOtpSubmitLabel",
+      otpResend: "authOtpResend",
+      otpResendLabel: "authOtpResendLabel",
+      otpChangeEmail: "authOtpChangeEmail",
+      otpCancel: "authOtpCancel",
       signInStatus: "authSignInStatus",
       accountEmail: "authAccountEmail",
       accountProvider: "authAccountProvider",
@@ -342,7 +401,9 @@ export class AuthUI {
   }
 
   _bindEvents() {
-    this._listen(this._elements.headerButton, "click", () => this.openDialog());
+    this._listen(this._elements.headerButton, "click", () => {
+      if (this._state.status !== "signed_in") this.openDialog();
+    });
     this._listen(this._elements.closeButton, "click", () => this.closeDialog());
     this._listen(this._elements.dialog, "cancel", (event) => {
       event.preventDefault();
@@ -353,6 +414,7 @@ export class AuthUI {
     });
     this._listen(this._elements.dialog, "close", () => {
       this._root.body?.classList?.remove("auth-dialog-open");
+      this._resetEmailOtp({ clearEmail: true });
       this._signInMessage = null;
       this._accountMessage = null;
       this._elements.headerButton.focus();
@@ -363,7 +425,26 @@ export class AuthUI {
     });
     this._listen(this._elements.emailForm, "submit", (event) => {
       event.preventDefault();
-      void this._sendMagicLink();
+      void this._requestEmailOtp();
+    });
+    this._listen(this._elements.otpForm, "submit", (event) => {
+      event.preventDefault();
+      void this._verifyEmailOtp();
+    });
+    this._listen(this._elements.otpInput, "input", () => {
+      this._normalizeOtpInput();
+    });
+    this._listen(this._elements.otpInput, "paste", (event) => {
+      this._pasteOtp(event);
+    });
+    this._listen(this._elements.otpResend, "click", () => {
+      void this._resendEmailOtp();
+    });
+    this._listen(this._elements.otpChangeEmail, "click", () => {
+      this._useDifferentEmail();
+    });
+    this._listen(this._elements.otpCancel, "click", () => {
+      this.closeDialog();
     });
     this._listen(this._elements.signOutButton, "click", () => {
       void this._signOut();
@@ -399,9 +480,9 @@ export class AuthUI {
     }
   }
 
-  async _sendMagicLink() {
+  async _requestEmailOtp() {
     if (this._pendingAction || this._destroyed) return;
-    const email = this._elements.emailInput.value.trim();
+    const email = normalizeEmail(this._elements.emailInput.value);
     this._elements.emailInput.value = email;
     this._elements.emailInput.setCustomValidity("");
     if (!email || !this._elements.emailInput.checkValidity()) {
@@ -413,29 +494,164 @@ export class AuthUI {
       this._render();
       return;
     }
-    if (!this._beginAction("email")) return;
+    if (!this._beginAction("email_request")) return;
+    const epoch = this._emailFlowEpoch;
 
     try {
-      await this._auth.signInWithEmail(email);
-      if (!this._destroyed) {
+      const result = await this._auth.requestEmailOtp(email);
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._activeEmail = normalizeEmail(result?.email) || email;
+        this._emailStep = "otp";
+        this._clearOtpInput();
+        this._startResendCooldown();
         this._signInMessage = {
-          message: "Check your email for the sign-in link.",
+          message: "A six-digit sign-in code was sent.",
           tone: "success",
         };
+        queueMicrotask(() => {
+          if (this._isCurrentEmailFlow(epoch) && this._emailStep === "otp") {
+            this._elements.otpInput.focus();
+          }
+        });
       }
     } catch (error) {
-      if (!this._destroyed) {
+      if (this._isCurrentEmailFlow(epoch)) {
         this._signInMessage = {
-          message: safeUiErrorMessage(error, "The sign-in email could not be sent."),
+          message: safeUiErrorMessage(
+            error,
+            "We could not send the sign-in code. Please try again.",
+          ),
           tone: "error",
         };
       }
     } finally {
-      if (!this._destroyed) {
+      if (this._isCurrentEmailFlow(epoch)) {
         this._pendingAction = null;
         this._render();
       }
     }
+  }
+
+  async _verifyEmailOtp() {
+    if (this._pendingAction || this._destroyed || !this._activeEmail) return;
+    const otp = normalizeOtp(this._elements.otpInput.value);
+    this._elements.otpInput.value = otp;
+    this._elements.otpInput.setCustomValidity("");
+    if (!/^\d{6}$/.test(otp)) {
+      const hasNonnumericCharacters = otp.length > 0 && !/^\d+$/.test(otp);
+      const message = hasNonnumericCharacters
+        ? "Use digits only for the sign-in code."
+        : UI_ERROR_MESSAGES.INVALID_EMAIL_OTP;
+      this._elements.otpInput.setCustomValidity(message);
+      this._signInMessage = { message, tone: "error" };
+      this._elements.otpInput.reportValidity();
+      this._render();
+      return;
+    }
+    if (!this._beginAction("otp_verify")) return;
+    const epoch = this._emailFlowEpoch;
+
+    try {
+      await this._auth.verifyEmailOtp(this._activeEmail, otp);
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._pendingAction = null;
+        this._signInMessage = null;
+        this._resetEmailOtp({ clearEmail: true });
+        if (this._elements.dialog.open) this._elements.dialog.close();
+      }
+    } catch (error) {
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._clearOtpInput();
+        this._signInMessage = {
+          message: safeUiErrorMessage(
+            error,
+            "We could not verify the code. Please try again.",
+          ),
+          tone: "error",
+        };
+        queueMicrotask(() => {
+          if (this._isCurrentEmailFlow(epoch)) this._elements.otpInput.focus();
+        });
+      }
+    } finally {
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._pendingAction = null;
+        this._render();
+      }
+    }
+  }
+
+  async _resendEmailOtp() {
+    if (
+      this._pendingAction ||
+      this._destroyed ||
+      !this._activeEmail ||
+      this._resendSecondsRemaining() > 0
+    ) {
+      return;
+    }
+    if (!this._beginAction("otp_resend")) return;
+    const epoch = this._emailFlowEpoch;
+    const email = this._activeEmail;
+    this._clearOtpInput();
+
+    try {
+      await this._auth.requestEmailOtp(email);
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._startResendCooldown();
+        this._signInMessage = {
+          message: "A new six-digit sign-in code was sent.",
+          tone: "success",
+        };
+      }
+    } catch (error) {
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._signInMessage = {
+          message: safeUiErrorMessage(
+            error,
+            "We could not send the sign-in code. Please try again.",
+          ),
+          tone: "error",
+        };
+      }
+    } finally {
+      if (this._isCurrentEmailFlow(epoch)) {
+        this._pendingAction = null;
+        this._render();
+      }
+    }
+  }
+
+  _normalizeOtpInput() {
+    const compact = normalizeOtp(this._elements.otpInput.value);
+    this._elements.otpInput.value = compact;
+    this._elements.otpInput.setCustomValidity(
+      compact && !/^\d+$/.test(compact)
+        ? "Use digits only for the sign-in code."
+        : "",
+    );
+  }
+
+  _pasteOtp(event) {
+    const pasted = event?.clipboardData?.getData?.("text");
+    if (typeof pasted !== "string") return;
+    event.preventDefault();
+    this._elements.otpInput.value = normalizeOtp(pasted);
+    this._normalizeOtpInput();
+  }
+
+  _useDifferentEmail() {
+    if (this._pendingAction || this._destroyed) return;
+    const email = this._activeEmail;
+    this._resetEmailOtp({ clearEmail: false });
+    this._elements.emailInput.value = email;
+    this._signInMessage = null;
+    this._render();
+    queueMicrotask(() => {
+      if (!this._destroyed && this._emailStep === "email") {
+        this._elements.emailInput.focus();
+      }
+    });
   }
 
   async _signOut() {
@@ -484,11 +700,65 @@ export class AuthUI {
     }
   }
 
+  _startResendCooldown() {
+    this._stopResendCooldown();
+    this._resendAvailableAt = this._clock() + EMAIL_OTP_COOLDOWN_MS;
+    this._resendTimer = this._setInterval(() => {
+      if (this._destroyed || this._resendSecondsRemaining() <= 0) {
+        this._stopResendCooldown({ preserveAvailability: true });
+      }
+      this._render();
+    }, 1000);
+    this._resendTimer?.unref?.();
+  }
+
+  _stopResendCooldown({ preserveAvailability = false } = {}) {
+    if (this._resendTimer !== null) {
+      this._clearInterval(this._resendTimer);
+      this._resendTimer = null;
+    }
+    if (!preserveAvailability) this._resendAvailableAt = 0;
+  }
+
+  _resendSecondsRemaining() {
+    if (!this._resendAvailableAt) return 0;
+    return Math.max(
+      0,
+      Math.ceil((this._resendAvailableAt - this._clock()) / 1000),
+    );
+  }
+
+  _clearOtpInput() {
+    if (!this._elements?.otpInput) return;
+    this._elements.otpInput.value = "";
+    this._elements.otpInput.setCustomValidity("");
+  }
+
+  _resetEmailOtp({ clearEmail = false } = {}) {
+    this._emailFlowEpoch += 1;
+    this._activeEmail = "";
+    this._emailStep = "email";
+    this._stopResendCooldown();
+    this._clearOtpInput();
+    if (clearEmail && this._elements?.emailInput) {
+      this._elements.emailInput.value = "";
+      this._elements.emailInput.setCustomValidity("");
+    }
+    if (EMAIL_OTP_ACTIONS.has(this._pendingAction)) this._pendingAction = null;
+  }
+
+  _isCurrentEmailFlow(epoch) {
+    return !this._destroyed && epoch === this._emailFlowEpoch;
+  }
+
   _beginAction(action) {
     if (this._pendingAction || this._destroyed) return false;
     this._pendingAction = action;
-    if (action === "google" || action === "email") this._signInMessage = null;
-    else this._accountMessage = null;
+    if (action === "google" || EMAIL_OTP_ACTIONS.has(action)) {
+      this._signInMessage = null;
+    } else {
+      this._accountMessage = null;
+    }
     this._render();
     return true;
   }
@@ -504,12 +774,27 @@ export class AuthUI {
         ? this._profileIdentity.displayName
         : null;
     this._elements.headerLabel.textContent = profileHeaderLabel ?? model.headerLabel;
+    this._elements.headerButton.title =
+      this._profileIdentity?.fullDisplayName ?? model.headerLabel;
     this._elements.headerButton.dataset.authKind = model.headerKind;
     this._elements.headerButton.disabled = model.headerDisabled;
+    const accountNavigation = model.headerKind === "account";
+    this._elements.headerButton.setAttribute(
+      "aria-controls",
+      accountNavigation ? "accountSection" : "authDialog",
+    );
+    if (accountNavigation) {
+      this._elements.headerButton.removeAttribute?.("aria-haspopup");
+    } else {
+      this._elements.headerButton.setAttribute("aria-haspopup", "dialog");
+    }
     this._elements.title.textContent = model.title;
     this._elements.description.textContent = model.description;
     this._elements.signInView.hidden = model.dialogMode !== "sign_in";
     this._elements.accountView.hidden = model.dialogMode !== "account";
+    this._elements.emailStep.hidden = this._emailStep !== "email";
+    this._elements.otpStep.hidden = this._emailStep !== "otp";
+    this._elements.otpEmail.textContent = this._activeEmail;
     this._elements.accountEmail.textContent = model.accountEmail;
     this._elements.accountProvider.textContent = model.accountProvider;
 
@@ -519,7 +804,19 @@ export class AuthUI {
     this._elements.emailInput.disabled = Boolean(pending);
     this._elements.emailSubmit.disabled = Boolean(pending);
     this._elements.emailSubmitLabel.textContent =
-      pending === "email" ? "Sending…" : "Send sign-in link";
+      pending === "email_request" ? "Sending…" : "Send sign-in code";
+    this._elements.otpInput.disabled = Boolean(pending);
+    this._elements.otpSubmit.disabled = Boolean(pending);
+    this._elements.otpSubmitLabel.textContent =
+      pending === "otp_verify" ? "Verifying…" : "Verify and sign in";
+    const resendSeconds = this._resendSecondsRemaining();
+    this._elements.otpResend.disabled =
+      Boolean(pending) || !this._activeEmail || resendSeconds > 0;
+    this._elements.otpResendLabel.textContent = resendSeconds > 0
+      ? `Resend code in ${resendSeconds}s`
+      : "Resend code";
+    this._elements.otpChangeEmail.disabled = Boolean(pending);
+    this._elements.otpCancel.disabled = false;
     this._elements.retryButton.hidden = !model.showRetry;
     this._elements.retryButton.disabled = Boolean(pending);
     this._elements.retryLabel.textContent =

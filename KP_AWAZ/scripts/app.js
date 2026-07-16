@@ -8,18 +8,31 @@ import {
   initializeLeaderboard,
 } from "./modules/leaderboard.js";
 import { initNavigation } from "./modules/navigation.js";
-import { loadPartials, restoreHashPosition } from "./modules/partials.js";
-import { destroyAuthUI, initAuthUI } from "./modules/auth-ui.js";
+import {
+  loadPartials,
+  restoreHashPosition,
+} from "./modules/partials.js?v=20260717-email-otp";
+import {
+  destroyAuthUI,
+  initAuthUI,
+} from "./modules/auth-ui.js?v=20260717-email-otp";
 import {
   destroyMyContributions,
   initializeMyContributions,
 } from "./modules/my-contributions.js";
-import { destroyMyPoints, initializeMyPoints } from "./modules/my-points.js";
+import {
+  destroyAccountScore,
+  initializeAccountScore,
+} from "./modules/my-points.js";
+import {
+  destroyPrivateNavigation,
+  initializePrivateNavigation,
+} from "./modules/private-navigation.js";
 import { destroyProfileUI, initProfileUI } from "./modules/profile-ui.js";
 import {
   destroyAuthService,
   initializeAuthService,
-} from "./services/auth-service.js";
+} from "./services/auth-service.js?v=20260717-email-otp";
 
 function showBootError(error) {
   const message = document.createElement("div");
@@ -54,15 +67,21 @@ function initializeAuthenticationInterfaces() {
   }
 
   try {
+    initializePrivateNavigation();
+  } catch {
+    // Private-section navigation remains isolated from sign-in and the page.
+  }
+
+  try {
     initProfileUI();
   } catch {
     // Profile UI failures remain isolated from authentication and the page.
   }
 
   try {
-    initializeMyPoints();
+    initializeAccountScore();
   } catch {
-    // Point history failures remain isolated from other account features.
+    // Account-score failures remain isolated from other account features.
   }
 
   try {
@@ -76,8 +95,9 @@ function cleanupApplication() {
   destroyContributions();
   destroyLeaderboard();
   destroyMyContributions();
-  destroyMyPoints();
+  destroyAccountScore();
   destroyProfileUI();
+  destroyPrivateNavigation();
   destroyAuthUI();
   destroyAuthService();
 }

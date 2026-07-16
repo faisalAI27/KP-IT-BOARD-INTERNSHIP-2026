@@ -299,27 +299,42 @@ export class Leaderboard {
   }
 
   _createEntry(item) {
-    const entry = this._root.createElement("li");
+    const entry = this._root.createElement("tr");
     entry.className =
       item.rank <= 3
         ? `leaderboard-entry leaderboard-entry-top-${item.rank}`
         : "leaderboard-entry";
 
+    const rankCell = this._root.createElement("td");
+    rankCell.className = "leaderboard-rank-cell";
     const rank = this._root.createElement("span");
-    rank.className = "leaderboard-rank";
+    rank.className = "leaderboard-rank-badge";
     rank.textContent = formatLeaderboardRank(item.rank);
     rank.setAttribute("aria-label", `Rank ${item.rank}`);
+    rankCell.append(rank);
 
-    const contributor = this._root.createElement("div");
+    const contributor = this._root.createElement("td");
     contributor.className = "leaderboard-contributor";
-    const name = this._root.createElement("h3");
+    const name = this._root.createElement("span");
+    name.className = "leaderboard-contributor-name";
     name.textContent = item.displayName;
-    const approved = this._root.createElement("p");
-    approved.textContent = formatApprovedContributionCount(
-      item.approvedContributions,
+    contributor.append(name);
+
+    const approved = this._root.createElement("td");
+    approved.className = "leaderboard-approved-count";
+    approved.setAttribute(
+      "aria-label",
+      formatApprovedContributionCount(item.approvedContributions),
     );
-    contributor.append(name, approved);
-    entry.append(rank, contributor);
+    const approvedNumber = this._root.createElement("strong");
+    approvedNumber.textContent = String(item.approvedContributions);
+    const approvedLabel = this._root.createElement("span");
+    approvedLabel.textContent =
+      item.approvedContributions === 1
+        ? " approved contribution"
+        : " approved contributions";
+    approved.append(approvedNumber, approvedLabel);
+    entry.append(rankCell, contributor, approved);
     return entry;
   }
 

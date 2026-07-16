@@ -10,6 +10,10 @@ import {
   formatContributionDuration,
   formatContributionType,
 } from "../../scripts/modules/my-contributions.js";
+import {
+  MY_CONTRIBUTIONS_SECTION,
+  PRIVATE_SECTION_CHANGED_EVENT,
+} from "../../scripts/modules/private-navigation.js";
 
 
 const USER_A = "0d5dd8f5-93df-462b-b234-a16973089092";
@@ -123,7 +127,7 @@ class FakeEventTarget extends FakeElement {
 
 
 const ELEMENT_IDS = [
-  "myContributionsSection",
+  "myContributionsPageSection",
   "myContributionsStatus",
   "myContributionsList",
   "myContributionsEmpty",
@@ -199,8 +203,11 @@ function createFixture({
   state = authState("signed_out"),
   get,
   locale = "en-US",
+  open,
 } = {}) {
   const root = createRoot();
+  root.elements.get("myContributionsPageSection").hidden =
+    !(open ?? state.status === "signed_in");
   const authApi = createAuthApi(state);
   const contributionsApi = createHistoryApi(get);
   const eventTarget = new FakeEventTarget();
@@ -213,6 +220,13 @@ function createFixture({
   });
   assert.equal(history.initializeMyContributions(), true);
   return { authApi, contributionsApi, eventTarget, history, root };
+}
+
+
+function openContributions(fixture) {
+  fixture.eventTarget.dispatch(PRIVATE_SECTION_CHANGED_EVENT, {
+    section: MY_CONTRIBUTIONS_SECTION,
+  });
 }
 
 
@@ -245,13 +259,13 @@ async function settle() {
 }
 
 
-test("account partial includes the accessible My Contributions controls once", async () => {
+test("separate My Contributions partial includes its accessible controls once", async () => {
   const html = await readFile(
-    new URL("../../sections/auth-dialog.html", import.meta.url),
+    new URL("../../sections/my-contributions.html", import.meta.url),
     "utf8",
   );
   for (const id of [
-    "myContributionsSection",
+    "myContributionsPageSection",
     "myContributionsStatus",
     "myContributionsList",
     "refreshContributionsButton",
@@ -264,13 +278,18 @@ test("account partial includes the accessible My Contributions controls once", a
   assert.match(html, /id="refreshContributionsButton"[\s\S]*type="button"/);
   assert.match(html, /id="loadMoreContributionsButton"[\s\S]*type="button"/);
   assert.match(html, /You have not submitted any voice contributions yet\./);
+  const account = await readFile(
+    new URL("../../sections/account.html", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(account, /id="myContributionsList"/);
 });
 
 
 test("signed-out state hides history and does not call the API", async () => {
   const fixture = createFixture();
   await settle();
-  assert.equal(element(fixture, "myContributionsSection").hidden, true);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
   assert.equal(fixture.contributionsApi.calls.length, 0);
 });
 
@@ -278,19 +297,23 @@ test("signed-out state hides history and does not call the API", async () => {
 test("authentication loading hides history and does not call the API", async () => {
   const fixture = createFixture({ state: authState("loading") });
   await settle();
-  assert.equal(element(fixture, "myContributionsSection").hidden, true);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
   assert.equal(fixture.contributionsApi.calls.length, 0);
 });
 
 
-test("verified login automatically requests the first ten items", () => {
+test("verified login waits until My Contributions is opened", () => {
   const request = deferred();
   const fixture = createFixture({
     state: authState("signed_in", USER_A),
     get: () => request.promise,
+    open: false,
   });
+  assert.equal(fixture.contributionsApi.calls.length, 0);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
+  openContributions(fixture);
   assert.deepEqual(fixture.contributionsApi.calls, [{ limit: 10, offset: 0 }]);
-  assert.equal(element(fixture, "myContributionsSection").hidden, false);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, false);
 });
 
 
@@ -303,7 +326,7 @@ test("sign-out clears loaded history and hides the section", async () => {
   fixture.authApi.emit(authState("signed_out"));
   assert.equal(fixture.history.getState().items.length, 0);
   assert.equal(element(fixture, "myContributionsList").children.length, 0);
-  assert.equal(element(fixture, "myContributionsSection").hidden, true);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
 });
 
 
@@ -348,7 +371,7 @@ test("response after sign-out is ignored", async () => {
   request.resolve(historyPage([ITEM_A]));
   await settle();
   assert.equal(fixture.history.getState().items.length, 0);
-  assert.equal(element(fixture, "myContributionsSection").hidden, true);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
 });
 
 
@@ -737,6 +760,21 @@ test("contribution-created event refreshes the first page", async () => {
 });
 
 
+test("contribution-created event waits while history is closed", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_A]),
+    open: false,
+  });
+  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
+  await settle();
+  assert.equal(fixture.contributionsApi.calls.length, 0);
+  openContributions(fixture);
+  await settle();
+  assert.equal(fixture.contributionsApi.calls.length, 1);
+});
+
+
 test("contribution-created event after sign-out does nothing", async () => {
   const fixture = createFixture({
     state: authState("signed_in", USER_A),
@@ -809,7 +847,7 @@ test("event listener is removed during destruction", () => {
     fixture.eventTarget.listeners.get(CONTRIBUTION_CREATED_EVENT)?.size,
     0,
   );
-  assert.equal(fixture.eventTarget.removals, 1);
+  assert.equal(fixture.eventTarget.removals, 2);
 });
 
 
@@ -827,7 +865,7 @@ test("repeated initialization and destruction are safe", () => {
   fixture.history.destroyMyContributions();
   fixture.history.destroyMyContributions();
   assert.equal(fixture.authApi.calls.unsubscriptions, 1);
-  assert.equal(fixture.eventTarget.removals, 1);
+  assert.equal(fixture.eventTarget.removals, 2);
 });
 
 
@@ -838,6 +876,6 @@ test("HTTP 401 clears history and reuses auth verification", async () => {
   });
   await settle();
   assert.equal(fixture.history.getState().items.length, 0);
-  assert.equal(element(fixture, "myContributionsSection").hidden, true);
+  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
   assert.equal(fixture.authApi.calls.verify, 1);
 });

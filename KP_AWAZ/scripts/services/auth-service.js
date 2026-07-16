@@ -8,6 +8,7 @@ import {
 
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_OTP_PATTERN = /^\d{6}$/;
 const BACKEND_AUTH_CODES = new Set([
   "AUTHENTICATION_REQUIRED",
   "INVALID_ACCESS_TOKEN",
@@ -121,6 +122,16 @@ function sessionRestoreError() {
 }
 
 
+function normalizeEmail(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+
+function normalizeEmailOtp(otp) {
+  return typeof otp === "string" ? otp.replace(/\s+/g, "") : "";
+}
+
+
 export class AuthService {
   constructor({
     apiBaseUrl = appConfig.api.baseUrl,
@@ -152,6 +163,7 @@ export class AuthService {
     this._initializationPromise = null;
     this._destroyed = false;
     this._verificationEpoch = 0;
+    this._emailOtpVerificationActive = false;
     this._state = {
       status: "loading",
       session: null,
@@ -279,8 +291,8 @@ export class AuthService {
     return { ok: true, redirecting: true };
   }
 
-  async signInWithEmail(email) {
-    const cleanedEmail = typeof email === "string" ? email.trim() : "";
+  async requestEmailOtp(email) {
+    const cleanedEmail = normalizeEmail(email);
     if (
       !cleanedEmail ||
       cleanedEmail.length > 254 ||
@@ -296,21 +308,98 @@ export class AuthService {
       const { error } = await client.auth.signInWithOtp({
         email: cleanedEmail,
         options: {
-          emailRedirectTo: this._resolvedRedirectUrl(),
           shouldCreateUser: true,
         },
       });
       if (error) throw error;
     } catch {
-      throw new AuthServiceError("The sign-in email could not be sent.", {
-        code: "EMAIL_SIGN_IN_FAILED",
+      throw new AuthServiceError(
+        "We could not send the sign-in code. Please try again.",
+        {
+          code: "EMAIL_OTP_SEND_FAILED",
+        },
+      );
+    }
+
+    return { ok: true, email: cleanedEmail };
+  }
+
+  async verifyEmailOtp(email, otp) {
+    const cleanedEmail = normalizeEmail(email);
+    if (
+      !cleanedEmail ||
+      cleanedEmail.length > 254 ||
+      !EMAIL_PATTERN.test(cleanedEmail)
+    ) {
+      throw new AuthServiceError("Enter a valid email address.", {
+        code: "INVALID_EMAIL",
       });
     }
 
-    return {
-      ok: true,
-      message: "Check your email for the sign-in link.",
-    };
+    const cleanedOtp = normalizeEmailOtp(otp);
+    if (!EMAIL_OTP_PATTERN.test(cleanedOtp)) {
+      throw new AuthServiceError("Enter the complete six-digit code.", {
+        code: "INVALID_EMAIL_OTP",
+      });
+    }
+
+    const client = this._ensureClient();
+    this._emailOtpVerificationActive = true;
+    try {
+      let verification;
+      try {
+        verification = await client.auth.verifyOtp({
+          email: cleanedEmail,
+          token: cleanedOtp,
+          type: "email",
+        });
+      } catch {
+        throw new AuthServiceError(
+          "We could not verify the code. Please try again.",
+          { code: "EMAIL_OTP_VERIFY_FAILED" },
+        );
+      }
+
+      if (verification?.error) {
+        throw new AuthServiceError(
+          "Invalid or expired code. Request a new code and try again.",
+          { code: "INVALID_OR_EXPIRED_EMAIL_OTP" },
+        );
+      }
+
+      let session;
+      try {
+        session = await this._loadSession();
+      } catch {
+        throw new AuthServiceError(
+          "We could not verify the code. Please try again.",
+          { code: "EMAIL_OTP_VERIFY_FAILED" },
+        );
+      }
+      if (!session) {
+        throw new AuthServiceError(
+          "We could not verify the code. Please try again.",
+          { code: "EMAIL_OTP_VERIFY_FAILED" },
+        );
+      }
+
+      const epoch = this._replaceSession(session);
+      this._publish("loading");
+      const backendUser = await this.verifyCurrentUserWithBackend(epoch);
+      if (!backendUser) {
+        const state = this.getCurrentAuthState();
+        if (state.status !== "signed_in" || !state.backendUser) {
+          throw new AuthServiceError(
+            "We could not verify the code. Please try again.",
+            { code: "EMAIL_OTP_VERIFY_FAILED" },
+          );
+        }
+      }
+
+      return { ok: true, email: cleanedEmail };
+    } finally {
+      this._emailOtpVerificationActive = false;
+    }
   }
 
   async signOut() {
@@ -409,6 +498,7 @@ export class AuthService {
     this._destroyed = true;
     this._initialized = false;
     this._verificationEpoch += 1;
+    this._emailOtpVerificationActive = false;
     this._unsubscribeAuth?.();
     this._unsubscribeAuth = null;
     this._listeners.clear();
@@ -476,6 +566,7 @@ export class AuthService {
 
   async _handleAuthEvent(event, session) {
     if (this._destroyed) return;
+    if (event === "SIGNED_IN" && this._emailOtpVerificationActive) return;
     if (event === "SIGNED_OUT" || !session) {
       this._replaceSession(null);
       this._publish("signed_out");
@@ -541,7 +632,9 @@ export const initializeAuthService = () => authService.initializeAuthService();
 export const getCurrentSession = () => authService.getCurrentSession();
 export const getCurrentAccessToken = () => authService.getCurrentAccessToken();
 export const signInWithGoogle = () => authService.signInWithGoogle();
-export const signInWithEmail = (email) => authService.signInWithEmail(email);
+export const requestEmailOtp = (email) => authService.requestEmailOtp(email);
+export const verifyEmailOtp = (email, otp) =>
+  authService.verifyEmailOtp(email, otp);
 export const signOut = () => authService.signOut();
 export const subscribeToAuthChanges = (callback) =>
   authService.subscribeToAuthChanges(callback);

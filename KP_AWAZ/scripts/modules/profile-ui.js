@@ -2,9 +2,9 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js";
+} from "../services/auth-service.js?v=20260717-email-otp";
 import { getMyProfile, updateMyProfile } from "../services/profile-api.js";
-import { setAuthProfileDisplayName } from "./auth-ui.js";
+import { setAuthProfileDisplayName } from "./auth-ui.js?v=20260717-email-otp";
 
 
 const PROFILE_ERROR_MESSAGES = Object.freeze({
@@ -65,8 +65,6 @@ const defaultAuthApi = Object.freeze({
   verifyCurrentUserWithBackend,
 });
 const defaultProfileApi = Object.freeze({ getMyProfile, updateMyProfile });
-
-
 export class ProfileUI {
   constructor({
     root = globalThis.document,
@@ -137,6 +135,7 @@ export class ProfileUI {
       retryButton: "retryProfileButton",
       form: "profileForm",
       displayName: "profileDisplayName",
+      verifiedEmail: "profileVerifiedEmail",
       preferredLanguage: "profilePreferredLanguage",
       leaderboardOptIn: "profileLeaderboardOptIn",
       saveButton: "profileSaveButton",
@@ -334,6 +333,7 @@ export class ProfileUI {
   _populateForm(profile) {
     this._ensureLanguageOption(profile.preferredLanguage);
     this._elements.displayName.value = profile.displayName;
+    this._elements.verifiedEmail.value = profile.email ?? "";
     this._elements.preferredLanguage.value = profile.preferredLanguage;
     this._elements.leaderboardOptIn.checked = profile.leaderboardOptIn;
   }
@@ -351,6 +351,7 @@ export class ProfileUI {
   _clearForm() {
     if (!this._elements) return;
     this._elements.displayName.value = "";
+    this._elements.verifiedEmail.value = "";
     this._elements.preferredLanguage.value = "Pashto";
     this._elements.leaderboardOptIn.checked = false;
   }

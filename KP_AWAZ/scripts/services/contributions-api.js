@@ -1,6 +1,6 @@
 import { appConfig } from "../config.js";
 import { pashtoSentences } from "../data/pashto-sentences.js";
-import { getCurrentAccessToken } from "./auth-service.js";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-email-otp";
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({

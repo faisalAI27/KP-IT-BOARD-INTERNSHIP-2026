@@ -17,7 +17,7 @@ export function initNavigation() {
     menuToggle.setAttribute("aria-label", isOpen ? "Open navigation" : "Close navigation");
   });
 
-  primaryNavigation.querySelectorAll("a").forEach((link) => {
+  primaryNavigation.querySelectorAll("a, button[data-nav-target]").forEach((link) => {
     link.addEventListener("click", closeNavigation);
   });
 
@@ -29,4 +29,3 @@ export function initNavigation() {
     if (window.innerWidth > 900) closeNavigation();
   });
 }
-
