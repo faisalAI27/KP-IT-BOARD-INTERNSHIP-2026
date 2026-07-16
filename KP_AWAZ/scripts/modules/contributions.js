@@ -4,6 +4,7 @@ import {
   submitVoiceDonation,
 } from "../services/contributions-api.js";
 import { ContributionAuthController } from "./contribution-auth.js";
+import { dispatchContributionCreated } from "./my-contributions.js";
 import { createRecorder, stopRecorderIfActive } from "./recorder.js";
 
 const SENTENCE_LOAD_ERROR =
@@ -366,6 +367,10 @@ export async function initContributions() {
     element.hidden = false;
   }
 
+  function announceContributionCreated() {
+    dispatchContributionCreated();
+  }
+
   function resetDonationFlow() {
     donateForm.reset();
     donateRecorder.reset();
@@ -526,6 +531,7 @@ export async function initContributions() {
       donateFlowContent.hidden = true;
       flowProgress.hidden = true;
       donateSuccess.hidden = false;
+      announceContributionCreated();
     } catch (error) {
       if (!accessController.finishSubmission(submission)) return;
       showError(donationError, error);
@@ -573,6 +579,7 @@ export async function initContributions() {
       recordSuccess.classList.add("show");
       submitOpenRecordingButton.textContent = "Submitted";
       submitOpenRecordingButton.removeAttribute("aria-busy");
+      announceContributionCreated();
     } catch (error) {
       if (!accessController.finishSubmission(submission)) return;
       showError(recordError, error);

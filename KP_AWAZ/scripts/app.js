@@ -6,6 +6,10 @@ import { initFaq } from "./modules/faq.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js";
 import { destroyAuthUI, initAuthUI } from "./modules/auth-ui.js";
+import {
+  destroyMyContributions,
+  initializeMyContributions,
+} from "./modules/my-contributions.js";
 import { destroyProfileUI, initProfileUI } from "./modules/profile-ui.js";
 import {
   destroyAuthService,
@@ -49,10 +53,17 @@ function initializeAuthenticationInterfaces() {
   } catch {
     // Profile UI failures remain isolated from authentication and the page.
   }
+
+  try {
+    initializeMyContributions();
+  } catch {
+    // Contribution history failures remain isolated from account settings.
+  }
 }
 
 function cleanupApplication() {
   destroyContributions();
+  destroyMyContributions();
   destroyProfileUI();
   destroyAuthUI();
   destroyAuthService();

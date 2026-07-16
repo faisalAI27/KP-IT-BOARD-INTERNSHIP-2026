@@ -298,7 +298,7 @@ curl -X POST \
 
 Explicit consent is required. Open recordings use the configured larger open-recording size limit and the same MIME, filename-extension, size, and basic signature checks as guided recordings. Audio is stored privately using the contribution UUID, and the database stores only its relative storage key. Successful submissions return HTTP 201 with the public contribution ID, queued status, and UTC creation time.
 
-## My Contributions API foundation
+## My Contributions API
 
 Return the verified caller's contributions with:
 
@@ -314,7 +314,7 @@ curl \
 
 The endpoint filters ownership in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. It never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no storage keys, absolute paths, tokens, or owner IDs.
 
-SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. A visual My Contributions interface has not been implemented yet.
+SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. The frontend account dialog uses this private endpoint for its My Contributions interface and does not provide audio playback because the response has no playable URL.
 
 ## Run tests
 

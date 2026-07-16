@@ -447,6 +447,157 @@
   margin-top: 0;
 }
 
+.my-contributions {
+  min-width: 0;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.my-contributions-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.my-contributions-heading h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.22rem;
+  line-height: 1.25;
+}
+
+.my-contributions-heading .auth-kicker {
+  margin-bottom: 4px;
+}
+
+.my-contributions-refresh {
+  flex: 0 0 auto;
+}
+
+.my-contributions-status,
+.my-contributions-empty,
+.my-contributions-error {
+  margin-top: 15px;
+  padding: 14px;
+  border: 1px solid rgba(62, 98, 89, 0.15);
+  border-radius: 13px;
+  background: rgba(62, 98, 89, 0.07);
+  color: var(--pine-dark);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.my-contributions-empty strong,
+.my-contributions-empty span {
+  display: block;
+}
+
+.my-contributions-empty span {
+  margin-top: 4px;
+  color: var(--ink-soft);
+}
+
+.my-contributions-error {
+  display: grid;
+  border-color: rgba(193, 97, 61, 0.18);
+  background: rgba(193, 97, 61, 0.07);
+  color: var(--terracotta-dark);
+  gap: 11px;
+}
+
+.my-contributions-error .btn {
+  width: 100%;
+}
+
+.my-contributions-status[hidden],
+.my-contributions-empty[hidden],
+.my-contributions-error[hidden] {
+  display: none;
+}
+
+.my-contributions-list {
+  display: grid;
+  min-width: 0;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  gap: 11px;
+}
+
+.my-contributions-list[hidden] {
+  display: none;
+}
+
+.my-contribution-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid rgba(46, 38, 32, 0.11);
+  border-radius: 15px;
+  background: var(--paper-soft);
+}
+
+.my-contribution-card:focus-visible {
+  border-color: var(--pine);
+  outline: 3px solid rgba(62, 98, 89, 0.12);
+  outline-offset: 2px;
+}
+
+.my-contribution-card h4 {
+  color: var(--pine-dark);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.my-contribution-metadata {
+  display: grid;
+  min-width: 0;
+  margin: 11px 0 0;
+  gap: 8px;
+}
+
+.my-contribution-meta-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.my-contribution-meta-row dt {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.my-contribution-meta-row dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.7rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.my-contributions-pagination {
+  display: grid;
+  margin-top: 12px;
+  gap: 9px;
+}
+
+.my-contributions-load-more-error {
+  margin: 0;
+  color: var(--terracotta-dark);
+  font-size: 0.7rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.my-contributions-load-more {
+  width: 100%;
+}
+
 .auth-account-actions {
   display: grid;
   margin-top: 20px;

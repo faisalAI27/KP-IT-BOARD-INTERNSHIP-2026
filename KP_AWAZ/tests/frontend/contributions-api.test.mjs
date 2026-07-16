@@ -410,6 +410,37 @@ test("getMyContributions sends bearer token and validated pagination", async () 
 });
 
 
+test("getMyContributions ignores identity, session, and refresh-token parameters", async () => {
+  const request = installJsonFetch(historyBody);
+
+  await contributionApi.getMyContributions({
+    limit: 20,
+    offset: 0,
+    userId: "another-user",
+    profileId: "another-profile",
+    accessToken: "caller-supplied-access-token",
+    refreshToken: REFRESH_TOKEN,
+  });
+
+  const requestText = `${request().url} ${JSON.stringify(request().options)}`;
+  for (const forbidden of [
+    "another-user",
+    "another-profile",
+    "caller-supplied-access-token",
+    REFRESH_TOKEN,
+    "userId",
+    "profileId",
+    "refreshToken",
+  ]) {
+    assert.equal(requestText.includes(forbidden), false);
+  }
+  assert.equal(
+    new Headers(request().options.headers).get("Authorization"),
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+});
+
+
 test("getMyContributions rejects invalid pagination before fetch", async () => {
   let fetchCalls = 0;
   const api = new ContributionsApi({
@@ -446,6 +477,38 @@ test("getMyContributions preserves safe backend errors", async () => {
     assert.equal(error.message, "Authentication is required.");
     assert.equal(error.code, "AUTHENTICATION_REQUIRED");
     assert.equal(error.status, 401);
+    return true;
+  });
+});
+
+
+test("getMyContributions network failure uses a safe history error", async () => {
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      throw new Error(`network failed with ${ACCESS_TOKEN}`);
+    },
+  });
+
+  await assert.rejects(api.getMyContributions({ limit: 10, offset: 0 }), (error) => {
+    assert.equal(error.message, "The KP AWAZ backend could not be reached.");
+    assert.equal(error.code, "NETWORK_ERROR");
+    assert.equal(error.status, 0);
+    assert.equal(error.message.includes(ACCESS_TOKEN), false);
+    return true;
+  });
+});
+
+
+test("getMyContributions backend errors cannot echo the access token", async () => {
+  installJsonFetch(
+    { message: `Rejected ${ACCESS_TOKEN}`, code: `BAD_${ACCESS_TOKEN}` },
+    { status: 500 },
+  );
+
+  await assert.rejects(contributionApi.getMyContributions(), (error) => {
+    assert.equal(error.message.includes(ACCESS_TOKEN), false);
+    assert.equal(error.code.includes(ACCESS_TOKEN), false);
     return true;
   });
 });
