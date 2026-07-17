@@ -9,112 +9,72 @@
     />
     <title>Contributor access — KP AWAZ</title>
     <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/auth-page.css?v=20260717-auth-routing" />
+    <link rel="stylesheet" href="styles/auth-page.css?v=20260717-centered-auth" />
   </head>
   <body class="access-page" data-page-state="loading" data-auth-view="sign_in">
     <a class="skip-link" href="#accountAccess">Skip to account access</a>
 
     <main class="access-layout" id="accountAccess">
-      <section
-        class="access-story"
-        id="authCulturalPanel"
-        aria-labelledby="accessStoryTitle"
+      <figure
+        class="cultural-hero"
+        id="authCulturalHero"
+        data-hero-state="loading"
+        aria-hidden="true"
       >
-        <div class="story-motif story-motif-top" aria-hidden="true"></div>
-        <div class="story-motif story-motif-bottom" aria-hidden="true"></div>
+        <div class="cultural-hero-fallback" aria-hidden="true"></div>
+        <picture>
+          <source
+            media="(max-width: 620px)"
+            srcset="assets/auth/kp-awaz-auth-background-mobile.webp"
+            type="image/webp"
+          />
+          <source
+            srcset="assets/auth/kp-awaz-auth-background.webp"
+            type="image/webp"
+          />
+          <img
+            id="authCulturalHeroImage"
+            src="assets/auth/kp-awaz-auth-background-fallback.jpg"
+            width="1672"
+            height="941"
+            decoding="async"
+            fetchpriority="high"
+            alt=""
+          />
+        </picture>
+      </figure>
+      <div class="access-background-overlay" aria-hidden="true"></div>
 
-        <header class="story-header">
-          <a class="access-brand" href="index.html" aria-label="KP AWAZ home">
-            <img src="assets/images/logo.svg" alt="" />
-            <span>KP <strong>AWAZ</strong></span>
-          </a>
-          <span class="story-language" aria-label="Pashto word for voice" lang="ps" dir="rtl">غږ</span>
-        </header>
-
-        <div class="access-story-copy">
-          <span class="access-kicker" id="accessStoryContext">Welcome back to the community</span>
-          <h1 id="accessStoryTitle">Our voices belong in the digital future.</h1>
-          <p class="story-mission">
-            Help preserve the languages, expressions and stories of Khyber
-            Pakhtunkhwa by contributing your voice.
-          </p>
-          <p class="story-state-message" id="accessStoryMessage">
-            Continue preserving the voices and languages of Khyber Pakhtunkhwa.
-          </p>
-        </div>
-
-        <figure
-          class="cultural-hero"
-          id="authCulturalHero"
-          data-hero-state="loading"
-        >
-          <div class="cultural-hero-fallback" aria-hidden="true">
-            <img src="assets/images/kp-auth-mountain-voice.svg" alt="" />
+      <div class="access-stage" id="authCulturalPanel">
+        <section class="access-form-side" aria-labelledby="accessTitle">
+          <div class="access-card">
+          <div class="access-card-topbar">
+            <a class="access-back" href="index.html">
+              <span aria-hidden="true">←</span> Back to KP AWAZ
+            </a>
+            <span class="access-language" aria-label="Pashto word for voice" lang="ps" dir="rtl">غږ</span>
           </div>
-          <picture>
-            <source
-              media="(max-width: 900px)"
-              srcset="assets/auth/kp-awaz-cultural-hero-mobile.webp"
-              type="image/webp"
-            />
-            <source
-              srcset="assets/auth/kp-awaz-cultural-hero.webp"
-              type="image/webp"
-            />
-            <img
-              id="authCulturalHeroImage"
-              src="assets/auth/kp-awaz-cultural-hero-fallback.jpg"
-              width="1600"
-              height="2000"
-              decoding="async"
-              fetchpriority="high"
-              alt="Illustration of a KP community sharing their voices as a sound wave flows from a traditional gathering toward mountain landscapes and a digital language network."
-            />
-          </picture>
-          <span class="cultural-hero-glow" aria-hidden="true"></span>
-          <div class="story-signal" aria-label="KP AWAZ community message">
-            <span class="story-signal-mark" aria-hidden="true">✦</span>
-            <p id="authCulturalMessage">Every voice carries a memory.</p>
+
+          <div class="access-branding">
+            <a class="access-brand" href="index.html" aria-label="KP AWAZ home">
+              <img src="assets/images/logo.svg" width="46" height="46" alt="" />
+              <span>KP <strong>AWAZ</strong></span>
+            </a>
+            <p>Our voices, our language, our Khyber Pakhtunkhwa.</p>
           </div>
-        </figure>
 
-        <section class="story-impact" aria-labelledby="impactTitle">
-          <div>
-            <span class="access-kicker" id="impactTitle">Every language carries a community</span>
-            <p>
-              A shared voice can become knowledge that future technology understands.
-            </p>
+          <div class="auth-view-context" aria-hidden="true">
+            <span id="accessStoryContext">Welcome back to the community</span>
+            <span id="accessStoryTitle">Our voices belong in the digital future.</span>
+            <span id="accessStoryMessage">
+              Continue preserving the voices and languages of Khyber Pakhtunkhwa.
+            </span>
           </div>
-          <ol class="contribution-path" aria-label="Contribution journey">
-            <li><span>01</span><strong>Speak</strong><small>Share your voice</small></li>
-            <li><span>02</span><strong>Review</strong><small>Quality checked</small></li>
-            <li><span>03</span><strong>Preserve</strong><small>Build language data</small></li>
-          </ol>
-          <p class="review-note">
-            Recordings remain pending until review before joining the community dataset.
-          </p>
-        </section>
-
-        <footer class="story-footer">
-          <span>Our voices, our language, our Khyber Pakhtunkhwa.</span>
-          <nav aria-label="Public information">
-            <a href="index.html">Public home</a>
-            <a href="about.html">About</a>
-            <a href="how-it-works.html">How it works</a>
-          </nav>
-        </footer>
-      </section>
-
-      <section class="access-form-side" aria-labelledby="accessTitle">
-        <div class="access-card">
-          <a class="access-back" href="index.html">
-            <span aria-hidden="true">←</span> Back to KP AWAZ
-          </a>
 
           <div id="accountInteractiveContent">
             <header class="access-card-heading">
               <span class="access-kicker" id="accessCardKicker">Contributor sign in</span>
-              <h2 id="accessTitle">Welcome back.</h2>
+              <h1 id="accessTitle">Welcome back.</h1>
               <p id="accessSubtitle">Sign in to continue your contribution journey.</p>
             </header>
 
@@ -143,7 +103,15 @@
             </div>
 
             <button class="access-google" id="accountGoogleButton" type="button">
-              <span class="google-mark" aria-hidden="true">G</span>
+              <span class="google-mark-slot" aria-hidden="true">
+                <img
+                  class="google-mark"
+                  src="assets/brands/google-g-logo.png"
+                  width="20"
+                  height="20"
+                  alt=""
+                />
+              </span>
               <span id="accountGoogleButtonLabel">Continue with Google</span>
             </button>
 
@@ -426,8 +394,14 @@
               JavaScript is required to use secure account access.
             </p>
           </noscript>
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
+
+      <aside class="access-cultural-note" aria-label="KP AWAZ community message">
+        <span aria-hidden="true">✦</span>
+        <p id="authCulturalMessage">Every voice carries a story. Every language carries a community.</p>
+      </aside>
     </main>
 
     <script type="module" src="scripts/auth-page.js?v=20260717-auth-routing"></script>

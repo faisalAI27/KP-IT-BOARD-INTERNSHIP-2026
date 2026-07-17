@@ -301,17 +301,14 @@ test("cultural authentication markup communicates the KP AWAZ mission", async ()
 });
 
 
-test("generated cultural hero is meaningful while fallback artwork is decorative", async () => {
-  const [html, svg] = await Promise.all([
-    readProjectFile("auth.html"),
-    readProjectFile("assets/images/kp-auth-mountain-voice.svg"),
-  ]);
-  assert.match(html, /src="assets\/images\/kp-auth-mountain-voice\.svg" alt=""/);
+test("generated cultural background is decorative and the centered card carries real HTML", async () => {
+  const html = await readProjectFile("auth.html");
   assert.match(html, /class="cultural-hero"/);
-  assert.match(html, /alt="Illustration of a KP community sharing their voices/);
+  assert.match(html, /id="authCulturalHero"[\s\S]*?aria-hidden="true"/);
   assert.match(html, /class="cultural-hero-fallback" aria-hidden="true"/);
-  assert.match(svg, /<svg/);
-  assert.doesNotMatch(svg, /<title>|<desc>/);
+  assert.match(html, /class="access-stage" id="authCulturalPanel"/);
+  assert.match(html, /class="access-card"/);
+  assert.doesNotMatch(html, /class="access-story"|class="story-impact"/);
 });
 
 
@@ -739,39 +736,41 @@ test("markup keeps sign-in fields minimal and create fields complete", async () 
 });
 
 
-test("OTP, errors, trust links, and review status are accessible in markup", async () => {
+test("OTP, errors, and trust links are accessible in markup", async () => {
   const html = await readProjectFile("auth.html");
   assert.match(html, /id="signupOtpInput"[\s\S]*?inputmode="numeric"/);
   assert.match(html, /autocomplete="one-time-code"/);
   assert.match(html, /maxlength="6"/);
   assert.match(html, /aria-describedby="signupOtpHelp signupOtpMessage"/);
   assert.match(html, /role="alert"[\s\S]*?aria-live="polite"/);
-  assert.match(html, /href="index\.html">Public home<\/a>/);
-  assert.match(html, /href="about\.html">About<\/a>/);
-  assert.match(html, /href="how-it-works\.html">How it works<\/a>/);
-  assert.match(html, /remain pending until review before joining the community dataset/i);
+  assert.match(html, /href="index\.html"[\s\S]*?Back to KP AWAZ/);
+  assert.match(html, /href="about\.html">Read our privacy promise<\/a>/);
 });
 
 
-test("responsive CSS keeps mobile authentication independent of large artwork", async () => {
-  const css = await readProjectFile("styles/auth-page.css");
+test("responsive CSS keeps centered mobile authentication independent of background loading", async () => {
+  const [html, css] = await Promise.all([
+    readProjectFile("auth.html"),
+    readProjectFile("styles/auth-page.css"),
+  ]);
   assert.match(css, /@media \(max-width: 620px\)/);
-  assert.match(css, /\.cultural-hero\s*\{[\s\S]*?aspect-ratio: 14 \/ 9;/);
-  assert.doesNotMatch(css, /\.cultural-hero,\s*\.story-impact\s*\{\s*display: none;/);
+  assert.match(html, /media="\(max-width: 620px\)"[\s\S]*?kp-awaz-auth-background-mobile\.webp/);
+  assert.match(css, /\.access-layout\s*\{[\s\S]*?place-items: center/);
+  assert.doesNotMatch(css, /filter:\s*blur|backdrop-filter/);
   assert.match(css, /overflow-x: hidden/);
-  assert.match(css, /min-height: 52px/);
+  assert.match(css, /min-height: 50px/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
 
 
 test("authentication redesign contains no credential persistence, logs, or TokenHash", async () => {
-  const [html, controller, cultural, svg] = await Promise.all([
+  const [html, controller, cultural, css] = await Promise.all([
     readProjectFile("auth.html"),
     readProjectFile("scripts/modules/account-access.js"),
     readProjectFile("scripts/modules/auth-cultural-panel.js"),
-    readProjectFile("assets/images/kp-auth-mountain-voice.svg"),
+    readProjectFile("styles/auth-page.css"),
   ]);
-  const source = `${html}\n${controller}\n${cultural}\n${svg}`;
+  const source = `${html}\n${controller}\n${cultural}\n${css}`;
   assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie/);
   assert.doesNotMatch(source, /console\.(?:log|info|warn|error)/);
   assert.doesNotMatch(source, /TokenHash|service[_-]?role|client[_-]?secret|smtp[_-]?password/i);

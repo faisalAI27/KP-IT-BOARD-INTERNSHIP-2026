@@ -22,10 +22,6 @@
     right: -10px;
   }
 
-  .chip-bottom {
-    left: -8px;
-  }
-
   .lang-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -160,10 +156,6 @@
 
   .chip-top {
     right: 0;
-  }
-
-  .chip-bottom {
-    left: 0;
   }
 
   .mission-grid,
@@ -368,18 +360,9 @@
     height: 465px;
   }
 
-  .hero-cultural-caption {
-    padding: 64px 20px 20px;
-  }
-
   .chip-top {
     top: 42px;
     right: -2px;
-  }
-
-  .chip-bottom {
-    bottom: 17px;
-    left: -2px;
   }
 
   .art-chip {
@@ -672,11 +655,6 @@
     object-position: center 55%;
   }
 
-  .hero-cultural-caption {
-    padding: 58px 18px 18px;
-    font-size: 0.96rem;
-  }
-
   .art-chip {
     min-width: 0;
     font-size: 0.65rem;
@@ -688,10 +666,6 @@
 
   .chip-top {
     top: 26px;
-  }
-
-  .chip-bottom {
-    bottom: 7px;
   }
 
   .chip-icon {

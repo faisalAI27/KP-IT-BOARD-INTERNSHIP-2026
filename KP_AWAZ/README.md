@@ -134,22 +134,19 @@ and password; Google OAuth behavior is unchanged.
 
 ### Cultural authentication visual
 
-The account entrance uses an original, locally stored editorial illustration
-of a multigenerational KP community sharing a voice recording in a
-hujra-inspired gathering space. The layered mountains represent the geography
-and identity of Khyber Pakhtunkhwa; the carved-wood setting, woven textile, and
-rabab reference regional cultural expression without turning the scene into a
-collection of symbols. A warm sound wave rises from the microphone and becomes
-connected digital points, representing community speech moving into preserved
-language data and future technology. No external photography, hotlinked image,
-or copyrighted website artwork is used.
+The account entrance places one centered, opaque authentication card over an
+original full-viewport editorial illustration; it no longer uses a split-screen
+layout. KP-inspired mountains, a hujra setting, carved wood, woven textiles, a
+rabāb, community conversation, and a microphone surround the card. A warm
+sound wave becoming connected points represents community speech moving into
+preserved language data and future technology.
 
-Responsive `<picture>` sources provide a 1600×2000 WebP desktop illustration, a
-1120×720 WebP mobile crop, and a progressive JPEG fallback. Declared dimensions
-and a reserved CSS aspect ratio prevent layout shifts. If the generated image
-cannot load, a local SVG and layered CSS mountain scene replace it without
-affecting authentication. The soft voice-path glow pauses in hidden tabs and is
-disabled with reduced motion.
+Responsive local assets provide separate desktop and portrait-mobile WebP
+compositions plus a progressive JPEG fallback. Authentication initializes
+without waiting for the artwork, and a forest-green CSS mountain and textile
+fallback preserves contrast if it cannot load. The Google button uses the
+official multicolor Google G from Google's pre-approved Android/Web sign-in
+asset bundle, stored locally without recoloring.
 
 The functional card remains sign-in-first and changes context for account
 creation, signup OTP, loading, error, and verified-success states. Keyboard
