@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 128" role="img" aria-labelledby="mono-dark-title mono-dark-desc">
+  <title id="mono-dark-title">KP AWAZ monochrome dark</title>
+  <desc id="mono-dark-desc">The KP AWAZ primary logo rendered in one dark color.</desc>
+  <defs>
+    <mask id="dark-wave-cut">
+      <rect width="128" height="128" fill="#fff"/>
+      <path fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5" d="M32 86h11l5-8 7 16 8-29 8 22 6-11 8 10h11"/>
+    </mask>
+  </defs>
+  <g fill="#141414" aria-hidden="true">
+    <path fill-rule="evenodd" d="M14 114V58C14 30.4 36.4 8 64 8s50 22.4 50 50v56H14Zm15-6h70V59c0-20.4-15.7-36-35-36S29 38.6 29 59v49Z"/>
+    <path mask="url(#dark-wave-cut)" d="m29 84 20-25 13 15 16-24 21 31v27H29Z"/>
+    <path fill-rule="evenodd" d="m64 30 6 6-6 6-6-6 6-6Zm0 3-3 3 3 3 3-3-3-3Z"/>
+  </g>
+  <text x="149" y="51" fill="#141414" font-family="Georgia, 'Times New Roman', serif" font-size="23" font-weight="700" letter-spacing="2">KP</text>
+  <text x="145" y="112" fill="#141414" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="700" letter-spacing="-.8">AWAZ</text>
+</svg>

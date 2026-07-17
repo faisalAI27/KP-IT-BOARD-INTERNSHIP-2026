@@ -88,6 +88,14 @@ The main-page hero uses the locally stored, optimized
 crop connects community voice recording with the people, landscape, materials,
 and warmth of Khyber Pakhtunkhwa while keeping the existing earthy palette.
 
+## Brand identity
+
+The KP AWAZ logo system uses a cultural gateway, KP mountain peaks, and an
+integrated voice waveform. Full-color, horizontal, stacked, icon-only, and
+monochrome SVG assets live in `assets/images/`. Meaning, colors, minimum sizes,
+accessibility, and frontend usage are documented in
+[`docs/brand-identity.md`](docs/brand-identity.md).
+
 ## Production build
 
 ```bash

@@ -231,17 +231,9 @@ footer {
   gap: 48px;
 }
 
-footer .logo .word {
-  color: var(--paper);
-}
-
-footer .logo .word span {
-  color: var(--honey);
-}
-
-footer .logo .mark {
-  width: 40px;
-  height: 40px;
+footer .logo .brand-lockup {
+  width: 141px;
+  height: 42px;
 }
 
 .foot-brand .desc {
@@ -300,4 +292,3 @@ footer li a:hover {
   border-radius: 50%;
   background: var(--honey);
 }
-

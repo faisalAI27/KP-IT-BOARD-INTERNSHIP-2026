@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" role="img" aria-labelledby="horizontal-title horizontal-desc">
+  <title id="horizontal-title">KP AWAZ</title>
+  <desc id="horizontal-desc">A compact horizontal KP AWAZ logo for navigation and narrow layouts.</desc>
+  <g transform="translate(4 4) scale(.6875)" aria-hidden="true">
+    <path fill="#153f32" d="M14 114V58C14 30.4 36.4 8 64 8s50 22.4 50 50v56H14Z"/>
+    <path fill="#f7f1e6" d="M29 108V59c0-20.4 15.7-36 35-36s35 15.6 35 36v49H29Z"/>
+    <path fill="#b65d3a" d="m29 84 20-25 13 15 16-24 21 31v27H29Z"/>
+    <path fill="#c89943" d="m64 30 6 6-6 6-6-6 6-6Z"/>
+    <path fill="#153f32" d="m64 33 3 3-3 3-3-3 3-3Z"/>
+    <path fill="none" stroke="#f7f1e6" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5" d="M32 86h11l5-8 7 16 8-29 8 22 6-11 8 10h11"/>
+  </g>
+  <text x="108" y="62" fill="#c89943" font-family="Georgia, 'Times New Roman', serif" font-size="31" font-weight="700" letter-spacing="1">KP</text>
+  <text x="174" y="68" fill="#153f32" font-family="Georgia, 'Times New Roman', serif" font-size="53" font-weight="700" letter-spacing="-.8">AWAZ</text>
+</svg>

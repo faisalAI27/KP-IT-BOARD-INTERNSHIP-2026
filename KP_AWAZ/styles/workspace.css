@@ -46,16 +46,13 @@ body.workspace-body {
 }
 
 .workspace-brand img {
-  width: 42px;
+  width: 141px;
   height: 42px;
+  object-fit: contain;
 }
 
 .workspace-brand span {
   line-height: 1.05;
-}
-
-.workspace-brand strong {
-  color: var(--honey);
 }
 
 .workspace-brand small {

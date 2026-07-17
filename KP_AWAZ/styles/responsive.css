@@ -225,13 +225,9 @@
     gap: 12px;
   }
 
-  .logo .mark {
-    width: 34px;
-    height: 34px;
-  }
-
-  .logo .word {
-    font-size: 1.16rem;
+  .logo .brand-lockup {
+    width: 121px;
+    height: 36px;
   }
 
   .nav-cta .btn {
