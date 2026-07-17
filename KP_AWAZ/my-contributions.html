@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Review your private KP AWAZ voice contributions." />
+    <title>My Contributions — KP AWAZ</title>
+    <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/workspace.css?v=20260717-auth-routing" />
+    <link rel="stylesheet" href="styles/auth.css?v=20260717-member-workspace" />
+    <link rel="stylesheet" href="styles/my-contributions.css?v=20260717-member-workspace" />
+    <link rel="stylesheet" href="styles/workspace-pages.css?v=20260717-member-workspace" />
+  </head>
+  <body class="workspace-body" data-workspace-state="loading">
+    <a class="skip-link" href="#workspaceMain">Skip to contribution history</a>
+    <div data-partial="sections/workspace-sidebar.html"></div>
+
+    <main class="workspace-main" id="workspaceMain">
+      <div class="workspace-loading-shell" role="status" aria-live="polite"><span class="workspace-loading-mark" aria-hidden="true"></span><strong>Loading your contributor workspace…</strong><small>Restoring your secure session.</small></div>
+      <div class="workspace-content">
+        <div class="workspace-guard" id="workspaceGuard" role="alert" hidden>
+          <strong>We could not open your contribution history.</strong>
+          <span id="workspaceGuardMessage"></span>
+        </div>
+        <div data-partial="sections/my-contributions.html"></div>
+      </div>
+    </main>
+
+    <script
+      type="module"
+      src="scripts/contributions-page-app.js?v=20260717-auth-routing"
+    ></script>
+  </body>
+</html>

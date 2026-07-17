@@ -26,6 +26,44 @@
         </button>
       </div>
 
+      <section
+        class="my-contributions-summary"
+        id="myContributionsSummary"
+        aria-labelledby="myContributionsSummaryTitle"
+      >
+        <div class="my-contributions-summary-heading">
+          <span class="auth-kicker">Review overview</span>
+          <h4 id="myContributionsSummaryTitle">Your contribution summary</h4>
+        </div>
+        <dl class="my-contributions-summary-grid">
+          <div>
+            <dt>Total</dt>
+            <dd id="myContributionsSummaryTotal">—</dd>
+          </div>
+          <div data-status="pending">
+            <dt>Pending review</dt>
+            <dd id="myContributionsSummaryPending">—</dd>
+          </div>
+          <div data-status="approved">
+            <dt>Approved</dt>
+            <dd id="myContributionsSummaryApproved">—</dd>
+          </div>
+          <div data-status="rejected">
+            <dt>Rejected</dt>
+            <dd id="myContributionsSummaryRejected">—</dd>
+          </div>
+        </dl>
+      <p
+          class="my-contributions-summary-status"
+          id="myContributionsSummaryStatus"
+          role="status"
+          aria-live="polite"
+      ></p>
+      <p class="my-contributions-score-note">
+        Only approved contributions increase your contribution score.
+      </p>
+      </section>
+
       <div
         class="my-contributions-status"
         id="myContributionsStatus"

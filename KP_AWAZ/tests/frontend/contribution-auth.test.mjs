@@ -144,6 +144,18 @@ test("contribution partial provides an accessible login-required status", async 
   assert.match(html, /id="contributionAuthMessage"/);
   assert.match(html, /id="contributionSignInButton"[\s\S]*Sign in/);
   assert.equal((html.match(/id="toReviewBtn"/g) ?? []).length, 1);
+  assert.equal(
+    (html.match(/Recording submitted successfully\./g) ?? []).length,
+    2,
+  );
+  assert.equal(
+    (
+      html.match(
+        /Your contribution is now waiting for administrator review\. Your score\s+will increase after it is approved\./g,
+      ) ?? []
+    ).length,
+    2,
+  );
 });
 
 

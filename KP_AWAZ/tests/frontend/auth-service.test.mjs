@@ -84,7 +84,13 @@ function createFakeSupabase({
   sessionError = null,
   googleError = null,
   emailError = null,
+  signUpError = null,
+  passwordSignInError = null,
+  resendError = null,
+  resetError = null,
+  updateUserError = null,
   otpError = null,
+  signUpSession = null,
   otpSession = session({
     user: {
       id: USER_ID,
@@ -98,6 +104,11 @@ function createFakeSupabase({
     getSession: 0,
     google: [],
     email: [],
+    signUp: [],
+    passwordSignIn: [],
+    resend: [],
+    passwordReset: [],
+    updateUser: [],
     otp: [],
     signOut: 0,
     subscriptions: 0,
@@ -123,6 +134,34 @@ function createFakeSupabase({
       async signInWithOtp(input) {
         calls.email.push(input);
         return { data: {}, error: emailError };
+      },
+      async signUp(input) {
+        calls.signUp.push(input);
+        if (!signUpError && signUpSession) currentSession = signUpSession;
+        return {
+          data: { session: signUpError ? null : signUpSession },
+          error: signUpError,
+        };
+      },
+      async signInWithPassword(input) {
+        calls.passwordSignIn.push(input);
+        if (!passwordSignInError) currentSession = otpSession;
+        return {
+          data: { session: passwordSignInError ? null : otpSession },
+          error: passwordSignInError,
+        };
+      },
+      async resend(input) {
+        calls.resend.push(input);
+        return { data: {}, error: resendError };
+      },
+      async resetPasswordForEmail(email, options) {
+        calls.passwordReset.push({ email, options });
+        return { data: {}, error: resetError };
+      },
+      async updateUser(input) {
+        calls.updateUser.push(input);
+        return { data: {}, error: updateUserError };
       },
       async verifyOtp(input) {
         calls.otp.push(input);
@@ -478,6 +517,186 @@ test("invalid or expired Supabase OTP returns only the safe fixed error", async 
 });
 
 
+test("password signup normalizes identity and requests email verification", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+  const password = "voice-path-2026";
+
+  const result = await service.signUpWithPassword({
+    email: "  Person@Example.com ",
+    password,
+    displayName: "  Faisal Imran  ",
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    email: "person@example.com",
+    verificationRequired: true,
+  });
+  assert.deepEqual(fake.calls.signUp, [
+    {
+      email: "person@example.com",
+      password,
+      options: { data: { display_name: "Faisal Imran" } },
+    },
+  ]);
+  assert.equal(JSON.stringify(result).includes(password), false);
+  assert.equal(JSON.stringify(service.getCurrentAuthState()).includes(password), false);
+});
+
+
+test("invalid password signup details are rejected before Supabase", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+
+  await assert.rejects(
+    service.signUpWithPassword({
+      email: "person@example.com",
+      password: "short",
+      displayName: "Person",
+    }),
+    (error) => error.code === "INVALID_PASSWORD",
+  );
+  await assert.rejects(
+    service.signUpWithPassword({
+      email: "person@example.com",
+      password: "long-enough-password",
+      displayName: "x",
+    }),
+    (error) => error.code === "INVALID_DISPLAY_NAME",
+  );
+  assert.equal(fake.calls.signUp.length, 0);
+});
+
+
+test("signup OTP verifies with type email and enters the existing backend flow", async () => {
+  const fake = createFakeSupabase();
+  const backendRequests = [];
+  const service = createService(fake, {
+    fetchImpl: async (url, options) => {
+      backendRequests.push({ url, options });
+      return jsonResponse(verifiedUser({ provider: "email" }));
+    },
+  });
+
+  const result = await service.verifySignupOtp(
+    " Person@Example.com ",
+    "12 34 56",
+  );
+
+  assert.deepEqual(fake.calls.otp, [
+    {
+      email: "person@example.com",
+      token: "123456",
+      type: "email",
+    },
+  ]);
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.equal(service.getCurrentAuthState().status, "signed_in");
+  assert.equal(backendRequests.length, 1);
+  assert.equal(JSON.stringify(backendRequests).includes("123456"), false);
+});
+
+
+test("signup OTP resend uses the verified signup email contract", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+
+  const result = await service.resendSignupOtp(" PERSON@example.com ");
+
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.deepEqual(fake.calls.resend, [
+    { type: "signup", email: "person@example.com" },
+  ]);
+});
+
+
+test("password sign-in verifies the resulting session with FastAPI", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+  const password = "returning-voice-2026";
+
+  const result = await service.signInWithPassword({
+    email: "Person@Example.com",
+    password,
+  });
+
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.deepEqual(fake.calls.passwordSignIn, [
+    { email: "person@example.com", password },
+  ]);
+  assert.equal(service.getCurrentAuthState().status, "signed_in");
+  assert.equal(JSON.stringify(service.getCurrentAuthState()).includes(password), false);
+});
+
+
+test("password authentication failures never expose raw Supabase errors", async () => {
+  const fake = createFakeSupabase({
+    signUpError: new Error(`duplicate ${ACCESS_TOKEN}`),
+    passwordSignInError: new Error(`invalid ${REFRESH_TOKEN}`),
+    resendError: new Error("smtp-private-detail"),
+  });
+  const service = createService(fake);
+
+  await assert.rejects(
+    service.signUpWithPassword({
+      email: "person@example.com",
+      password: "secure-password",
+      displayName: "Person",
+    }),
+    (error) =>
+      error.code === "PASSWORD_SIGN_UP_FAILED" &&
+      !error.message.includes(ACCESS_TOKEN),
+  );
+  await assert.rejects(
+    service.signInWithPassword({
+      email: "person@example.com",
+      password: "secure-password",
+    }),
+    (error) =>
+      error.code === "PASSWORD_SIGN_IN_FAILED" &&
+      !error.message.includes(REFRESH_TOKEN),
+  );
+  await assert.rejects(
+    service.resendSignupOtp("person@example.com"),
+    (error) =>
+      error.code === "SIGNUP_OTP_RESEND_FAILED" &&
+      !error.message.includes("smtp-private-detail"),
+  );
+});
+
+
+test("password recovery normalizes email and uses the allowed reset page", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake, {
+    locationOrigin: "https://app.example.test",
+  });
+
+  const result = await service.requestPasswordReset(" Person@Example.com ");
+
+  assert.deepEqual(result, { ok: true });
+  assert.deepEqual(fake.calls.passwordReset, [{
+    email: "person@example.com",
+    options: { redirectTo: "https://app.example.test/reset-password.html" },
+  }]);
+});
+
+
+test("verified password-recovery session can update password through Supabase only", async () => {
+  const fake = createFakeSupabase({ initialSession: session() });
+  const service = createService(fake);
+  await service.initializeAuthService();
+  fake.emit("PASSWORD_RECOVERY", session());
+  await settleAuthEvent();
+
+  assert.equal(service.isPasswordRecoverySession(), true);
+  await service.updatePassword("a-secure-new-password");
+
+  assert.deepEqual(fake.calls.updateUser, [{ password: "a-secure-new-password" }]);
+  assert.equal(service.isPasswordRecoverySession(), false);
+});
+
+
 test("OTP verification failure never exposes raw Supabase secrets", async () => {
   const fake = createFakeSupabase();
   fake.client.auth.verifyOtp = async () => {
@@ -826,6 +1045,73 @@ test("duplicate initialization creates one auth subscription", async () => {
 
   assert.equal(fake.calls.getSession, 1);
   assert.equal(fake.calls.subscriptions, 1);
+});
+
+
+test("bootstrap and initial-session event share one backend verification", async () => {
+  const restored = session();
+  const fake = createFakeSupabase({ initialSession: restored });
+  let resolveVerification;
+  let backendCalls = 0;
+  const service = createService(fake, {
+    fetchImpl: () => {
+      backendCalls += 1;
+      return new Promise((resolve) => {
+        resolveVerification = resolve;
+      });
+    },
+  });
+
+  const initialization = service.initializeAuthService();
+  await settleAuthEvent();
+  fake.emit("INITIAL_SESSION", restored);
+  await settleAuthEvent();
+  assert.equal(backendCalls, 1);
+  resolveVerification(jsonResponse(verifiedUser()));
+  await initialization;
+  await settleAuthEvent();
+
+  assert.equal(service.getCurrentAuthState().status, "signed_in");
+  assert.equal(backendCalls, 1);
+});
+
+
+test("authentication bootstrap timeout keeps the session and publishes a safe recoverable error", async () => {
+  const fake = createFakeSupabase({ initialSession: session() });
+  const service = createService(fake, {
+    requestTimeoutMs: 5,
+    fetchImpl: () => new Promise(() => {}),
+  });
+
+  const state = await service.initializeAuthService();
+
+  assert.equal(state.status, "error");
+  assert.equal(state.error.code, "AUTH_REQUEST_TIMEOUT");
+  assert.equal(
+    state.error.message,
+    "We could not complete the authentication request. Please try again.",
+  );
+  assert.equal(state.session.userId, USER_ID);
+  assert.equal(fake.calls.signOut, 0);
+  assert.equal(fake.calls.subscriptions, 1);
+});
+
+
+test("password login timeout is safe and never signs the user out", async () => {
+  const fake = createFakeSupabase({ initialSession: null });
+  fake.client.auth.signInWithPassword = () => new Promise(() => {});
+  const service = createService(fake, { requestTimeoutMs: 5 });
+
+  await assert.rejects(
+    service.signInWithPassword({
+      email: "person@example.com",
+      password: "strong-password",
+    }),
+    (error) =>
+      error.code === "AUTH_REQUEST_TIMEOUT" &&
+      error.message === "We could not complete the authentication request. Please try again.",
+  );
+  assert.equal(fake.calls.signOut, 0);
 });
 
 

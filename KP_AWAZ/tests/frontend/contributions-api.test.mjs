@@ -40,6 +40,8 @@ const historyItem = {
   mimeType: "audio/webm",
   durationSeconds: 4.2,
   status: "queued",
+  reviewStatus: "pending",
+  rejectionReason: null,
   createdAt: successBody.createdAt,
 };
 const historyBody = {
@@ -527,6 +529,42 @@ test("contribution history response is reduced to safe fields", () => {
 });
 
 
+test("contribution history accepts private rejected feedback for the owner", () => {
+  const rejectionReason = "Please record in a quieter room.";
+  const result = validateMyContributionsResponse({
+    ...historyBody,
+    items: [
+      {
+        ...historyItem,
+        reviewStatus: "rejected",
+        rejectionReason,
+      },
+    ],
+  });
+
+  assert.equal(result.items[0].reviewStatus, "rejected");
+  assert.equal(result.items[0].rejectionReason, rejectionReason);
+});
+
+
+test("non-rejected contribution history cannot carry rejection feedback", () => {
+  assert.throws(
+    () =>
+      validateMyContributionsResponse({
+        ...historyBody,
+        items: [
+          {
+            ...historyItem,
+            reviewStatus: "approved",
+            rejectionReason: "must not leak",
+          },
+        ],
+      }),
+    (error) => error.code === "INVALID_CONTRIBUTION_HISTORY_RESPONSE",
+  );
+});
+
+
 test("malformed contribution history responses are rejected", async (context) => {
   for (const body of [
     null,
@@ -537,6 +575,8 @@ test("malformed contribution history responses are rejected", async (context) =>
     { ...historyBody, offset: -1 },
     { ...historyBody, items: [{ ...historyItem, createdAt: "invalid" }] },
     { ...historyBody, items: [{ ...historyItem, durationSeconds: -1 }] },
+    { ...historyBody, items: [{ ...historyItem, reviewStatus: "reviewing" }] },
+    { ...historyBody, items: [{ ...historyItem, rejectionReason: undefined }] },
   ]) {
     await context.test(JSON.stringify(body), () => {
       assert.throws(

@@ -39,6 +39,8 @@ def add_contribution(
     user_id: str | None,
     created_at: datetime,
     contribution_type: str = "guided",
+    review_status: str = "pending",
+    rejection_reason: str | None = None,
 ) -> Contribution:
     contribution = Contribution(
         id=contribution_id,
@@ -57,6 +59,8 @@ def add_contribution(
         file_size=128,
         duration_seconds=3.5,
         status="queued",
+        review_status=review_status,
+        rejection_reason=rejection_reason,
         created_at=created_at,
         updated_at=created_at,
     )
@@ -113,6 +117,8 @@ def test_only_current_user_rows_are_returned(
         contribution_id="22222222-2222-4222-8222-222222222222",
         user_id=OTHER_USER_ID,
         created_at=now,
+        review_status="rejected",
+        rejection_reason="Private feedback for another owner",
     )
     add_contribution(
         db_session,
@@ -126,6 +132,7 @@ def test_only_current_user_rows_are_returned(
     assert response.status_code == 200
     assert response.json()["total"] == 1
     assert [item["id"] for item in response.json()["items"]] == [mine.id]
+    assert "Private feedback for another owner" not in response.text
 
 
 def test_response_uses_safe_camel_case_fields(
@@ -155,6 +162,8 @@ def test_response_uses_safe_camel_case_fields(
         "mimeType",
         "durationSeconds",
         "status",
+        "reviewStatus",
+        "rejectionReason",
         "createdAt",
     }
     assert item["id"] == contribution.id
@@ -167,14 +176,39 @@ def test_response_uses_safe_camel_case_fields(
         "access_token",
         "refresh_token",
         "_sa_instance_state",
-        "reviewstatus",
         "reviewedat",
-        "rejectionreason",
     ]:
         assert forbidden not in serialized
+    assert item["reviewStatus"] == "pending"
+    assert item["rejectionReason"] is None
 
 
-def test_rejection_reason_remains_admin_only(
+def test_rejected_owner_receives_review_status_and_private_reason(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, TEST_USER_ID)
+    add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=datetime.now(timezone.utc),
+        review_status="rejected",
+        rejection_reason="Please reduce background noise.",
+    )
+
+    response = get_mine(client)
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["reviewStatus"] == "rejected"
+    assert item["rejectionReason"] == "Please reduce background noise."
+
+
+@pytest.mark.parametrize("review_status", ["pending", "approved"])
+def test_non_rejected_owner_never_receives_a_rejection_reason(
+    review_status: str,
     client: TestClient,
     db_session: Session,
 ) -> None:
@@ -185,18 +219,19 @@ def test_rejection_reason_remains_admin_only(
         contribution_id="11111111-1111-4111-8111-111111111111",
         user_id=TEST_USER_ID,
         created_at=datetime.now(timezone.utc),
+        review_status=review_status,
     )
-    contribution.review_status = "rejected"
-    contribution.reviewed_at = datetime.now(timezone.utc)
-    contribution.rejection_reason = "Administrative reason"
+    # Simulate historical inconsistent data to verify response-level privacy.
+    contribution.rejection_reason = "Stale private review text"
     db_session.commit()
 
     response = get_mine(client)
 
     assert response.status_code == 200
-    assert "Administrative reason" not in response.text
-    assert "rejectionReason" not in response.text
-    assert "reviewStatus" not in response.text
+    item = response.json()["items"][0]
+    assert item["reviewStatus"] == review_status
+    assert item["rejectionReason"] is None
+    assert "Stale private review text" not in response.text
 
 
 def test_limit_offset_total_and_newest_first(

@@ -5,10 +5,19 @@ import {
   isSupabaseConfigured,
   resolveAuthRedirectUrl,
 } from "./supabase-client.js";
+import {
+  AUTH_REQUEST_TIMEOUT_MESSAGE,
+  AUTH_REQUEST_TIMEOUT_MS,
+  isRequestTimeoutError,
+  withRequestTimeout,
+} from "./request-timeout.js?v=20260717-auth-routing";
 
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const EMAIL_OTP_LENGTH = 6;
+export const EMAIL_VERIFICATION_OTP_LENGTH = 6;
+export const EMAIL_OTP_LENGTH = EMAIL_VERIFICATION_OTP_LENGTH;
+export const ACCOUNT_PASSWORD_MIN_LENGTH = 8;
+export const ACCOUNT_PASSWORD_MAX_LENGTH = 72;
 const EMAIL_OTP_PATTERN = new RegExp(`^\\d{${EMAIL_OTP_LENGTH}}$`);
 const BACKEND_AUTH_CODES = new Set([
   "AUTHENTICATION_REQUIRED",
@@ -23,6 +32,7 @@ const AUTH_EVENTS = new Set([
   "SIGNED_OUT",
   "TOKEN_REFRESHED",
   "USER_UPDATED",
+  "PASSWORD_RECOVERY",
 ]);
 
 
@@ -123,6 +133,18 @@ function sessionRestoreError() {
 }
 
 
+function requestTimeoutError() {
+  return new AuthServiceError(AUTH_REQUEST_TIMEOUT_MESSAGE, {
+    code: "AUTH_REQUEST_TIMEOUT",
+  });
+}
+
+
+function preserveRequestTimeout(error, fallback) {
+  return error?.code === "AUTH_REQUEST_TIMEOUT" ? error : fallback;
+}
+
+
 function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
 }
@@ -130,6 +152,49 @@ function normalizeEmail(email) {
 
 function normalizeEmailOtp(otp) {
   return typeof otp === "string" ? otp.replace(/[\s-]+/g, "") : "";
+}
+
+
+function requireValidEmail(email) {
+  const cleanedEmail = normalizeEmail(email);
+  if (
+    !cleanedEmail ||
+    cleanedEmail.length > 254 ||
+    !EMAIL_PATTERN.test(cleanedEmail)
+  ) {
+    throw new AuthServiceError("Enter a valid email address.", {
+      code: "INVALID_EMAIL",
+    });
+  }
+  return cleanedEmail;
+}
+
+
+function requireValidPassword(password) {
+  if (
+    typeof password !== "string" ||
+    password.length < ACCOUNT_PASSWORD_MIN_LENGTH ||
+    password.length > ACCOUNT_PASSWORD_MAX_LENGTH
+  ) {
+    throw new AuthServiceError(
+      `Use a password between ${ACCOUNT_PASSWORD_MIN_LENGTH} and ${ACCOUNT_PASSWORD_MAX_LENGTH} characters.`,
+      { code: "INVALID_PASSWORD" },
+    );
+  }
+  return password;
+}
+
+
+function requireValidDisplayName(displayName) {
+  const cleanedName =
+    typeof displayName === "string" ? displayName.trim() : "";
+  if (cleanedName.length < 2 || cleanedName.length > 80) {
+    throw new AuthServiceError(
+      "Display name must contain between 2 and 80 characters.",
+      { code: "INVALID_DISPLAY_NAME" },
+    );
+  }
+  return cleanedName;
 }
 
 
@@ -142,6 +207,7 @@ export class AuthService {
     fetchImpl = (...args) => globalThis.fetch(...args),
     locationOrigin = globalThis.location?.origin,
     redirectUrl = null,
+    requestTimeoutMs = AUTH_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
@@ -156,6 +222,7 @@ export class AuthService {
     this._fetch = fetchImpl;
     this._locationOrigin = locationOrigin;
     this._redirectUrl = redirectUrl;
+    this._requestTimeoutMs = requestTimeoutMs;
     this._listeners = new Set();
     this._unsubscribeAuth = null;
     this._session = null;
@@ -164,7 +231,12 @@ export class AuthService {
     this._initializationPromise = null;
     this._destroyed = false;
     this._verificationEpoch = 0;
+    this._verificationPromise = null;
+    this._verificationAccessToken = null;
+    this._verifiedAccessToken = null;
     this._emailOtpVerificationActive = false;
+    this._passwordVerificationActive = false;
+    this._passwordRecoveryActive = false;
     this._state = {
       status: "loading",
       session: null,
@@ -180,6 +252,14 @@ export class AuthService {
   getCurrentAccessToken() {
     const token = this._session?.access_token;
     return typeof token === "string" && token.trim() ? token : null;
+  }
+
+  isPasswordRecoverySession() {
+    return Boolean(
+      this._passwordRecoveryActive &&
+        this._state.status === "signed_in" &&
+        this._backendUser,
+    );
   }
 
   subscribeToAuthChanges(callback) {
@@ -209,6 +289,18 @@ export class AuthService {
     }
   }
 
+  async _runRequest(operation, { onTimeout = null } = {}) {
+    try {
+      return await withRequestTimeout(operation, {
+        timeoutMs: this._requestTimeoutMs,
+        onTimeout,
+      });
+    } catch (error) {
+      if (isRequestTimeoutError(error)) throw requestTimeoutError();
+      throw error;
+    }
+  }
+
   async _initialize() {
     if (!this._configured) {
       this._initialized = true;
@@ -218,10 +310,10 @@ export class AuthService {
 
     try {
       this._ensureClient();
+      this._registerAuthSubscription();
       const session = await this._loadSession();
       const epoch = this._replaceSession(session);
       this._initialized = true;
-      this._registerAuthSubscription();
 
       if (!session) {
         this._publish("signed_out");
@@ -278,47 +370,46 @@ export class AuthService {
   async signInWithGoogle() {
     const client = this._ensureClient();
     try {
-      const { error } = await client.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: this._resolvedRedirectUrl() },
-      });
+      const { error } = await this._runRequest(() =>
+        client.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: this._resolvedRedirectUrl() },
+        }),
+      );
       if (error) throw error;
-    } catch {
-      throw new AuthServiceError("Google sign-in could not be completed.", {
-        code: "GOOGLE_SIGN_IN_FAILED",
-      });
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError("Google sign-in could not be completed.", {
+          code: "GOOGLE_SIGN_IN_FAILED",
+        }),
+      );
     }
 
     return { ok: true, redirecting: true };
   }
 
   async requestEmailOtp(email) {
-    const cleanedEmail = normalizeEmail(email);
-    if (
-      !cleanedEmail ||
-      cleanedEmail.length > 254 ||
-      !EMAIL_PATTERN.test(cleanedEmail)
-    ) {
-      throw new AuthServiceError("Enter a valid email address.", {
-        code: "INVALID_EMAIL",
-      });
-    }
+    const cleanedEmail = requireValidEmail(email);
 
     const client = this._ensureClient();
     try {
-      const { error } = await client.auth.signInWithOtp({
-        email: cleanedEmail,
-        options: {
-          shouldCreateUser: true,
-        },
-      });
+      const { error } = await this._runRequest(() =>
+        client.auth.signInWithOtp({
+          email: cleanedEmail,
+          options: {
+            shouldCreateUser: true,
+          },
+        }),
+      );
       if (error) throw error;
-    } catch {
-      throw new AuthServiceError(
-        "We could not send the sign-in code. Please try again.",
-        {
-          code: "EMAIL_OTP_SEND_FAILED",
-        },
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError(
+          "We could not send the sign-in code. Please try again.",
+          { code: "EMAIL_OTP_SEND_FAILED" },
+        ),
       );
     }
 
@@ -326,16 +417,7 @@ export class AuthService {
   }
 
   async verifyEmailOtp(email, otp) {
-    const cleanedEmail = normalizeEmail(email);
-    if (
-      !cleanedEmail ||
-      cleanedEmail.length > 254 ||
-      !EMAIL_PATTERN.test(cleanedEmail)
-    ) {
-      throw new AuthServiceError("Enter a valid email address.", {
-        code: "INVALID_EMAIL",
-      });
-    }
+    const cleanedEmail = requireValidEmail(email);
 
     const cleanedOtp = normalizeEmailOtp(otp);
     if (!EMAIL_OTP_PATTERN.test(cleanedOtp)) {
@@ -349,15 +431,20 @@ export class AuthService {
     try {
       let verification;
       try {
-        verification = await client.auth.verifyOtp({
-          email: cleanedEmail,
-          token: cleanedOtp,
-          type: "email",
-        });
-      } catch {
-        throw new AuthServiceError(
-          "We could not verify the code. Please try again.",
-          { code: "EMAIL_OTP_VERIFY_FAILED" },
+        verification = await this._runRequest(() =>
+          client.auth.verifyOtp({
+            email: cleanedEmail,
+            token: cleanedOtp,
+            type: "email",
+          }),
+        );
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "We could not verify the code. Please try again.",
+            { code: "EMAIL_OTP_VERIFY_FAILED" },
+          ),
         );
       }
 
@@ -371,10 +458,13 @@ export class AuthService {
       let session;
       try {
         session = await this._loadSession();
-      } catch {
-        throw new AuthServiceError(
-          "We could not verify the code. Please try again.",
-          { code: "EMAIL_OTP_VERIFY_FAILED" },
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "We could not verify the code. Please try again.",
+            { code: "EMAIL_OTP_VERIFY_FAILED" },
+          ),
         );
       }
       if (!session) {
@@ -403,18 +493,244 @@ export class AuthService {
     }
   }
 
-  async signOut() {
+  async signUpWithPassword({ email, password, displayName } = {}) {
+    const cleanedEmail = requireValidEmail(email);
+    const safePassword = requireValidPassword(password);
+    const cleanedName = requireValidDisplayName(displayName);
+    const client = this._ensureClient();
+    this._passwordVerificationActive = true;
+
+    try {
+      let result;
+      try {
+        result = await this._runRequest(() =>
+          client.auth.signUp({
+            email: cleanedEmail,
+            password: safePassword,
+            options: {
+              data: { display_name: cleanedName },
+            },
+          }),
+        );
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "We could not create the account. Please try again.",
+            { code: "PASSWORD_SIGN_UP_FAILED" },
+          ),
+        );
+      }
+
+      if (result?.error) {
+        throw new AuthServiceError(
+          "We could not create the account. Check your details or sign in if you already have an account.",
+          { code: "PASSWORD_SIGN_UP_FAILED" },
+        );
+      }
+
+      const session = result?.data?.session ?? null;
+      if (session) await this._verifyInteractiveSession(session);
+      return {
+        ok: true,
+        email: cleanedEmail,
+        verificationRequired: !session,
+      };
+    } finally {
+      this._passwordVerificationActive = false;
+    }
+  }
+
+  async resendSignupOtp(email) {
+    const cleanedEmail = requireValidEmail(email);
     const client = this._ensureClient();
     try {
-      const { error } = await client.auth.signOut();
+      const { error } = await this._runRequest(() =>
+        client.auth.resend({
+          type: "signup",
+          email: cleanedEmail,
+        }),
+      );
       if (error) throw error;
-    } catch {
-      throw new AuthServiceError("Sign-out could not be completed.", {
-        code: "SIGN_OUT_FAILED",
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError(
+          "We could not resend the verification code. Please try again.",
+          { code: "SIGNUP_OTP_RESEND_FAILED" },
+        ),
+      );
+    }
+    return { ok: true, email: cleanedEmail };
+  }
+
+  async verifySignupOtp(email, otp) {
+    const cleanedEmail = requireValidEmail(email);
+    const cleanedOtp = normalizeEmailOtp(otp);
+    if (!EMAIL_OTP_PATTERN.test(cleanedOtp)) {
+      throw new AuthServiceError("Enter the complete six-digit code.", {
+        code: "INVALID_SIGNUP_OTP",
       });
     }
 
+    const client = this._ensureClient();
+    this._passwordVerificationActive = true;
+    try {
+      let result;
+      try {
+        result = await this._runRequest(() =>
+          client.auth.verifyOtp({
+            email: cleanedEmail,
+            token: cleanedOtp,
+            type: "email",
+          }),
+        );
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "We could not verify the code. Please try again.",
+            { code: "SIGNUP_OTP_VERIFY_FAILED" },
+          ),
+        );
+      }
+
+      if (result?.error) {
+        throw new AuthServiceError(
+          "Invalid or expired code. Request a new code and try again.",
+          { code: "INVALID_OR_EXPIRED_SIGNUP_OTP" },
+        );
+      }
+
+      const session = result?.data?.session ?? (await this._loadSession());
+      if (!session) {
+        throw new AuthServiceError(
+          "We could not verify the code. Please try again.",
+          { code: "SIGNUP_OTP_VERIFY_FAILED" },
+        );
+      }
+      await this._verifyInteractiveSession(session);
+      return { ok: true, email: cleanedEmail };
+    } finally {
+      this._passwordVerificationActive = false;
+    }
+  }
+
+  async signInWithPassword({ email, password } = {}) {
+    const cleanedEmail = requireValidEmail(email);
+    const safePassword = requireValidPassword(password);
+    const client = this._ensureClient();
+    this._passwordVerificationActive = true;
+
+    try {
+      let result;
+      try {
+        result = await this._runRequest(() =>
+          client.auth.signInWithPassword({
+            email: cleanedEmail,
+            password: safePassword,
+          }),
+        );
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "We could not sign you in. Check your email and password and try again.",
+            { code: "PASSWORD_SIGN_IN_FAILED" },
+          ),
+        );
+      }
+      if (result?.error || !result?.data?.session) {
+        throw new AuthServiceError(
+          "We could not sign you in. Check your email and password and try again.",
+          { code: "PASSWORD_SIGN_IN_FAILED" },
+        );
+      }
+      await this._verifyInteractiveSession(result.data.session);
+      return { ok: true, email: cleanedEmail };
+    } finally {
+      this._passwordVerificationActive = false;
+    }
+  }
+
+  async requestPasswordReset(email) {
+    const cleanedEmail = requireValidEmail(email);
+    const client = this._ensureClient();
+    let redirectTo;
+    try {
+      redirectTo = new URL("/reset-password.html", this._locationOrigin).href;
+    } catch {
+      throw new AuthServiceError(
+        "We could not start password recovery. Please try again.",
+        { code: "PASSWORD_RESET_REQUEST_FAILED" },
+      );
+    }
+
+    try {
+      const { error } = await this._runRequest(() =>
+        client.auth.resetPasswordForEmail(cleanedEmail, { redirectTo }),
+      );
+      if (error) throw error;
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError(
+          "We could not start password recovery. Please try again.",
+          { code: "PASSWORD_RESET_REQUEST_FAILED" },
+        ),
+      );
+    }
+    return { ok: true };
+  }
+
+  async updatePassword(password) {
+    const safePassword = requireValidPassword(password);
+    if (
+      this._state.status !== "signed_in" ||
+      !this._backendUser ||
+      !this.getCurrentAccessToken()
+    ) {
+      throw new AuthServiceError("A verified session is required.", {
+        code: "PASSWORD_UPDATE_SESSION_REQUIRED",
+        status: 401,
+      });
+    }
+
+    const client = this._ensureClient();
+    try {
+      const { error } = await this._runRequest(() =>
+        client.auth.updateUser({ password: safePassword }),
+      );
+      if (error) throw error;
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError(
+          "We could not update the password. Please try again.",
+          { code: "PASSWORD_UPDATE_FAILED" },
+        ),
+      );
+    }
+    this._passwordRecoveryActive = false;
+    return { ok: true };
+  }
+
+  async signOut() {
+    const client = this._ensureClient();
+    try {
+      const { error } = await this._runRequest(() => client.auth.signOut());
+      if (error) throw error;
+    } catch (error) {
+      throw preserveRequestTimeout(
+        error,
+        new AuthServiceError("Sign-out could not be completed.", {
+          code: "SIGN_OUT_FAILED",
+        }),
+      );
+    }
+
     this._replaceSession(null);
+    this._passwordRecoveryActive = false;
     this._publish("signed_out");
     return { ok: true };
   }
@@ -430,32 +746,73 @@ export class AuthService {
       throw error;
     }
 
-    let response;
+    if (this._backendUser && this._verifiedAccessToken === accessToken) {
+      if (this._state.status !== "signed_in") this._publish("signed_in");
+      return { ...this._backendUser };
+    }
+
+    let verification = this._verificationPromise;
+    if (!verification || this._verificationAccessToken !== accessToken) {
+      this._verificationAccessToken = accessToken;
+      verification = this._requestVerifiedUser(accessToken);
+      this._verificationPromise = verification;
+    }
+
     try {
-      response = await this._fetch(`${this._apiBaseUrl}/auth/me`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-    } catch {
-      const error = new AuthServiceError(
-        "The authentication service could not be reached.",
-        { code: "AUTH_BACKEND_UNAVAILABLE", status: 0 },
-      );
+      const verifiedUser = await verification;
+      if (!this._isCurrentVerification(expectedEpoch)) return null;
+      if (this._backendUser && this._verifiedAccessToken === accessToken) {
+        return { ...this._backendUser };
+      }
+      this._backendUser = verifiedUser;
+      this._verifiedAccessToken = accessToken;
+      this._publish("signed_in");
+      return { ...verifiedUser };
+    } catch (error) {
       this._publishVerificationError(error, expectedEpoch);
+      throw error;
+    } finally {
+      if (this._verificationPromise === verification) {
+        this._verificationPromise = null;
+        this._verificationAccessToken = null;
+      }
+    }
+  }
+
+  async _requestVerifiedUser(accessToken) {
+    let response;
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    try {
+      response = await this._runRequest(
+        () =>
+          this._fetch(`${this._apiBaseUrl}/auth/me`, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            ...(controller ? { signal: controller.signal } : {}),
+          }),
+        { onTimeout: () => controller?.abort() },
+      );
+    } catch (requestError) {
+      const error = preserveRequestTimeout(
+        requestError,
+        new AuthServiceError(
+          "The authentication service could not be reached.",
+          { code: "AUTH_BACKEND_UNAVAILABLE", status: 0 },
+        ),
+      );
       throw error;
     }
 
     let body = null;
     try {
-      body = await response.json();
-    } catch {
+      body = await this._runRequest(() => response.json());
+    } catch (error) {
+      if (error?.code === "AUTH_REQUEST_TIMEOUT") throw error;
       // A safe malformed-response error is created below.
     }
-
-    if (!this._isCurrentVerification(expectedEpoch)) return null;
 
     if (!response.ok) {
       const backendCode =
@@ -473,7 +830,6 @@ export class AuthService {
         code: backendCode,
         status: response.status,
       });
-      this._publishVerificationError(error, expectedEpoch);
       throw error;
     }
 
@@ -483,14 +839,9 @@ export class AuthService {
         "The backend returned an invalid authentication response.",
         { code: "INVALID_BACKEND_AUTH_RESPONSE", status: response.status },
       );
-      this._publishVerificationError(error, expectedEpoch);
       throw error;
     }
-
-    if (!this._isCurrentVerification(expectedEpoch)) return null;
-    this._backendUser = verifiedUser;
-    this._publish("signed_in");
-    return { ...verifiedUser };
+    return verifiedUser;
   }
 
   destroyAuthService() {
@@ -499,7 +850,12 @@ export class AuthService {
     this._destroyed = true;
     this._initialized = false;
     this._verificationEpoch += 1;
+    this._verificationPromise = null;
+    this._verificationAccessToken = null;
+    this._verifiedAccessToken = null;
     this._emailOtpVerificationActive = false;
+    this._passwordVerificationActive = false;
+    this._passwordRecoveryActive = false;
     this._unsubscribeAuth?.();
     this._unsubscribeAuth = null;
     this._listeners.clear();
@@ -533,18 +889,45 @@ export class AuthService {
   async _loadSession() {
     let result;
     try {
-      result = await this._ensureClient().auth.getSession();
-    } catch {
-      throw sessionRestoreError();
+      result = await this._runRequest(() =>
+        this._ensureClient().auth.getSession(),
+      );
+    } catch (error) {
+      throw preserveRequestTimeout(error, sessionRestoreError());
     }
     if (result?.error) throw sessionRestoreError();
     return result?.data?.session ?? null;
   }
 
+  async _verifyInteractiveSession(session) {
+    const epoch = this._replaceSession(session);
+    this._publish("loading");
+    const backendUser = await this.verifyCurrentUserWithBackend(epoch);
+    if (!backendUser) {
+      const state = this.getCurrentAuthState();
+      if (state.status !== "signed_in" || !state.backendUser) {
+        throw new AuthServiceError(
+          "Account verification could not be completed. Please try again.",
+          { code: "ACCOUNT_VERIFICATION_FAILED" },
+        );
+      }
+    }
+    return backendUser;
+  }
+
   _replaceSession(session) {
-    this._session = session && typeof session === "object" ? session : null;
-    this._backendUser = null;
-    this._verificationEpoch += 1;
+    const nextSession = session && typeof session === "object" ? session : null;
+    const previousToken = this.getCurrentAccessToken();
+    const nextToken =
+      typeof nextSession?.access_token === "string" && nextSession.access_token.trim()
+        ? nextSession.access_token
+        : null;
+    this._session = nextSession;
+    if (previousToken !== nextToken) {
+      this._backendUser = null;
+      this._verifiedAccessToken = null;
+      this._verificationEpoch += 1;
+    }
     return this._verificationEpoch;
   }
 
@@ -567,11 +950,21 @@ export class AuthService {
 
   async _handleAuthEvent(event, session) {
     if (this._destroyed) return;
-    if (event === "SIGNED_IN" && this._emailOtpVerificationActive) return;
+    if (
+      event === "SIGNED_IN" &&
+      (this._emailOtpVerificationActive || this._passwordVerificationActive)
+    ) {
+      return;
+    }
     if (event === "SIGNED_OUT" || !session) {
       this._replaceSession(null);
+      this._passwordRecoveryActive = false;
       this._publish("signed_out");
       return;
+    }
+
+    if (event === "PASSWORD_RECOVERY") {
+      this._passwordRecoveryActive = true;
     }
 
     const epoch = this._replaceSession(session);
@@ -632,10 +1025,22 @@ const authService = new AuthService();
 export const initializeAuthService = () => authService.initializeAuthService();
 export const getCurrentSession = () => authService.getCurrentSession();
 export const getCurrentAccessToken = () => authService.getCurrentAccessToken();
+export const isPasswordRecoverySession = () =>
+  authService.isPasswordRecoverySession();
 export const signInWithGoogle = () => authService.signInWithGoogle();
 export const requestEmailOtp = (email) => authService.requestEmailOtp(email);
 export const verifyEmailOtp = (email, otp) =>
   authService.verifyEmailOtp(email, otp);
+export const signUpWithPassword = (input) =>
+  authService.signUpWithPassword(input);
+export const resendSignupOtp = (email) => authService.resendSignupOtp(email);
+export const verifySignupOtp = (email, otp) =>
+  authService.verifySignupOtp(email, otp);
+export const signInWithPassword = (input) =>
+  authService.signInWithPassword(input);
+export const requestPasswordReset = (email) =>
+  authService.requestPasswordReset(email);
+export const updatePassword = (password) => authService.updatePassword(password);
 export const signOut = () => authService.signOut();
 export const subscribeToAuthChanges = (callback) =>
   authService.subscribeToAuthChanges(callback);

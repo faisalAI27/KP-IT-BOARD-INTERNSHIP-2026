@@ -553,9 +553,31 @@
   }
 
   .nav-cta .auth-header-button {
-    min-width: 88px;
-    max-width: 92px;
+    min-width: 100px;
+    max-width: 110px;
     padding-inline: 10px;
+  }
+
+  .nav-cta .public-account-link {
+    display: inline-grid;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 0;
+  }
+
+  .nav-cta .public-account-link::before {
+    content: "A";
+    font-size: 0.72rem;
+    font-weight: 850;
+  }
+
+  .nav-cta .public-account-link[hidden] {
+    display: none;
   }
 
   .auth-otp-actions {

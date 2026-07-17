@@ -1,8 +1,9 @@
 import { appConfig } from "../config.js";
 import { pashtoSentences } from "../data/pashto-sentences.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-unified-auth";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
+const REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
 export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({
   "audio/webm": "webm",
   "audio/ogg": "ogg",
@@ -134,6 +135,11 @@ function safeContributionItem(item) {
   const sentenceId = optionalString(item.sentenceId);
   const sentenceText = optionalString(item.sentenceText);
   const topic = optionalString(item.topic);
+  const reviewStatus =
+    typeof item.reviewStatus === "string"
+      ? item.reviewStatus.trim().toLowerCase()
+      : "";
+  const rejectionReason = optionalString(item.rejectionReason);
   const valid =
     typeof item.id === "string" &&
     item.id.trim() &&
@@ -152,6 +158,9 @@ function safeContributionItem(item) {
       (typeof item.durationSeconds === "number" && item.durationSeconds >= 0)) &&
     typeof item.status === "string" &&
     item.status.trim() &&
+    REVIEW_STATUSES.has(reviewStatus) &&
+    rejectionReason !== undefined &&
+    (reviewStatus === "rejected" || rejectionReason === null) &&
     typeof item.createdAt === "string" &&
     !Number.isNaN(Date.parse(item.createdAt));
   if (!valid) return null;
@@ -166,6 +175,11 @@ function safeContributionItem(item) {
     mimeType: item.mimeType.trim(),
     durationSeconds: item.durationSeconds,
     status: item.status.trim(),
+    reviewStatus,
+    rejectionReason:
+      reviewStatus === "rejected" && typeof rejectionReason === "string"
+        ? rejectionReason.trim() || null
+        : null,
     createdAt: item.createdAt,
   };
 }

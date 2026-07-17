@@ -1,6 +1,6 @@
 <header class="nav" id="top">
   <div class="nav-inner">
-    <a class="logo" href="#top" aria-label="KP Awaz home">
+    <a class="logo" href="index.html" aria-label="KP Awaz home">
       <span class="mark" aria-hidden="true">
         <img src="assets/images/logo.svg" alt="" />
       </span>
@@ -18,9 +18,10 @@
     </button>
 
     <nav class="links" id="primary-navigation" aria-label="Primary">
-      <a href="#top" data-public-nav>Home</a>
-      <a href="#contribute" data-public-nav>Contribute</a>
-      <a href="#leaderboard" data-public-nav>Leaderboard</a>
+      <a href="index.html" data-public-nav>Home</a>
+      <a href="about.html" data-public-nav>About</a>
+      <a href="how-it-works.html" data-public-nav>How it works</a>
+      <a href="leaderboard.html" data-public-nav>Leaderboard</a>
       <button
         class="nav-private-link"
         id="myContributionsNavButton"
@@ -35,20 +36,24 @@
 
     <div class="nav-cta">
       <div class="account-control">
-        <button
+        <a
           class="btn btn-quiet btn-sm auth-header-button"
           id="authHeaderButton"
-          type="button"
+          href="auth.html"
           data-auth-kind="loading"
-          aria-haspopup="dialog"
-          aria-controls="authDialog"
-          disabled
+          aria-disabled="true"
         >
           <span class="auth-status-dot" aria-hidden="true"></span>
-          <span id="authHeaderButtonLabel">Checking account…</span>
-        </button>
+          <span id="authHeaderButtonLabel">Account</span>
+        </a>
+        <a
+          class="btn btn-quiet btn-sm public-account-link"
+          id="publicAccountLink"
+          href="profile.html"
+          hidden
+        >Account</a>
       </div>
-      <a class="btn btn-primary btn-sm" href="#contribute">
+      <a class="btn btn-primary btn-sm" href="auth.html?next=contribute.html" data-start-contributing>
         Start contributing
         <svg viewBox="0 0 20 20" aria-hidden="true">
           <path d="m7 5 5 5-5 5" />

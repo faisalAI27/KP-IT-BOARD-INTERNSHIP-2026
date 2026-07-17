@@ -1,0 +1,5 @@
+.contribute-page-content > .contribute-section { padding: 0; background: transparent; }
+.contribute-page-content .contribute-layout { width: 100%; grid-template-columns: minmax(210px,.26fr) minmax(0,.74fr); gap: clamp(25px,4vw,58px); }
+.contribute-page-content .contribute-intro { top: 30px; }
+.contribution-success-links { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 16px; gap: 10px; }
+@media (max-width: 1050px) { .contribute-page-content .contribute-layout { grid-template-columns: 1fr; }.contribute-page-content .contribute-intro { position: static; } }

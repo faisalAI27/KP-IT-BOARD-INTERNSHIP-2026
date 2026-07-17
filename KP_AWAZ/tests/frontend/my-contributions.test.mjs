@@ -5,9 +5,11 @@ import { test } from "node:test";
 import {
   CONTRIBUTION_CREATED_EVENT,
   MyContributions,
+  contributionReviewHelper,
   dispatchContributionCreated,
   formatContributionDate,
   formatContributionDuration,
+  formatContributionReviewStatus,
   formatContributionType,
 } from "../../scripts/modules/my-contributions.js";
 import {
@@ -30,6 +32,8 @@ const ITEM_A = Object.freeze({
   mimeType: "audio/webm",
   durationSeconds: 7.4,
   status: "queued",
+  reviewStatus: "pending",
+  rejectionReason: null,
   createdAt: "2026-07-15T10:20:00Z",
 });
 const ITEM_B = Object.freeze({
@@ -42,6 +46,7 @@ const ITEM_B = Object.freeze({
   originalFilename: "story.ogg",
   mimeType: "audio/ogg",
   durationSeconds: null,
+  reviewStatus: "approved",
   createdAt: "2026-07-16T11:30:00Z",
 });
 
@@ -129,6 +134,12 @@ class FakeEventTarget extends FakeElement {
 const ELEMENT_IDS = [
   "myContributionsPageSection",
   "myContributionsStatus",
+  "myContributionsSummary",
+  "myContributionsSummaryStatus",
+  "myContributionsSummaryTotal",
+  "myContributionsSummaryPending",
+  "myContributionsSummaryApproved",
+  "myContributionsSummaryRejected",
   "myContributionsList",
   "myContributionsEmpty",
   "myContributionsError",
@@ -199,27 +210,63 @@ function createHistoryApi(get) {
 }
 
 
+function statisticsResponse(overrides = {}) {
+  return {
+    totalContributions: 2,
+    pendingContributions: 1,
+    approvedContributions: 1,
+    rejectedContributions: 0,
+    leaderboardOptIn: false,
+    leaderboardEligible: false,
+    publicRank: null,
+    ...overrides,
+  };
+}
+
+
+function createStatisticsApi(get) {
+  const calls = [];
+  return {
+    calls,
+    async getMyContributionStatistics() {
+      calls.push({});
+      return get ? get(calls.length) : statisticsResponse();
+    },
+  };
+}
+
+
 function createFixture({
   state = authState("signed_out"),
   get,
   locale = "en-US",
   open,
+  getStatistics,
 } = {}) {
   const root = createRoot();
   root.elements.get("myContributionsPageSection").hidden =
     !(open ?? state.status === "signed_in");
   const authApi = createAuthApi(state);
   const contributionsApi = createHistoryApi(get);
+  const statisticsApi = createStatisticsApi(getStatistics);
   const eventTarget = new FakeEventTarget();
   const history = new MyContributions({
     root,
     authApi,
     contributionsApi,
+    statisticsApi,
     eventTarget,
     locale,
   });
   assert.equal(history.initializeMyContributions(), true);
-  return { authApi, contributionsApi, eventTarget, history, root };
+  return {
+    authApi,
+    contributionsApi,
+    eventTarget,
+    history,
+    root,
+    statisticsApi,
+  };
 }
 
 
@@ -267,6 +314,11 @@ test("separate My Contributions partial includes its accessible controls once", 
   for (const id of [
     "myContributionsPageSection",
     "myContributionsStatus",
+    "myContributionsSummary",
+    "myContributionsSummaryTotal",
+    "myContributionsSummaryPending",
+    "myContributionsSummaryApproved",
+    "myContributionsSummaryRejected",
     "myContributionsList",
     "refreshContributionsButton",
     "loadMoreContributionsButton",
@@ -278,6 +330,7 @@ test("separate My Contributions partial includes its accessible controls once", 
   assert.match(html, /id="refreshContributionsButton"[\s\S]*type="button"/);
   assert.match(html, /id="loadMoreContributionsButton"[\s\S]*type="button"/);
   assert.match(html, /You have not submitted any voice contributions yet\./);
+  assert.match(html, />Pending review</);
   const account = await readFile(
     new URL("../../sections/account.html", import.meta.url),
     "utf8",
@@ -437,6 +490,112 @@ test("contribution response renders one keyboard-focusable card", async () => {
   assert.equal(card.tagName, "LI");
   assert.equal(card.tabIndex, 0);
   assert.match(card.textContent, /Guided recording/);
+});
+
+
+test("pending contribution shows review status and score guidance", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_A]),
+  });
+  await settle();
+
+  assert.match(renderedText(fixture), /Pending review/);
+  assert.match(renderedText(fixture), /waiting for administrator review/);
+  assert.match(renderedText(fixture), /does not count toward your score yet/);
+  assert.equal(formatContributionReviewStatus("pending"), "Pending review");
+});
+
+
+test("approved contribution explains that it counts toward score", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_B]),
+  });
+  await settle();
+
+  assert.match(renderedText(fixture), /Approved/);
+  assert.match(renderedText(fixture), /count toward your contribution score/);
+  assert.equal(formatContributionReviewStatus("approved"), "Approved");
+});
+
+
+test("rejected contribution shows only its private plain-text feedback", async () => {
+  const unsafeLookingReason = "<img src=x onerror=alert(1)> Please retry.";
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () =>
+      historyPage([
+        {
+          ...ITEM_A,
+          reviewStatus: "rejected",
+          rejectionReason: unsafeLookingReason,
+        },
+      ]),
+  });
+  await settle();
+
+  assert.match(renderedText(fixture), /Rejected/);
+  assert.match(renderedText(fixture), /Administrator feedback/);
+  assert.ok(renderedText(fixture).includes(unsafeLookingReason));
+  assert.equal(element(fixture, "myContributionsList").children.length, 1);
+  assert.equal(formatContributionReviewStatus("rejected"), "Rejected");
+});
+
+
+test("rejection reason is omitted for pending and approved items", async () => {
+  const forbiddenReason = "This stale reason must not render";
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () =>
+      historyPage([
+        { ...ITEM_A, rejectionReason: forbiddenReason },
+        { ...ITEM_B, rejectionReason: forbiddenReason },
+      ]),
+  });
+  await settle();
+
+  assert.equal(renderedText(fixture).includes(forbiddenReason), false);
+  assert.equal(renderedText(fixture).includes("Administrator feedback"), false);
+  assert.match(contributionReviewHelper("rejected"), /do not count/);
+});
+
+
+test("authenticated statistics render total, pending, approved, and rejected summary", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_A, ITEM_B]),
+    getStatistics: () =>
+      statisticsResponse({
+        totalContributions: 7,
+        pendingContributions: 3,
+        approvedContributions: 2,
+        rejectedContributions: 2,
+      }),
+  });
+  await settle();
+
+  assert.equal(element(fixture, "myContributionsSummaryTotal").textContent, "7");
+  assert.equal(element(fixture, "myContributionsSummaryPending").textContent, "3");
+  assert.equal(element(fixture, "myContributionsSummaryApproved").textContent, "2");
+  assert.equal(element(fixture, "myContributionsSummaryRejected").textContent, "2");
+  assert.equal(fixture.statisticsApi.calls.length, 1);
+});
+
+
+test("statistics failure does not hide a successfully loaded history", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_A]),
+    getStatistics: () => Promise.reject({ code: "NETWORK_ERROR" }),
+  });
+  await settle();
+
+  assert.equal(fixture.history.getState().items.length, 1);
+  assert.match(
+    element(fixture, "myContributionsSummaryStatus").textContent,
+    /could not load your contribution summary/,
+  );
 });
 
 

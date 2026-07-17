@@ -53,12 +53,16 @@ const ELEMENT_IDS = [
   "adminConnectionStatus",
   "adminDashboard",
   "adminDisconnectButton",
+  "adminPendingCount",
+  "adminRefreshQueueButton",
   "adminQueueSummary",
   "adminQueueStatus",
   "adminQueueError",
   "adminQueueErrorMessage",
   "adminRetryQueueButton",
   "adminQueueEmpty",
+  "adminQueueEmptyTitle",
+  "adminQueueEmptyDescription",
   "adminContributionList",
   "adminPreviousPageButton",
   "adminNextPageButton",
@@ -366,6 +370,7 @@ test("3 successful connection loads the pending queue", async () => {
   assert.equal(fixture.api.calls.list[0].limit, 20);
   assert.equal(fixture.api.calls.list[0].offset, 0);
   assert.equal(element(fixture, "adminDashboard").hidden, false);
+  assert.equal(element(fixture, "adminPendingCount").textContent, "Pending reviews: 1");
 });
 
 
@@ -461,6 +466,10 @@ test("12 empty queue state renders", async () => {
   await connect(fixture);
   assert.equal(element(fixture, "adminQueueEmpty").hidden, false);
   assert.equal(element(fixture, "adminContributionList").children.length, 0);
+  assert.equal(
+    element(fixture, "adminQueueEmptyTitle").textContent,
+    "No recordings are waiting for review.",
+  );
 });
 
 
@@ -481,7 +490,9 @@ test("14 approved filter is requested from the backend", async () => {
   await connect(fixture);
   filterButton(fixture, "approved").dispatch("click");
   await flush();
-  assert.equal(fixture.api.calls.list.at(-1).status, "approved");
+  assert.ok(fixture.api.calls.list.some((call) => call.status === "approved"));
+  assert.equal(fixture.api.calls.list.at(-1).status, "pending");
+  assert.equal(fixture.api.calls.list.at(-1).limit, 1);
 });
 
 
@@ -490,7 +501,8 @@ test("15 rejected filter is requested from the backend", async () => {
   await connect(fixture);
   filterButton(fixture, "rejected").dispatch("click");
   await flush();
-  assert.equal(fixture.api.calls.list.at(-1).status, "rejected");
+  assert.ok(fixture.api.calls.list.some((call) => call.status === "rejected"));
+  assert.equal(fixture.api.calls.list.at(-1).status, "pending");
 });
 
 
@@ -499,7 +511,8 @@ test("16 all filter is requested from the backend", async () => {
   await connect(fixture);
   filterButton(fixture, "all").dispatch("click");
   await flush();
-  assert.equal(fixture.api.calls.list.at(-1).status, "all");
+  assert.ok(fixture.api.calls.list.some((call) => call.status === "all"));
+  assert.equal(fixture.api.calls.list.at(-1).status, "pending");
 });
 
 
@@ -689,6 +702,11 @@ test("32 approval removes the item from the pending queue immediately", async ()
   await openItem(fixture);
   await fixture.review.review("approved");
   assert.equal(fixture.review.getState().queue.items.length, 0);
+  assert.equal(fixture.review.getState().pendingTotal, 0);
+  assert.equal(
+    fixture.review.getState().review.message,
+    "Contribution approved. The contributor’s score will update on their next refresh.",
+  );
   refresh.resolve(queuePage([], { status: "pending" }));
   await flush();
 });
@@ -743,6 +761,10 @@ test("36 rejected recording remains represented in selected detail", async () =>
   assert.equal(selected.reviewStatus, "rejected");
   assert.equal(selected.rejectionReason, "Audio is clipped.");
   assert.equal(element(fixture, "adminDetailPanel").hidden, false);
+  assert.equal(
+    fixture.review.getState().review.message,
+    "Contribution rejected. It will not count toward the contributor’s score.",
+  );
 });
 
 
@@ -955,6 +977,42 @@ test("50 browser storage APIs never receive the admin key", async () => {
   const fixture = createFixture();
   await connect(fixture);
   assert.equal(JSON.stringify(fixture.review.getState()).includes(RUNTIME_KEY), false);
+});
+
+
+test("admin page exposes an accessible pending count and explicit refresh", async () => {
+  const html = await readFile(
+    new URL("../../admin.html", import.meta.url),
+    "utf8",
+  );
+  assert.match(html, /id="adminPendingCount"[\s\S]*aria-live="polite"/);
+  assert.match(html, /id="adminRefreshQueueButton"[\s\S]*Refresh queue/);
+  assert.match(html, /No recordings are waiting for review\./);
+});
+
+
+test("pending count refreshes from backend while another filter is active", async () => {
+  const fixture = createFixture({
+    list(options) {
+      if (options.status === "pending") {
+        return queuePage([ITEM_A], { total: 4, status: "pending" });
+      }
+      return queuePage([], { status: options.status });
+    },
+  });
+  await connect(fixture);
+  assert.equal(element(fixture, "adminPendingCount").textContent, "Pending reviews: 4");
+
+  filterButton(fixture, "approved").dispatch("click");
+  await flush();
+
+  assert.equal(element(fixture, "adminPendingCount").textContent, "Pending reviews: 4");
+  assert.deepEqual(fixture.api.calls.list.at(-1), {
+    adminKey: RUNTIME_KEY,
+    status: "pending",
+    limit: 1,
+    offset: 0,
+  });
 });
 
 

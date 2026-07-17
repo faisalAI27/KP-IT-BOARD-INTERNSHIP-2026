@@ -2,12 +2,13 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-unified-auth";
-import { getMyContributions } from "../services/contributions-api.js";
+} from "../services/auth-service.js?v=20260717-auth-routing";
+import { getMyContributions } from "../services/contributions-api.js?v=20260717-member-workspace";
+import { getMyContributionStatistics } from "../services/profile-api.js?v=20260717-member-workspace";
 import {
   MY_CONTRIBUTIONS_SECTION,
   PRIVATE_SECTION_CHANGED_EVENT,
-} from "./private-navigation.js";
+} from "./private-navigation.js?v=20260717-member-workspace";
 
 
 export const CONTRIBUTION_CREATED_EVENT = "kp-awaz:contribution-created";
@@ -54,6 +55,16 @@ function safeHistoryItem(item) {
     durationSeconds:
       typeof duration === "number" && Number.isFinite(duration) && duration >= 0
         ? duration
+        : null,
+    reviewStatus: ["pending", "approved", "rejected"].includes(
+      item?.reviewStatus,
+    )
+      ? item.reviewStatus
+      : "pending",
+    rejectionReason:
+      item?.reviewStatus === "rejected" &&
+      typeof item?.rejectionReason === "string"
+        ? item.rejectionReason.trim() || null
         : null,
     createdAt: typeof item?.createdAt === "string" ? item.createdAt : "",
   };
@@ -114,6 +125,30 @@ function emptyState() {
 }
 
 
+function emptyStatistics() {
+  return {
+    status: "idle",
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    error: null,
+  };
+}
+
+
+function safeStatistics(response) {
+  return {
+    status: "loaded",
+    total: response.totalContributions,
+    pending: response.pendingContributions,
+    approved: response.approvedContributions,
+    rejected: response.rejectedContributions,
+    error: null,
+  };
+}
+
+
 function cloneState(state) {
   return {
     status: state.status,
@@ -131,6 +166,24 @@ export function formatContributionType(value) {
   if (type === "guided") return "Guided recording";
   if (type === "open" || type === "open_recording") return "Open recording";
   return "Voice contribution";
+}
+
+
+export function formatContributionReviewStatus(value) {
+  if (value === "approved") return "Approved";
+  if (value === "rejected") return "Rejected";
+  return "Pending review";
+}
+
+
+export function contributionReviewHelper(value) {
+  if (value === "approved") {
+    return "Approved recordings count toward your contribution score.";
+  }
+  if (value === "rejected") {
+    return "Rejected recordings do not count toward your contribution score.";
+  }
+  return "Stored safely and waiting for administrator review. It does not count toward your score yet.";
 }
 
 
@@ -177,6 +230,7 @@ const defaultAuthApi = Object.freeze({
   verifyCurrentUserWithBackend,
 });
 const defaultContributionsApi = Object.freeze({ getMyContributions });
+const defaultStatisticsApi = Object.freeze({ getMyContributionStatistics });
 
 
 export class MyContributions {
@@ -184,12 +238,14 @@ export class MyContributions {
     root = globalThis.document,
     authApi = defaultAuthApi,
     contributionsApi = defaultContributionsApi,
+    statisticsApi = defaultStatisticsApi,
     eventTarget = globalThis.window,
     locale = undefined,
   } = {}) {
     this._root = root;
     this._auth = authApi;
     this._api = contributionsApi;
+    this._statisticsApi = statisticsApi;
     this._eventTarget = eventTarget;
     this._locale = locale;
     this._elements = null;
@@ -204,6 +260,7 @@ export class MyContributions {
     this._needsRefresh = false;
     this._refreshQueued = false;
     this._state = emptyState();
+    this._statistics = emptyStatistics();
     this._handleContributionCreated = () => {
       if (this._destroyed || !this._activeUserId) return;
       this._needsRefresh = true;
@@ -245,7 +302,13 @@ export class MyContributions {
   }
 
   getState() {
-    return cloneState(this._state);
+    return {
+      ...cloneState(this._state),
+      statistics: {
+        ...this._statistics,
+        error: this._statistics.error ? { ...this._statistics.error } : null,
+      },
+    };
   }
 
   async refresh() {
@@ -269,15 +332,45 @@ export class MyContributions {
       offset: 0,
       error: null,
     };
+    this._statistics = {
+      ...this._statistics,
+      status: "loading",
+      error: null,
+    };
     this._render();
 
-    try {
-      const response = await this._api.getMyContributions({
+    const [historyResult, statisticsResult] = await Promise.allSettled([
+      this._api.getMyContributions({
         limit: PAGE_LIMIT,
         offset: 0,
-      });
-      if (!this._isCurrent(generation, lifecycleId, userId)) return false;
-      const page = safePage(response);
+      }),
+      this._statisticsApi.getMyContributionStatistics(),
+    ]);
+    if (!this._isCurrent(generation, lifecycleId, userId)) return false;
+
+    const authenticationError = [historyResult, statisticsResult].find(
+      (result) =>
+        result.status === "rejected" && this._isUnauthorized(result.reason),
+    );
+    if (authenticationError) {
+      this._handleUnauthorized();
+      return false;
+    }
+
+    if (statisticsResult.status === "fulfilled") {
+      this._statistics = safeStatistics(statisticsResult.value);
+    } else {
+      this._statistics = {
+        ...emptyStatistics(),
+        status: "error",
+        error: {
+          message: "We could not load your contribution summary.",
+        },
+      };
+    }
+
+    if (historyResult.status === "fulfilled") {
+      const page = safePage(historyResult.value);
       this._state = {
         status: "loaded",
         items: deduplicateItems(page.items),
@@ -289,17 +382,14 @@ export class MyContributions {
       this._render();
       this._runQueuedRefresh(generation, lifecycleId, userId);
       return true;
-    } catch (error) {
-      if (!this._isCurrent(generation, lifecycleId, userId)) return false;
-      if (this._isUnauthorized(error)) {
-        this._handleUnauthorized();
-        return false;
-      }
+    }
+
+    {
       const scope = hadItems ? "refresh" : "initial";
       this._state = {
         ...this._state,
         status: hadItems ? "loaded" : "error",
-        error: safeHistoryError(error, scope),
+        error: safeHistoryError(historyResult.reason, scope),
       };
       this._render();
       this._runQueuedRefresh(generation, lifecycleId, userId);
@@ -376,6 +466,7 @@ export class MyContributions {
     }
     this._bindings = [];
     this._state = emptyState();
+    this._statistics = emptyStatistics();
     this._render();
   }
 
@@ -384,6 +475,12 @@ export class MyContributions {
     const ids = {
       section: "myContributionsPageSection",
       status: "myContributionsStatus",
+      summary: "myContributionsSummary",
+      summaryStatus: "myContributionsSummaryStatus",
+      summaryTotal: "myContributionsSummaryTotal",
+      summaryPending: "myContributionsSummaryPending",
+      summaryApproved: "myContributionsSummaryApproved",
+      summaryRejected: "myContributionsSummaryRejected",
       list: "myContributionsList",
       empty: "myContributionsEmpty",
       error: "myContributionsError",
@@ -443,6 +540,7 @@ export class MyContributions {
     this._needsRefresh = true;
     this._refreshQueued = false;
     this._state = emptyState();
+    this._statistics = emptyStatistics();
     this._render();
     if (this._sectionOpen) void this.refresh();
   }
@@ -458,6 +556,7 @@ export class MyContributions {
     this._needsRefresh = false;
     this._refreshQueued = false;
     this._state = emptyState();
+    this._statistics = emptyStatistics();
     this._render();
   }
 
@@ -525,6 +624,16 @@ export class MyContributions {
 
     const title = this._root.createElement("h4");
     title.textContent = formatContributionType(item.contributionType);
+    const heading = this._root.createElement("div");
+    heading.className = "my-contribution-card-heading";
+    const badge = this._root.createElement("span");
+    badge.className = "my-contribution-status-badge";
+    badge.setAttribute("data-status", item.reviewStatus);
+    badge.textContent = formatContributionReviewStatus(item.reviewStatus);
+    heading.append(title, badge);
+    const reviewHelper = this._root.createElement("p");
+    reviewHelper.className = "my-contribution-review-helper";
+    reviewHelper.textContent = contributionReviewHelper(item.reviewStatus);
     const metadata = this._root.createElement("dl");
     metadata.className = "my-contribution-metadata";
     const prompt = item.sentenceText || item.topic;
@@ -546,7 +655,17 @@ export class MyContributions {
     );
     metadata.append(this._createMetadataRow("File", item.originalFilename));
     metadata.append(this._createMetadataRow("Format", item.mimeType));
-    card.append(title, metadata);
+    card.append(heading, reviewHelper, metadata);
+    if (item.reviewStatus === "rejected" && item.rejectionReason) {
+      const feedback = this._root.createElement("div");
+      feedback.className = "my-contribution-feedback";
+      const feedbackLabel = this._root.createElement("strong");
+      feedbackLabel.textContent = "Administrator feedback";
+      const feedbackText = this._root.createElement("p");
+      feedbackText.textContent = item.rejectionReason;
+      feedback.append(feedbackLabel, feedbackText);
+      card.append(feedback);
+    }
     return card;
   }
 
@@ -569,8 +688,28 @@ export class MyContributions {
       this._state.error?.scope === "refresh";
     const loadMoreError = this._state.error?.scope === "load-more";
     const hasMore = hasItems && this._state.items.length < this._state.total;
+    const statisticsLoading = this._statistics.status === "loading";
+    const statisticsReady = this._statistics.status === "loaded";
+    const statisticsError = this._statistics.status === "error";
 
     this._elements.section.hidden = !active || !this._sectionOpen;
+    this._elements.summary.hidden = !active;
+    this._elements.summary.setAttribute(
+      "aria-busy",
+      String(statisticsLoading),
+    );
+    this._elements.summaryStatus.textContent = statisticsLoading
+      ? "Loading contribution summary…"
+      : statisticsError
+        ? this._statistics.error?.message ??
+          "We could not load your contribution summary."
+        : "";
+    this._elements.summaryStatus.hidden = statisticsReady;
+    const neutralValue = statisticsReady ? null : "—";
+    this._elements.summaryTotal.textContent = neutralValue ?? String(this._statistics.total);
+    this._elements.summaryPending.textContent = neutralValue ?? String(this._statistics.pending);
+    this._elements.summaryApproved.textContent = neutralValue ?? String(this._statistics.approved);
+    this._elements.summaryRejected.textContent = neutralValue ?? String(this._statistics.rejected);
     this._elements.status.hidden = !loading;
     this._elements.status.textContent = loading
       ? hasItems

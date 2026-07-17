@@ -1,5 +1,5 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-unified-auth";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
 
 
 const LEADERBOARD_PATH = "/leaderboard";

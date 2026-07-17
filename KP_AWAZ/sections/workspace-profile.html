@@ -1,0 +1,167 @@
+<header class="workspace-page-header">
+  <div>
+    <span class="workspace-eyebrow">Identity &amp; privacy</span>
+    <h1>Your contributor profile.</h1>
+    <p>
+      Keep your public name intentional, choose a language preference, and decide
+      whether your approved work may appear on the leaderboard.
+    </p>
+  </div>
+  <a class="workspace-header-link" href="dashboard.html">Return to overview →</a>
+</header>
+
+<div class="workspace-profile-grid">
+  <div class="workspace-profile-summary">
+    <section class="profile-portrait-card" aria-labelledby="profilePortraitTitle">
+      <div class="profile-portrait-rings" aria-hidden="true"></div>
+      <span class="profile-portrait-avatar" id="profileHeroAvatar">K</span>
+      <span class="workspace-eyebrow">Contributor identity</span>
+      <h2 id="profilePortraitTitle"><span id="profileHeroName">Loading profile…</span></h2>
+      <p id="profileHeroEmail">Verifying account</p>
+      <dl class="profile-private-facts">
+        <div><dt>Sign-in method</dt><dd id="profileAuthMethod">—</dd></div>
+        <div><dt>Preferred language</dt><dd id="profileSummaryLanguage">—</dd></div>
+        <div><dt>Contributor since</dt><dd id="profileContributorSince">—</dd></div>
+        <div><dt>Public rank</dt><dd id="profileSummaryRank">—</dd></div>
+      </dl>
+      <div class="profile-privacy-seal">
+        <span aria-hidden="true">✦</span>
+        <div>
+          <strong>Private by design</strong>
+          <small>Your email is never shown on the public leaderboard.</small>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="account-score-card account-detail-card profile-score-card"
+      id="accountScoreSection"
+      aria-labelledby="accountScoreTitle"
+      hidden
+    >
+      <div class="account-score-heading">
+        <div>
+          <span class="auth-kicker">Approved voice impact</span>
+          <h3 id="accountScoreTitle">Current score</h3>
+        </div>
+        <button class="btn btn-quiet btn-sm" id="refreshAccountScoreButton" type="button">
+          Refresh
+        </button>
+      </div>
+      <strong class="account-score-value" id="accountScoreValue">Loading…</strong>
+      <p>Only administrator-approved recordings add to this score.</p>
+      <p
+        class="account-score-status"
+        id="accountScoreStatus"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></p>
+      <div class="account-score-error" id="accountScoreError" role="alert" hidden>
+        <span id="accountScoreErrorMessage">We could not load your score.</span>
+        <button class="btn btn-quiet btn-sm" id="retryAccountScoreButton" type="button">
+          Retry score
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <section
+    class="profile-settings account-detail-card workspace-profile-settings"
+    id="profileSettings"
+    aria-labelledby="profileSettingsTitle"
+    hidden
+  >
+    <div class="profile-settings-heading">
+      <span class="auth-kicker">How KP AWAZ knows you</span>
+      <h2 id="profileSettingsTitle">Profile settings</h2>
+      <p>Changes are saved to your private FastAPI profile.</p>
+    </div>
+
+    <div class="profile-loading" id="profileLoading" role="status" aria-live="polite">
+      Loading profile…
+    </div>
+
+    <div class="profile-load-error" id="profileLoadError" role="alert" hidden>
+      <span id="profileLoadErrorMessage">Profile settings could not be loaded.</span>
+      <button class="btn btn-quiet btn-sm" id="retryProfileButton" type="button">
+        Retry profile
+      </button>
+    </div>
+
+    <form class="profile-form" id="profileForm" hidden>
+      <div class="profile-field">
+        <label for="profileDisplayName">Display name</label>
+        <input
+          id="profileDisplayName"
+          name="displayName"
+          type="text"
+          autocomplete="name"
+          minlength="2"
+          maxlength="80"
+          required
+        />
+        <small>This is the only identity shown publicly when you opt in.</small>
+      </div>
+
+      <div class="profile-field">
+        <label for="profileVerifiedEmail">Verified email</label>
+        <input
+          id="profileVerifiedEmail"
+          type="email"
+          autocomplete="email"
+          placeholder="Not available"
+          readonly
+        />
+        <small>Managed by your verified Supabase account.</small>
+      </div>
+
+      <div class="profile-field">
+        <label for="profilePreferredLanguage">Preferred language</label>
+        <select id="profilePreferredLanguage" name="preferredLanguage" required>
+          <option value="Pashto">Pashto</option>
+          <option value="Urdu">Urdu</option>
+          <option value="English">English</option>
+        </select>
+        <small>Used to prepare future contribution experiences for you.</small>
+      </div>
+
+      <label class="profile-privacy-choice" for="profileLeaderboardOptIn">
+        <input id="profileLeaderboardOptIn" name="leaderboardOptIn" type="checkbox" />
+        <span>
+          <strong>Show my display name on the public leaderboard</strong>
+          <small>
+            Your email and account identifier stay private. You appear only after
+            at least one recording is approved.
+          </small>
+        </span>
+      </label>
+
+      <button class="btn btn-primary profile-save-button" id="profileSaveButton" type="submit">
+        <span id="profileSaveButtonLabel">Save profile</span>
+      </button>
+
+      <div
+        class="auth-message profile-status"
+        id="profileStatus"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        hidden
+      ></div>
+    </form>
+  </section>
+</div>
+
+<section class="profile-data-boundary" aria-labelledby="dataBoundaryTitle">
+  <span class="profile-data-number">01</span>
+  <div>
+    <span class="workspace-eyebrow">Clear data boundary</span>
+    <h2 id="dataBoundaryTitle">What belongs where</h2>
+  </div>
+  <p>
+    Supabase holds your login session. FastAPI holds your contributor preferences,
+    review history, and contribution score. Audio is stored separately from both your password
+    and profile settings.
+  </p>
+</section>

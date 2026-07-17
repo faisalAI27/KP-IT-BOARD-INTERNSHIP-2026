@@ -326,7 +326,7 @@ curl \
   "http://127.0.0.1:8000/api/contributions/me?limit=20&offset=0"
 ```
 
-The endpoint filters ownership in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. It never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no storage keys, absolute paths, tokens, or owner IDs.
+The endpoint filters ownership in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. Each item includes `reviewStatus` (`pending`, `approved`, or `rejected`) and a nullable `rejectionReason`. The reason is returned only for a rejected contribution belonging to the verified caller; it is always null for pending and approved items. The endpoint never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no reviewer identity, review revision, storage keys, absolute paths, tokens, or owner IDs.
 
 SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. The frontend account dialog uses this private endpoint for its My Contributions interface and does not provide audio playback because the response has no playable URL.
 
@@ -344,6 +344,12 @@ PATCH /api/admin/contributions/{contribution_id}/review
 ```
 
 List filters support `pending`, `approved`, `rejected`, and `all`. Results are newest first and contain only safe review metadata. Owner UUIDs, email addresses, storage keys, absolute paths, and authentication secrets are excluded. The protected audio route validates the stored canonical audio key and serves the file inline only when it remains inside the configured private audio root; no public static audio route is enabled.
+
+The admin frontend starts with the pending filter and displays the pending
+filter's database-backed `total` independently of the active queue page. It
+refreshes that count on connection, filter changes, review decisions, and the
+explicit queue refresh action. Review requests are single-flight, rejected
+audio remains stored, and prior decisions can still be corrected.
 
 Use placeholder values when testing locally:
 
@@ -382,6 +388,13 @@ curl -X PATCH \
 ```
 
 Administrators may correct a previous decision by submitting another valid approval or rejection. Rejected recordings are preserved. Review changes are reflected immediately in the dynamic statistics and public leaderboard described below.
+
+Submission never awards score. The authoritative transitions are: pending is
+zero; pending to approved is plus one; approved to rejected is minus one;
+rejected to approved is plus one; and legacy unowned contributions are always
+zero. Statistics, the points balance, and leaderboard queries derive their
+results from persisted backend ownership and review state rather than client
+events.
 
 ### Local review interface
 

@@ -29,6 +29,19 @@ python3 -m http.server 4173
 
 Then open `http://127.0.0.1:4173`.
 
+Contributor pages are available at:
+
+- `http://127.0.0.1:4173/auth.html` — password account creation, email
+  verification, password sign-in, and Google sign-in
+- `http://127.0.0.1:4173/dashboard.html` — authenticated overview
+- `http://127.0.0.1:4173/contribute.html` — protected recording studio
+- `http://127.0.0.1:4173/my-contributions.html` — private review history
+- `http://127.0.0.1:4173/profile.html` — profile and leaderboard privacy
+- `http://127.0.0.1:4173/settings.html` — preferences and account security
+
+Opening a private page without a verified session redirects to `auth.html` and
+returns to the requested page after sign-in.
+
 The separate administrator review page is available at
 `http://127.0.0.1:4173/admin.html`. Enter the value configured as
 `ADMIN_API_KEY` in the running backend; never place a real key in source code or
@@ -44,7 +57,18 @@ Do not open `index.html` directly. The development page loads HTML section parti
 
 ```text
 KP_AWAZ/
-├── index.html                 # Small page shell
+├── index.html                 # Public archive homepage
+├── about.html                 # Mission and responsible-data page
+├── how-it-works.html          # Contribution and scoring explanation
+├── leaderboard.html           # Complete public rankings
+├── auth.html                  # Dedicated contributor account entrance
+├── forgot-password.html       # Password-recovery request
+├── reset-password.html        # Verified recovery-session password update
+├── dashboard.html             # Private contributor overview
+├── contribute.html            # Private recording studio
+├── my-contributions.html      # Private review-history page
+├── profile.html               # Private identity and privacy page
+├── settings.html              # Private preferences and security page
 ├── admin.html                 # Isolated contribution-review page
 ├── sections/                  # One HTML partial per visible section
 ├── styles/                    # Foundation, section and responsive CSS
@@ -70,10 +94,11 @@ and warmth of Khyber Pakhtunkhwa while keeping the existing earthy palette.
 npm run build
 ```
 
-This creates `dist/`, assembles all contributor HTML partials, includes the
-standalone `admin.html`, generates the browser-compatible Supabase vendor
-module, and copies the runtime assets. Development stays modular while
-production avoids client-side partial requests.
+This creates `dist/` and assembles every public, authentication, recovery,
+contributor-workspace, and standalone administrator page,
+generates the browser-compatible Supabase vendor module, and copies the runtime
+assets. Development stays modular while production avoids client-side partial
+requests.
 
 The focused vendor bundle can also be regenerated directly with:
 
@@ -91,17 +116,65 @@ UI modules must not call `fetch` directly. Add or update calls in `scripts/servi
 
 ## Authentication interface
 
-The header provides a visible account control. Signed-out users can continue
-with Google or request a six-digit email sign-in code from the authentication
-dialog. Email authentication does not use or request a password.
+The public site has no authentication modal. Signed-out **Start contributing**
+links open `auth.html?next=contribute.html`; after successful authentication the
+allowlisted destination opens. A restored verified session changes only the
+public header actions—the homepage and other public pages remain available and
+never redirect automatically. A verified contributor can choose Dashboard,
+Account, or Start contributing explicitly.
+
+`auth.html` provides the full account entrance. A new contributor supplies a
+display name, email, and 8–72 character password. Supabase Auth creates the
+credential account and sends a six-digit signup verification code. The page
+verifies that code with OTP type `email`, obtains the resulting Supabase
+session, and runs the same FastAPI `GET /api/auth/me` verification used by
+Google and returning password sign-in. Only then does it save the initial display
+name and enter `dashboard.html`. Returning contributors can sign in with email
+and password; Google OAuth behavior is unchanged.
+
+### Cultural authentication visual
+
+The account entrance uses an original, locally stored editorial illustration
+of a multigenerational KP community sharing a voice recording in a
+hujra-inspired gathering space. The layered mountains represent the geography
+and identity of Khyber Pakhtunkhwa; the carved-wood setting, woven textile, and
+rabab reference regional cultural expression without turning the scene into a
+collection of symbols. A warm sound wave rises from the microphone and becomes
+connected digital points, representing community speech moving into preserved
+language data and future technology. No external photography, hotlinked image,
+or copyrighted website artwork is used.
+
+Responsive `<picture>` sources provide a 1600×2000 WebP desktop illustration, a
+1120×720 WebP mobile crop, and a progressive JPEG fallback. Declared dimensions
+and a reserved CSS aspect ratio prevent layout shifts. If the generated image
+cannot load, a local SVG and layered CSS mountain scene replace it without
+affecting authentication. The soft voice-path glow pauses in hidden tabs and is
+disabled with reduced motion.
+
+The functional card remains sign-in-first and changes context for account
+creation, signup OTP, loading, error, and verified-success states. Keyboard
+users can move between the Sign In and Create Account tabs with arrow, Home,
+and End keys; Escape safely leaves OTP verification.
+
+Passwords and signup codes remain only in live form controls while needed.
+They are cleared after requests, successful verification, mode changes, page
+destruction, and navigation. They are never written to browser storage, URLs,
+logs, the FastAPI API, or application profile state. Signup-code resending uses
+only the active normalized email and has a 60-second client cooldown.
 
 Supabase manages browser session persistence, Google URL-session detection, and
-token refresh. The email template must render `{{ .Token }}` so the user can
-enter the delivered code in the second dialog step. The frontend requests codes
-with `shouldCreateUser: true`, verifies them with OTP type `email`, reloads the
-resulting Supabase session, and then runs the existing FastAPI `GET /api/auth/me`
-verification. The account interface is displayed as fully signed in only after
-that backend verification succeeds.
+token refresh. The confirmation email must render `{{ .Token }}` so the user can
+enter the delivered signup code. The account interface is displayed as fully
+signed in only after FastAPI `GET /api/auth/me` verifies the resulting session.
+
+Authentication provider calls, session restoration, and FastAPI verification
+use a centralized 12-second frontend timeout. A timeout keeps any existing
+session intact, releases the active form controls, and shows only: “We could not
+complete the authentication request. Please try again.” Provider and backend
+errors never leave a page-wide overlay, blur, scroll lock, or inert document.
+Only the submitted form is marked busy, and its loading state is cleared in a
+`finally` block. Backend verification is single-flight per access token and is
+cached only in memory for the current page lifecycle.
 
 Email codes are held only by the OTP input while needed. They are cleared after
 success, cancellation, sign-out, email changes, and UI destruction; they are
@@ -112,9 +185,9 @@ cooldown.
 Google sign-in requires the Google provider to be enabled and configured in the
 Supabase dashboard before live use. Its redirect behavior is unchanged. For
 local development, the configured Google redirect is
-`http://127.0.0.1:4173/`.
+`http://127.0.0.1:4173/dashboard.html`.
 
-Google OAuth and email OTP are independent entry methods. **Continue with
+Google OAuth and email/password signup are independent entry methods. **Continue with
 Google** calls only Google's normal OAuth flow; KP AWAZ does not request or
 verify an email OTP, force an account chooser, force repeated consent, add
 unnecessary scopes, or retain Google provider tokens. Google may still show its
@@ -127,16 +200,44 @@ for testing must be added manually under **Google Cloud → Google Auth Platform
 → Audience → Test users**. Test users are not managed by application code, and
 Google client secrets must never be placed in frontend files.
 
-### Required Supabase email-code configuration
+Password recovery starts on `forgot-password.html` and always shows the same
+account-neutral success copy. Supabase sends the recovery message to the
+allowlisted `reset-password.html` URL. That page exposes its new-password form
+only after Supabase emits a password-recovery session and FastAPI verifies the
+access token. Password fields are cleared on failure, success, and navigation.
+
+### Required Supabase account configuration
 
 The hosted Supabase project must be configured manually to match the six-digit
 interface:
 
-1. Set the email OTP length to `6`.
-2. In the sign-in email template, render `{{ .Token }}` as the code.
-3. Remove `{{ .ConfirmationURL }}` and `{{ .TokenHash }}` from that template.
+1. Under **Authentication → Sign In / Providers → Email**, enable the email
+   provider, new signups, Confirm Email, an 8-character-or-stronger password
+   minimum, and six-digit OTPs.
+2. Under **Authentication → Emails → Templates → Confirm signup**, render
+   `{{ .Token }}` as the six-digit code instead of requiring
+   `{{ .ConfirmationURL }}`.
+3. Add the deployed `reset-password.html` address to the redirect allow list and
+   keep the recovery email template enabled.
 4. Keep custom SMTP configured so recipients outside the Supabase project team
    can receive codes.
+
+Suggested Confirm signup subject: `Verify your KP AWAZ account`.
+
+```html
+<h2>Verify your KP AWAZ account</h2>
+<p>Enter this six-digit code on KP AWAZ:</p>
+<div style="margin:24px 0;padding:16px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px">
+  {{ .Token }}
+</div>
+<p>If you did not create this account, you can ignore this email.</p>
+<p>Our voices, our language, our Khyber Pakhtunkhwa.</p>
+```
+
+For password-account creation, keep **Confirm email** enabled and configure the
+Supabase confirmation template to render the same `{{ .Token }}` six-digit
+value. The dedicated page verifies it with type `email`; it never accepts or
+renders `TokenHash`.
 
 Never place SMTP usernames, passwords, provider API keys, project secrets, or
 real OTP values in code, tests, documentation examples, or frontend
@@ -153,23 +254,52 @@ supabasePublishableKey
 redirectUrl
 ```
 
-When `redirectUrl` is blank, Google OAuth uses the current website origin and
-application root. Empty Supabase configuration does not stop navigation or FAQ
+The configured relative `redirectUrl` resolves against the deployed origin and
+currently returns Google OAuth to `dashboard.html`. Empty Supabase configuration does not stop navigation or FAQ
 features from initializing, but recording remains unavailable until
 authentication is configured and the user is verified.
 
-### Header private navigation
+### Contributor workspace
 
-Signed-out visitors see Home, Contribute, Leaderboard, and Sign in. After
-FastAPI verifies the session, the header adds a separate **My Contributions**
-control and changes Sign in to the user's compact profile name. The profile-name
-control opens the dedicated Account section; My Contributions opens only the
-private recording history. Both use the existing single-page navigation and do
-not open a new browser tab.
+The contributor experience is now split into real page boundaries instead of
+growing the public page into a single large application:
 
-Sign-out hides both private destinations, clears their data, and returns the
-website to a public section. Long profile names are truncated in the header
-without changing the full saved display name.
+- `dashboard.html` loads the verified profile, dynamic review statistics,
+  approved-contribution score, three most recent submissions, and leaderboard preview.
+- `contribute.html` reuses the guided and open recorder with authenticated uploads.
+- `my-contributions.html` reuses the existing paginated private history module,
+  including review states and administrator feedback.
+- `profile.html` shows private identity, contributor-since date, supported profile
+  edits, approved score, and public rank.
+- `settings.html` manages preferred language, leaderboard visibility, password
+  updates for password-capable accounts, data-use information, and sign out.
+- `sections/workspace-sidebar.html` is shared by every private page; page shells,
+  feature modules, service adapters, and styles remain separate.
+
+The dashboard does not invent word counts, speech duration, XP levels, or
+unsupported donation types. Every number shown comes from the current backend
+contracts. Private pages verify the restored Supabase session with FastAPI
+before requesting profile data and redirect signed-out users to the account
+entrance with a local allowlisted return destination. While this check runs,
+they show a lightweight “Loading your contributor workspace…” shell instead of
+revealing, fading, or disabling the private page. The shared sidebar includes a
+**Visit Public Website** link back to `index.html`.
+
+### Public and private navigation
+
+Public navigation links to Home, About, How it works, Leaderboard, account
+access, and the contribution journey. Authenticated work is kept on protected
+pages with a shared responsive sidebar. Sign-out clears the private in-memory
+view and returns to `index.html`.
+
+Routing decisions are centralized in `scripts/services/route-guard.js`:
+`index.html`, `about.html`, `how-it-works.html`, and `leaderboard.html` are
+public for every visitor; `auth.html` redirects only a fully verified user;
+`dashboard.html`, `contribute.html`, `my-contributions.html`, `profile.html`,
+and `settings.html` require verification. The root path is normalized to
+`index.html`, unsafe `next` values are rejected, and each page lifecycle allows
+at most one redirect for a transition. `admin.html` remains independent and
+continues to use only its existing runtime admin API-key mechanism.
 
 Sign-out clears only the Supabase browser session and private in-memory UI. It
 does not delete the local profile, profile preferences, contribution ownership,
@@ -206,6 +336,12 @@ privacy-safe public leaderboard are calculated dynamically by the backend.
 Approved owned contributions also receive private append-only points. Rewards
 are not implemented yet.
 
+After either upload succeeds, the contributor remains in the recording flow and
+sees that the recording is waiting for administrator review. Submission itself
+does not increase the score. The history, account score, and an opened personal
+leaderboard context request fresh backend state after submission; they never add
+a point optimistically in browser state.
+
 Signed-in users can view their private submission history in its own **My
 Contributions** section using the separate header control. The interface loads
 ten results at a time from `GET /api/contributions/me` and preserves loading,
@@ -213,6 +349,14 @@ empty, safe error, retry, refresh, and Load more states. It does not preload the
 history merely because a user signs in. A successful guided or open-recording
 upload marks closed history as needing refresh, or refreshes it when the section
 is already open.
+
+Each history card shows `Pending review`, `Approved`, or `Rejected`. Pending
+recordings are safely stored but do not score yet; approved recordings count;
+rejected recordings do not count. A rejection reason is shown as plain text only
+to the verified owner and only for a rejected item. Pending and approved items
+never render rejection text. The summary above the history uses
+`GET /api/profile/me/statistics` for total, pending, approved, and rejected
+counts rather than deriving counts from the current history page.
 
 The backend filters history by the identity derived from the bearer token. The frontend neither sends nor accepts a user ID for history requests, so one account cannot select or view another account's contributions. The two legacy unowned contributions do not appear in any user's history. Audio playback is not included because the history response does not provide a safe playable URL. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
 
@@ -252,6 +396,12 @@ statistics.
 Counts are aggregated from the contribution rows on every request; mutable
 counter columns are not stored in profiles. The public leaderboard continues to
 rank approved contribution counts rather than points.
+
+The scoring rule is fixed: one currently approved contribution owned by the
+verified profile equals one point. A new pending submission adds zero; approval
+adds one; changing approval to rejection removes one; and approving again adds
+one back. Rejected, pending, legacy unowned, and orphaned contributions always
+count as zero.
 
 ### Public Leaderboard
 
@@ -335,6 +485,8 @@ compact **Current score** card inside My Account. It requests the points endpoin
 with `limit=1&offset=0`, does not calculate the score from the returned page,
 and never renders or stores ledger items in UI state. The card provides loading,
 safe error, retry, and refresh behavior with correct `point`/`points` wording.
+The contributor-facing explanation states that only recordings approved by an
+administrator are included.
 
 The backend append-only ledger remains unchanged as the internal accounting
 mechanism, but contributor-facing approval, reversal, backfill, date, delta,
@@ -364,6 +516,12 @@ audio playback; approval; rejection with a required reason; and correction of
 earlier decisions. Audio object URLs are revoked when changing or closing the
 selection, disconnecting, or destroying the page module. There is no public
 audio URL or download action, and rejected recordings remain stored.
+
+The initial view is the newest-first Pending queue. A visible `Pending reviews`
+count uses the backend's total for the pending filter and is refreshed when the
+admin connects, changes filters, records a decision, or explicitly refreshes.
+Successful decisions remove an item from the Pending view, preserve its audio,
+and explain whether the contributor's score will update or remain unchanged.
 
 This is temporary internal API-key administration, not an admin-account system.
 The public leaderboard is available only on the contributor website and does

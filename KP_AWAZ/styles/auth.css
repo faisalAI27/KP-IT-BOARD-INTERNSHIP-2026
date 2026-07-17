@@ -17,6 +17,10 @@
   opacity: 0.72;
 }
 
+.auth-header-button[aria-disabled="true"] {
+  opacity: 0.78;
+}
+
 .auth-header-button[data-auth-kind="account"] {
   border-color: rgba(62, 98, 89, 0.28);
   background: rgba(62, 98, 89, 0.09);
@@ -64,9 +68,7 @@
 }
 
 .auth-dialog::backdrop {
-  background: rgba(31, 26, 22, 0.56);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(31, 26, 22, 0.68);
 }
 
 .auth-dialog-shell {
@@ -241,6 +243,21 @@
   font-size: 0.68rem;
   line-height: 1.5;
   text-align: center;
+}
+
+.auth-create-account-link {
+  display: block;
+  margin-top: 13px;
+  color: var(--pine-dark);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.auth-create-account-link:hover {
+  color: var(--terracotta-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .auth-otp-step {

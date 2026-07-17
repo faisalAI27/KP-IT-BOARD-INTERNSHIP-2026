@@ -1,11 +1,12 @@
 import {
   getPersonalLeaderboardContext,
   getPublicLeaderboard,
-} from "../services/leaderboard-api.js";
+} from "../services/leaderboard-api.js?v=20260717-member-workspace";
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-unified-auth";
+} from "../services/auth-service.js?v=20260717-auth-routing";
+import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
 
 
 const PAGE_LIMIT = 20;
@@ -213,6 +214,7 @@ export class Leaderboard {
     root = globalThis.document,
     leaderboardApi = defaultLeaderboardApi,
     authApi = null,
+    eventTarget = globalThis.window,
     schedule = (callback) => globalThis.requestAnimationFrame(callback),
     prefersReducedMotion = () =>
       globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true,
@@ -220,6 +222,7 @@ export class Leaderboard {
     this._root = root;
     this._api = leaderboardApi;
     this._auth = authApi;
+    this._eventTarget = eventTarget;
     this._schedule = schedule;
     this._prefersReducedMotion = prefersReducedMotion;
     this._elements = null;
@@ -237,12 +240,26 @@ export class Leaderboard {
     this._state = emptyState();
     this._showcase = emptyShowcaseState();
     this._personal = emptyPersonalState();
+    this._handleContributionCreated = () => {
+      if (
+        this._destroyed ||
+        !this._leaderboardOpened ||
+        !this._activeUserId ||
+        this._personal.status === "loading"
+      ) {
+        return;
+      }
+      void this.loadPersonalContext();
+    };
   }
 
   initializeLeaderboard() {
     if (this._initialized) return true;
     this._elements = this._resolveElements();
     if (!this._elements) return false;
+
+    this._leaderboardOpened =
+      this._root.body?.dataset?.leaderboardPage === "true";
 
     this._initialized = true;
     this._destroyed = false;
@@ -580,6 +597,13 @@ export class Leaderboard {
           this._leaderboardOpened = true;
           if (this._activeUserId) void this.loadPersonalContext();
         });
+      }
+      if (this._eventTarget?.addEventListener) {
+        this._listen(
+          this._eventTarget,
+          CONTRIBUTION_CREATED_EVENT,
+          this._handleContributionCreated,
+        );
       }
     }
   }

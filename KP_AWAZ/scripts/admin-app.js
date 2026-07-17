@@ -1,7 +1,7 @@
 import {
   destroyAdminReview,
   initializeAdminReview,
-} from "./modules/admin-review.js";
+} from "./modules/admin-review.js?v=20260717-member-workspace";
 
 
 initializeAdminReview();

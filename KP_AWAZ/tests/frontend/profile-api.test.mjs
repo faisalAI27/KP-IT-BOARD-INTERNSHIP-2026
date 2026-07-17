@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   ProfileApi,
   ProfileApiError,
+  validateProfileStatisticsResponse,
 } from "../../scripts/services/profile-api.js";
 
 
@@ -18,6 +19,15 @@ const PROFILE = Object.freeze({
   createdAt: "2026-07-15T12:00:00Z",
   updatedAt: "2026-07-15T12:00:00Z",
   lastLoginAt: "2026-07-15T12:00:00Z",
+});
+const STATISTICS = Object.freeze({
+  totalContributions: 4,
+  pendingContributions: 2,
+  approvedContributions: 1,
+  rejectedContributions: 1,
+  leaderboardOptIn: true,
+  leaderboardEligible: true,
+  publicRank: 3,
 });
 
 
@@ -81,6 +91,43 @@ test("PATCH uses the profile endpoint, bearer token, and JSON body", async () =>
 });
 
 
+test("contribution statistics GET uses the authenticated current-user endpoint", async () => {
+  const { api, calls } = fixture({
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ body: STATISTICS });
+    },
+  });
+
+  const result = await api.getMyContributionStatistics();
+
+  assert.deepEqual(result, STATISTICS);
+  assert.equal(
+    calls[0].url,
+    "http://127.0.0.1:8000/api/profile/me/statistics",
+  );
+  assert.equal(calls[0].options.method, "GET");
+  assert.equal(calls[0].options.headers.Authorization, `Bearer ${ACCESS_TOKEN}`);
+  assert.equal(calls[0].url.includes(ACCESS_TOKEN), false);
+});
+
+
+test("statistics validation requires exact nonnegative review counts", () => {
+  for (const invalid of [
+    { ...STATISTICS, pendingContributions: -1 },
+    { ...STATISTICS, approvedContributions: 2 },
+    { ...STATISTICS, rejectedContributions: "1" },
+    { ...STATISTICS, leaderboardOptIn: "true" },
+    { ...STATISTICS, publicRank: 0 },
+  ]) {
+    assert.throws(
+      () => validateProfileStatisticsResponse(invalid),
+      (error) => error.code === "PROFILE_STATISTICS_RESPONSE_INVALID",
+    );
+  }
+});
+
+
 test("refresh tokens are never sent", async () => {
   const { api, calls } = fixture();
 
@@ -111,9 +158,10 @@ test("GET returns only a validated safe profile", async () => {
     displayName: PROFILE.displayName,
     preferredLanguage: PROFILE.preferredLanguage,
     leaderboardOptIn: false,
+    createdAt: PROFILE.createdAt,
   });
   assert.equal(JSON.stringify(profile).includes("do-not-return"), false);
-  assert.equal("createdAt" in profile, false);
+  assert.equal(profile.createdAt, PROFILE.createdAt);
 });
 
 
@@ -160,6 +208,7 @@ test("malformed profile responses are rejected", async (context) => {
     { ...PROFILE, leaderboardOptIn: "false" },
     { ...PROFILE, email: 42 },
     { ...PROFILE, authProvider: {} },
+    { ...PROFILE, createdAt: "not-a-date" },
   ];
 
   for (const invalidProfile of invalidProfiles) {

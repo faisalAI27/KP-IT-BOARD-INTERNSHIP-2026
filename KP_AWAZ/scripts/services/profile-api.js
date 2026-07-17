@@ -1,8 +1,9 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-unified-auth";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
 
 
 const PROFILE_PATH = "/profile/me";
+const PROFILE_STATISTICS_PATH = "/profile/me/statistics";
 const ALLOWED_UPDATE_FIELDS = new Set([
   "displayName",
   "preferredLanguage",
@@ -45,6 +46,10 @@ export function validateProfileResponse(payload, status = 200) {
       : "";
   const email = safeNullableString(payload.email);
   const authProvider = safeNullableString(payload.authProvider);
+  const createdAt =
+    typeof payload.createdAt === "string" && !Number.isNaN(Date.parse(payload.createdAt))
+      ? payload.createdAt
+      : null;
   const valid =
     id &&
     displayName.length >= 2 &&
@@ -53,7 +58,8 @@ export function validateProfileResponse(payload, status = 200) {
     preferredLanguage.length <= 100 &&
     typeof payload.leaderboardOptIn === "boolean" &&
     email !== undefined &&
-    authProvider !== undefined;
+    authProvider !== undefined &&
+    createdAt;
 
   if (!valid) {
     throw new ProfileApiError("The profile service returned an invalid response.", {
@@ -69,6 +75,49 @@ export function validateProfileResponse(payload, status = 200) {
     displayName,
     preferredLanguage,
     leaderboardOptIn: payload.leaderboardOptIn,
+    createdAt,
+  };
+}
+
+
+export function validateProfileStatisticsResponse(payload, status = 200) {
+  const countFields = [
+    "totalContributions",
+    "pendingContributions",
+    "approvedContributions",
+    "rejectedContributions",
+  ];
+  const valid =
+    payload &&
+    typeof payload === "object" &&
+    !Array.isArray(payload) &&
+    countFields.every(
+      (field) => Number.isInteger(payload[field]) && payload[field] >= 0,
+    ) &&
+    payload.totalContributions ===
+      payload.pendingContributions +
+        payload.approvedContributions +
+        payload.rejectedContributions &&
+    typeof payload.leaderboardOptIn === "boolean" &&
+    typeof payload.leaderboardEligible === "boolean" &&
+    (payload.publicRank === null ||
+      (Number.isInteger(payload.publicRank) && payload.publicRank >= 1));
+
+  if (!valid) {
+    throw new ProfileApiError(
+      "The contribution statistics service returned an invalid response.",
+      { code: "PROFILE_STATISTICS_RESPONSE_INVALID", status },
+    );
+  }
+
+  return {
+    totalContributions: payload.totalContributions,
+    pendingContributions: payload.pendingContributions,
+    approvedContributions: payload.approvedContributions,
+    rejectedContributions: payload.rejectedContributions,
+    leaderboardOptIn: payload.leaderboardOptIn,
+    leaderboardEligible: payload.leaderboardEligible,
+    publicRank: payload.publicRank,
   };
 }
 
@@ -175,7 +224,18 @@ export class ProfileApi {
     return this._request("PATCH", prepareProfileUpdates(updates));
   }
 
-  async _request(method, payload = null) {
+  async getMyContributionStatistics() {
+    return this._request("GET", null, {
+      path: PROFILE_STATISTICS_PATH,
+      validate: validateProfileStatisticsResponse,
+    });
+  }
+
+  async _request(
+    method,
+    payload = null,
+    { path = PROFILE_PATH, validate = validateProfileResponse } = {},
+  ) {
     const token = this._getAccessToken();
     const accessToken = typeof token === "string" ? token.trim() : "";
     if (!accessToken) {
@@ -197,7 +257,7 @@ export class ProfileApi {
 
     let response;
     try {
-      response = await this._fetch(`${this._apiBaseUrl}${PROFILE_PATH}`, options);
+      response = await this._fetch(`${this._apiBaseUrl}${path}`, options);
     } catch {
       throw new ProfileApiError("The KP AWAZ backend could not be reached.", {
         code: "NETWORK_ERROR",
@@ -206,7 +266,7 @@ export class ProfileApi {
 
     const body = await readJson(response);
     if (!response.ok) throw errorFromResponse(response, body, accessToken);
-    return validateProfileResponse(body, response.status);
+    return validate(body, response.status);
   }
 }
 
@@ -216,3 +276,5 @@ const profileApi = new ProfileApi();
 
 export const getMyProfile = () => profileApi.getMyProfile();
 export const updateMyProfile = (updates) => profileApi.updateMyProfile(updates);
+export const getMyContributionStatistics = () =>
+  profileApi.getMyContributionStatistics();

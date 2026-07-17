@@ -4,6 +4,13 @@ export function initNavigation() {
 
   if (!menuToggle || !primaryNavigation) return;
 
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  for (const link of primaryNavigation.querySelectorAll("a[data-public-nav]")) {
+    const targetPage = link.getAttribute("href")?.split(/[?#]/, 1)[0];
+    if (targetPage === currentPage) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+
   function closeNavigation() {
     primaryNavigation.classList.remove("open");
     menuToggle.setAttribute("aria-expanded", "false");

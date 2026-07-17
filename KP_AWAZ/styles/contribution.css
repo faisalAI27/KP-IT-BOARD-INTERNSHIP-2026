@@ -377,6 +377,15 @@ input[type="text"]:focus {
   font-size: 0.65rem;
 }
 
+.success-msg p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.success-msg strong {
+  display: block;
+}
+
 .submission-error {
   margin-top: 14px;
   padding: 11px 13px;

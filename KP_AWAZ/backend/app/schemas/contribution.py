@@ -1,8 +1,9 @@
 """Public response schema reserved for future contribution endpoints."""
 
 from datetime import datetime, timezone
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -51,7 +52,19 @@ class MyContributionResponse(BaseModel):
     mime_type: str = Field(alias="mimeType")
     duration_seconds: float | None = Field(alias="durationSeconds")
     status: str
+    review_status: Literal["pending", "approved", "rejected"] = Field(
+        alias="reviewStatus"
+    )
+    rejection_reason: str | None = Field(alias="rejectionReason")
     created_at: datetime = Field(alias="createdAt")
+
+    @model_validator(mode="after")
+    def hide_non_rejection_reason(self) -> "MyContributionResponse":
+        """Expose review feedback only to the owner and only for a rejection."""
+
+        if self.review_status != "rejected":
+            self.rejection_reason = None
+        return self
 
     @field_validator("created_at")
     @classmethod

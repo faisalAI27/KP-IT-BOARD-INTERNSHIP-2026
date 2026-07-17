@@ -1,0 +1,275 @@
+.workspace-main .my-contributions-page {
+  padding: 0;
+  background: transparent;
+}
+
+.workspace-main .my-contributions-page .wrap {
+  width: 100%;
+}
+
+.workspace-main .my-contributions-page-heading {
+  max-width: 830px;
+  margin-bottom: 34px;
+}
+
+.workspace-main .my-contributions-page-heading::before {
+  display: inline-block;
+  margin-bottom: 11px;
+  color: var(--terracotta);
+  content: "PRIVATE REVIEW TRAIL";
+  font-size: 0.69rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.workspace-main .my-contributions-page-heading h2 {
+  font-size: clamp(2.7rem, 6vw, 5rem);
+  line-height: 0.98;
+}
+
+.workspace-main .my-contributions-panel {
+  max-width: none;
+  padding: clamp(22px, 4vw, 42px);
+  border-radius: 28px 7px 28px 28px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 20px 50px rgba(46, 38, 32, 0.06);
+}
+
+.workspace-main .my-contributions-summary {
+  border-radius: 20px 6px 20px 20px;
+  background:
+    linear-gradient(rgba(62, 98, 89, 0.065), rgba(62, 98, 89, 0.065)),
+    var(--card);
+}
+
+.workspace-main .my-contributions-summary-grid > div,
+.workspace-main .my-contribution-card {
+  border-radius: 17px 5px 17px 17px;
+}
+
+.workspace-main .my-contribution-card {
+  background: #f7f0e5;
+}
+
+.workspace-profile-grid {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(290px, 0.72fr) minmax(460px, 1.28fr);
+  gap: 20px;
+}
+
+.workspace-profile-summary {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+
+.profile-portrait-card {
+  position: relative;
+  overflow: hidden;
+  padding: 38px 30px 30px;
+  border-radius: 30px 7px 30px 30px;
+  background:
+    radial-gradient(circle at 85% 16%, rgba(231, 169, 76, 0.16), transparent 12rem),
+    #173e34;
+  color: rgba(255, 255, 255, 0.66);
+  box-shadow: 0 23px 50px rgba(23, 62, 52, 0.16);
+  text-align: center;
+}
+
+.profile-portrait-rings {
+  position: absolute;
+  top: 23px;
+  left: 50%;
+  width: 160px;
+  height: 160px;
+  border: 1px solid rgba(231, 169, 76, 0.15);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 18px rgba(231, 169, 76, 0.035),
+    0 0 0 36px rgba(231, 169, 76, 0.022);
+  transform: translateX(-50%);
+}
+
+.profile-portrait-avatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 112px;
+  height: 112px;
+  margin: 0 auto 28px;
+  place-items: center;
+  border: 1px solid rgba(231, 169, 76, 0.45);
+  border-radius: 50%;
+  background: rgba(231, 169, 76, 0.12);
+  color: #ffdda5;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+}
+
+.profile-portrait-card .workspace-eyebrow {
+  color: #f4ca84;
+}
+
+.profile-portrait-card .workspace-eyebrow::before {
+  display: none;
+}
+
+.profile-portrait-card h2 {
+  margin-top: 10px;
+  color: white;
+  font-size: 2rem;
+}
+
+.profile-portrait-card > p {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+
+.profile-privacy-seal {
+  display: grid;
+  align-items: center;
+  margin-top: 30px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  background: rgba(5, 28, 22, 0.2);
+  text-align: left;
+  grid-template-columns: 34px 1fr;
+  gap: 11px;
+}
+
+.profile-privacy-seal > span {
+  color: var(--honey);
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.profile-privacy-seal strong,
+.profile-privacy-seal small {
+  display: block;
+}
+
+.profile-privacy-seal strong {
+  color: white;
+  font-size: 0.74rem;
+}
+
+.profile-privacy-seal small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.62rem;
+}
+
+.profile-score-card,
+.workspace-profile-settings {
+  border-radius: 25px 6px 25px 25px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.workspace-profile-settings {
+  margin: 0;
+  padding: clamp(26px, 4vw, 44px);
+}
+
+.workspace-profile-settings .profile-settings-heading h2 {
+  margin-top: 5px;
+  font-size: 2rem;
+}
+
+.workspace-profile-settings .profile-settings-heading p {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.workspace-profile-settings .profile-form {
+  margin-top: 25px;
+  gap: 20px;
+}
+
+.workspace-profile-settings .profile-field small {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+  font-weight: 500;
+}
+
+.workspace-profile-settings .profile-field input,
+.workspace-profile-settings .profile-field select {
+  min-height: 54px;
+  border-radius: 12px;
+}
+
+.profile-data-boundary {
+  display: grid;
+  align-items: center;
+  margin-top: 25px;
+  padding: 27px 30px;
+  border: 1px solid rgba(193, 97, 61, 0.16);
+  border-radius: 22px 5px 22px 22px;
+  background: #fff5ed;
+  grid-template-columns: auto minmax(220px, 0.7fr) minmax(320px, 1.3fr);
+  gap: 20px;
+}
+
+.profile-data-number {
+  color: var(--terracotta);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.1rem;
+}
+
+.profile-data-boundary h2 {
+  margin-top: 5px;
+  font-size: 1.45rem;
+}
+
+.profile-data-boundary > p {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+@media (max-width: 1050px) {
+  .workspace-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-profile-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-data-boundary {
+    grid-template-columns: auto 1fr;
+  }
+
+  .profile-data-boundary > p {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .workspace-profile-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-main .my-contributions-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-data-boundary {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-data-boundary > p {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 470px) {
+  .workspace-main .my-contributions-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.profile-private-facts { display: grid; width: 100%; margin: 24px 0 0; border-top: 1px solid var(--line); }
+.profile-private-facts div { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--line); gap: 18px; }.profile-private-facts dt { color: var(--ink-soft); font-size: .75rem; }.profile-private-facts dd { margin: 0; color: var(--pine-dark); font-size: .78rem; font-weight: 800; text-align: right; }

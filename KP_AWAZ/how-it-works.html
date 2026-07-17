@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="See how voice contributions are recorded, reviewed, and counted on KP AWAZ." />
+    <title>How contribution works — KP AWAZ</title>
+    <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/main.css?v=20260717-auth-routing" />
+    <link rel="stylesheet" href="styles/public-pages.css?v=20260717-auth-routing" />
+  </head>
+  <body data-app-state="loading">
+    <a class="skip-link" href="#main-content">Skip to contribution process</a>
+    <div data-partial="sections/header.html"></div>
+    <main id="main-content">
+      <section class="process-hero section-pad"><div class="wrap"><span class="story-kicker">From one voice to a trusted archive</span><h1>Seven careful steps. One transparent contribution journey.</h1><p>Your score is earned by administrator-approved recordings, never by submitting alone.</p></div></section>
+      <section class="section-pad">
+        <ol class="wrap process-list">
+          <li><span>01</span><div><h2>Create an account</h2><p>Use a display name, email and password, or continue separately with Google.</p></div></li>
+          <li><span>02</span><div><h2>Verify a new email account</h2><p>Enter the six-digit code sent during signup. Returning password users do not repeat this step for normal sign-in.</p></div></li>
+          <li><span>03</span><div><h2>Choose a real recording task</h2><p>Read a guided Pashto sentence or provide the transcript for an open voice recording.</p></div></li>
+          <li><span>04</span><div><h2>Record, listen and submit</h2><p>Grant microphone permission, check playback, re-record if needed, then submit through the protected API.</p></div></li>
+          <li><span>05</span><div><h2>Wait for review</h2><p>Every new recording begins as <strong>Pending review</strong>. Pending recordings do not increase score.</p></div></li>
+          <li><span>06</span><div><h2>Receive a decision</h2><p><strong>Approved</strong> recordings add one to your contribution score. <strong>Rejected</strong> recordings add zero and can include private feedback.</p></div></li>
+          <li><span>07</span><div><h2>Follow your impact</h2><p>View your private history, approved score, and public rank when leaderboard visibility is enabled.</p></div></li>
+        </ol>
+      </section>
+      <section class="score-rule"><div class="wrap score-rule-grid"><div><span class="story-kicker">The scoring rule</span><h2>Contribution score = approved owned contributions.</h2></div><dl><div><dt>Pending</dt><dd>0 score effect</dd></div><div><dt>Approved</dt><dd>+1 score</dd></div><div><dt>Rejected</dt><dd>0 score effect</dd></div></dl></div></section>
+      <section class="section-pad story-closing"><div class="wrap"><h2>Ready to lend your voice?</h2><p>Your workspace keeps recordings, review outcomes, and score together.</p><a class="btn btn-primary" href="auth.html?next=contribute.html" data-start-contributing>Start contributing →</a></div></section>
+    </main>
+    <div data-partial="sections/footer.html"></div>
+    <script type="module" src="scripts/public-page-app.js?v=20260717-auth-routing"></script>
+  </body>
+</html>

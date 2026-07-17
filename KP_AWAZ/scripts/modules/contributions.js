@@ -2,9 +2,9 @@ import {
   getSentencePrompts,
   submitOpenRecording,
   submitVoiceDonation,
-} from "../services/contributions-api.js";
-import { ContributionAuthController } from "./contribution-auth.js";
-import { dispatchContributionCreated } from "./my-contributions.js";
+} from "../services/contributions-api.js?v=20260717-member-workspace";
+import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
+import { dispatchContributionCreated } from "./my-contributions.js?v=20260717-member-workspace";
 import { createRecorder, stopRecorderIfActive } from "./recorder.js";
 
 const SENTENCE_LOAD_ERROR =
@@ -374,7 +374,6 @@ export async function initContributions() {
   function resetDonationFlow() {
     donateForm.reset();
     donateRecorder.reset();
-    delete donateForm.dataset.submissionId;
     if (submitDonationButton.dataset.originalContent) {
       submitDonationButton.innerHTML =
         submitDonationButton.dataset.originalContent;
@@ -404,7 +403,6 @@ export async function initContributions() {
     resetDonationFlow();
     recordSoundForm.reset();
     openRecorder.reset();
-    delete recordSoundForm.dataset.submissionId;
     recordSuccess.classList.remove("show");
     recordError.hidden = true;
     donationError.hidden = true;
@@ -515,7 +513,7 @@ export async function initContributions() {
     setPending(submitDonationButton, true, "Submitting…");
 
     try {
-      const result = await submitVoiceDonation({
+      await submitVoiceDonation({
         contributorName: donorName.value.trim(),
         language: donorLanguage.value,
         sentence: sentence.text,
@@ -527,7 +525,6 @@ export async function initContributions() {
 
       if (!accessController.finishSubmission(submission)) return;
 
-      donateForm.dataset.submissionId = result.id;
       donateFlowContent.hidden = true;
       flowProgress.hidden = true;
       donateSuccess.hidden = false;
@@ -565,7 +562,7 @@ export async function initContributions() {
     setPending(submitOpenRecordingButton, true, "Submitting…");
 
     try {
-      const result = await submitOpenRecording({
+      await submitOpenRecording({
         contributorName: document.getElementById("record-name").value.trim(),
         language: document.getElementById("record-language-select").value,
         topic: document.getElementById("record-topic").value.trim(),
@@ -575,7 +572,6 @@ export async function initContributions() {
 
       if (!accessController.finishSubmission(submission)) return;
 
-      recordSoundForm.dataset.submissionId = result.id;
       recordSuccess.classList.add("show");
       submitOpenRecordingButton.textContent = "Submitted";
       submitOpenRecordingButton.removeAttribute("aria-busy");
@@ -589,7 +585,6 @@ export async function initContributions() {
 
   recordSoundForm.addEventListener("reset", () => {
     openRecordingConsent.checked = false;
-    delete recordSoundForm.dataset.submissionId;
     if (submitOpenRecordingButton.dataset.originalContent) {
       submitOpenRecordingButton.innerHTML =
         submitOpenRecordingButton.dataset.originalContent;

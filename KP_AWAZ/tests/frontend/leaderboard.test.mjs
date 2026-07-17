@@ -7,6 +7,7 @@ import {
   formatApprovedContributionCount,
   formatLeaderboardRank,
 } from "../../scripts/modules/leaderboard.js";
+import { CONTRIBUTION_CREATED_EVENT } from "../../scripts/modules/my-contributions.js";
 
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
@@ -201,6 +202,7 @@ function createEnhancedFixture({
   const root = createRoot();
   for (const id of ENHANCED_IDS) root.elements.set(id, new FakeElement());
   const leaderboardLink = new FakeElement("a");
+  const eventTarget = new FakeElement("event-target");
   root.querySelectorAll = (selector) =>
     selector === 'a[href="#leaderboard"]' ? [leaderboardLink] : [];
   const publicCalls = [];
@@ -232,6 +234,7 @@ function createEnhancedFixture({
     root,
     leaderboardApi,
     authApi,
+    eventTarget,
     prefersReducedMotion,
     schedule,
   });
@@ -239,6 +242,7 @@ function createEnhancedFixture({
   return {
     authApi,
     contextCalls,
+    eventTarget,
     leaderboard,
     leaderboardApi,
     leaderboardLink,
@@ -295,8 +299,12 @@ test("leaderboard partial is public, semantic, and accessible", async () => {
   assert.match(html, /<tbody id="leaderboardList"/);
   assert.match(html, /id="leaderboardStatus"[\s\S]*aria-live="polite"/);
   assert.match(index, /sections\/leaderboard\.html/);
-  assert.match(header, /href="#leaderboard"[^>]*>Leaderboard/);
+  assert.match(header, /href="leaderboard\.html"[^>]*>Leaderboard/);
   assert.equal(html.includes("authDialog"), false);
+  assert.match(
+    html,
+    /Your contribution score includes only recordings approved by an administrator\./,
+  );
 });
 
 
@@ -912,6 +920,20 @@ test("personal context failures render only a safe retry state", async () => {
   assert.equal(fixture.leaderboard.getPersonalState().status, "error");
   assert.equal(element(fixture, "retryLeaderboardContextButton").hidden, false);
   assert.equal(renderedText(fixture).includes(SECRET), false);
+});
+
+
+test("new contribution refreshes opened personal context from backend", async () => {
+  const fixture = createEnhancedFixture();
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+  assert.equal(fixture.contextCalls.length, 1);
+
+  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
+  await settle();
+
+  assert.equal(fixture.contextCalls.length, 2);
 });
 
 

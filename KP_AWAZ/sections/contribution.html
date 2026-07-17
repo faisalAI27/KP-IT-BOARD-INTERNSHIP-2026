@@ -335,11 +335,18 @@
             <div class="flow-success" id="success-donate" role="status" aria-live="polite" hidden>
               <span class="success-icon">✓</span>
               <span class="panel-kicker">Contribution received</span>
-              <h4>Thank you for lending your voice.</h4>
-              <p>Your sentence and recording have been queued for review.</p>
+              <h4>Recording submitted successfully.</h4>
+              <p>
+                Your contribution is now waiting for administrator review. Your score
+                will increase after it is approved.
+              </p>
               <button class="btn btn-primary btn-sm" id="donateAgainBtn" type="button">
                 Donate another sentence
               </button>
+              <div class="contribution-success-links">
+                <a class="btn btn-quiet btn-sm" href="my-contributions.html">View My Contributions</a>
+                <a class="btn btn-quiet btn-sm" href="dashboard.html">Return to Dashboard</a>
+              </div>
             </div>
           </form>
         </section>
@@ -414,7 +421,17 @@
                 </button>
               </div>
             <div class="success-msg" id="success-record" role="status" aria-live="polite">
-              <span>✓</span> Thank you — your recording has been queued for review.
+              <span aria-hidden="true">✓</span>
+              <p>
+                <strong>Recording submitted successfully.</strong>
+                Your contribution is now waiting for administrator review. Your score
+                will increase after it is approved.
+              </p>
+              <div class="contribution-success-links">
+                <button class="btn btn-quiet btn-sm" type="reset">Record another</button>
+                <a class="btn btn-quiet btn-sm" href="my-contributions.html">View My Contributions</a>
+                <a class="btn btn-quiet btn-sm" href="dashboard.html">Return to Dashboard</a>
+              </div>
             </div>
             <div class="submission-error" id="recordError" role="alert" hidden></div>
           </div>

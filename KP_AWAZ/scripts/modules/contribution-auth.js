@@ -1,8 +1,8 @@
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-unified-auth";
-import { openAuthDialog } from "./auth-ui.js?v=20260717-unified-auth";
+} from "../services/auth-service.js?v=20260717-auth-routing";
+import { openAuthDialog } from "./auth-ui.js?v=20260717-member-workspace";
 
 
 const defaultAuthApi = Object.freeze({

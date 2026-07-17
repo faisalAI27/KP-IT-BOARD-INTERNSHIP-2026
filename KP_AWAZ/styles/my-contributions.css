@@ -54,6 +54,72 @@
   flex: 0 0 auto;
 }
 
+.my-contributions-summary {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid rgba(62, 98, 89, 0.16);
+  border-radius: 15px;
+  background: rgba(62, 98, 89, 0.055);
+}
+
+.my-contributions-summary[hidden] {
+  display: none;
+}
+
+.my-contributions-summary-heading h4 {
+  margin-top: 3px;
+  color: var(--pine-dark);
+  font-size: 0.88rem;
+}
+
+.my-contributions-summary-grid {
+  display: grid;
+  margin: 14px 0 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.my-contributions-summary-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(46, 38, 32, 0.09);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.my-contributions-summary-grid dt {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.my-contributions-summary-grid dd {
+  margin: 5px 0 0;
+  color: var(--pine-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.my-contributions-summary-grid [data-status="approved"] dd {
+  color: var(--pine);
+}
+
+.my-contributions-summary-grid [data-status="rejected"] dd {
+  color: var(--terracotta-dark);
+}
+
+.my-contributions-summary-status {
+  margin: 11px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+
+.my-contributions-summary-status[hidden] {
+  display: none;
+}
+
 .my-contributions-status,
 .my-contributions-empty,
 .my-contributions-error {
@@ -129,6 +195,66 @@
   line-height: 1.35;
 }
 
+.my-contribution-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.my-contribution-status-badge {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid rgba(178, 128, 44, 0.25);
+  border-radius: 999px;
+  background: rgba(214, 164, 67, 0.12);
+  color: #78551a;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.my-contribution-status-badge[data-status="approved"] {
+  border-color: rgba(62, 98, 89, 0.25);
+  background: rgba(62, 98, 89, 0.1);
+  color: var(--pine-dark);
+}
+
+.my-contribution-status-badge[data-status="rejected"] {
+  border-color: rgba(193, 97, 61, 0.25);
+  background: rgba(193, 97, 61, 0.09);
+  color: var(--terracotta-dark);
+}
+
+.my-contribution-review-helper {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.my-contribution-feedback {
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-left: 3px solid var(--terracotta);
+  border-radius: 8px;
+  background: rgba(193, 97, 61, 0.07);
+}
+
+.my-contribution-feedback strong {
+  color: var(--terracotta-dark);
+  font-size: 0.67rem;
+}
+
+.my-contribution-feedback p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .my-contribution-metadata {
   display: grid;
   min-width: 0;
@@ -178,6 +304,10 @@
 }
 
 @media (max-width: 760px) {
+  .my-contributions-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .my-contributions-list {
     grid-template-columns: 1fr;
   }
@@ -209,8 +339,14 @@
 }
 
 @media (max-width: 430px) {
+  .my-contribution-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .my-contribution-meta-row {
     grid-template-columns: 1fr;
     gap: 2px;
   }
 }
+.my-contributions-score-note { margin-top: 14px; color: var(--pine-dark); font-size: .78rem; font-weight: 750; }

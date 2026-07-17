@@ -238,6 +238,14 @@
   gap: 18px;
 }
 
+.leaderboard-score-explanation {
+  display: block;
+  margin-top: 5px;
+  color: rgba(250, 246, 239, 0.72);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
 .leaderboard-personal-status strong,
 .leaderboard-personal-status span {
   display: block;

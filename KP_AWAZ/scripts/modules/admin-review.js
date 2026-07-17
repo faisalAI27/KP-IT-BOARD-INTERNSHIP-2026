@@ -52,6 +52,8 @@ function initialState() {
     connectionMessage: "",
     adminKey: null,
     filter: "pending",
+    pendingTotal: 0,
+    pendingStatus: "idle",
     queue: emptyQueue(),
     selection: emptySelection(),
     review: emptyReview(),
@@ -192,6 +194,7 @@ export class AdminReview {
     this._lifecycleId = 0;
     this._connectionGeneration = 0;
     this._queueGeneration = 0;
+    this._pendingGeneration = 0;
     this._selectionGeneration = 0;
     this._audioGeneration = 0;
     this._reviewGeneration = 0;
@@ -216,6 +219,8 @@ export class AdminReview {
       connectionMessage: this._state.connectionMessage,
       hasAdminKey: Boolean(this._state.adminKey),
       filter: this._state.filter,
+      pendingTotal: this._state.pendingTotal,
+      pendingStatus: this._state.pendingStatus,
       queue: {
         ...this._state.queue,
         items: this._state.queue.items.map((item) => ({ ...item })),
@@ -258,6 +263,7 @@ export class AdminReview {
     this._state.connectionStatus = "connecting";
     this._state.connectionMessage = "Checking the key and loading the pending queue…";
     this._state.filter = "pending";
+    this._state.pendingStatus = "loading";
     this._state.queue = { ...emptyQueue(), status: "loading" };
     input.value = "";
     this._render();
@@ -273,12 +279,16 @@ export class AdminReview {
       this._state.connectionStatus = "connected";
       this._state.connectionMessage = "";
       this._state.queue = safePage(response);
+      this._state.pendingTotal = this._state.queue.total;
+      this._state.pendingStatus = "ready";
       this._render();
       return true;
     } catch (error) {
       if (!this._isConnectionCurrent(generation, lifecycleId, key)) return false;
       this._state.adminKey = null;
       this._state.queue = emptyQueue();
+      this._state.pendingTotal = 0;
+      this._state.pendingStatus = "idle";
       this._state.connectionStatus = "error";
       this._state.connectionMessage = isAuthenticationError(error)
         ? "The admin key was not accepted. Enter it again to reconnect."
@@ -334,7 +344,12 @@ export class AdminReview {
         return this.loadQueue({ offset: priorOffset, keepSelection });
       }
       this._state.queue = page;
+      if (filter === "pending") {
+        this._state.pendingTotal = page.total;
+        this._state.pendingStatus = "ready";
+      }
       this._render();
+      if (filter !== "pending") void this._refreshPendingTotal();
       return true;
     } catch (error) {
       if (!this._isQueueCurrent(generation, lifecycleId, key, filter)) return false;
@@ -414,6 +429,40 @@ export class AdminReview {
     }
   }
 
+  async _refreshPendingTotal() {
+    if (!this._isConnected()) return false;
+    const key = this._state.adminKey;
+    const lifecycleId = this._lifecycleId;
+    const generation = ++this._pendingGeneration;
+    this._state.pendingStatus = "loading";
+    this._renderPendingCount();
+    try {
+      const response = await this._api.listContributions({
+        adminKey: key,
+        status: "pending",
+        limit: 1,
+        offset: 0,
+      });
+      if (!this._isPendingCurrent(generation, lifecycleId, key)) return false;
+      this._state.pendingTotal =
+        Number.isInteger(response?.total) && response.total >= 0
+          ? response.total
+          : 0;
+      this._state.pendingStatus = "ready";
+      this._renderPendingCount();
+      return true;
+    } catch (error) {
+      if (!this._isPendingCurrent(generation, lifecycleId, key)) return false;
+      if (isAuthenticationError(error)) {
+        this._invalidateAuthentication();
+        return false;
+      }
+      this._state.pendingStatus = "error";
+      this._renderPendingCount();
+      return false;
+    }
+  }
+
   async retryAudio() {
     const { id, status } = this._state.selection;
     if (!this._isConnected() || !id || status !== "ready") return false;
@@ -459,6 +508,7 @@ export class AdminReview {
     }
 
     const id = this._state.selection.id;
+    const priorReviewStatus = this._state.selection.item.reviewStatus;
     const key = this._state.adminKey;
     const lifecycleId = this._lifecycleId;
     const selectionGeneration = this._selectionGeneration;
@@ -493,13 +543,17 @@ export class AdminReview {
         status: "success",
         message:
           decision === "approved"
-            ? "Approval saved. You can change this decision if a correction is needed."
-            : "Rejection saved. You can approve it later after correction.",
+            ? "Contribution approved. The contributor’s score will update on their next refresh."
+            : "Contribution rejected. It will not count toward the contributor’s score.",
         error: null,
       };
       reasonField.value = "";
       reasonField.setCustomValidity?.("");
       this._replaceQueueItem(item);
+      if (priorReviewStatus === "pending" && decision !== "pending") {
+        this._state.pendingTotal = Math.max(0, this._state.pendingTotal - 1);
+        this._state.pendingStatus = "ready";
+      }
       this._render();
       void this.loadQueue({ offset: this._state.queue.offset, keepSelection: true });
       return true;
@@ -635,6 +689,7 @@ export class AdminReview {
   _setFilter(filter) {
     if (!REVIEW_FILTERS.has(filter) || filter === this._state.filter) return;
     ++this._queueGeneration;
+    ++this._pendingGeneration;
     this._state.queue.status = "ready";
     this._state.filter = filter;
     this._clearSelection();
@@ -663,6 +718,7 @@ export class AdminReview {
   _invalidateRequests() {
     ++this._connectionGeneration;
     ++this._queueGeneration;
+    ++this._pendingGeneration;
     ++this._selectionGeneration;
     ++this._audioGeneration;
     ++this._reviewGeneration;
@@ -694,6 +750,15 @@ export class AdminReview {
       lifecycleId === this._lifecycleId &&
       this._state.adminKey === key &&
       this._state.filter === filter
+    );
+  }
+
+  _isPendingCurrent(generation, lifecycleId, key) {
+    return (
+      this._isConnected() &&
+      generation === this._pendingGeneration &&
+      lifecycleId === this._lifecycleId &&
+      this._state.adminKey === key
     );
   }
 
@@ -756,6 +821,9 @@ export class AdminReview {
     this._bind(this._elements.adminRetryQueueButton, "click", () => {
       void this.loadQueue();
     });
+    this._bind(this._elements.adminRefreshQueueButton, "click", () => {
+      void this.loadQueue({ offset: 0 });
+    });
     this._bind(this._elements.adminPreviousPageButton, "click", () => {
       const offset = Math.max(0, this._state.queue.offset - this._state.queue.limit);
       void this.loadQueue({ offset });
@@ -812,12 +880,16 @@ export class AdminReview {
       "adminConnectionStatus",
       "adminDashboard",
       "adminDisconnectButton",
+      "adminPendingCount",
+      "adminRefreshQueueButton",
       "adminQueueSummary",
       "adminQueueStatus",
       "adminQueueError",
       "adminQueueErrorMessage",
       "adminRetryQueueButton",
       "adminQueueEmpty",
+      "adminQueueEmptyTitle",
+      "adminQueueEmptyDescription",
       "adminContributionList",
       "adminPreviousPageButton",
       "adminNextPageButton",
@@ -859,6 +931,7 @@ export class AdminReview {
   _render() {
     if (!this._elements) return;
     this._renderConnection();
+    this._renderPendingCount();
     this._renderFilters();
     this._renderQueue();
     this._renderSelection();
@@ -887,6 +960,16 @@ export class AdminReview {
     }
   }
 
+  _renderPendingCount() {
+    if (!this._elements) return;
+    this._elements.adminPendingCount.textContent =
+      this._state.pendingStatus === "loading"
+        ? "Pending reviews: loading…"
+        : this._state.pendingStatus === "error"
+          ? "Pending reviews unavailable"
+          : `Pending reviews: ${this._state.pendingTotal}`;
+  }
+
   _renderQueue() {
     const queue = this._state.queue;
     const loading = queue.status === "loading";
@@ -904,12 +987,20 @@ export class AdminReview {
       : "";
     this._elements.adminQueueEmpty.hidden =
       loading || hasError || queue.items.length > 0 || queue.status === "idle";
+    const pendingView = this._state.filter === "pending";
+    this._elements.adminQueueEmptyTitle.textContent = pendingView
+      ? "No recordings are waiting for review."
+      : "No contributions in this view";
+    this._elements.adminQueueEmptyDescription.textContent = pendingView
+      ? "New submissions will appear here after the queue is refreshed."
+      : "Choose another status or check again later.";
     this._renderQueueItems();
     this._elements.adminPaginationStatus.textContent = queueRange(queue);
     this._elements.adminPreviousPageButton.disabled = loading || queue.offset <= 0;
     this._elements.adminNextPageButton.disabled =
       loading || queue.offset + queue.items.length >= queue.total;
     this._elements.adminRetryQueueButton.disabled = loading;
+    this._elements.adminRefreshQueueButton.disabled = loading;
     this._renderFilters();
   }
 

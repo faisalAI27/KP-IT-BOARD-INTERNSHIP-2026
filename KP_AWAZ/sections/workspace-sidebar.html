@@ -1,0 +1,90 @@
+<button
+  class="workspace-menu-button"
+  id="workspaceMenuButton"
+  type="button"
+  aria-controls="workspaceSidebar"
+  aria-expanded="false"
+>
+  <span></span><span></span><span></span>
+  <span class="sr-only">Open workspace menu</span>
+</button>
+
+<button
+  class="workspace-backdrop"
+  id="workspaceBackdrop"
+  type="button"
+  aria-label="Close workspace menu"
+  hidden
+></button>
+
+<aside class="workspace-sidebar" id="workspaceSidebar" aria-label="Contributor workspace">
+  <a class="workspace-brand" href="index.html" aria-label="KP AWAZ public home">
+    <img src="assets/images/logo.svg" alt="" />
+    <span>KP <strong>AWAZ</strong><small>Contributor space</small></span>
+  </a>
+
+  <nav class="workspace-navigation" aria-label="Workspace navigation">
+    <span class="workspace-nav-label">Your workspace</span>
+    <a href="dashboard.html" data-workspace-link="overview">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 11.5 12 5l8 6.5V20h-6v-5h-4v5H4Z" />
+      </svg>
+      <span>Overview</span>
+    </a>
+    <a href="my-contributions.html" data-workspace-link="contributions">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <span>My Contributions</span>
+    </a>
+    <a href="leaderboard.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 21v-7H4v7m16 0V9h-4v12m-4 0V3H8v18M2 21h20" />
+      </svg>
+      <span>Leaderboard</span>
+    </a>
+    <a href="profile.html" data-workspace-link="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3" />
+        <path d="M6 20c.5-4 2.5-6 6-6s5.5 2 6 6" />
+      </svg>
+      <span>Profile &amp; privacy</span>
+    </a>
+
+    <span class="workspace-nav-label workspace-nav-label-spaced">Contribute</span>
+    <a class="workspace-record-link" href="contribute.html" data-workspace-link="contribute">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />
+      </svg>
+      <span>Donate your voice<small>Guided or open recording</small></span>
+      <b aria-hidden="true">→</b>
+    </a>
+    <span class="workspace-nav-label workspace-nav-label-spaced">Account</span>
+    <a href="settings.html" data-workspace-link="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="3" /><path d="M19 13.5V10.5l-2-.7-.6-1.4.9-1.9-2.1-2.1-1.9.9-1.4-.6L10.5 3h-3l-.7 2-.9.4M5 8.5l-2 .7v3l2 .7.6 1.4-.9 1.9 2.1 2.1 1.9-.9 1.4.6.7 2h3l.7-2 1.4-.6 1.9.9 2.1-2.1-.9-1.9Z" />
+      </svg>
+      <span>Settings</span>
+    </a>
+    <a href="index.html" data-public-website-link>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5h16v14H4zM8 9h8M8 13h5" />
+      </svg>
+      <span>Visit Public Website</span>
+    </a>
+  </nav>
+
+  <div class="workspace-identity">
+    <span class="workspace-avatar" id="workspaceUserAvatar" aria-hidden="true">K</span>
+    <div>
+      <strong id="workspaceUserName">Loading profile…</strong>
+      <span id="workspaceUserEmail">Verifying session</span>
+    </div>
+  </div>
+  <button class="workspace-sign-out" id="workspaceSignOutButton" type="button">
+    <span id="workspaceSignOutLabel">Sign out</span>
+    <span aria-hidden="true">→</span>
+  </button>
+</aside>

@@ -2,8 +2,9 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-unified-auth";
-import { getMyPoints } from "../services/points-api.js";
+} from "../services/auth-service.js?v=20260717-auth-routing";
+import { getMyPoints } from "../services/points-api.js?v=20260717-member-workspace";
+import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
 
 
 const SCORE_REQUEST_LIMIT = 1;
@@ -75,10 +76,12 @@ export class AccountScore {
     root = globalThis.document,
     authApi = defaultAuthApi,
     pointsApi = defaultPointsApi,
+    eventTarget = globalThis.window,
   } = {}) {
     this._root = root;
     this._auth = authApi;
     this._api = pointsApi;
+    this._eventTarget = eventTarget;
     this._elements = null;
     this._bindings = [];
     this._unsubscribe = null;
@@ -87,7 +90,19 @@ export class AccountScore {
     this._generation = 0;
     this._lifecycleId = 0;
     this._activeUserId = null;
+    this._refreshQueued = false;
     this._state = emptyState();
+    this._handleContributionCreated = () => {
+      if (this._destroyed || !this._activeUserId) return;
+      if (
+        this._state.status === "loading" ||
+        this._state.status === "refreshing"
+      ) {
+        this._refreshQueued = true;
+        return;
+      }
+      void this.refresh();
+    };
   }
 
   initializeAccountScore() {
@@ -152,6 +167,7 @@ export class AccountScore {
         error: null,
       };
       this._render();
+      this._runQueuedRefresh(generation, lifecycleId, userId);
       return true;
     } catch (error) {
       if (!this._isCurrent(generation, lifecycleId, userId)) return false;
@@ -165,6 +181,7 @@ export class AccountScore {
         error: safeScoreError(error, hadScore ? "refresh" : "initial"),
       };
       this._render();
+      this._runQueuedRefresh(generation, lifecycleId, userId);
       return false;
     }
   }
@@ -176,6 +193,7 @@ export class AccountScore {
     this._generation += 1;
     this._lifecycleId += 1;
     this._activeUserId = null;
+    this._refreshQueued = false;
     this._unsubscribe?.();
     this._unsubscribe = null;
     for (const { element, type, listener } of this._bindings) {
@@ -210,6 +228,13 @@ export class AccountScore {
     this._listen(this._elements.retryButton, "click", () => {
       void this.refresh();
     });
+    if (this._eventTarget?.addEventListener) {
+      this._listen(
+        this._eventTarget,
+        CONTRIBUTION_CREATED_EVENT,
+        this._handleContributionCreated,
+      );
+    }
   }
 
   _listen(element, type, listener) {
@@ -227,6 +252,7 @@ export class AccountScore {
 
     this._generation += 1;
     this._activeUserId = userId;
+    this._refreshQueued = false;
     this._state = emptyState();
     this._render();
     void this.refresh();
@@ -239,6 +265,7 @@ export class AccountScore {
       this._state.balance === 0;
     if (!alreadyReset) this._generation += 1;
     this._activeUserId = null;
+    this._refreshQueued = false;
     this._state = emptyState();
     this._render();
   }
@@ -261,6 +288,19 @@ export class AccountScore {
       lifecycleId === this._lifecycleId &&
       userId === this._activeUserId
     );
+  }
+
+  _runQueuedRefresh(generation, lifecycleId, userId) {
+    if (
+      !this._refreshQueued ||
+      !this._isCurrent(generation, lifecycleId, userId)
+    ) {
+      return;
+    }
+    this._refreshQueued = false;
+    queueMicrotask(() => {
+      if (this._isCurrent(generation, lifecycleId, userId)) void this.refresh();
+    });
   }
 
   _render() {

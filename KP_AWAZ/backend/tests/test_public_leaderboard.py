@@ -252,6 +252,11 @@ def test_public_response_excludes_all_private_and_audio_metadata(
         audio_storage_key="audio/private/secret-recording.webm",
         original_filename="secret-filename.webm",
     )
+    add_statistics_contribution(
+        db_session,
+        user_id=profile_id,
+        review_status="rejected",
+    )
 
     response = client.get(ENDPOINT)
     serialized = response.text.lower()
@@ -266,6 +271,8 @@ def test_public_response_excludes_all_private_and_audio_metadata(
         "leaderboardoptin",
         "pending",
         "rejected",
+        "needs correction",
+        "rejectionreason",
         "secret-recording",
         "secret-filename",
         "audio",

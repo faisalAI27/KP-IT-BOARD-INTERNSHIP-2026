@@ -34,7 +34,22 @@ async function copyRuntimeAssets() {
 
 await rm(outputRoot, { recursive: true, force: true });
 await buildSupabaseVendorBundle();
-await assemblePage("index.html");
-await assemblePage("admin.html");
+for (const pageName of [
+  "index.html",
+  "about.html",
+  "how-it-works.html",
+  "leaderboard.html",
+  "auth.html",
+  "forgot-password.html",
+  "reset-password.html",
+  "dashboard.html",
+  "contribute.html",
+  "my-contributions.html",
+  "profile.html",
+  "settings.html",
+  "admin.html",
+]) {
+  await assemblePage(pageName);
+}
 await copyRuntimeAssets();
 console.log(`Production files created in ${outputRoot}`);

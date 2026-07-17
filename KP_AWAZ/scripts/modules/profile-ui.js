@@ -2,9 +2,12 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-unified-auth";
-import { getMyProfile, updateMyProfile } from "../services/profile-api.js";
-import { setAuthProfileDisplayName } from "./auth-ui.js?v=20260717-unified-auth";
+} from "../services/auth-service.js?v=20260717-auth-routing";
+import {
+  getMyProfile,
+  updateMyProfile,
+} from "../services/profile-api.js?v=20260717-member-workspace";
+import { setAuthProfileDisplayName } from "./auth-ui.js?v=20260717-member-workspace";
 
 
 const PROFILE_ERROR_MESSAGES = Object.freeze({
@@ -45,6 +48,7 @@ function cloneProfile(profile) {
         displayName: profile.displayName,
         preferredLanguage: profile.preferredLanguage,
         leaderboardOptIn: profile.leaderboardOptIn,
+        createdAt: profile.createdAt,
       }
     : null;
 }

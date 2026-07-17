@@ -9,7 +9,7 @@
     />
     <title>Contribution review | KP Awaz</title>
     <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/admin.css" />
+    <link rel="stylesheet" href="styles/admin.css?v=20260717-member-workspace" />
   </head>
   <body class="admin-page">
     <a class="skip-link" href="#adminMain">Skip to review workspace</a>
@@ -88,6 +88,12 @@
               All
             </button>
           </div>
+          <span
+            id="adminPendingCount"
+            class="admin-pending-count"
+            role="status"
+            aria-live="polite"
+          >Pending reviews: 0</span>
         </div>
 
         <div class="admin-workspace">
@@ -97,6 +103,9 @@
                 <h2 id="adminQueueTitle">Review queue</h2>
                 <p id="adminQueueSummary" class="admin-panel-summary"></p>
               </div>
+              <button id="adminRefreshQueueButton" class="btn btn-secondary btn-small" type="button">
+                Refresh queue
+              </button>
             </div>
 
             <p id="adminQueueStatus" class="admin-status" role="status" aria-live="polite"></p>
@@ -109,8 +118,10 @@
             </div>
 
             <div id="adminQueueEmpty" class="admin-empty" hidden>
-              <strong>No contributions in this view</strong>
-              <p>Choose another status or check again later.</p>
+              <strong id="adminQueueEmptyTitle">No recordings are waiting for review.</strong>
+              <p id="adminQueueEmptyDescription">
+                New submissions will appear here after the queue is refreshed.
+              </p>
             </div>
 
             <ul id="adminContributionList" class="admin-contribution-list"></ul>
@@ -214,6 +225,6 @@
       </section>
     </main>
 
-    <script type="module" src="scripts/admin-app.js"></script>
+    <script type="module" src="scripts/admin-app.js?v=20260717-member-workspace"></script>
   </body>
 </html>

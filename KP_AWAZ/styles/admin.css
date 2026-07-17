@@ -182,7 +182,19 @@
   gap: 18px;
 }
 
-.admin-filters > span {
+.admin-pending-count {
+  margin-left: auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(214, 164, 67, 0.3);
+  border-radius: 999px;
+  background: rgba(214, 164, 67, 0.11);
+  color: #704d16;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-filters > span:not(.admin-pending-count) {
   color: var(--ink-soft);
   font-size: 0.82rem;
   font-weight: 800;

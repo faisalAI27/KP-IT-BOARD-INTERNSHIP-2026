@@ -6,6 +6,7 @@ import {
   AccountScore,
   formatAccountScore,
 } from "../../scripts/modules/my-points.js";
+import { CONTRIBUTION_CREATED_EVENT } from "../../scripts/modules/my-contributions.js";
 
 
 const USER_A = "0d5dd8f5-93df-462b-b234-a16973089092";
@@ -142,9 +143,10 @@ function createFixture({ state = authState("signed_out"), get } = {}) {
   const root = createRoot();
   const authApi = createAuthApi(state);
   const pointsApi = createPointsApi(get);
-  const score = new AccountScore({ root, authApi, pointsApi });
+  const eventTarget = new FakeElement("event-target");
+  const score = new AccountScore({ root, authApi, pointsApi, eventTarget });
   assert.equal(score.initializeAccountScore(), true);
-  return { authApi, pointsApi, root, score };
+  return { authApi, eventTarget, pointsApi, root, score };
 }
 
 
@@ -186,7 +188,10 @@ test("Account partial contains one accessible score-only interface", async () =>
     assert.equal((html.match(new RegExp(`id="${id}"`, "g")) ?? []).length, 1);
   }
   assert.match(html, /id="accountScoreStatus"[\s\S]*aria-live="polite"/);
-  assert.match(html, /Points are earned when your owned voice contributions are approved\./);
+  assert.match(
+    html,
+    /Your contribution score includes only recordings approved by an administrator\./,
+  );
 });
 
 
@@ -350,6 +355,39 @@ test("refresh replaces the score using limit one", async () => {
   await settle();
   assert.deepEqual(fixture.pointsApi.calls.at(-1), { limit: 1, offset: 0 });
   assert.equal(fixture.score.getState().balance, 4);
+});
+
+
+test("contribution-created event refreshes score from backend without optimism", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: (call) => scoreResponse(call === 1 ? 4 : 4),
+  });
+  await settle();
+
+  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
+  assert.equal(fixture.score.getState().balance, 4);
+  await settle();
+
+  assert.equal(fixture.pointsApi.calls.length, 2);
+  assert.equal(fixture.score.getState().balance, 4);
+});
+
+
+test("submission event during score loading queues one backend refresh", async () => {
+  const first = deferred();
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: (call) => (call === 1 ? first.promise : scoreResponse(0)),
+  });
+
+  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
+  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
+  assert.equal(fixture.pointsApi.calls.length, 1);
+  first.resolve(scoreResponse(0));
+  await settle();
+
+  assert.equal(fixture.pointsApi.calls.length, 2);
 });
 
 
