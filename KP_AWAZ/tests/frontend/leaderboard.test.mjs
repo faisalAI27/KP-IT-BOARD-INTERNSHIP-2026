@@ -34,6 +34,8 @@ class FakeElement {
     this.disabled = false;
     this.hidden = false;
     this.listeners = new Map();
+    this.focusCalls = [];
+    this.scrollCalls = [];
     this._text = "";
   }
 
@@ -59,6 +61,18 @@ class FakeElement {
     for (const listener of [...(this.listeners.get(type) ?? [])]) {
       listener({ target: this, type });
     }
+  }
+
+  click() {
+    this.dispatch("click");
+  }
+
+  focus(options) {
+    this.focusCalls.push(options);
+  }
+
+  scrollIntoView(options) {
+    this.scrollCalls.push(options);
   }
 
   append(...children) {
@@ -132,6 +146,109 @@ function createFixture({ get } = {}) {
   const leaderboard = new Leaderboard({ root, leaderboardApi });
   assert.equal(leaderboard.initializeLeaderboard(), true);
   return { leaderboard, leaderboardApi, root };
+}
+
+
+const ENHANCED_IDS = [
+  "leaderboardShowcase",
+  "leaderboardShowcaseStatus",
+  "leaderboardShowcaseList",
+  "leaderboardShowcaseError",
+  "retryLeaderboardShowcaseButton",
+  "leaderboardPersonalStatus",
+  "leaderboardPersonalMessage",
+  "leaderboardPersonalDetails",
+  "retryLeaderboardContextButton",
+  "leaderboardManageVisibility",
+  "authHeaderButton",
+];
+
+
+function personalContext({
+  eligible = true,
+  optIn = true,
+  approved = 3,
+  items = [{ ...ENTRY_A, isCurrentUser: true }],
+  total = items.length,
+  offset = 0,
+} = {}) {
+  return {
+    leaderboardOptIn: optIn,
+    leaderboardEligible: eligible,
+    currentUser: {
+      rank: eligible ? 1 : null,
+      displayName: "Faisal Imran",
+      approvedContributions: approved,
+    },
+    items: eligible ? items : [],
+    total: eligible ? total : 0,
+    limit: 20,
+    offset: eligible ? offset : 0,
+  };
+}
+
+
+function createEnhancedFixture({
+  authState = {
+    status: "signed_in",
+    backendUser: { id: USER_ID },
+  },
+  context = () => personalContext(),
+  publicGet = null,
+  prefersReducedMotion = () => false,
+  schedule = (callback) => callback(),
+} = {}) {
+  const root = createRoot();
+  for (const id of ENHANCED_IDS) root.elements.set(id, new FakeElement());
+  const leaderboardLink = new FakeElement("a");
+  root.querySelectorAll = (selector) =>
+    selector === 'a[href="#leaderboard"]' ? [leaderboardLink] : [];
+  const publicCalls = [];
+  const contextCalls = [];
+  const leaderboardApi = {
+    async getPublicLeaderboard(pagination) {
+      publicCalls.push({ ...pagination });
+      if (publicGet) return publicGet(publicCalls.length, pagination);
+      return pagination.limit === 3
+        ? { items: [ENTRY_A, ENTRY_B], total: 2, limit: 3, offset: 0 }
+        : leaderboardPage([ENTRY_A, ENTRY_B]);
+    },
+    async getPersonalLeaderboardContext(pagination) {
+      contextCalls.push({ ...pagination });
+      return context(contextCalls.length, pagination);
+    },
+  };
+  let state = authState;
+  const subscribers = new Set();
+  const authApi = {
+    getCurrentAuthState: () => state,
+    subscribeToAuthChanges(callback) {
+      subscribers.add(callback);
+      callback(state);
+      return () => subscribers.delete(callback);
+    },
+  };
+  const leaderboard = new Leaderboard({
+    root,
+    leaderboardApi,
+    authApi,
+    prefersReducedMotion,
+    schedule,
+  });
+  assert.equal(leaderboard.initializeLeaderboard(), true);
+  return {
+    authApi,
+    contextCalls,
+    leaderboard,
+    leaderboardApi,
+    leaderboardLink,
+    publicCalls,
+    root,
+    setAuthState(nextState) {
+      state = nextState;
+      for (const callback of subscribers) callback(state);
+    },
+  };
 }
 
 
@@ -610,4 +727,202 @@ test("leaderboard loading empty and error states keep valid table markup", async
   assert.match(html, /id="leaderboardStatus"/);
   assert.match(html, /id="leaderboardEmpty"/);
   assert.match(html, /id="leaderboardError"/);
+});
+
+
+test("top-three showcase uses a separate public limit-three request", async () => {
+  const fixture = createEnhancedFixture({
+    authState: { status: "signed_out", backendUser: null },
+  });
+  await settle();
+
+  assert.deepEqual(fixture.publicCalls, [
+    { limit: 20, offset: 0 },
+    { limit: 3, offset: 0 },
+  ]);
+  assert.equal(
+    element(fixture, "leaderboardShowcaseList").children.length,
+    2,
+  );
+  assert.match(
+    element(fixture, "leaderboardShowcaseList").textContent,
+    /Faisal Imran/,
+  );
+});
+
+
+test("top-three showcase has an isolated safe error and retry", async () => {
+  let showcaseCalls = 0;
+  const fixture = createEnhancedFixture({
+    authState: { status: "signed_out", backendUser: null },
+    publicGet(_call, pagination) {
+      if (pagination.limit === 3) {
+        showcaseCalls += 1;
+        if (showcaseCalls === 1) return Promise.reject(new Error(SECRET));
+        return { items: [ENTRY_A], total: 1, limit: 3, offset: 0 };
+      }
+      return leaderboardPage([ENTRY_A]);
+    },
+  });
+  await settle();
+
+  assert.equal(element(fixture, "leaderboardShowcaseError").hidden, false);
+  assert.equal(renderedText(fixture).includes(SECRET), false);
+  element(fixture, "retryLeaderboardShowcaseButton").dispatch("click");
+  await settle();
+  assert.equal(element(fixture, "leaderboardShowcaseError").hidden, true);
+  assert.equal(element(fixture, "leaderboardShowcaseList").children.length, 1);
+});
+
+
+test("signed-out leaderboard click never requests personal context", async () => {
+  const fixture = createEnhancedFixture({
+    authState: { status: "signed_out", backendUser: null },
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  assert.equal(fixture.contextCalls.length, 0);
+  assert.equal(element(fixture, "leaderboardPersonalStatus").hidden, true);
+});
+
+
+test("signed-in leaderboard click loads the containing page and highlights You", async () => {
+  const duplicate = { ...ENTRY_A, displayName: "Faisal Imran" };
+  const fixture = createEnhancedFixture({
+    context: () =>
+      personalContext({
+        items: [
+          { ...duplicate, isCurrentUser: false },
+          { ...duplicate, isCurrentUser: true },
+        ],
+        total: 42,
+        offset: 20,
+      }),
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  assert.deepEqual(fixture.contextCalls, [{ limit: 20 }]);
+  const rows = element(fixture, "leaderboardList").children;
+  assert.equal(rows.length, 2);
+  assert.equal(rows.filter((row) => row.className.includes("current")).length, 1);
+  assert.match(rows[1].textContent, /You/);
+  assert.equal(rows[0].textContent.includes("You"), false);
+  assert.match(element(fixture, "leaderboardSummary").textContent, /21–22 of 42/);
+});
+
+
+test("personal row is focused, announced, and smoothly scrolled", async () => {
+  const fixture = createEnhancedFixture();
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  const row = element(fixture, "leaderboardList").children[0];
+  assert.deepEqual(row.scrollCalls, [{ behavior: "smooth", block: "center" }]);
+  assert.deepEqual(row.focusCalls, [{ preventScroll: true }]);
+  assert.match(element(fixture, "leaderboardPersonalMessage").textContent, /#1/);
+  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /highlighted/);
+});
+
+
+test("reduced-motion preference disables smooth personal-row scrolling", async () => {
+  const fixture = createEnhancedFixture({ prefersReducedMotion: () => true });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  const row = element(fixture, "leaderboardList").children[0];
+  assert.equal(row.scrollCalls[0].behavior, "auto");
+});
+
+
+test("ineligible user sees private score, reason, and Account visibility action", async () => {
+  const fixture = createEnhancedFixture({
+    context: () =>
+      personalContext({ eligible: false, optIn: false, approved: 7 }),
+  });
+  let accountClicks = 0;
+  element(fixture, "authHeaderButton").addEventListener("click", () => {
+    accountClicks += 1;
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  assert.equal(element(fixture, "leaderboardPersonalStatus").hidden, false);
+  assert.equal(
+    element(fixture, "leaderboardPersonalMessage").textContent,
+    "Not currently ranked.",
+  );
+  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /7 approved/);
+  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /Account/);
+  assert.equal(element(fixture, "leaderboardManageVisibility").hidden, false);
+  element(fixture, "leaderboardManageVisibility").dispatch("click");
+  assert.equal(accountClicks, 1);
+});
+
+
+test("sign-out clears personal context but preserves the public showcase", async () => {
+  const fixture = createEnhancedFixture();
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+  assert.match(renderedText(fixture), /You/);
+
+  fixture.setAuthState({ status: "signed_out", backendUser: null });
+
+  assert.equal(fixture.leaderboard.getPersonalState().status, "idle");
+  assert.equal(renderedText(fixture).includes("You"), false);
+  assert.equal(element(fixture, "leaderboardShowcaseList").children.length, 2);
+});
+
+
+test("a stale personal response cannot cross authenticated accounts", async () => {
+  const first = deferred();
+  const second = deferred();
+  const fixture = createEnhancedFixture({
+    context: (call) => (call === 1 ? first.promise : second.promise),
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  fixture.setAuthState({
+    status: "signed_in",
+    backendUser: { id: "different-user-id" },
+  });
+  first.resolve(personalContext());
+  await settle();
+
+  assert.equal(fixture.leaderboard.getPersonalState().status, "loading");
+  assert.equal(renderedText(fixture).includes("You"), false);
+});
+
+
+test("personal context failures render only a safe retry state", async () => {
+  const fixture = createEnhancedFixture({
+    context: () => Promise.reject(new Error(SECRET)),
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  assert.equal(fixture.leaderboard.getPersonalState().status, "error");
+  assert.equal(element(fixture, "retryLeaderboardContextButton").hidden, false);
+  assert.equal(renderedText(fixture).includes(SECRET), false);
+});
+
+
+test("destroy clears personal identity state and rendered markers", async () => {
+  const fixture = createEnhancedFixture();
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  fixture.leaderboard.destroyLeaderboard();
+
+  assert.equal(fixture.leaderboard.getPersonalState().status, "idle");
+  assert.equal(renderedText(fixture).includes("You"), false);
 });

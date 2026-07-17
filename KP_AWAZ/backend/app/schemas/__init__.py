@@ -18,6 +18,9 @@ from app.schemas.sentence_import import (
     SentenceImportResponse,
 )
 from app.schemas.statistics import (
+    PersonalLeaderboardContextResponse,
+    PersonalLeaderboardCurrentUserResponse,
+    PersonalLeaderboardItemResponse,
     ProfileContributionStatisticsResponse,
     PublicLeaderboardItem,
     PublicLeaderboardResponse,
@@ -35,6 +38,9 @@ __all__ = [
     "MyContributionListResponse",
     "MyContributionResponse",
     "PersonalPointsResponse",
+    "PersonalLeaderboardContextResponse",
+    "PersonalLeaderboardCurrentUserResponse",
+    "PersonalLeaderboardItemResponse",
     "PointLedgerItemResponse",
     "ProfileResponse",
     "ProfileContributionStatisticsResponse",

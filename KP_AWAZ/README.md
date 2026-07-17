@@ -114,6 +114,35 @@ Supabase dashboard before live use. Its redirect behavior is unchanged. For
 local development, the configured Google redirect is
 `http://127.0.0.1:4173/`.
 
+Google OAuth and email OTP are independent entry methods. **Continue with
+Google** calls only Google's normal OAuth flow; KP AWAZ does not request or
+verify an email OTP, force an account chooser, force repeated consent, add
+unnecessary scopes, or retain Google provider tokens. Google may still show its
+own chooser or consent screen when Google considers it necessary. After either
+method succeeds, the same restored Supabase session, FastAPI `/api/auth/me`
+verification, profile loading, and private navigation lifecycle is used.
+
+If the Google OAuth application is still in Testing mode, every account used
+for testing must be added manually under **Google Cloud → Google Auth Platform
+→ Audience → Test users**. Test users are not managed by application code, and
+Google client secrets must never be placed in frontend files.
+
+### Required Supabase email-code configuration
+
+The hosted Supabase project must be configured manually to match the six-digit
+interface:
+
+1. Set the email OTP length to `6`.
+2. In the sign-in email template, render `{{ .Token }}` as the code.
+3. Remove `{{ .ConfirmationURL }}` and `{{ .TokenHash }}` from that template.
+4. Keep custom SMTP configured so recipients outside the Supabase project team
+   can receive codes.
+
+Never place SMTP usernames, passwords, provider API keys, project secrets, or
+real OTP values in code, tests, documentation examples, or frontend
+configuration. The application accepts the six-digit token only in the
+in-memory input; `TokenHash` is neither displayed nor accepted.
+
 Frontend authentication uses only the Supabase project URL and publishable key. A service-role key must never appear in frontend configuration, browser code, logs, or production files.
 
 Authentication configuration is centralized under `appConfig.auth` in `scripts/config.js` with these fields:
@@ -141,6 +170,14 @@ not open a new browser tab.
 Sign-out hides both private destinations, clears their data, and returns the
 website to a public section. Long profile names are truncated in the header
 without changing the full saved display name.
+
+Sign-out clears only the Supabase browser session and private in-memory UI. It
+does not delete the local profile, profile preferences, contribution ownership,
+recording files, review state, or point-ledger entries. Signing back in with the
+same verified Supabase user ID restores that durable data. Google and email
+accounts remain separate when Supabase gives them different user IDs; they
+share data only when Supabase intentionally represents them as the same linked
+identity.
 
 ## Profile settings
 
@@ -241,6 +278,26 @@ private contribution points are displayed.
 Private scores remain available only to their signed-in owners in **My
 Account**. Public ranking is based solely on currently approved contribution
 count. Rewards are not implemented.
+
+The section also loads a separate public top-three showcase with
+`GET /api/leaderboard?limit=3&offset=0`. It remains public and visible after
+sign-out. The semantic table below it remains the complete ranked view.
+
+When a verified user opens Leaderboard, the frontend requests:
+
+```http
+GET /api/leaderboard/me/context?limit=20
+```
+
+FastAPI derives the current profile from the bearer token and returns the
+bounded page containing that profile. Only the server-provided
+`isCurrentUser` marker is used to highlight the row and add the **You** badge;
+display names are never used as identity keys. Dense public rank remains
+separate from deterministic row position, so tied users share rank while page
+lookup remains stable. Opted-out users or users with no approved recordings
+receive no public page, but see their own private approved count and an Account
+link explaining how eligibility works. This authenticated response still
+excludes user/profile IDs, emails, provider metadata, tokens, and audio data.
 
 ## Private contribution points
 

@@ -1,8 +1,8 @@
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-email-otp";
-import { openAuthDialog } from "./auth-ui.js?v=20260717-email-otp";
+} from "../services/auth-service.js?v=20260717-unified-auth";
+import { openAuthDialog } from "./auth-ui.js?v=20260717-unified-auth";
 
 
 const defaultAuthApi = Object.freeze({

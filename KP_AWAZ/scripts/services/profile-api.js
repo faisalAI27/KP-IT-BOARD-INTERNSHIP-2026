@@ -1,5 +1,5 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-email-otp";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260717-unified-auth";
 
 
 const PROFILE_PATH = "/profile/me";

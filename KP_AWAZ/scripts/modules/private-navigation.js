@@ -2,7 +2,7 @@ import {
   getCurrentAuthState,
   signOut,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-email-otp";
+} from "../services/auth-service.js?v=20260717-unified-auth";
 
 
 export const PRIVATE_SECTION_CHANGED_EVENT =

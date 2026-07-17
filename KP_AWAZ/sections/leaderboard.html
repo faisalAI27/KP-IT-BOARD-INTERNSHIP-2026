@@ -35,7 +35,70 @@
       </p>
     </div>
 
+    <section
+      class="leaderboard-showcase"
+      id="leaderboardShowcase"
+      aria-labelledby="leaderboardShowcaseTitle"
+    >
+      <div class="leaderboard-showcase-heading">
+        <span>Community podium</span>
+        <h3 id="leaderboardShowcaseTitle">Leading voices</h3>
+      </div>
+      <p
+        class="leaderboard-showcase-status"
+        id="leaderboardShowcaseStatus"
+        role="status"
+        aria-live="polite"
+      >
+        Loading leading contributors…
+      </p>
+      <div
+        class="leaderboard-showcase-error"
+        id="leaderboardShowcaseError"
+        role="alert"
+        hidden
+      >
+        <span>We could not load the leading contributors.</span>
+        <button class="btn btn-quiet" id="retryLeaderboardShowcaseButton" type="button">
+          Retry
+        </button>
+      </div>
+      <ol class="leaderboard-podium" id="leaderboardShowcaseList" hidden></ol>
+    </section>
+
     <div class="leaderboard-panel" id="leaderboardSection">
+      <div
+        class="leaderboard-personal-status"
+        id="leaderboardPersonalStatus"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        hidden
+      >
+        <div>
+          <strong id="leaderboardPersonalMessage"></strong>
+          <span id="leaderboardPersonalDetails"></span>
+        </div>
+        <div class="leaderboard-personal-actions">
+          <button
+            class="btn btn-quiet"
+            id="retryLeaderboardContextButton"
+            type="button"
+            hidden
+          >
+            Retry
+          </button>
+          <button
+            class="btn btn-quiet"
+            id="leaderboardManageVisibility"
+            type="button"
+            hidden
+          >
+            Manage leaderboard visibility
+          </button>
+        </div>
+      </div>
+
       <div
         class="leaderboard-status"
         id="leaderboardStatus"
@@ -67,7 +130,7 @@
       </div>
 
       <div class="leaderboard-table-wrapper">
-        <table class="leaderboard-table" aria-label="Public contributor rankings">
+        <table class="leaderboard-table" aria-label="Complete public contributor rankings">
           <thead>
             <tr>
               <th scope="col">Rank</th>

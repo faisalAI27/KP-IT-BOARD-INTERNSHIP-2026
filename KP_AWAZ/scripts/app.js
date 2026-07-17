@@ -11,11 +11,11 @@ import { initNavigation } from "./modules/navigation.js";
 import {
   loadPartials,
   restoreHashPosition,
-} from "./modules/partials.js?v=20260717-email-otp";
+} from "./modules/partials.js?v=20260717-unified-auth";
 import {
   destroyAuthUI,
   initAuthUI,
-} from "./modules/auth-ui.js?v=20260717-email-otp";
+} from "./modules/auth-ui.js?v=20260717-unified-auth";
 import {
   destroyMyContributions,
   initializeMyContributions,
@@ -32,7 +32,7 @@ import { destroyProfileUI, initProfileUI } from "./modules/profile-ui.js";
 import {
   destroyAuthService,
   initializeAuthService,
-} from "./services/auth-service.js?v=20260717-email-otp";
+} from "./services/auth-service.js?v=20260717-unified-auth";
 
 function showBootError(error) {
   const message = document.createElement("div");

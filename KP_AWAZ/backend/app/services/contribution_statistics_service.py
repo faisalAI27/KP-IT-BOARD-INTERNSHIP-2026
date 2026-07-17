@@ -31,6 +31,13 @@ class LeaderboardQueryError(ContributionStatisticsError):
     message = "The public leaderboard could not be loaded."
 
 
+class PersonalLeaderboardContextQueryError(ContributionStatisticsError):
+    """Safe authenticated containing-page query failure."""
+
+    code = "LEADERBOARD_CONTEXT_QUERY_FAILED"
+    message = "Your leaderboard position could not be loaded."
+
+
 @dataclass(frozen=True, slots=True)
 class ProfileContributionStatistics:
     """One profile's dynamic contribution counts and public eligibility."""
@@ -58,6 +65,38 @@ class LeaderboardPage:
     """One bounded leaderboard page and its eligible-profile total."""
 
     items: list[LeaderboardEntry]
+    total: int
+    limit: int
+    offset: int
+
+
+@dataclass(frozen=True, slots=True)
+class PersonalLeaderboardEntry:
+    """One ranked row with an explicit current-user marker."""
+
+    rank: int
+    display_name: str
+    approved_contributions: int
+    is_current_user: bool
+
+
+@dataclass(frozen=True, slots=True)
+class PersonalLeaderboardCurrentUser:
+    """Privacy-safe authenticated summary of the verified caller."""
+
+    rank: int | None
+    display_name: str
+    approved_contributions: int
+
+
+@dataclass(frozen=True, slots=True)
+class PersonalLeaderboardContext:
+    """The verified caller's eligibility and containing leaderboard page."""
+
+    leaderboard_opt_in: bool
+    leaderboard_eligible: bool
+    current_user: PersonalLeaderboardCurrentUser
+    items: list[PersonalLeaderboardEntry]
     total: int
     limit: int
     offset: int
@@ -97,6 +136,16 @@ def _ranked_eligible_profiles():
             func.dense_rank()
             .over(order_by=eligible.c.approved_count.desc())
             .label("public_rank"),
+            func.row_number()
+            .over(
+                order_by=(
+                    eligible.c.approved_count.desc(),
+                    func.lower(func.trim(eligible.c.display_name)).asc(),
+                    eligible.c.profile_id.asc(),
+                )
+            )
+            .label("row_position"),
+            func.count().over().label("eligible_total"),
         )
         .subquery("ranked_eligible_profiles")
     )
@@ -198,6 +247,105 @@ def list_public_leaderboard(
             for row in rows
         ],
         total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+def get_personal_leaderboard_context(
+    *,
+    database: Session,
+    profile: Profile,
+    limit: int,
+) -> PersonalLeaderboardContext:
+    """Return the bounded ranked page containing the verified caller."""
+
+    approved_query = select(func.count(Contribution.id)).where(
+        Contribution.user_id == profile.id,
+        Contribution.review_status == "approved",
+    )
+
+    try:
+        approved = int(database.scalar(approved_query) or 0)
+        opted_in = bool(profile.leaderboard_opt_in)
+        if not opted_in or approved == 0:
+            return PersonalLeaderboardContext(
+                leaderboard_opt_in=opted_in,
+                leaderboard_eligible=False,
+                current_user=PersonalLeaderboardCurrentUser(
+                    rank=None,
+                    display_name=str(profile.display_name),
+                    approved_contributions=approved,
+                ),
+                items=[],
+                total=0,
+                limit=limit,
+                offset=0,
+            )
+
+        ranked = _ranked_eligible_profiles()
+        current_row = database.execute(
+            select(
+                ranked.c.public_rank,
+                ranked.c.display_name,
+                ranked.c.approved_count,
+                ranked.c.row_position,
+                ranked.c.eligible_total,
+            ).where(ranked.c.profile_id == profile.id)
+        ).one_or_none()
+        if current_row is None:
+            return PersonalLeaderboardContext(
+                leaderboard_opt_in=opted_in,
+                leaderboard_eligible=False,
+                current_user=PersonalLeaderboardCurrentUser(
+                    rank=None,
+                    display_name=str(profile.display_name),
+                    approved_contributions=approved,
+                ),
+                items=[],
+                total=0,
+                limit=limit,
+                offset=0,
+            )
+
+        offset = ((int(current_row.row_position) - 1) // limit) * limit
+        rows = database.execute(
+            select(
+                ranked.c.profile_id,
+                ranked.c.public_rank,
+                ranked.c.display_name,
+                ranked.c.approved_count,
+            )
+            .order_by(ranked.c.row_position.asc())
+            .limit(limit)
+            .offset(offset)
+        ).all()
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise PersonalLeaderboardContextQueryError() from error
+
+    entries = [
+        PersonalLeaderboardEntry(
+            rank=int(row.public_rank),
+            display_name=str(row.display_name),
+            approved_contributions=int(row.approved_count),
+            is_current_user=str(row.profile_id) == profile.id,
+        )
+        for row in rows
+    ]
+    if sum(entry.is_current_user for entry in entries) != 1:
+        raise PersonalLeaderboardContextQueryError()
+
+    return PersonalLeaderboardContext(
+        leaderboard_opt_in=opted_in,
+        leaderboard_eligible=True,
+        current_user=PersonalLeaderboardCurrentUser(
+            rank=int(current_row.public_rank),
+            display_name=str(current_row.display_name),
+            approved_contributions=int(current_row.approved_count),
+        ),
+        items=entries,
+        total=int(current_row.eligible_total),
         limit=limit,
         offset=offset,
     )

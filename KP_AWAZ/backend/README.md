@@ -149,6 +149,20 @@ SUPABASE_AUTH_TIMEOUT_SECONDS=5
 
 Use only a Supabase publishable key for this flow. A service-role key must never be placed in frontend code or exposed to the browser.
 
+Google OAuth and six-digit email OTP are separate frontend entry methods. The
+Google action calls Supabase OAuth only and does not call the email OTP request
+or verification methods. The email action requests and verifies a six-digit
+`email` OTP in Supabase, then sends only the resulting access token to FastAPI.
+The OTP itself, `TokenHash`, Google provider tokens, Google client secrets, and
+SMTP credentials are never sent to or stored by this backend.
+
+For hosted email login, configure the Supabase email template manually with
+`{{ .Token }}`, remove `{{ .ConfirmationURL }}` and `{{ .TokenHash }}`, set OTP
+length to `6`, and keep custom SMTP configured for external recipients without
+committing its credentials. If Google OAuth remains in Testing mode, add test
+accounts manually under **Google Cloud → Google Auth Platform → Audience → Test
+users**.
+
 The protected foundation endpoint is:
 
 ```http
@@ -462,8 +476,34 @@ Counts and eligibility are calculated dynamically with SQL aggregation; profiles
 do not store mutable contribution counters. The composite
 `(review_status, user_id)` contribution index supports these filters. The public
 leaderboard remains based on approved contribution counts and does not expose
-the private points ledger. Rewards and the public leaderboard frontend are not
-implemented yet.
+the private points ledger. Rewards are not implemented; the contributor
+frontend renders this API as a public podium and semantic table.
+
+### Authenticated personal leaderboard context
+
+The containing-page endpoint requires the same verified Supabase bearer token:
+
+```http
+GET /api/leaderboard/me/context?limit=20
+```
+
+It derives the current profile internally and returns `leaderboardOptIn`,
+`leaderboardEligible`, a privacy-safe `currentUser` summary, `items`, `total`,
+`limit`, and the calculated page `offset`. Eligible page items add only the
+boolean `isCurrentUser`; exactly one item is marked. Ineligible users receive
+their private approved count, a null rank, and an empty public page.
+
+The query uses SQL aggregation plus `dense_rank()` for public ties and a
+separate deterministic `row_number()` for containing-page lookup. It does not
+load the complete contributor population into Python and never returns profile
+IDs, user IDs, emails, authentication providers, tokens, contribution IDs, or
+audio metadata.
+
+Ending a browser session does not call a deletion endpoint. Profiles,
+preferences, owned contributions, audio storage keys and files, review state,
+and append-only ledger events remain durable and are restored when the same
+verified Supabase user ID signs in again. Different Supabase user IDs remain
+separate accounts even when their email text matches.
 
 ## Append-only contribution points
 

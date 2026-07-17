@@ -2,7 +2,7 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-email-otp";
+} from "../services/auth-service.js?v=20260717-unified-auth";
 import { getMyPoints } from "../services/points-api.js";
 
 

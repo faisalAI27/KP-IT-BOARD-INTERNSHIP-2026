@@ -8,7 +8,8 @@ import {
 
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const EMAIL_OTP_PATTERN = /^\d{6}$/;
+export const EMAIL_OTP_LENGTH = 6;
+const EMAIL_OTP_PATTERN = new RegExp(`^\\d{${EMAIL_OTP_LENGTH}}$`);
 const BACKEND_AUTH_CODES = new Set([
   "AUTHENTICATION_REQUIRED",
   "INVALID_ACCESS_TOKEN",
@@ -128,7 +129,7 @@ function normalizeEmail(email) {
 
 
 function normalizeEmailOtp(otp) {
-  return typeof otp === "string" ? otp.replace(/\s+/g, "") : "";
+  return typeof otp === "string" ? otp.replace(/[\s-]+/g, "") : "";
 }
 
 
@@ -283,7 +284,7 @@ export class AuthService {
       });
       if (error) throw error;
     } catch {
-      throw new AuthServiceError("Google sign-in could not be started.", {
+      throw new AuthServiceError("Google sign-in could not be completed.", {
         code: "GOOGLE_SIGN_IN_FAILED",
       });
     }

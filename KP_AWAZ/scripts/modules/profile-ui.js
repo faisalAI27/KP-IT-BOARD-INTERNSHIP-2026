@@ -2,9 +2,9 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-email-otp";
+} from "../services/auth-service.js?v=20260717-unified-auth";
 import { getMyProfile, updateMyProfile } from "../services/profile-api.js";
-import { setAuthProfileDisplayName } from "./auth-ui.js?v=20260717-email-otp";
+import { setAuthProfileDisplayName } from "./auth-ui.js?v=20260717-unified-auth";
 
 
 const PROFILE_ERROR_MESSAGES = Object.freeze({

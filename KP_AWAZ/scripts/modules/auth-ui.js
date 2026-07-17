@@ -1,4 +1,5 @@
 import {
+  EMAIL_OTP_LENGTH,
   getCurrentAuthState,
   requestEmailOtp,
   signInWithGoogle,
@@ -6,7 +7,7 @@ import {
   subscribeToAuthChanges,
   verifyEmailOtp,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-email-otp";
+} from "../services/auth-service.js?v=20260717-unified-auth";
 
 
 const EMAIL_OTP_COOLDOWN_MS = 60_000;
@@ -19,7 +20,7 @@ const SIGN_IN_DESCRIPTION =
   "Continue with Google or use a six-digit code sent to your email.";
 const UI_ERROR_MESSAGES = Object.freeze({
   AUTH_NOT_CONFIGURED: "Account sign-in is not configured.",
-  GOOGLE_SIGN_IN_FAILED: "Google sign-in could not be started. Please try again.",
+  GOOGLE_SIGN_IN_FAILED: "Google sign-in could not be completed. Please try again.",
   EMAIL_OTP_SEND_FAILED: "We could not send the sign-in code. Please try again.",
   EMAIL_OTP_VERIFY_FAILED: "We could not verify the code. Please try again.",
   INVALID_OR_EXPIRED_EMAIL_OTP:
@@ -73,7 +74,12 @@ function normalizeEmail(email) {
 
 
 function normalizeOtp(otp) {
-  return typeof otp === "string" ? otp.replace(/\s+/g, "") : "";
+  return typeof otp === "string" ? otp.replace(/[\s-]+/g, "") : "";
+}
+
+
+function isCompleteOtp(otp) {
+  return new RegExp(`^\\d{${EMAIL_OTP_LENGTH}}$`).test(otp);
 }
 
 
@@ -269,6 +275,8 @@ export class AuthUI {
     this._destroyed = false;
     this._initialized = true;
     this._bindEvents();
+    this._elements.otpInput.maxLength = EMAIL_OTP_LENGTH;
+    this._elements.otpInput.pattern = `[0-9]{${EMAIL_OTP_LENGTH}}`;
     this._state = this._auth.getCurrentAuthState();
     this._render();
     this._unsubscribe = this._auth.subscribeToAuthChanges((state) => {
@@ -468,7 +476,7 @@ export class AuthUI {
     } catch (error) {
       if (!this._destroyed) {
         this._signInMessage = {
-          message: safeUiErrorMessage(error, "Google sign-in could not be started."),
+          message: safeUiErrorMessage(error, "Google sign-in could not be completed."),
           tone: "error",
         };
       }
@@ -505,7 +513,7 @@ export class AuthUI {
         this._clearOtpInput();
         this._startResendCooldown();
         this._signInMessage = {
-          message: "A six-digit sign-in code was sent.",
+          message: "A six-digit sign-in code has been sent to your email.",
           tone: "success",
         };
         queueMicrotask(() => {
@@ -537,7 +545,7 @@ export class AuthUI {
     const otp = normalizeOtp(this._elements.otpInput.value);
     this._elements.otpInput.value = otp;
     this._elements.otpInput.setCustomValidity("");
-    if (!/^\d{6}$/.test(otp)) {
+    if (!isCompleteOtp(otp)) {
       const hasNonnumericCharacters = otp.length > 0 && !/^\d+$/.test(otp);
       const message = hasNonnumericCharacters
         ? "Use digits only for the sign-in code."
@@ -804,7 +812,7 @@ export class AuthUI {
     this._elements.emailInput.disabled = Boolean(pending);
     this._elements.emailSubmit.disabled = Boolean(pending);
     this._elements.emailSubmitLabel.textContent =
-      pending === "email_request" ? "Sending…" : "Send sign-in code";
+      pending === "email_request" ? "Sending…" : "Send six-digit code";
     this._elements.otpInput.disabled = Boolean(pending);
     this._elements.otpSubmit.disabled = Boolean(pending);
     this._elements.otpSubmitLabel.textContent =

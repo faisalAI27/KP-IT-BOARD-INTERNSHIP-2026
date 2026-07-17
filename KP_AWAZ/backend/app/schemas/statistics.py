@@ -51,3 +51,45 @@ class PublicLeaderboardResponse(BaseModel):
     total: int = Field(ge=0)
     limit: int = Field(ge=1, le=100)
     offset: int = Field(ge=0)
+
+
+class PersonalLeaderboardCurrentUserResponse(BaseModel):
+    """Authenticated summary without exposing an identity key or email."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        from_attributes=True,
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    rank: int | None = Field(default=None, ge=1)
+    display_name: str = Field(alias="displayName", min_length=2, max_length=80)
+    approved_contributions: int = Field(alias="approvedContributions", ge=0)
+
+
+class PersonalLeaderboardItemResponse(PublicLeaderboardItem):
+    """Public ranked fields plus a server-derived current-user marker."""
+
+    is_current_user: bool = Field(alias="isCurrentUser")
+
+
+class PersonalLeaderboardContextResponse(BaseModel):
+    """Containing leaderboard page for only the authenticated caller."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        from_attributes=True,
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    leaderboard_opt_in: bool = Field(alias="leaderboardOptIn")
+    leaderboard_eligible: bool = Field(alias="leaderboardEligible")
+    current_user: PersonalLeaderboardCurrentUserResponse = Field(
+        alias="currentUser"
+    )
+    items: list[PersonalLeaderboardItemResponse]
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+    offset: int = Field(ge=0)

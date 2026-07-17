@@ -284,6 +284,30 @@
     gap: 20px;
   }
 
+  .leaderboard-podium {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .leaderboard-podium-card,
+  .leaderboard-podium-card:first-child {
+    min-height: 0;
+  }
+
+  .leaderboard-personal-status,
+  .leaderboard-showcase-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .leaderboard-personal-actions {
+    flex-direction: column;
+  }
+
+  .leaderboard-personal-actions .btn {
+    width: 100%;
+  }
+
   .leaderboard-refresh {
     min-height: 42px;
   }

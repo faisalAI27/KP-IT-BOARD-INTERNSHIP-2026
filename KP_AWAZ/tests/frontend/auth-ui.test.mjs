@@ -446,7 +446,7 @@ test("dialog exposes the accessible two-step email OTP interface", async () => {
   assert.match(html, /<dialog[\s\S]*id="authDialog"/);
   assert.match(html, /<label for="authEmailInput">Email address<\/label>/);
   assert.match(html, /id="authEmailInput"[\s\S]*type="email"/);
-  assert.match(html, />Send sign-in code</);
+  assert.match(html, />Send six-digit code</);
   assert.match(
     html,
     /We will send a six-digit sign-in code to your email\./,
@@ -582,6 +582,19 @@ test("Google sign-in is single-flight and shows its loading label", async () => 
 });
 
 
+test("Google sign-in never enters or calls the email OTP flow", async () => {
+  const fixture = createFixture();
+
+  element(fixture, "authGoogleButton").dispatch("click");
+  await settle();
+
+  assert.equal(fixture.authApi.calls.google, 1);
+  assert.equal(fixture.authApi.calls.emailOtpRequests.length, 0);
+  assert.equal(fixture.authApi.calls.emailOtpVerifications.length, 0);
+  assert.equal(element(fixture, "authOtpStep").hidden, true);
+});
+
+
 test("Google failure restores the button and renders a token-free error", async () => {
   const secret = "private-token-must-not-render";
   const fixture = createFixture(authState("signed_out"), {
@@ -633,7 +646,7 @@ test("valid email requests one code and reveals the OTP step", async () => {
   assert.equal(element(fixture, "authOtpResendLabel").textContent, "Resend code in 60s");
   assert.equal(
     element(fixture, "authSignInStatus").textContent,
-    "A six-digit sign-in code was sent.",
+    "A six-digit sign-in code has been sent to your email.",
   );
 });
 
@@ -676,7 +689,7 @@ test("email code-request failure is safe and restores the submit button", async 
 });
 
 
-test("OTP input accepts a pasted six-digit code with harmless spaces", async () => {
+test("OTP input accepts a pasted six-digit code with harmless spaces and hyphens", async () => {
   const fixture = createFixture(
     authState("signed_out"),
     {},
@@ -686,7 +699,7 @@ test("OTP input accepts a pasted six-digit code with harmless spaces", async () 
   let pastePrevented = false;
 
   element(fixture, "authOtpInput").dispatch("paste", {
-    clipboardData: { getData: () => " 12 34 56 " },
+    clipboardData: { getData: () => " 12-34 56 " },
     preventDefault() {
       pastePrevented = true;
     },

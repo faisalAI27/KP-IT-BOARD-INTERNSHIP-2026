@@ -5,6 +5,7 @@ import {
   LeaderboardApi,
   LeaderboardApiError,
   validateLeaderboardResponse,
+  validatePersonalLeaderboardContext,
 } from "../../scripts/services/leaderboard-api.js";
 
 
@@ -19,6 +20,15 @@ const ITEM = Object.freeze({
 });
 const LEADERBOARD = Object.freeze({
   items: [ITEM],
+  total: 1,
+  limit: 20,
+  offset: 0,
+});
+const PERSONAL_CONTEXT = Object.freeze({
+  leaderboardOptIn: true,
+  leaderboardEligible: true,
+  currentUser: ITEM,
+  items: [{ ...ITEM, isCurrentUser: true }],
   total: 1,
   limit: 20,
   offset: 0,
@@ -58,6 +68,128 @@ test("public leaderboard request uses GET", async () => {
   const { api, calls } = fixture();
   await api.getPublicLeaderboard();
   assert.equal(calls[0].options.method, "GET");
+});
+
+
+test("personal context uses the authenticated containing-page route", async () => {
+  const calls = [];
+  const api = new LeaderboardApi({
+    apiBaseUrl: "http://127.0.0.1:8000/api",
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ body: PERSONAL_CONTEXT });
+    },
+  });
+
+  await api.getPersonalLeaderboardContext();
+
+  assert.equal(new URL(calls[0].url).pathname, "/api/leaderboard/me/context");
+  assert.equal(new URL(calls[0].url).searchParams.get("limit"), "20");
+  assert.equal(calls[0].options.headers.Authorization, `Bearer ${ACCESS_TOKEN}`);
+  assert.equal(calls[0].options.method, "GET");
+});
+
+
+test("personal context never sends a user or profile identity", async () => {
+  const calls = [];
+  const api = new LeaderboardApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ body: PERSONAL_CONTEXT });
+    },
+  });
+
+  await api.getPersonalLeaderboardContext({
+    userId: USER_ID,
+    profileId: PROFILE_ID,
+  });
+
+  assert.equal(JSON.stringify(calls).includes(USER_ID), false);
+  assert.equal(JSON.stringify(calls).includes(PROFILE_ID), false);
+  assert.equal(calls[0].url.includes(ACCESS_TOKEN), false);
+});
+
+
+test("personal context requires an access token before fetch", async () => {
+  let fetches = 0;
+  const api = new LeaderboardApi({
+    getAccessToken: () => null,
+    fetchImpl: async () => {
+      fetches += 1;
+      return response({ body: PERSONAL_CONTEXT });
+    },
+  });
+
+  await assert.rejects(api.getPersonalLeaderboardContext(), {
+    code: "AUTHENTICATION_REQUIRED",
+    status: 401,
+  });
+  assert.equal(fetches, 0);
+});
+
+
+test("personal context backend errors cannot expose token values", async () => {
+  const api = new LeaderboardApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () =>
+      response({
+        ok: false,
+        status: 500,
+        body: {
+          code: "LEADERBOARD_CONTEXT_QUERY_FAILED",
+          message: `query failed with access token ${ACCESS_TOKEN}`,
+        },
+      }),
+  });
+
+  await assert.rejects(api.getPersonalLeaderboardContext(), (error) => {
+    assert.equal(error.message.includes(ACCESS_TOKEN), false);
+    assert.equal(error.code, "LEADERBOARD_CONTEXT_QUERY_FAILED");
+    return true;
+  });
+});
+
+
+test("eligible personal context requires exactly one current-user marker", () => {
+  assert.throws(
+    () =>
+      validatePersonalLeaderboardContext({
+        ...PERSONAL_CONTEXT,
+        items: [{ ...ITEM, isCurrentUser: false }],
+      }),
+    { code: "LEADERBOARD_RESPONSE_INVALID" },
+  );
+});
+
+
+test("malformed personal context items fail with the safe response error", () => {
+  assert.throws(
+    () => validatePersonalLeaderboardContext({ ...PERSONAL_CONTEXT, items: null }),
+    { code: "LEADERBOARD_RESPONSE_INVALID" },
+  );
+});
+
+
+test("ineligible personal context preserves private approved count safely", () => {
+  const result = validatePersonalLeaderboardContext({
+    leaderboardOptIn: false,
+    leaderboardEligible: false,
+    currentUser: {
+      rank: null,
+      displayName: "Private Contributor",
+      approvedContributions: 7,
+      email: "secret@example.com",
+    },
+    items: [],
+    total: 0,
+    limit: 20,
+    offset: 0,
+  });
+
+  assert.equal(result.currentUser.approvedContributions, 7);
+  assert.equal(JSON.stringify(result).includes("secret@example.com"), false);
 });
 
 

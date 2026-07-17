@@ -297,6 +297,9 @@ test("Google sign-in uses provider, redirect, and no unnecessary scopes", async 
     },
   ]);
   assert.equal("scopes" in fake.calls.google[0].options, false);
+  assert.equal("prompt" in fake.calls.google[0].options, false);
+  assert.equal(fake.calls.email.length, 0);
+  assert.equal(fake.calls.otp.length, 0);
 });
 
 
@@ -417,6 +420,20 @@ test("six-digit email OTP verifies with type email and enters signed-in state", 
     `Bearer ${ACCESS_TOKEN}`,
   );
   assert.equal(JSON.stringify(backendRequests).includes("123456"), false);
+});
+
+
+test("email OTP normalization removes harmless spaces and hyphens", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+
+  await service.verifyEmailOtp("person@example.com", "12-34 56");
+
+  assert.deepEqual(fake.calls.otp[0], {
+    email: "person@example.com",
+    token: "123456",
+    type: "email",
+  });
 });
 
 
