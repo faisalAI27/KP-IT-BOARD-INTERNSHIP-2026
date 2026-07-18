@@ -2,6 +2,7 @@ import {
   ACCOUNT_PASSWORD_MAX_LENGTH,
   ACCOUNT_PASSWORD_MIN_LENGTH,
   EMAIL_OTP_LENGTH,
+  checkAccountStatus,
   getCurrentAuthState,
   initializeAuthService,
   resendSignupOtp,
@@ -48,6 +49,8 @@ const SAFE_MESSAGES = Object.freeze({
     "Your account exists, but KP AWAZ could not verify the session. Please sign in again.",
   AUTH_REQUEST_TIMEOUT:
     "We could not complete the authentication request. Please try again.",
+  ACCOUNT_STATUS_CHECK_FAILED:
+    "We could not check this email right now. Please try again.",
 });
 
 const ACCESS_VIEW_CONTENT = Object.freeze({
@@ -166,6 +169,7 @@ function safeErrorMessage(error, fallback) {
 
 
 const defaultAuthApi = Object.freeze({
+  checkAccountStatus,
   getCurrentAuthState,
   initializeAuthService,
   resendSignupOtp,
@@ -211,6 +215,8 @@ export class AccountAccess {
     this._success = false;
     this._activeEmail = "";
     this._activeDisplayName = "";
+    this._existingAccount = false;
+    this._accountStatusFailed = false;
     this._resendAvailableAt = 0;
     this._destination = resolveWorkspaceDestination(location?.search);
     this._navigating = false;
@@ -257,6 +263,8 @@ export class AccountAccess {
     this._clearSecrets();
     this._activeEmail = "";
     this._activeDisplayName = "";
+    this._existingAccount = false;
+    this._accountStatusFailed = false;
     this._action = null;
     this._success = false;
   }
@@ -291,6 +299,13 @@ export class AccountAccess {
       createSubmit: "createAccountSubmit",
       createSubmitLabel: "createAccountSubmitLabel",
       createMessage: "createAccountMessage",
+      accountStatusFailure: "accountStatusFailure",
+      retryAccountStatus: "retryAccountStatusButton",
+      existingAccountPanel: "existingAccountPanel",
+      existingAccountSignIn: "existingAccountSignInButton",
+      existingAccountGoogle: "existingAccountGoogleButton",
+      existingAccountForgotPassword: "existingAccountForgotPassword",
+      existingAccountDifferentEmail: "existingAccountDifferentEmailButton",
       otpEmail: "signupOtpEmail",
       otpForm: "signupOtpForm",
       otpInput: "signupOtpInput",
@@ -334,6 +349,27 @@ export class AccountAccess {
     this._listen(this._elements.createForm, "submit", (event) => {
       event.preventDefault();
       void this._createAccount();
+    });
+    this._listen(this._elements.retryAccountStatus, "click", () => {
+      void this._createAccount();
+    });
+    this._listen(this._elements.existingAccountSignIn, "click", () => {
+      this._switchExistingAccountToSignIn();
+    });
+    this._listen(this._elements.existingAccountGoogle, "click", () => {
+      void this._continueWithGoogle();
+    });
+    this._listen(this._elements.existingAccountForgotPassword, "click", () => {
+      this._clearSecrets();
+    });
+    this._listen(this._elements.existingAccountDifferentEmail, "click", () => {
+      this._useDifferentEmail();
+    });
+    this._listen(this._elements.createEmail, "input", () => {
+      if (!this._accountStatusFailed) return;
+      this._accountStatusFailed = false;
+      this._setMessage(this._elements.createMessage, "", "");
+      this._render();
     });
     this._listen(this._elements.otpForm, "submit", (event) => {
       event.preventDefault();
@@ -466,7 +502,9 @@ export class AccountAccess {
   }
 
   async _createAccount() {
-    if (!this._beginAction("create")) return;
+    if (!this._beginAction("account_check")) return;
+    this._accountStatusFailed = false;
+    this._existingAccount = false;
     const form = this._elements.createForm;
     const displayName = this._elements.displayName.value.trim();
     const email = this._elements.createEmail.value;
@@ -483,7 +521,17 @@ export class AccountAccess {
       return;
     }
 
+    let signupStarted = false;
     try {
+      const status = await this._auth.checkAccountStatus(email);
+      if (status.accountExists) {
+        this._showExistingAccount(status.email);
+        return;
+      }
+
+      signupStarted = true;
+      this._action = "create";
+      this._render();
       const result = await this._auth.signUpWithPassword({
         email,
         password,
@@ -509,6 +557,19 @@ export class AccountAccess {
       );
       this._elements.otpInput.focus?.();
     } catch (error) {
+      if (error?.code === "ACCOUNT_ALREADY_EXISTS") {
+        this._showExistingAccount(email);
+        return;
+      }
+      if (!signupStarted) {
+        this._accountStatusFailed = true;
+        this._setMessage(
+          this._elements.createMessage,
+          SAFE_MESSAGES.ACCOUNT_STATUS_CHECK_FAILED,
+          "error",
+        );
+        return;
+      }
       this._setMessage(
         this._elements.createMessage,
         safeErrorMessage(error, "We could not create your account. Please try again."),
@@ -653,6 +714,38 @@ export class AccountAccess {
     this._elements.createEmail.focus?.();
   }
 
+  _showExistingAccount(email) {
+    this._activeEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    this._existingAccount = true;
+    this._accountStatusFailed = false;
+    this._createStep = "details";
+    this._clearSecrets();
+    this._clearMessages();
+    this._render();
+    this._elements.existingAccountSignIn.focus?.();
+  }
+
+  _switchExistingAccountToSignIn() {
+    if (this._action) return;
+    const email = this._activeEmail;
+    this._clearSignupState();
+    this._mode = "sign_in";
+    this._clearMessages();
+    this._elements.signInEmail.value = email;
+    this._render();
+    this._elements.signInPassword.focus?.();
+  }
+
+  _useDifferentEmail() {
+    if (this._action) return;
+    this._clearSignupState();
+    this._mode = "create";
+    this._elements.createEmail.value = "";
+    this._clearMessages();
+    this._render();
+    this._elements.createEmail.focus?.();
+  }
+
   _clearSignupState() {
     this._stopCooldown();
     this._elements.otpInput.value = "";
@@ -661,6 +754,8 @@ export class AccountAccess {
     this._elements.confirmPassword.value = "";
     this._activeEmail = "";
     this._activeDisplayName = "";
+    this._existingAccount = false;
+    this._accountStatusFailed = false;
     this._createStep = "details";
     this._updatePasswordFeedback();
   }
@@ -824,12 +919,16 @@ export class AccountAccess {
     this._elements.stepReady.dataset.state =
       this._createStep === "ready" ? "active" : "upcoming";
 
-    const creating = this._action === "create";
+    const checkingAccount = this._action === "account_check";
+    const creating = checkingAccount || this._action === "create";
     const verifying = this._action === "verify";
     const signingIn = this._action === "sign_in";
     const usingGoogle = this._action === "google";
     const resending = this._action === "resend";
     this._elements.createForm.setAttribute("aria-busy", String(creating));
+    this._elements.createForm.hidden = this._existingAccount;
+    this._elements.existingAccountPanel.hidden = !this._existingAccount;
+    this._elements.accountStatusFailure.hidden = !this._accountStatusFailed;
     this._elements.otpForm.setAttribute("aria-busy", String(verifying || resending));
     this._elements.signInForm.setAttribute("aria-busy", String(signingIn));
     for (const element of [
@@ -848,12 +947,20 @@ export class AccountAccess {
     this._elements.toggleSignInPassword.disabled = signingIn;
     this._elements.signInSubmit.disabled = signingIn;
     this._elements.googleButton.disabled = usingGoogle;
+    this._elements.existingAccountGoogle.disabled = usingGoogle;
+    this._elements.existingAccountSignIn.disabled = usingGoogle;
+    this._elements.existingAccountDifferentEmail.disabled = usingGoogle;
+    this._elements.retryAccountStatus.disabled = creating;
     this._elements.createSubmit.setAttribute(
       "aria-busy",
       String(creating),
     );
     this._elements.createSubmitLabel.textContent =
-      this._action === "create" ? "Creating your account…" : "Create account";
+      checkingAccount
+        ? "Checking your account…"
+        : this._action === "create"
+          ? "Creating your account…"
+          : "Create account";
     this._elements.otpSubmit.setAttribute(
       "aria-busy",
       String(verifying),

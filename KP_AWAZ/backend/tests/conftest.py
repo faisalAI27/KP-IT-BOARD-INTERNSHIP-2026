@@ -17,12 +17,14 @@ TEST_STORAGE = TEST_ROOT / "storage"
 TEST_ADMIN_API_KEY = "test-admin-key"
 TEST_SUPABASE_URL = "https://test-project.supabase.co"
 TEST_SUPABASE_PUBLISHABLE_KEY = "test-publishable-key"
+TEST_SUPABASE_SECRET_KEY = "test-server-secret-key"
 
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DATABASE}"
 os.environ["STORAGE_ROOT"] = str(TEST_STORAGE)
 os.environ["ADMIN_API_KEY"] = TEST_ADMIN_API_KEY
 os.environ["SUPABASE_URL"] = TEST_SUPABASE_URL
 os.environ["SUPABASE_PUBLISHABLE_KEY"] = TEST_SUPABASE_PUBLISHABLE_KEY
+os.environ["SUPABASE_SECRET_KEY"] = TEST_SUPABASE_SECRET_KEY
 os.environ["SUPABASE_AUTH_TIMEOUT_SECONDS"] = "1"
 
 from app.database import Base, engine  # noqa: E402

@@ -142,6 +142,13 @@ const ACCOUNT_ELEMENT_IDS = [
   "createAccountSubmit",
   "createAccountSubmitLabel",
   "createAccountMessage",
+  "accountStatusFailure",
+  "retryAccountStatusButton",
+  "existingAccountPanel",
+  "existingAccountSignInButton",
+  "existingAccountGoogleButton",
+  "existingAccountForgotPassword",
+  "existingAccountDifferentEmailButton",
   "signupOtpEmail",
   "signupOtpForm",
   "signupOtpInput",
@@ -196,6 +203,7 @@ function createAccountFixture(overrides = {}) {
   const root = new FakeDocument();
   const calls = {
     google: 0,
+    accountStatus: [],
     profile: [],
     resend: [],
     signIn: [],
@@ -210,6 +218,13 @@ function createAccountFixture(overrides = {}) {
     subscribeToAuthChanges(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    async checkAccountStatus(email) {
+      calls.accountStatus.push(email);
+      return {
+        accountExists: false,
+        email: email.trim().toLowerCase(),
+      };
     },
     async signUpWithPassword(details) {
       calls.signUp.push(details);
@@ -298,6 +313,18 @@ test("cultural authentication markup communicates the KP AWAZ mission", async ()
   assert.match(html, /languages of\s+Khyber Pakhtunkhwa/i);
   assert.match(html, /Our voices, our language, our Khyber Pakhtunkhwa\./);
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
+});
+
+
+test("existing-account markup uses provider-neutral guidance and safe actions", async () => {
+  const html = await readProjectFile("auth.html");
+  assert.match(html, /An account already exists with this email\./);
+  assert.match(html, /Sign in to continue to your contributor dashboard\./);
+  assert.match(html, /id="existingAccountSignInButton"[\s\S]*?>Sign In</);
+  assert.match(html, /id="existingAccountGoogleButton"[\s\S]*?>Continue with Google</);
+  assert.match(html, /id="existingAccountForgotPassword" href="forgot-password\.html"/);
+  assert.match(html, /Use a different email/);
+  assert.doesNotMatch(html, /belongs to a Google account|user ID already exists|email is confirmed/i);
 });
 
 
@@ -399,6 +426,7 @@ test("successful password signup opens focused six-digit OTP mode", async () => 
   byId(fixture, "createAccountForm").dispatch("submit");
   await flush();
 
+  assert.deepEqual(fixture.calls.accountStatus, [" Person@Example.com "]);
   assert.equal(fixture.calls.signUp.length, 1);
   assert.equal(byId(fixture, "accountOtpStep").hidden, false);
   assert.equal(byId(fixture, "accountDetailsStep").hidden, true);
@@ -406,6 +434,193 @@ test("successful password signup opens focused six-digit OTP mode", async () => 
   assert.equal(byId(fixture, "signupOtpInput").focusCalls, 1);
   assert.equal(byId(fixture, "accountGoogleButton").hidden, false);
 });
+
+
+test("existing email stops signup and shows account guidance without OTP", async () => {
+  const fixture = createAccountFixture({
+    authApi: {
+      async checkAccountStatus(email) {
+        fixture.calls.accountStatus.push(email);
+        return { accountExists: true, email: "person@example.com" };
+      },
+    },
+  });
+  await fixture.account.initialize();
+  byId(fixture, "createAccountTab").dispatch("click");
+  byId(fixture, "createDisplayName").value = "Person";
+  byId(fixture, "createEmail").value = " Person@Example.com ";
+  byId(fixture, "createPassword").value = "strong-password";
+  byId(fixture, "confirmPassword").value = "strong-password";
+  byId(fixture, "createAccountForm").dispatch("submit");
+  await flush();
+
+  assert.equal(fixture.calls.signUp.length, 0);
+  assert.equal(byId(fixture, "existingAccountPanel").hidden, false);
+  assert.equal(byId(fixture, "accountOtpStep").hidden, true);
+  assert.equal(byId(fixture, "createPassword").value, "");
+  assert.equal(byId(fixture, "confirmPassword").value, "");
+});
+
+
+test("existing-account Sign In preserves email and focuses an empty password", async () => {
+  const fixture = createAccountFixture();
+  await fixture.account.initialize();
+  fixture.account._mode = "create";
+  fixture.account._showExistingAccount("person@example.com");
+  byId(fixture, "existingAccountSignInButton").dispatch("click");
+
+  assert.equal(byId(fixture, "passwordSignInPanel").hidden, false);
+  assert.equal(byId(fixture, "passwordSignInEmail").value, "person@example.com");
+  assert.equal(byId(fixture, "passwordSignInPassword").value, "");
+  assert.equal(byId(fixture, "passwordSignInPassword").focusCalls, 1);
+});
+
+
+test("existing-account alternate actions reuse Google and safe recovery", async () => {
+  const fixture = createAccountFixture();
+  await fixture.account.initialize();
+  fixture.account._mode = "create";
+  fixture.account._showExistingAccount("person@example.com");
+  byId(fixture, "existingAccountGoogleButton").dispatch("click");
+  await flush();
+  assert.equal(fixture.calls.google, 1);
+  assert.equal(fixture.calls.signUp.length, 0);
+
+  const html = await readProjectFile("auth.html");
+  assert.match(
+    html,
+    /id="existingAccountForgotPassword" href="forgot-password\.html"/,
+  );
+});
+
+
+test("Use a different email clears account guidance and signup secrets", async () => {
+  const fixture = createAccountFixture();
+  await fixture.account.initialize();
+  fixture.account._mode = "create";
+  fixture.account._showExistingAccount("person@example.com");
+  byId(fixture, "createEmail").value = "person@example.com";
+  byId(fixture, "createPassword").value = "should-clear";
+  byId(fixture, "confirmPassword").value = "should-clear";
+  byId(fixture, "existingAccountDifferentEmailButton").dispatch("click");
+
+  assert.equal(byId(fixture, "existingAccountPanel").hidden, true);
+  assert.equal(byId(fixture, "createAccountForm").hidden, false);
+  assert.equal(byId(fixture, "createEmail").value, "");
+  assert.equal(byId(fixture, "createPassword").value, "");
+  assert.equal(byId(fixture, "confirmPassword").value, "");
+  assert.equal(byId(fixture, "createEmail").focusCalls, 1);
+});
+
+
+test("account-status failure blocks signup, restores controls, and can retry", async () => {
+  let checks = 0;
+  const fixture = createAccountFixture({
+    authApi: {
+      async checkAccountStatus(email) {
+        checks += 1;
+        if (checks === 1) throw new Error("private upstream detail");
+        return { accountExists: false, email: email.trim().toLowerCase() };
+      },
+    },
+  });
+  await fixture.account.initialize();
+  byId(fixture, "createAccountTab").dispatch("click");
+  byId(fixture, "createDisplayName").value = "Person";
+  byId(fixture, "createEmail").value = "person@example.com";
+  byId(fixture, "createPassword").value = "strong-password";
+  byId(fixture, "confirmPassword").value = "strong-password";
+  byId(fixture, "createAccountForm").dispatch("submit");
+  await flush();
+
+  assert.equal(fixture.calls.signUp.length, 0);
+  assert.equal(byId(fixture, "accountStatusFailure").hidden, false);
+  assert.equal(
+    byId(fixture, "createAccountMessage").textContent,
+    "We could not check this email right now. Please try again.",
+  );
+  assert.equal(byId(fixture, "createEmail").disabled, false);
+  assert.equal(byId(fixture, "createPassword").value, "strong-password");
+
+  byId(fixture, "retryAccountStatusButton").dispatch("click");
+  await flush();
+  assert.equal(checks, 2);
+  assert.equal(fixture.calls.signUp.length, 1);
+  assert.equal(byId(fixture, "accountOtpStep").hidden, false);
+});
+
+
+test("account check shows focused loading without blocking other access choices", async () => {
+  let finishCheck;
+  const fixture = createAccountFixture({
+    authApi: {
+      checkAccountStatus() {
+        return new Promise((resolve) => {
+          finishCheck = resolve;
+        });
+      },
+    },
+  });
+  await fixture.account.initialize();
+  byId(fixture, "createAccountTab").dispatch("click");
+  byId(fixture, "createDisplayName").value = "Person";
+  byId(fixture, "createEmail").value = "person@example.com";
+  byId(fixture, "createPassword").value = "strong-password";
+  byId(fixture, "confirmPassword").value = "strong-password";
+  byId(fixture, "createAccountForm").dispatch("submit");
+
+  assert.equal(byId(fixture, "createAccountSubmitLabel").textContent, "Checking your account…");
+  assert.equal(byId(fixture, "createEmail").disabled, true);
+  assert.equal(byId(fixture, "passwordSignInEmail").disabled, false);
+  assert.equal(byId(fixture, "accountGoogleButton").disabled, false);
+  assert.equal(byId(fixture, "accountAccess").getAttribute("aria-busy"), null);
+
+  finishCheck({ accountExists: false, email: "person@example.com" });
+  await flush();
+});
+
+
+test("frontend authentication assets contain no server-only Supabase key", async () => {
+  const files = [
+    "auth.html",
+    "scripts/auth-page.js",
+    "scripts/modules/account-access.js",
+    "scripts/services/auth-service.js",
+    "scripts/config.js",
+    "styles/auth-page.css",
+  ];
+  const contents = await Promise.all(files.map(readProjectFile));
+  const combined = contents.join("\n");
+  assert.doesNotMatch(
+    combined,
+    /SUPABASE_(?:SECRET|SERVICE_ROLE)_KEY|service[_-]role/i,
+  );
+});
+
+
+for (const code of ["email_exists", "user_already_exists"]) {
+  test(`${code} signup race uses existing-account guidance`, async () => {
+    const fixture = createAccountFixture({
+      authApi: {
+        async signUpWithPassword() {
+          throw { code: "ACCOUNT_ALREADY_EXISTS" };
+        },
+      },
+    });
+    await fixture.account.initialize();
+    byId(fixture, "createAccountTab").dispatch("click");
+    byId(fixture, "createDisplayName").value = "Person";
+    byId(fixture, "createEmail").value = "PERSON@example.com";
+    byId(fixture, "createPassword").value = "strong-password";
+    byId(fixture, "confirmPassword").value = "strong-password";
+    byId(fixture, "createAccountForm").dispatch("submit");
+    await flush();
+
+    assert.equal(byId(fixture, "existingAccountPanel").hidden, false);
+    assert.equal(byId(fixture, "accountOtpStep").hidden, true);
+    assert.equal(byId(fixture, "createPassword").value, "");
+  });
+}
 
 
 test("signup disables only the submitted form and clears loading after failure", async () => {
@@ -427,6 +642,7 @@ test("signup disables only the submitted form and clears loading after failure",
   byId(fixture, "createPassword").value = "strong-password";
   byId(fixture, "confirmPassword").value = "strong-password";
   byId(fixture, "createAccountForm").dispatch("submit");
+  await flush();
 
   assert.equal(byId(fixture, "createDisplayName").disabled, true);
   assert.equal(byId(fixture, "createEmail").disabled, true);

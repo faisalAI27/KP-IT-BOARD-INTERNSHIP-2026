@@ -9,11 +9,14 @@ from pydantic import ValidationError
 
 from app.config import Settings
 from app.services.supabase_auth import (
+    AccountStatusNotConfiguredError,
+    AccountStatusUnavailableError,
     AuthenticatedUser,
     AuthNotConfiguredError,
     AuthServiceUnavailableError,
     InvalidAccessTokenError,
     InvalidAuthResponseError,
+    SupabaseAdminClient,
     SupabaseAuthClient,
 )
 
@@ -22,6 +25,7 @@ VALID_USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
 SUPABASE_URL = "https://test-project.supabase.co"
 PUBLISHABLE_KEY = "test-publishable-key"
 ACCESS_TOKEN = "test-user-access-token"
+SECRET_KEY = "test-server-secret-key"
 
 
 def call_get_user(
@@ -46,6 +50,26 @@ def json_transport(payload: object, status_code: int = 200) -> httpx.MockTranspo
     )
 
 
+def call_account_exists(
+    handler: httpx.MockTransport,
+    *,
+    email: str = "person@example.com",
+    supabase_url: str = SUPABASE_URL,
+    secret_key: str = SECRET_KEY,
+    users_per_page: int = 1000,
+    max_pages: int = 10,
+) -> bool:
+    client = SupabaseAdminClient(
+        supabase_url=supabase_url,
+        secret_key=secret_key,
+        timeout_seconds=1,
+        users_per_page=users_per_page,
+        max_pages=max_pages,
+        transport=handler,
+    )
+    return asyncio.run(client.account_exists(email))
+
+
 def test_supabase_settings_allow_missing_development_configuration() -> None:
     configured = Settings(
         _env_file=None,
@@ -62,13 +86,101 @@ def test_supabase_settings_normalize_url_and_require_positive_timeout() -> None:
         _env_file=None,
         supabase_url=f"  {SUPABASE_URL}///  ",
         supabase_publishable_key=" test-key ",
+        supabase_secret_key=" server-key ",
         supabase_auth_timeout_seconds=5,
     )
 
     assert configured.supabase_url == SUPABASE_URL
     assert configured.supabase_publishable_key == "test-key"
+    assert configured.supabase_secret_key == "server-key"
     with pytest.raises(ValidationError):
         Settings(_env_file=None, supabase_auth_timeout_seconds=0)
+
+
+def test_admin_lookup_finds_normalized_email_across_bounded_pages() -> None:
+    requested_pages: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        page = int(request.url.params["page"])
+        requested_pages.append(page)
+        users = (
+            [{"email": "first@example.com"}, {"email": "second@example.com"}]
+            if page == 1
+            else [{"email": " Person@Example.com "}]
+        )
+        return httpx.Response(200, json={"users": users})
+
+    exists = call_account_exists(
+        httpx.MockTransport(handler),
+        email="PERSON@example.com",
+        users_per_page=2,
+        max_pages=3,
+    )
+
+    assert exists is True
+    assert requested_pages == [1, 2]
+
+
+def test_admin_lookup_returns_false_only_after_a_short_final_page() -> None:
+    exists = call_account_exists(
+        json_transport({"users": [{"email": "other@example.com"}]}),
+        users_per_page=2,
+    )
+
+    assert exists is False
+
+
+def test_admin_lookup_uses_secret_only_in_server_headers() -> None:
+    observed: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        observed.update(request.headers)
+        assert request.url.path == "/auth/v1/admin/users"
+        assert request.url.params["page"] == "1"
+        assert request.url.params["per_page"] == "1000"
+        return httpx.Response(200, json={"users": []})
+
+    assert call_account_exists(httpx.MockTransport(handler)) is False
+    assert observed["apikey"] == SECRET_KEY
+    assert observed["authorization"] == f"Bearer {SECRET_KEY}"
+
+
+def test_admin_lookup_scan_bound_is_inconclusive_not_false() -> None:
+    with pytest.raises(AccountStatusUnavailableError):
+        call_account_exists(
+            json_transport({"users": [{"email": "other@example.com"}]}),
+            users_per_page=1,
+            max_pages=2,
+        )
+
+
+def test_admin_lookup_missing_secret_fails_without_network_access() -> None:
+    requests = 0
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        return httpx.Response(200, json={"users": []})
+
+    with pytest.raises(AccountStatusNotConfiguredError):
+        call_account_exists(httpx.MockTransport(handler), secret_key="")
+
+    assert requests == 0
+
+
+@pytest.mark.parametrize("status_code", [401, 403, 429, 500, 503])
+def test_admin_lookup_upstream_failures_are_safe(status_code: int) -> None:
+    transport = json_transport(
+        {"message": f"raw {SECRET_KEY} person@example.com"},
+        status_code,
+    )
+
+    with pytest.raises(AccountStatusUnavailableError) as captured:
+        call_account_exists(transport)
+
+    safe_exception = f"{captured.value!r} {captured.value}"
+    assert SECRET_KEY not in safe_exception
+    assert "person@example.com" not in safe_exception
 
 
 def test_valid_google_user_response_returns_minimal_authenticated_user() -> None:

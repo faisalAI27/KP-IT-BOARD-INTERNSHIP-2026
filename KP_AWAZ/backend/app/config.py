@@ -41,7 +41,13 @@ class Settings(BaseSettings):
     admin_api_key: str = ""
     supabase_url: str = ""
     supabase_publishable_key: str = ""
+    supabase_secret_key: str = ""
     supabase_auth_timeout_seconds: float = Field(default=5, gt=0)
+    supabase_admin_timeout_seconds: float = Field(default=3, gt=0, le=10)
+    supabase_admin_users_per_page: int = Field(default=1000, gt=0, le=1000)
+    supabase_admin_max_pages: int = Field(default=10, gt=0, le=100)
+    account_status_rate_limit: int = Field(default=5, gt=0, le=100)
+    account_status_rate_window_seconds: int = Field(default=60, gt=0, le=3600)
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",
@@ -67,9 +73,9 @@ class Settings(BaseSettings):
 
         return value.strip().rstrip("/")
 
-    @field_validator("supabase_publishable_key")
+    @field_validator("supabase_publishable_key", "supabase_secret_key")
     @classmethod
-    def normalize_supabase_publishable_key(cls, value: str) -> str:
+    def normalize_supabase_key(cls, value: str) -> str:
         """Normalize optional development configuration without requiring it."""
 
         return value.strip()

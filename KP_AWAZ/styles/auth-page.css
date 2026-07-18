@@ -742,6 +742,84 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-success);
 }
 
+.account-status-failure {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.account-status-failure button,
+.existing-account-actions > button:last-child {
+  border: 0;
+  background: transparent;
+  color: var(--auth-deep-green);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.existing-account-panel {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(20, 58, 45, 0.16);
+  border-radius: 14px;
+  background: rgba(238, 242, 236, 0.78);
+  text-align: center;
+}
+
+.existing-account-emblem {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--auth-deep-green);
+  color: var(--auth-gold);
+}
+
+.existing-account-panel h3 {
+  margin: 10px 0 7px;
+  color: var(--auth-charcoal);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.28rem;
+}
+
+.existing-account-panel p + p {
+  margin-top: 4px;
+}
+
+.existing-account-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 17px;
+}
+
+.existing-account-actions .access-primary,
+.existing-account-actions .access-secondary {
+  min-height: 43px;
+}
+
+.existing-account-actions .access-secondary {
+  border: 1px solid rgba(20, 58, 45, 0.2);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--auth-deep-green);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.existing-account-actions a {
+  color: var(--auth-deep-green);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+
 .access-terms {
   margin-top: 21px;
   padding-top: 14px;

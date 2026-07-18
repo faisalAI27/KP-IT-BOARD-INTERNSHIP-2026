@@ -10,7 +10,15 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import SessionLocal
-from app.services.supabase_auth import AuthenticatedUser, SupabaseAuthClient
+from app.services.account_status_rate_limit import (
+    AccountStatusRateLimiter,
+    account_status_rate_limiter,
+)
+from app.services.supabase_auth import (
+    AuthenticatedUser,
+    SupabaseAdminClient,
+    SupabaseAuthClient,
+)
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -69,6 +77,18 @@ def get_supabase_auth_client() -> SupabaseAuthClient:
     """Build the small Supabase Auth client from validated application settings."""
 
     return SupabaseAuthClient()
+
+
+def get_supabase_admin_client() -> SupabaseAdminClient:
+    """Build the server-only Supabase administrator client."""
+
+    return SupabaseAdminClient()
+
+
+def get_account_status_rate_limiter() -> AccountStatusRateLimiter:
+    """Return the shared in-process account-status abuse guard."""
+
+    return account_status_rate_limiter
 
 
 async def require_authenticated_user(

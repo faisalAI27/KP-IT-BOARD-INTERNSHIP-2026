@@ -1,7 +1,11 @@
 """Pydantic schema exports."""
 
 from app.schemas.admin import AdminHealthResponse
-from app.schemas.auth import AuthenticatedUserResponse
+from app.schemas.auth import (
+    AccountStatusRequest,
+    AccountStatusResponse,
+    AuthenticatedUserResponse,
+)
 from app.schemas.contribution import (
     AdminContributionListResponse,
     AdminContributionResponse,
@@ -31,6 +35,8 @@ __all__ = [
     "AdminHealthResponse",
     "AdminContributionListResponse",
     "AdminContributionResponse",
+    "AccountStatusRequest",
+    "AccountStatusResponse",
     "AuthenticatedUserResponse",
     "ContributionCreatedResponse",
     "ContributionReviewRequest",

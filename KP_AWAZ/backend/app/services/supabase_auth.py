@@ -52,6 +52,28 @@ class AuthServiceUnavailableError(SupabaseAuthError):
     message = "Authentication is temporarily unavailable."
 
 
+class AccountStatusNotConfiguredError(SupabaseAuthError):
+    """Raised when the server-only Supabase administrator key is absent."""
+
+    code = "ACCOUNT_STATUS_NOT_CONFIGURED"
+    message = "Account status is temporarily unavailable."
+
+
+class AccountStatusUnavailableError(SupabaseAuthError):
+    """Raised when an administrator lookup cannot provide a reliable answer."""
+
+    code = "ACCOUNT_STATUS_UNAVAILABLE"
+    message = "Account status is temporarily unavailable."
+
+
+class AccountStatusRateLimitError(SupabaseAuthError):
+    """Raised when one client makes too many existence checks."""
+
+    code = "ACCOUNT_STATUS_RATE_LIMITED"
+    message = "Too many account checks. Please try again shortly."
+    http_status = 429
+
+
 class InvalidAuthResponseError(SupabaseAuthError):
     """Raised when a successful upstream response has no valid user identity."""
 
@@ -128,6 +150,107 @@ class SupabaseAuthClient:
             raise InvalidAuthResponseError() from error
 
         return _authenticated_user_from_payload(payload)
+
+
+class SupabaseAdminClient:
+    """Perform a bounded server-only lookup through Supabase Auth Admin."""
+
+    def __init__(
+        self,
+        *,
+        supabase_url: str | None = None,
+        secret_key: str | None = None,
+        timeout_seconds: float | None = None,
+        users_per_page: int | None = None,
+        max_pages: int | None = None,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        configured_url = settings.supabase_url if supabase_url is None else supabase_url
+        configured_key = (
+            settings.supabase_secret_key if secret_key is None else secret_key
+        )
+        configured_timeout = (
+            settings.supabase_admin_timeout_seconds
+            if timeout_seconds is None
+            else timeout_seconds
+        )
+        configured_page_size = (
+            settings.supabase_admin_users_per_page
+            if users_per_page is None
+            else users_per_page
+        )
+        configured_max_pages = (
+            settings.supabase_admin_max_pages if max_pages is None else max_pages
+        )
+
+        self._supabase_url = configured_url.strip().rstrip("/")
+        self._secret_key = configured_key.strip()
+        self._timeout_seconds = float(configured_timeout)
+        self._users_per_page = int(configured_page_size)
+        self._max_pages = int(configured_max_pages)
+        self._transport = transport
+
+        if self._timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        if not 1 <= self._users_per_page <= 1000:
+            raise ValueError("users_per_page must be between 1 and 1000")
+        if self._max_pages <= 0:
+            raise ValueError("max_pages must be positive")
+
+    async def account_exists(self, email: str) -> bool:
+        """Return only whether a normalized email appears within the safe bound."""
+
+        if not self._supabase_url or not self._secret_key:
+            raise AccountStatusNotConfiguredError()
+
+        normalized_email = email.strip().lower() if isinstance(email, str) else ""
+        if not normalized_email:
+            raise AccountStatusUnavailableError()
+
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout_seconds,
+                transport=self._transport,
+            ) as client:
+                for page in range(1, self._max_pages + 1):
+                    response = await client.get(
+                        f"{self._supabase_url}/auth/v1/admin/users",
+                        params={"page": page, "per_page": self._users_per_page},
+                        headers={
+                            "apikey": self._secret_key,
+                            "Authorization": f"Bearer {self._secret_key}",
+                        },
+                    )
+                    users = _admin_users_from_response(response)
+                    for user in users:
+                        candidate = user.get("email")
+                        if (
+                            isinstance(candidate, str)
+                            and candidate.strip().lower() == normalized_email
+                        ):
+                            return True
+                    if len(users) < self._users_per_page:
+                        return False
+        except (httpx.TimeoutException, httpx.RequestError) as error:
+            raise AccountStatusUnavailableError() from error
+
+        # A full last page means more users may exist beyond the configured bound.
+        raise AccountStatusUnavailableError()
+
+
+def _admin_users_from_response(response: httpx.Response) -> list[dict[str, Any]]:
+    if response.status_code != 200:
+        raise AccountStatusUnavailableError()
+    try:
+        payload = response.json()
+    except ValueError as error:
+        raise AccountStatusUnavailableError() from error
+    if not isinstance(payload, dict):
+        raise AccountStatusUnavailableError()
+    users = payload.get("users")
+    if not isinstance(users, list) or any(not isinstance(user, dict) for user in users):
+        raise AccountStatusUnavailableError()
+    return users
 
 
 def _authenticated_user_from_payload(payload: Any) -> AuthenticatedUser:

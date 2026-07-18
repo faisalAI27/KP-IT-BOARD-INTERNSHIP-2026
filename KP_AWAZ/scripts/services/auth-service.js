@@ -19,6 +19,10 @@ export const EMAIL_OTP_LENGTH = EMAIL_VERIFICATION_OTP_LENGTH;
 export const ACCOUNT_PASSWORD_MIN_LENGTH = 8;
 export const ACCOUNT_PASSWORD_MAX_LENGTH = 72;
 const EMAIL_OTP_PATTERN = new RegExp(`^\\d{${EMAIL_OTP_LENGTH}}$`);
+const EXISTING_ACCOUNT_SIGNUP_CODES = new Set([
+  "email_exists",
+  "user_already_exists",
+]);
 const BACKEND_AUTH_CODES = new Set([
   "AUTHENTICATION_REQUIRED",
   "INVALID_ACCESS_TOKEN",
@@ -142,6 +146,19 @@ function requestTimeoutError() {
 
 function preserveRequestTimeout(error, fallback) {
   return error?.code === "AUTH_REQUEST_TIMEOUT" ? error : fallback;
+}
+
+
+function accountAlreadyExistsError() {
+  return new AuthServiceError("An account already exists with this email.", {
+    code: "ACCOUNT_ALREADY_EXISTS",
+  });
+}
+
+
+function isExistingAccountSignupError(error) {
+  const code = typeof error?.code === "string" ? error.code.trim().toLowerCase() : "";
+  return EXISTING_ACCOUNT_SIGNUP_CODES.has(code);
 }
 
 
@@ -389,6 +406,46 @@ export class AuthService {
     return { ok: true, redirecting: true };
   }
 
+  async checkAccountStatus(email) {
+    const cleanedEmail = requireValidEmail(email);
+    let response;
+    try {
+      response = await this._runRequest(() =>
+        this._fetch(`${this._apiBaseUrl}/auth/account-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanedEmail }),
+        }),
+      );
+    } catch {
+      throw new AuthServiceError(
+        "We could not check this email right now. Please try again.",
+        { code: "ACCOUNT_STATUS_CHECK_FAILED" },
+      );
+    }
+
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+    if (
+      !response.ok ||
+      !payload ||
+      typeof payload !== "object" ||
+      Array.isArray(payload) ||
+      typeof payload.accountExists !== "boolean"
+    ) {
+      throw new AuthServiceError(
+        "We could not check this email right now. Please try again.",
+        { code: "ACCOUNT_STATUS_CHECK_FAILED" },
+      );
+    }
+
+    return { accountExists: payload.accountExists, email: cleanedEmail };
+  }
+
   async requestEmailOtp(email) {
     const cleanedEmail = requireValidEmail(email);
 
@@ -439,6 +496,9 @@ export class AuthService {
           }),
         );
       } catch (error) {
+        if (isExistingAccountSignupError(error)) {
+          throw accountAlreadyExistsError();
+        }
         throw preserveRequestTimeout(
           error,
           new AuthServiceError(
@@ -523,6 +583,9 @@ export class AuthService {
       }
 
       if (result?.error) {
+        if (isExistingAccountSignupError(result.error)) {
+          throw accountAlreadyExistsError();
+        }
         throw new AuthServiceError(
           "We could not create your account. Please try again.",
           { code: "PASSWORD_SIGN_UP_FAILED" },
@@ -1028,6 +1091,8 @@ export const getCurrentAccessToken = () => authService.getCurrentAccessToken();
 export const isPasswordRecoverySession = () =>
   authService.isPasswordRecoverySession();
 export const signInWithGoogle = () => authService.signInWithGoogle();
+export const checkAccountStatus = (email) =>
+  authService.checkAccountStatus(email);
 export const requestEmailOtp = (email) => authService.requestEmailOtp(email);
 export const verifyEmailOtp = (email, otp) =>
   authService.verifyEmailOtp(email, otp);

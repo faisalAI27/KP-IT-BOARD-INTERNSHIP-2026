@@ -142,6 +142,29 @@ Google and returning password sign-in. Only then does it save the initial displa
 name and enter `dashboard.html`. Returning contributors can sign in with email
 and password; Google OAuth behavior is unchanged.
 
+Before password signup, the browser sends only the normalized email to
+`POST /api/auth/account-status`. FastAPI performs a server-only Supabase Auth
+Admin lookup and returns only `accountExists`. A confirmed existing account
+never reaches `signUp()` or the OTP screen; the contributor is guided to
+password sign-in, the unchanged Google option, or password recovery. A new
+email continues through the existing signup and six-digit verification flow.
+If the lookup is unavailable or inconclusive, signup remains blocked and the
+form offers a safe retry.
+
+The current Admin list API is paginated. KP AWAZ checks at most 10 pages of up
+to 1,000 users; reaching that bound is treated as unavailable rather than
+incorrectly reporting that an account is new. The public endpoint is limited
+to five checks per minute per direct client address in the current single
+backend process. A horizontally scaled deployment should replace that
+in-process guard with a shared limiter before increasing traffic.
+
+Showing an exact existing-account message intentionally creates an account
+enumeration tradeoff. Rate limiting, generic provider-neutral wording, a short
+upstream timeout, strict input validation, and a boolean-only response reduce
+the exposure, but they do not eliminate it. The server-only Supabase credential
+must stay in the ignored backend environment file; it is never part of browser
+configuration, frontend assets, URLs, storage, or logs.
+
 ### Cultural authentication visual
 
 The account entrance places one centered, opaque authentication card over an

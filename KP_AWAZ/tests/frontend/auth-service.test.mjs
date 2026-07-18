@@ -545,6 +545,92 @@ test("password signup normalizes identity and requests email verification", asyn
 });
 
 
+test("account status normalizes email and calls only the FastAPI endpoint", async () => {
+  const fake = createFakeSupabase();
+  const requests = [];
+  const service = createService(fake, {
+    fetchImpl: async (url, options) => {
+      requests.push({ url, options });
+      return jsonResponse({ accountExists: true });
+    },
+  });
+
+  const result = await service.checkAccountStatus(" Person@Example.com ");
+
+  assert.deepEqual(result, {
+    accountExists: true,
+    email: "person@example.com",
+  });
+  assert.equal(requests[0].url, `${API_BASE_URL}/auth/account-status`);
+  assert.equal(requests[0].options.method, "POST");
+  assert.deepEqual(JSON.parse(requests[0].options.body), {
+    email: "person@example.com",
+  });
+  assert.equal("Authorization" in requests[0].options.headers, false);
+  assert.equal(fake.calls.signUp.length, 0);
+});
+
+
+test("invalid account-status email is rejected before any request", async () => {
+  let requests = 0;
+  const service = createService(createFakeSupabase(), {
+    fetchImpl: async () => {
+      requests += 1;
+      return jsonResponse({ accountExists: false });
+    },
+  });
+
+  await assert.rejects(service.checkAccountStatus("invalid"), (error) => {
+    assert.equal(error.code, "INVALID_EMAIL");
+    return true;
+  });
+  assert.equal(requests, 0);
+});
+
+
+test("account-status failures expose only the safe retry message", async () => {
+  const service = createService(createFakeSupabase(), {
+    fetchImpl: async () =>
+      jsonResponse({ message: `raw ${ACCESS_TOKEN}`, userId: USER_ID }, 503),
+  });
+
+  await assert.rejects(
+    service.checkAccountStatus("person@example.com"),
+    (error) => {
+      assert.equal(error.code, "ACCOUNT_STATUS_CHECK_FAILED");
+      assert.equal(
+        error.message,
+        "We could not check this email right now. Please try again.",
+      );
+      assert.equal(error.message.includes(ACCESS_TOKEN), false);
+      return true;
+    },
+  );
+});
+
+
+for (const code of ["email_exists", "user_already_exists"]) {
+  test(`${code} is mapped to the safe existing-account result`, async () => {
+    const fake = createFakeSupabase({ signUpError: { code, message: "raw" } });
+    const service = createService(fake);
+
+    await assert.rejects(
+      service.signUpWithPassword({
+        email: "person@example.com",
+        password: "strong-password",
+        displayName: "Person",
+      }),
+      (error) => {
+        assert.equal(error.code, "ACCOUNT_ALREADY_EXISTS");
+        assert.equal(error.message, "An account already exists with this email.");
+        assert.equal(error.message.includes("raw"), false);
+        return true;
+      },
+    );
+  });
+}
+
+
 test("invalid password signup details are rejected before Supabase", async () => {
   const fake = createFakeSupabase();
   const service = createService(fake);

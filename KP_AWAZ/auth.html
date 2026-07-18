@@ -311,6 +311,46 @@
                     hidden
                   ></div>
                 </form>
+
+                <div
+                  class="account-status-failure"
+                  id="accountStatusFailure"
+                  role="group"
+                  aria-label="Account check failed"
+                  hidden
+                >
+                  <button id="retryAccountStatusButton" type="button">Retry</button>
+                </div>
+
+                <section
+                  class="existing-account-panel"
+                  id="existingAccountPanel"
+                  aria-labelledby="existingAccountTitle"
+                  hidden
+                >
+                  <span class="existing-account-emblem" aria-hidden="true">✦</span>
+                  <h3 id="existingAccountTitle">Account already exists</h3>
+                  <p><strong>An account already exists with this email.</strong></p>
+                  <p>Sign in to continue to your contributor dashboard.</p>
+                  <div class="existing-account-actions">
+                    <button
+                      class="access-primary"
+                      id="existingAccountSignInButton"
+                      type="button"
+                    >Sign In</button>
+                    <button
+                      class="access-secondary"
+                      id="existingAccountGoogleButton"
+                      type="button"
+                    >Continue with Google</button>
+                    <a id="existingAccountForgotPassword" href="forgot-password.html">
+                      Forgot Password
+                    </a>
+                    <button id="existingAccountDifferentEmailButton" type="button">
+                      Use a different email
+                    </button>
+                  </div>
+                </section>
                 <p class="access-mode-link">
                   Already have an account?
                   <button id="switchToSignInButton" type="button">Sign in</button>
