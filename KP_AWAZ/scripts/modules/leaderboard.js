@@ -129,7 +129,7 @@ function safeLeaderboardError(error, scope) {
           ? "We could not find your leaderboard position."
           : scope === "showcase"
             ? "We could not load the leading contributors."
-            : "We could not load the leaderboard.";
+            : "We could not load the leaderboard. Please try again.";
   return { code, message, status, scope };
 }
 

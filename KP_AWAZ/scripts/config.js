@@ -1,8 +1,6 @@
 export const appConfig = Object.freeze({
   api: Object.freeze({
     baseUrl: "http://127.0.0.1:8000/api",
-    useMock: false,
-    mockDelayMs: 450,
   }),
   auth: Object.freeze({
     supabaseUrl: "https://hiaaggzinpancamdjryx.supabase.co",

@@ -54,6 +54,22 @@ test("all contributor pages use the verified workspace route guard", async () =>
   const shell = await read("scripts/modules/workspace-shell.js");
   assert.match(shell, /protectedAuthDestination\(filename\)/);
   assert.match(shell, /this\._navigate\("index\.html", \{ replace: true \}\)/);
+  assert.match(shell, /We could not load your dashboard\. Please try again\./);
+  assert.doesNotMatch(shell, /preferredLanguage:\s*"Pashto"/);
+});
+
+
+test("production contribution services contain no mock data path", async () => {
+  const [config, contributionApi, contributionModule] = await Promise.all([
+    read("scripts/config.js"),
+    read("scripts/services/contributions-api.js"),
+    read("scripts/modules/contributions.js"),
+  ]);
+  assert.doesNotMatch(`${config}\n${contributionApi}`, /useMock|mockDelayMs|pashto-sentences/);
+  assert.match(
+    contributionModule,
+    /We could not submit your recording\. Your recording has not been counted\./,
+  );
 });
 
 

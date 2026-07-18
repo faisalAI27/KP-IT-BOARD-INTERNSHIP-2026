@@ -14,6 +14,7 @@ import {
 } from "../../scripts/services/route-guard.js";
 import {
   AUTH_REQUEST_TIMEOUT_MESSAGE,
+  fetchWithRequestTimeout,
   withRequestTimeout,
 } from "../../scripts/services/request-timeout.js";
 
@@ -261,4 +262,24 @@ test("request timeout uses the fixed safe message and clears its timer", async (
       error.message === AUTH_REQUEST_TIMEOUT_MESSAGE,
   );
   assert.equal(active.size, 0);
+});
+
+
+test("fetch timeout aborts a hanging API request", async () => {
+  let requestSignal = null;
+
+  await assert.rejects(
+    fetchWithRequestTimeout(
+      async (_url, options) => {
+        requestSignal = options.signal;
+        return new Promise(() => {});
+      },
+      "http://127.0.0.1:8000/api/health",
+      {},
+      { timeoutMs: 5 },
+    ),
+    { code: "AUTH_REQUEST_TIMEOUT" },
+  );
+
+  assert.equal(requestSignal?.aborted, true);
 });

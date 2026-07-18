@@ -156,13 +156,12 @@ export function createRecorder({
     playback.load();
   }
 
-  function showRecordingFailure(session, error) {
+  function showRecordingFailure(session) {
     if (session.id !== sessionId || activeSession !== session) {
       releaseStream(session.stream);
       return;
     }
 
-    console.error("MediaRecorder failed.", error);
     sessionId += 1;
     clearTimer();
     setIdleButton();
@@ -227,8 +226,8 @@ export function createRecorder({
 
     try {
       session.recorder.stop();
-    } catch (error) {
-      showRecordingFailure(session, error);
+    } catch {
+      showRecordingFailure(session);
     }
   }
 
@@ -302,11 +301,10 @@ export function createRecorder({
       recorder = selectedMimeType
         ? new MediaRecorder(stream, { mimeType: selectedMimeType })
         : new MediaRecorder(stream);
-    } catch (error) {
+    } catch {
       releaseStream(stream);
       callout.textContent = "Recording failed";
       status.textContent = RECORDING_FAILURE_MESSAGE;
-      console.error("Could not construct MediaRecorder.", error);
       return;
     }
 
@@ -328,14 +326,12 @@ export function createRecorder({
       if (event.data.size > 0) session.chunks.push(event.data);
     });
     recorder.addEventListener("stop", () => finishRecording(session));
-    recorder.addEventListener("error", (event) =>
-      showRecordingFailure(session, event.error),
-    );
+    recorder.addEventListener("error", () => showRecordingFailure(session));
 
     try {
       recorder.start();
-    } catch (error) {
-      showRecordingFailure(session, error);
+    } catch {
+      showRecordingFailure(session);
       return;
     }
 

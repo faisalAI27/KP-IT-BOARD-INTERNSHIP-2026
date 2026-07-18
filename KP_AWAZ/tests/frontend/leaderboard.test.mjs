@@ -422,7 +422,7 @@ test("initial leaderboard error renders a safe Retry state", async () => {
   assert.equal(element(fixture, "leaderboardError").hidden, false);
   assert.equal(
     element(fixture, "leaderboardErrorMessage").textContent,
-    "We could not load the leaderboard.",
+    "We could not load the leaderboard. Please try again.",
   );
   assert.equal(renderedText(fixture).includes(SECRET), false);
 });

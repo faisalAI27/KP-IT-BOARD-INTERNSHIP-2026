@@ -99,7 +99,7 @@ export class WorkspaceShell {
     }
 
     const profile = await this._loadProfile(state);
-    if (this._destroyed || this._navigating) return false;
+    if (!profile || this._destroyed || this._navigating) return false;
     this._renderIdentity(profile, state.backendUser);
     this._root.body.dataset.workspaceState = "ready";
     if (typeof onReady === "function") {
@@ -197,16 +197,16 @@ export class WorkspaceShell {
       "Your Supabase session is present, but KP AWAZ could not verify it with the backend. Start the backend and try again.";
   }
 
-  async _loadProfile(state) {
+  async _loadProfile() {
     try {
       return await withRequestTimeout(() => this._profile.getMyProfile());
     } catch {
-      return {
-        displayName: compactIdentity(state.backendUser?.email?.split("@")[0]),
-        email: state.backendUser?.email ?? null,
-        preferredLanguage: "Pashto",
-        leaderboardOptIn: false,
-      };
+      if (this._destroyed || this._navigating) return null;
+      this._root.body.dataset.workspaceState = "error";
+      this._elements.guard.hidden = false;
+      this._elements.guardMessage.textContent =
+        "We could not load your dashboard. Please try again.";
+      return null;
     }
   }
 

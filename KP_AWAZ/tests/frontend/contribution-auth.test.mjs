@@ -151,7 +151,7 @@ test("contribution partial provides an accessible login-required status", async 
   assert.equal(
     (
       html.match(
-        /Your contribution is now waiting for administrator review\. Your score\s+will increase after it is approved\./g,
+        /Your contribution is waiting for administrator review\. Your score\s+will increase after it is approved\./g,
       ) ?? []
     ).length,
     2,

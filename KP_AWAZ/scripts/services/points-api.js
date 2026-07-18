@@ -1,5 +1,9 @@
 import { appConfig } from "../config.js";
 import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  fetchWithRequestTimeout,
+} from "./request-timeout.js?v=20260718-stabilization";
 
 
 const POINTS_PATH = "/profile/me/points";
@@ -152,11 +156,13 @@ export class PointsApi {
     apiBaseUrl = appConfig.api.baseUrl,
     fetchImpl = (...args) => globalThis.fetch(...args),
     getAccessToken = getCurrentAccessToken,
+    requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
     this._getAccessToken = getAccessToken;
+    this._requestTimeoutMs = requestTimeoutMs;
   }
 
   async getMyPoints({ limit = DEFAULT_LIMIT, offset = 0 } = {}) {
@@ -181,7 +187,8 @@ export class PointsApi {
 
     let response;
     try {
-      response = await this._fetch(
+      response = await fetchWithRequestTimeout(
+        this._fetch,
         `${this._apiBaseUrl}${POINTS_PATH}?${query}`,
         {
           method: "GET",
@@ -190,6 +197,7 @@ export class PointsApi {
             Authorization: `Bearer ${accessToken}`,
           },
         },
+        { timeoutMs: this._requestTimeoutMs },
       );
     } catch {
       throw new PointsApiError("The KP AWAZ backend could not be reached.", {

@@ -49,7 +49,7 @@ documentation.
 
 Backend Swagger is available at `http://127.0.0.1:8000/docs`, and backend health is available at `http://127.0.0.1:8000/api/health`.
 
-The backend must be running for real sentence prompts and recording submissions to work. Frontend mock mode is disabled in `scripts/config.js`.
+The backend must be running for sentence prompts and recording submissions to work. Production frontend paths always use the real API.
 
 Do not open `index.html` directly. The development page loads HTML section partials over HTTP.
 
@@ -74,8 +74,7 @@ KP_AWAZ/
 ├── styles/                    # Foundation, section and responsive CSS
 ├── scripts/
 │   ├── app.js                 # Application bootstrap
-│   ├── config.js              # API environment switch
-│   ├── data/                  # Temporary frontend datasets
+│   ├── config.js              # API and browser-auth configuration
 │   ├── modules/               # Navigation, FAQ, recorder and contribution UI
 │   └── services/              # All backend communication
 ├── assets/images/             # Brand and culturally rooted page imagery
@@ -118,9 +117,12 @@ It is generated from the installed official `@supabase/supabase-js` package. The
 
 ## Backend connection
 
-The active API URL and mock-mode switch are centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
+The active API URL is centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
+
+Authentication requests use a 12-second bound. Other API service requests use a
+20-second bound and abort the browser request before showing a safe retry state.
 
 ## Authentication interface
 
@@ -316,7 +318,7 @@ identity.
 
 ## Profile settings
 
-After Supabase restores or creates a session, FastAPI verifies the signed-in user before the frontend requests profile data. The first authenticated `GET /api/profile/me` automatically creates that user's local application profile when one does not already exist.
+After Supabase restores or creates a session, FastAPI verifies the signed-in user and guarantees that one local profile exists through `GET /api/auth/me` before the frontend requests profile data. `GET /api/profile/me` remains safe to call directly and also creates the profile when needed. Existing profile preferences and edited display names are never replaced by later provider metadata.
 
 Profile settings are available in the dedicated signed-in **My Account**
 section alongside the verified email when available, current score, and Sign

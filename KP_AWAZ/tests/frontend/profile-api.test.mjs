@@ -387,3 +387,24 @@ test("backend messages cannot echo the access token", async () => {
     return true;
   });
 });
+
+
+test("backend error codes cannot echo the access token", async () => {
+  const { api } = fixture({
+    fetchImpl: async () =>
+      response({
+        ok: false,
+        status: 500,
+        body: {
+          message: "The profile request failed.",
+          code: `BAD_${ACCESS_TOKEN}`,
+        },
+      }),
+  });
+
+  await assert.rejects(api.getMyProfile(), (error) => {
+    assert.equal(error.code, "PROFILE_REQUEST_FAILED");
+    assert.equal(JSON.stringify(error).includes(ACCESS_TOKEN), false);
+    return true;
+  });
+});

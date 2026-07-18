@@ -516,7 +516,7 @@ export class AuthService {
         throw preserveRequestTimeout(
           error,
           new AuthServiceError(
-            "We could not create the account. Please try again.",
+            "We could not create your account. Please try again.",
             { code: "PASSWORD_SIGN_UP_FAILED" },
           ),
         );
@@ -524,7 +524,7 @@ export class AuthService {
 
       if (result?.error) {
         throw new AuthServiceError(
-          "We could not create the account. Check your details or sign in if you already have an account.",
+          "We could not create your account. Please try again.",
           { code: "PASSWORD_SIGN_UP_FAILED" },
         );
       }
@@ -635,14 +635,14 @@ export class AuthService {
         throw preserveRequestTimeout(
           error,
           new AuthServiceError(
-            "We could not sign you in. Check your email and password and try again.",
+            "We could not sign you in. Please check your information and try again.",
             { code: "PASSWORD_SIGN_IN_FAILED" },
           ),
         );
       }
       if (result?.error || !result?.data?.session) {
         throw new AuthServiceError(
-          "We could not sign you in. Check your email and password and try again.",
+          "We could not sign you in. Please check your information and try again.",
           { code: "PASSWORD_SIGN_IN_FAILED" },
         );
       }

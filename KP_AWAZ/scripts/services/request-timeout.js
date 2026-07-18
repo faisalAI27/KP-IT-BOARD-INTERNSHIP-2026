@@ -1,4 +1,5 @@
 export const AUTH_REQUEST_TIMEOUT_MS = 12_000;
+export const API_REQUEST_TIMEOUT_MS = 20_000;
 export const AUTH_REQUEST_TIMEOUT_MESSAGE =
   "We could not complete the authentication request. Please try again.";
 
@@ -49,4 +50,31 @@ export async function withRequestTimeout(
   } finally {
     if (timer !== null) clearTimeoutImpl(timer);
   }
+}
+
+
+export async function fetchWithRequestTimeout(
+  fetchImpl,
+  url,
+  options = {},
+  { timeoutMs = API_REQUEST_TIMEOUT_MS } = {},
+) {
+  if (typeof fetchImpl !== "function") {
+    throw new TypeError("A fetch implementation is required.");
+  }
+
+  const controller = typeof AbortController === "function"
+    ? new AbortController()
+    : null;
+  const requestOptions = controller
+    ? { ...options, signal: controller.signal }
+    : options;
+
+  return withRequestTimeout(
+    () => fetchImpl(url, requestOptions),
+    {
+      timeoutMs,
+      onTimeout: () => controller?.abort(),
+    },
+  );
 }

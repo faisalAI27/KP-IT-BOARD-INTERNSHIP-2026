@@ -1,4 +1,8 @@
 import { appConfig } from "../config.js";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  fetchWithRequestTimeout,
+} from "./request-timeout.js?v=20260718-stabilization";
 
 const SAFE_REQUEST_ERROR = "The admin request could not be completed. Please try again.";
 const ADMIN_FILTERS = new Set(["pending", "approved", "rejected", "all"]);
@@ -232,10 +236,12 @@ export class AdminReviewApi {
   constructor({
     apiBaseUrl = appConfig.api.baseUrl,
     fetchImpl = (...args) => globalThis.fetch(...args),
+    requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
+    this._requestTimeoutMs = requestTimeoutMs;
   }
 
   async _request(path, { adminKey, method = "GET", body, responseType = "json" }) {
@@ -258,7 +264,12 @@ export class AdminReviewApi {
 
     let response;
     try {
-      response = await this._fetch(`${this._apiBaseUrl}${path}`, options);
+      response = await fetchWithRequestTimeout(
+        this._fetch,
+        `${this._apiBaseUrl}${path}`,
+        options,
+        { timeoutMs: this._requestTimeoutMs },
+      );
     } catch (error) {
       if (error instanceof AdminReviewApiError) throw error;
       throw new AdminReviewApiError("The admin API could not be reached.", {

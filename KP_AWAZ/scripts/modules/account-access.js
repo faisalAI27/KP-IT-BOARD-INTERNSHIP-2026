@@ -35,9 +35,9 @@ const SAFE_MESSAGES = Object.freeze({
   INVALID_PASSWORD: `Use a password between ${ACCOUNT_PASSWORD_MIN_LENGTH} and ${ACCOUNT_PASSWORD_MAX_LENGTH} characters.`,
   INVALID_DISPLAY_NAME: "Display name must contain between 2 and 80 characters.",
   PASSWORD_SIGN_UP_FAILED:
-    "We could not create the account. Check your details or sign in if you already have an account.",
+    "We could not create your account. Please try again.",
   PASSWORD_SIGN_IN_FAILED:
-    "We could not sign you in. Check your email and password and try again.",
+    "We could not sign you in. Please check your information and try again.",
   INVALID_SIGNUP_OTP: "Enter the complete six-digit code.",
   INVALID_OR_EXPIRED_SIGNUP_OTP:
     "Invalid or expired code. Request a new code and try again.",
@@ -511,7 +511,7 @@ export class AccountAccess {
     } catch (error) {
       this._setMessage(
         this._elements.createMessage,
-        safeErrorMessage(error, "We could not create the account. Please try again."),
+        safeErrorMessage(error, "We could not create your account. Please try again."),
         "error",
       );
       this._elements.createPassword.value = "";
@@ -649,7 +649,6 @@ export class AccountAccess {
     const email = this._activeEmail;
     this._clearSignupState();
     this._elements.createEmail.value = email;
-    this._createStep = "details";
     this._render();
     this._elements.createEmail.focus?.();
   }

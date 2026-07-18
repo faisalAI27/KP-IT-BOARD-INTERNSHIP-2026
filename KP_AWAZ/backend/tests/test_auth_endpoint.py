@@ -2,9 +2,12 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from app.dependencies import get_supabase_auth_client
 from app.main import app
+from app.models import Profile
 from app.services.supabase_auth import (
     AuthenticatedUser,
     AuthNotConfiguredError,
@@ -134,6 +137,7 @@ def test_valid_google_user_returns_only_safe_fields(client: TestClient) -> None:
             id=VALID_USER_ID,
             email="person@example.com",
             provider="google",
+            display_name="Verified Display Name",
         )
     )
     override_auth_client(stub)
@@ -159,6 +163,32 @@ def test_valid_google_user_returns_only_safe_fields(client: TestClient) -> None:
     ]:
         assert forbidden_value not in serialized_response
     assert stub.tokens == ["private-access-token"]
+
+
+def test_auth_me_creates_one_profile_without_duplicates(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    override_auth_client(
+        StubAuthClient(
+            user=AuthenticatedUser(
+                id=VALID_USER_ID,
+                email="person@example.com",
+                provider="google",
+                display_name="Verified Display Name",
+            )
+        )
+    )
+    headers = {"Authorization": "Bearer private-access-token"}
+
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
+    assert client.get("/api/auth/me", headers=headers).status_code == 200
+
+    db_session.expire_all()
+    assert db_session.scalar(select(func.count()).select_from(Profile)) == 1
+    profile = db_session.get(Profile, VALID_USER_ID)
+    assert profile is not None
+    assert profile.display_name == "Verified Display Name"
 
 
 def test_valid_email_user_returns_200(client: TestClient) -> None:

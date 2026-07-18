@@ -97,7 +97,7 @@ function safeError(scope) {
     return "The protected recording could not be loaded. You can retry without losing the details.";
   }
   if (scope === "review") {
-    return "The review decision was not saved. The contribution has not been changed.";
+    return "The review action could not be completed. Please try again.";
   }
   return "We could not refresh this review queue. Existing results are still available.";
 }

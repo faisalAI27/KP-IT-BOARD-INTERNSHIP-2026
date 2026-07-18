@@ -88,6 +88,7 @@ def test_valid_google_user_response_returns_minimal_authenticated_user() -> None
         id=VALID_USER_ID,
         email="person@example.com",
         provider="google",
+        display_name="Private Name",
     )
 
 
@@ -250,15 +251,48 @@ def test_raw_metadata_is_not_retained_on_authenticated_user() -> None:
             {
                 "id": VALID_USER_ID,
                 "app_metadata": {"provider": "google", "secret": "hidden"},
-                "user_metadata": {"private": "hidden"},
+                "user_metadata": {
+                    "display_name": "Safe Display Name",
+                    "private": "hidden",
+                },
                 "access_token": "must-not-appear",
             }
         )
     )
 
-    assert {field.name for field in fields(user)} == {"id", "email", "provider"}
+    assert {field.name for field in fields(user)} == {
+        "id",
+        "email",
+        "provider",
+        "display_name",
+    }
+    assert user.display_name == "Safe Display Name"
     assert "metadata" not in repr(user)
+    assert "hidden" not in repr(user)
     assert "must-not-appear" not in repr(user)
+
+
+@pytest.mark.parametrize(
+    "user_metadata",
+    [
+        None,
+        {},
+        {"display_name": "x"},
+        {"full_name": " "},
+        {"name": "x" * 81},
+        {"display_name": 42},
+    ],
+)
+def test_missing_or_invalid_display_name_metadata_is_ignored(
+    user_metadata: object,
+) -> None:
+    payload = {"id": VALID_USER_ID}
+    if user_metadata is not None:
+        payload["user_metadata"] = user_metadata
+
+    user = call_get_user(json_transport(payload))
+
+    assert user.display_name is None
 
 
 def test_auth_exceptions_do_not_contain_token_or_publishable_key() -> None:

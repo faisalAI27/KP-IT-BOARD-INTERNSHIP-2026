@@ -42,6 +42,12 @@ def require_admin_api_key(
 ) -> None:
     """Require the configured API key for an internal admin endpoint."""
 
+    if not settings.admin_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin API access is not configured.",
+        )
+
     if provided_key is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

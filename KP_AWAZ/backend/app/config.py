@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     max_import_file_size_mb: int = Field(default=5, gt=0)
     min_imported_sentence_length: int = Field(default=3, gt=0)
     max_imported_sentence_length: int = Field(default=500, gt=0)
-    admin_api_key: str = "dev-change-this-key"
+    admin_api_key: str = ""
     supabase_url: str = ""
     supabase_publishable_key: str = ""
     supabase_auth_timeout_seconds: float = Field(default=5, gt=0)
@@ -71,6 +71,13 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_supabase_publishable_key(cls, value: str) -> str:
         """Normalize optional development configuration without requiring it."""
+
+        return value.strip()
+
+    @field_validator("admin_api_key")
+    @classmethod
+    def normalize_admin_api_key(cls, value: str) -> str:
+        """Allow startup without admin access while rejecting whitespace keys."""
 
         return value.strip()
 

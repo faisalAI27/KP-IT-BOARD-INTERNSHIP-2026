@@ -1,6 +1,9 @@
 import { appConfig } from "../config.js";
-import { pashtoSentences } from "../data/pashto-sentences.js";
 import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  fetchWithRequestTimeout,
+} from "./request-timeout.js?v=20260718-stabilization";
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 const REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
@@ -39,19 +42,6 @@ export function extensionForAudioMimeType(mimeType) {
     throw new Error(`Unsupported audio MIME type: ${normalizedMimeType}`);
   }
   return extension;
-}
-
-function createMockResponse(type) {
-  return {
-    id: globalThis.crypto?.randomUUID?.() ?? `mock-${Date.now()}`,
-    type,
-    status: "queued",
-    createdAt: new Date().toISOString(),
-  };
-}
-
-function wait(milliseconds) {
-  return new Promise((resolve) => globalThis.setTimeout(resolve, milliseconds));
 }
 
 async function readJson(response) {
@@ -240,20 +230,20 @@ export class ContributionsApi {
     apiBaseUrl = appConfig.api.baseUrl,
     fetchImpl = (...args) => globalThis.fetch(...args),
     getAccessToken = getCurrentAccessToken,
-    useMock = appConfig.api.useMock,
-    mockDelayMs = appConfig.api.mockDelayMs,
+    requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
     this._getAccessToken = getAccessToken;
-    this._useMock = useMock;
-    this._mockDelayMs = mockDelayMs;
+    this._requestTimeoutMs = requestTimeoutMs;
   }
 
   async _fetchApi(url, options) {
     try {
-      return await this._fetch(url, options);
+      return await fetchWithRequestTimeout(this._fetch, url, options, {
+        timeoutMs: this._requestTimeoutMs,
+      });
     } catch {
       throw new ApiError("The KP AWAZ backend could not be reached.", {
         code: "NETWORK_ERROR",
@@ -262,12 +252,8 @@ export class ContributionsApi {
     }
   }
 
-  async _postForm(path, formData, mockType) {
+  async _postForm(path, formData) {
     const accessToken = requiredAccessToken(this._getAccessToken);
-    if (this._useMock) {
-      await wait(this._mockDelayMs);
-      return createMockResponse(mockType);
-    }
 
     const response = await this._fetchApi(`${this._apiBaseUrl}${path}`, {
       method: "POST",
@@ -285,10 +271,6 @@ export class ContributionsApi {
   }
 
   async getSentencePrompts(language = "Pashto") {
-    if (this._useMock) {
-      return language === "Pashto" ? [...pashtoSentences] : [];
-    }
-
     const query = new URLSearchParams({ language, limit: "20" });
     const response = await this._fetchApi(`${this._apiBaseUrl}/sentences?${query}`, {
       headers: { Accept: "application/json" },
@@ -347,7 +329,7 @@ export class ContributionsApi {
     }
     formData.append("consent", String(consent));
     appendAudio(formData, audioBlob);
-    return this._postForm("/contributions/voice", formData, "voice-donation");
+    return this._postForm("/contributions/voice", formData);
   }
 
   submitOpenRecording({ contributorName, language, topic, consent, audioBlob }) {
@@ -357,11 +339,7 @@ export class ContributionsApi {
     formData.append("topic", topic);
     formData.append("consent", String(consent));
     appendAudio(formData, audioBlob);
-    return this._postForm(
-      "/contributions/open-recording",
-      formData,
-      "open-recording",
-    );
+    return this._postForm("/contributions/open-recording", formData);
   }
 
   async getMyContributions({ limit = 20, offset = 0 } = {}) {

@@ -244,9 +244,8 @@ export async function initContributions() {
       if (destroyed) return;
       if (prompts.length === 0) makeCustomSentenceAvailable(NO_SENTENCE_PROMPTS);
       else useLoadedSentencePrompts(prompts);
-    } catch (error) {
+    } catch {
       if (destroyed) return;
-      console.error("Could not load contribution sentence prompts.", error);
       makeCustomSentenceAvailable(SENTENCE_LOAD_ERROR);
     } finally {
       sentencePromptsLoading = false;
@@ -361,9 +360,9 @@ export async function initContributions() {
     button.removeAttribute("aria-busy");
   }
 
-  function showError(element, error) {
+  function showSubmissionError(element) {
     element.textContent =
-      error.message || "Something went wrong. Please try again.";
+      "We could not submit your recording. Your recording has not been counted.";
     element.hidden = false;
   }
 
@@ -529,9 +528,9 @@ export async function initContributions() {
       flowProgress.hidden = true;
       donateSuccess.hidden = false;
       announceContributionCreated();
-    } catch (error) {
+    } catch {
       if (!accessController.finishSubmission(submission)) return;
-      showError(donationError, error);
+      showSubmissionError(donationError);
       setPending(submitDonationButton, false);
     }
   });
@@ -576,9 +575,9 @@ export async function initContributions() {
       submitOpenRecordingButton.textContent = "Submitted";
       submitOpenRecordingButton.removeAttribute("aria-busy");
       announceContributionCreated();
-    } catch (error) {
+    } catch {
       if (!accessController.finishSubmission(submission)) return;
-      showError(recordError, error);
+      showSubmissionError(recordError);
       setPending(submitOpenRecordingButton, false);
     }
   });

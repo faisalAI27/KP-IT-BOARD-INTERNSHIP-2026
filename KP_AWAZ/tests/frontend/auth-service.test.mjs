@@ -646,6 +646,7 @@ test("password authentication failures never expose raw Supabase errors", async 
     }),
     (error) =>
       error.code === "PASSWORD_SIGN_UP_FAILED" &&
+      error.message === "We could not create your account. Please try again." &&
       !error.message.includes(ACCESS_TOKEN),
   );
   await assert.rejects(
@@ -655,6 +656,8 @@ test("password authentication failures never expose raw Supabase errors", async 
     }),
     (error) =>
       error.code === "PASSWORD_SIGN_IN_FAILED" &&
+      error.message ===
+        "We could not sign you in. Please check your information and try again." &&
       !error.message.includes(REFRESH_TOKEN),
   );
   await assert.rejects(

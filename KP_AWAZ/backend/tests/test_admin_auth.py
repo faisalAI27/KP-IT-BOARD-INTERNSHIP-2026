@@ -1,8 +1,25 @@
 """Authentication tests for protected admin routes."""
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.config import settings
+
+
+def test_unconfigured_admin_review_fails_closed(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "admin_api_key", "")
+
+    response = client.get(
+        "/api/admin/health",
+        headers={"X-Admin-Key": "any-value"},
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Admin API access is not configured."}
+    assert "any-value" not in response.text
 
 
 def test_missing_admin_key_is_unauthorized(client: TestClient) -> None:

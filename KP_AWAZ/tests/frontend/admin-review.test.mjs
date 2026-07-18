@@ -829,6 +829,10 @@ test("40 review failure preserves the selected contribution", async () => {
   assert.equal(await fixture.review.review("approved"), false);
   assert.equal(fixture.review.getState().selection.id, ID_A);
   assert.equal(fixture.review.getState().selection.status, "ready");
+  assert.equal(
+    fixture.review.getState().review.message,
+    "The review action could not be completed. Please try again.",
+  );
   assert.equal(renderedText(fixture).includes("database internals"), false);
 });
 

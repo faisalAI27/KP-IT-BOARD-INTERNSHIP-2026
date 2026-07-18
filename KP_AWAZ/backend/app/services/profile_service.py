@@ -137,11 +137,15 @@ def _new_profile(
     now: datetime,
 ) -> Profile:
     email = _normalize_verified_email(authenticated_user.email)
+    try:
+        display_name = _validated_display_name(authenticated_user.display_name)
+    except InvalidDisplayNameError:
+        display_name = _default_display_name(email)
     return Profile(
         id=authenticated_user.id,
         email=email,
         auth_provider=_normalize_verified_provider(authenticated_user.provider),
-        display_name=_default_display_name(email),
+        display_name=display_name,
         preferred_language="Pashto",
         leaderboard_opt_in=False,
         created_at=now,

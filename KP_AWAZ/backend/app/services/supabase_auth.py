@@ -16,6 +16,7 @@ class AuthenticatedUser:
     id: str
     email: str | None
     provider: str | None
+    display_name: str | None = None
 
 
 class SupabaseAuthError(Exception):
@@ -160,4 +161,23 @@ def _authenticated_user_from_payload(payload: Any) -> AuthenticatedUser:
         raw_provider.strip() or None if isinstance(raw_provider, str) else None
     )
 
-    return AuthenticatedUser(id=user_id, email=email, provider=provider)
+    raw_user_metadata = payload.get("user_metadata")
+    if raw_user_metadata is not None and not isinstance(raw_user_metadata, dict):
+        raise InvalidAuthResponseError()
+    display_name: str | None = None
+    if isinstance(raw_user_metadata, dict):
+        for field_name in ("display_name", "full_name", "name"):
+            candidate = raw_user_metadata.get(field_name)
+            if not isinstance(candidate, str):
+                continue
+            cleaned_candidate = candidate.strip()
+            if 2 <= len(cleaned_candidate) <= 80:
+                display_name = cleaned_candidate
+                break
+
+    return AuthenticatedUser(
+        id=user_id,
+        email=email,
+        provider=provider,
+        display_name=display_name,
+    )

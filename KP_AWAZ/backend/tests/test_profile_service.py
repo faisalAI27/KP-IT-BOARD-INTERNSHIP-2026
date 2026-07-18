@@ -28,8 +28,14 @@ def authenticated_user(
     *,
     email: str | None = "person@example.com",
     provider: str | None = "google",
+    display_name: str | None = None,
 ) -> AuthenticatedUser:
-    return AuthenticatedUser(id=USER_ID, email=email, provider=provider)
+    return AuthenticatedUser(
+        id=USER_ID,
+        email=email,
+        provider=provider,
+        display_name=display_name,
+    )
 
 
 def profile_count(database: Session) -> int:
@@ -120,6 +126,15 @@ def test_default_display_name_is_generated_from_email_separators(
     assert profile.display_name == expected_name
 
 
+def test_new_profile_uses_verified_auth_display_name(db_session: Session) -> None:
+    profile = get_or_create_profile(
+        database=db_session,
+        authenticated_user=authenticated_user(display_name="  فیصل عمران  "),
+    )
+
+    assert profile.display_name == "فیصل عمران"
+
+
 @pytest.mark.parametrize("email", [None, "---@example.com", "a@example.com"])
 def test_missing_or_unusable_email_uses_contributor(
     email: str | None,
@@ -161,6 +176,7 @@ def test_existing_identity_synchronizes_without_overwriting_preferences(
         authenticated_user=authenticated_user(
             email="NEW@EXAMPLE.COM",
             provider="EMAIL",
+            display_name="Should Not Replace Edited Name",
         ),
     )
 

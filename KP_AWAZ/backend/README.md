@@ -121,11 +121,13 @@ Internal admin endpoints require the configured API key in the `X-Admin-Key` hea
 
 ```bash
 curl \
-  -H "X-Admin-Key: dev-change-this-key" \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
   http://127.0.0.1:8000/api/admin/health
 ```
 
-The development key comes from `ADMIN_API_KEY` in `.env`. Replace the example key outside local development and never commit a real API key to Git.
+The key comes from `ADMIN_API_KEY` in `.env`. Admin endpoints return a safe 503
+until a nonblank key is configured. Generate a long random value locally and
+never commit a real API key to Git.
 
 This API key is temporary internal authentication. A complete authentication system may replace it as the administration features grow.
 
@@ -137,7 +139,7 @@ Supabase Auth manages Google and email login. The frontend sends the current Sup
 Authorization: Bearer <access-token>
 ```
 
-FastAPI validates that token against the Supabase Auth user endpoint and uses only the verified user ID, email, and provider. The backend does not trust user IDs or email addresses supplied in form fields, and it does not log or store access tokens.
+FastAPI validates that token against the Supabase Auth user endpoint and retains only the verified user ID, email, provider, and one validated display-name value. The display name initializes a new local profile but never overwrites later profile edits. The backend does not trust user IDs or email addresses supplied in form fields, and it does not log or store access tokens.
 
 Configure the direct Auth client in `.env`:
 
@@ -177,7 +179,7 @@ curl \
   http://127.0.0.1:8000/api/auth/me
 ```
 
-A real token is obtained through the frontend login interface. Sentence endpoints remain public, contribution submission requires verified Supabase authentication, and existing admin endpoints continue to use `X-Admin-Key`.
+A real token is obtained through the frontend login interface. Successful verification also guarantees that exactly one local profile exists for the verified Supabase user ID. Sentence endpoints remain public, contribution submission requires verified Supabase authentication, and configured admin endpoints continue to use `X-Admin-Key`.
 
 ## Local authenticated user profiles
 
@@ -231,7 +233,7 @@ It requires the `X-Admin-Key` header, a `language` form field, and one or more `
 
 ```bash
 curl -X POST \
-  -H "X-Admin-Key: dev-change-this-key" \
+  -H "X-Admin-Key: YOUR_ADMIN_API_KEY" \
   -F "language=Pashto" \
   -F "files=@phrases-one.txt;type=text/plain" \
   -F "files=@phrases-two.txt;type=text/plain" \

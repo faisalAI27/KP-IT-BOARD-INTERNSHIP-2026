@@ -1,5 +1,9 @@
 import { appConfig } from "../config.js";
 import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  fetchWithRequestTimeout,
+} from "./request-timeout.js?v=20260718-stabilization";
 
 
 const PROFILE_PATH = "/profile/me";
@@ -196,10 +200,14 @@ function errorFromResponse(response, body, accessToken) {
       : SAFE_REQUEST_ERROR;
   const message =
     accessToken && rawMessage.includes(accessToken) ? SAFE_REQUEST_ERROR : rawMessage;
-  const code =
+  const rawCode =
     typeof body?.code === "string" && body.code.trim()
       ? body.code.trim()
       : "PROFILE_REQUEST_FAILED";
+  const code =
+    accessToken && rawCode.includes(accessToken)
+      ? "PROFILE_REQUEST_FAILED"
+      : rawCode;
   return new ProfileApiError(message, { code, status: response.status });
 }
 
@@ -209,11 +217,13 @@ export class ProfileApi {
     apiBaseUrl = appConfig.api.baseUrl,
     fetchImpl = (...args) => globalThis.fetch(...args),
     getAccessToken = getCurrentAccessToken,
+    requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
     this._getAccessToken = getAccessToken;
+    this._requestTimeoutMs = requestTimeoutMs;
   }
 
   async getMyProfile() {
@@ -257,7 +267,12 @@ export class ProfileApi {
 
     let response;
     try {
-      response = await this._fetch(`${this._apiBaseUrl}${path}`, options);
+      response = await fetchWithRequestTimeout(
+        this._fetch,
+        `${this._apiBaseUrl}${path}`,
+        options,
+        { timeoutMs: this._requestTimeoutMs },
+      );
     } catch {
       throw new ProfileApiError("The KP AWAZ backend could not be reached.", {
         code: "NETWORK_ERROR",

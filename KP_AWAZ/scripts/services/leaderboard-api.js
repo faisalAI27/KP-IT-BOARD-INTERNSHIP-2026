@@ -1,5 +1,9 @@
 import { appConfig } from "../config.js";
 import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  fetchWithRequestTimeout,
+} from "./request-timeout.js?v=20260718-stabilization";
 
 
 const LEADERBOARD_PATH = "/leaderboard";
@@ -231,11 +235,13 @@ export class LeaderboardApi {
     apiBaseUrl = appConfig.api.baseUrl,
     fetchImpl = (...args) => globalThis.fetch(...args),
     getAccessToken = getCurrentAccessToken,
+    requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
     this._getAccessToken = getAccessToken;
+    this._requestTimeoutMs = requestTimeoutMs;
   }
 
   async getPublicLeaderboard({ limit = DEFAULT_LIMIT, offset = 0 } = {}) {
@@ -259,7 +265,8 @@ export class LeaderboardApi {
 
     let response;
     try {
-      response = await this._fetch(
+      response = await fetchWithRequestTimeout(
+        this._fetch,
         `${this._apiBaseUrl}${LEADERBOARD_PATH}?${query}`,
         {
           method: "GET",
@@ -267,6 +274,7 @@ export class LeaderboardApi {
           cache: "no-store",
           headers: { Accept: "application/json" },
         },
+        { timeoutMs: this._requestTimeoutMs },
       );
     } catch {
       throw new LeaderboardApiError("The KP AWAZ backend could not be reached.", {
@@ -292,7 +300,8 @@ export class LeaderboardApi {
 
     let response;
     try {
-      response = await this._fetch(
+      response = await fetchWithRequestTimeout(
+        this._fetch,
         `${this._apiBaseUrl}${PERSONAL_CONTEXT_PATH}?${query}`,
         {
           method: "GET",
@@ -302,6 +311,7 @@ export class LeaderboardApi {
             Authorization: `Bearer ${accessToken}`,
           },
         },
+        { timeoutMs: this._requestTimeoutMs },
       );
     } catch {
       throw new LeaderboardApiError("The KP AWAZ backend could not be reached.", {

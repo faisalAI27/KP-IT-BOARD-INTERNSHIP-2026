@@ -3,6 +3,10 @@ node_modules/
 scripts/vendor/
 .DS_Store
 
+/backups/
+/exports/
+/backend/exports/
+
 backend/.venv/
 backend/.env
 
