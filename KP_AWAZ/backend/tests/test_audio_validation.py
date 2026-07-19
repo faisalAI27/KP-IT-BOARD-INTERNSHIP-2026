@@ -14,6 +14,7 @@ from app.utils.audio_validation import (
     UnsupportedAudioTypeError,
     extract_safe_audio_filename,
     validate_audio_file_size,
+    validate_audio_file_size_bytes,
     validate_audio_filename_extension,
     validate_audio_mime_type,
     validate_audio_signature,
@@ -27,6 +28,8 @@ WAV_BYTES = b"RIFF\x04\x00\x00\x00WAVEwav-data"
 MP3_ID3_BYTES = b"ID3mp3-data"
 MP3_FRAME_BYTES = b"\xff\xfbmp3-data"
 MP4_BYTES = b"\x00\x00\x00\x18ftypM4A m4a-data"
+AAC_BYTES = b"\xff\xf1aac-data"
+FLAC_BYTES = b"fLaCflac-data"
 
 
 @pytest.mark.parametrize(
@@ -38,6 +41,8 @@ MP4_BYTES = b"\x00\x00\x00\x18ftypM4A m4a-data"
         ("audio/x-wav", "wav"),
         ("audio/mpeg", "mp3"),
         ("audio/mp4", "m4a"),
+        ("audio/aac", "aac"),
+        ("audio/flac", "flac"),
     ],
 )
 def test_supported_mime_types_map_to_safe_extensions(
@@ -137,6 +142,13 @@ def test_file_above_size_limit_is_rejected() -> None:
     assert error.value.code == "AUDIO_FILE_TOO_LARGE"
 
 
+def test_universal_byte_limit_accepts_exact_size_and_rejects_larger() -> None:
+    validate_audio_file_size_bytes(10, 10)
+
+    with pytest.raises(AudioFileTooLargeError):
+        validate_audio_file_size_bytes(11, 10)
+
+
 @pytest.mark.parametrize(
     ("content", "mime_type"),
     [
@@ -147,6 +159,8 @@ def test_file_above_size_limit_is_rejected() -> None:
         (MP3_ID3_BYTES, "audio/mpeg"),
         (MP3_FRAME_BYTES, "audio/mpeg"),
         (MP4_BYTES, "audio/mp4"),
+        (AAC_BYTES, "audio/aac"),
+        (FLAC_BYTES, "audio/flac"),
     ],
 )
 def test_valid_basic_audio_signatures_succeed(
@@ -157,7 +171,15 @@ def test_valid_basic_audio_signatures_succeed(
 
 @pytest.mark.parametrize(
     "mime_type",
-    ["audio/webm", "audio/ogg", "audio/wav", "audio/mpeg", "audio/mp4"],
+    [
+        "audio/webm",
+        "audio/ogg",
+        "audio/wav",
+        "audio/mpeg",
+        "audio/mp4",
+        "audio/aac",
+        "audio/flac",
+    ],
 )
 def test_invalid_audio_signatures_are_rejected(mime_type: str) -> None:
     with pytest.raises(InvalidAudioSignatureError) as error:
@@ -176,9 +198,22 @@ def test_complete_webm_validation_returns_normalized_metadata() -> None:
 
     assert result.original_filename == "Recording.WEBM"
     assert result.mime_type == "audio/webm"
+    assert result.original_mime_type == "audio/webm;codecs=opus"
     assert result.extension == "webm"
     assert result.file_size == len(WEBM_BYTES)
     assert "../" not in result.original_filename
+
+
+def test_complete_validation_ignores_client_extension_for_storage_mapping() -> None:
+    result = validate_audio_upload(
+        filename="../../misleading.wav",
+        mime_type="audio/webm;codecs=opus",
+        content=WEBM_BYTES,
+        max_size_bytes=len(WEBM_BYTES),
+    )
+
+    assert result.original_filename == "misleading.wav"
+    assert result.extension == "webm"
 
 
 def test_public_validation_error_does_not_include_byte_content() -> None:
@@ -198,7 +233,11 @@ def test_public_validation_error_does_not_include_byte_content() -> None:
 
 @pytest.mark.parametrize(
     "setting_name",
-    ["max_guided_audio_size_mb", "max_open_audio_size_mb"],
+    [
+        "max_audio_upload_bytes",
+        "max_guided_audio_size_mb",
+        "max_open_audio_size_mb",
+    ],
 )
 def test_audio_size_settings_must_be_positive(setting_name: str) -> None:
     with pytest.raises(ValidationError):

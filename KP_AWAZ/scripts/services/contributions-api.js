@@ -16,14 +16,17 @@ const WITHDRAWAL_STATUSES = new Set([
 export const CONSENT_POLICY_VERSION = "1.0";
 export const CONSENT_REQUIRED_MESSAGE =
   "Please confirm the contribution consent before submitting.";
-export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({
-  "audio/webm": "webm",
-  "audio/ogg": "ogg",
-  "audio/wav": "wav",
-  "audio/x-wav": "wav",
-  "audio/mpeg": "mp3",
-  "audio/mp4": "m4a",
-});
+export const SUPPORTED_RECORDING_MIME_TYPES = Object.freeze([
+  "audio/webm",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/aac",
+  "audio/flac",
+]);
+const SUPPORTED_RECORDING_MIME_TYPE_SET = new Set(SUPPORTED_RECORDING_MIME_TYPES);
 
 export class ApiError extends Error {
   constructor(message, { code = "REQUEST_FAILED", status = 0 } = {}) {
@@ -40,17 +43,6 @@ export function normalizeAudioMimeType(mimeType) {
     throw new TypeError("Audio MIME type must be a string.");
   }
   return mimeType.trim().split(";", 1)[0].trim().toLowerCase();
-}
-
-export function extensionForAudioMimeType(mimeType) {
-  const normalizedMimeType = normalizeAudioMimeType(mimeType);
-  if (!normalizedMimeType) return "webm";
-
-  const extension = AUDIO_MIME_EXTENSION_MAP[normalizedMimeType];
-  if (!extension) {
-    throw new Error(`Unsupported audio MIME type: ${normalizedMimeType}`);
-  }
-  return extension;
 }
 
 async function readJson(response) {
@@ -236,8 +228,31 @@ function paginationValue(value, { name, defaultValue, minimum, maximum }) {
 }
 
 function appendAudio(formData, audioBlob) {
-  const extension = extensionForAudioMimeType(audioBlob.type);
-  formData.append("audio", audioBlob, `recording.${extension}`);
+  if (!(audioBlob instanceof Blob) || audioBlob.size <= 0) {
+    throw new ApiError("No usable recording was received. Please record again.", {
+      code: "EMPTY_AUDIO_FILE",
+    });
+  }
+  const mimeType = normalizeAudioMimeType(audioBlob.type);
+  if (!SUPPORTED_RECORDING_MIME_TYPE_SET.has(mimeType)) {
+    throw new ApiError("This audio format could not be stored by the platform.", {
+      code: "UNSUPPORTED_AUDIO_TYPE",
+    });
+  }
+  // This generic multipart name is display metadata only. The backend derives
+  // the safe extension and permanent filename exclusively from the MIME type.
+  formData.append("audio", audioBlob, "recording");
+}
+
+
+function appendAudioDuration(formData, durationSeconds) {
+  if (
+    typeof durationSeconds === "number" &&
+    Number.isFinite(durationSeconds) &&
+    durationSeconds >= 0
+  ) {
+    formData.append("audioDurationSeconds", String(durationSeconds));
+  }
 }
 
 export function appendCurrentConsent(
@@ -351,6 +366,7 @@ export class ContributionsApi {
     consentGiven,
     consentPolicyVersion,
     audioBlob,
+    audioDurationSeconds,
   }) {
     const formData = new FormData();
     formData.append("contributorName", contributorName);
@@ -361,6 +377,7 @@ export class ContributionsApi {
       formData.append("sentenceId", sentenceId.trim());
     }
     appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
+    appendAudioDuration(formData, audioDurationSeconds);
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/voice", formData);
   }
@@ -372,12 +389,14 @@ export class ContributionsApi {
     consentGiven,
     consentPolicyVersion,
     audioBlob,
+    audioDurationSeconds,
   }) {
     const formData = new FormData();
     formData.append("contributorName", contributorName);
     formData.append("language", language);
     formData.append("topic", topic);
     appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
+    appendAudioDuration(formData, audioDurationSeconds);
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/open-recording", formData);
   }

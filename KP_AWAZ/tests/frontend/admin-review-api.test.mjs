@@ -267,6 +267,23 @@ test("audio MIME parameters are normalized", async () => {
 });
 
 
+test("AAC and FLAC protected audio responses are accepted", async () => {
+  for (const mimeType of ["audio/aac", "audio/flac"]) {
+    const { api } = createApi(
+      () =>
+        new Response(new Blob(["audio"]), {
+          headers: { "content-type": mimeType },
+        }),
+    );
+    const result = await api.getContributionAudio({
+      adminKey: RUNTIME_KEY,
+      contributionId: CONTRIBUTION_ID,
+    });
+    assert.equal(result.type, mimeType);
+  }
+});
+
+
 test("invalid audio MIME type is rejected", async () => {
   const { api } = createApi(
     () => new Response(new Blob(["html"]), { headers: { "content-type": "text/html" } }),

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import math
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
@@ -13,8 +14,11 @@ from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution, Sentence
 from app.services.audio_storage import (
     AudioStorageError,
+    StagedAudioUpload,
+    cleanup_staged_audio,
+    commit_staged_audio_file,
     delete_audio_file,
-    save_audio_file,
+    store_audio_file,
 )
 from app.utils.audio_validation import ValidatedAudio, validate_audio_upload
 from app.utils.text_normalization import (
@@ -111,13 +115,15 @@ class CustomSentenceIdNotAllowedError(ContributionServiceError):
 
 class AudioStorageFailedError(ContributionServiceError):
     code = "AUDIO_STORAGE_FAILED"
-    default_message = "The contribution audio could not be stored."
+    default_message = "The recording could not be stored. Please try again."
     http_status = 500
 
 
 class ContributionCreationError(ContributionServiceError):
     code = "CONTRIBUTION_CREATION_FAILED"
-    default_message = "The voice contribution could not be completed."
+    default_message = (
+        "The contribution could not be completed. Your recording was not counted."
+    )
     http_status = 500
 
 
@@ -140,7 +146,9 @@ class GuidedContributionInput:
     consent_policy_version: str | None
     audio_filename: str
     audio_mime_type: str
-    audio_content: bytes
+    audio_content: bytes | None
+    audio_duration_seconds: float | None = None
+    staged_audio: StagedAudioUpload | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,7 +162,9 @@ class OpenRecordingInput:
     consent_policy_version: str | None
     audio_filename: str
     audio_mime_type: str
-    audio_content: bytes
+    audio_content: bytes | None
+    audio_duration_seconds: float | None = None
+    staged_audio: StagedAudioUpload | None = None
 
 
 def _validate_contributor_name(contributor_name: str) -> str:
@@ -230,6 +240,40 @@ def _validate_consent(
     return CONSENT_POLICY_VERSION
 
 
+def _validate_duration(duration_seconds: float | None) -> float | None:
+    if duration_seconds is None:
+        return None
+    if (
+        not isinstance(duration_seconds, (int, float))
+        or isinstance(duration_seconds, bool)
+        or not math.isfinite(float(duration_seconds))
+        or float(duration_seconds) < 0
+    ):
+        return None
+    return round(float(duration_seconds), 3)
+
+
+def _validated_audio(
+    *,
+    filename: str,
+    mime_type: str,
+    content: bytes | None,
+    staged_audio: StagedAudioUpload | None,
+) -> ValidatedAudio:
+    if staged_audio is not None:
+        if content not in {None, b""}:
+            raise ContributionCreationError()
+        return staged_audio.validated_audio
+    if not isinstance(content, bytes):
+        content = b""
+    return validate_audio_upload(
+        filename=filename,
+        mime_type=mime_type,
+        content=content,
+        max_size_bytes=settings.max_audio_upload_bytes,
+    )
+
+
 def _validate_optional_sentence(
     database: Session,
     *,
@@ -278,7 +322,9 @@ def _persist_contribution(
     sentence_source: str | None,
     topic: str | None,
     consent_policy_version: str,
-    audio_content: bytes,
+    audio_content: bytes | None,
+    staged_audio: StagedAudioUpload | None,
+    duration_seconds: float | None,
     validated_audio: ValidatedAudio,
     creation_failure_message: str | None = None,
 ) -> Contribution:
@@ -287,14 +333,22 @@ def _persist_contribution(
     contribution_id = str(uuid4())
     created_at = datetime.now(timezone.utc)
     try:
-        storage_key = save_audio_file(
-            contribution_id=contribution_id,
-            extension=validated_audio.extension,
-            content=audio_content,
-            created_at=created_at,
-        )
+        if staged_audio is not None:
+            stored_audio = commit_staged_audio_file(
+                contribution_id=contribution_id,
+                staged_audio=staged_audio,
+                created_at=created_at,
+            )
+        else:
+            stored_audio = store_audio_file(
+                contribution_id=contribution_id,
+                extension=validated_audio.extension,
+                content=audio_content or b"",
+                created_at=created_at,
+            )
     except AudioStorageError as error:
         database.rollback()
+        cleanup_staged_audio(staged_audio)
         raise AudioStorageFailedError() from error
 
     contribution = Contribution(
@@ -310,11 +364,16 @@ def _persist_contribution(
         consent_given=True,
         consent_policy_version=consent_policy_version,
         consent_timestamp=created_at,
-        audio_storage_key=storage_key,
+        audio_storage_key=stored_audio.storage_key,
         original_filename=validated_audio.original_filename,
         mime_type=validated_audio.mime_type,
-        file_size=validated_audio.file_size,
-        duration_seconds=None,
+        original_mime_type=validated_audio.original_mime_type,
+        audio_extension=validated_audio.extension,
+        audio_checksum_sha256=stored_audio.checksum_sha256,
+        server_generated_filename=stored_audio.generated_filename,
+        storage_format_version=stored_audio.storage_format_version,
+        file_size=stored_audio.file_size,
+        duration_seconds=_validate_duration(duration_seconds),
         status="queued",
         created_at=created_at,
         updated_at=created_at,
@@ -326,7 +385,7 @@ def _persist_contribution(
     except Exception as error:
         database.rollback()
         try:
-            delete_audio_file(storage_key)
+            delete_audio_file(stored_audio.storage_key)
         except AudioStorageError:
             pass
         raise ContributionCreationError(creation_failure_message) from error
@@ -366,11 +425,11 @@ def create_guided_contribution(
         language=language,
         submitted_sentence=sentence,
     )
-    validated_audio = validate_audio_upload(
+    validated_audio = _validated_audio(
         filename=contribution_input.audio_filename,
         mime_type=contribution_input.audio_mime_type,
         content=contribution_input.audio_content,
-        max_size_mb=settings.max_guided_audio_size_mb,
+        staged_audio=contribution_input.staged_audio,
     )
 
     return _persist_contribution(
@@ -385,6 +444,8 @@ def create_guided_contribution(
         topic=None,
         consent_policy_version=consent_policy_version,
         audio_content=contribution_input.audio_content,
+        staged_audio=contribution_input.staged_audio,
+        duration_seconds=contribution_input.audio_duration_seconds,
         validated_audio=validated_audio,
     )
 
@@ -406,11 +467,11 @@ def create_open_recording(
         contribution_input.consent_given,
         contribution_input.consent_policy_version,
     )
-    validated_audio = validate_audio_upload(
+    validated_audio = _validated_audio(
         filename=contribution_input.audio_filename,
         mime_type=contribution_input.audio_mime_type,
         content=contribution_input.audio_content,
-        max_size_mb=settings.max_open_audio_size_mb,
+        staged_audio=contribution_input.staged_audio,
     )
 
     return _persist_contribution(
@@ -425,8 +486,9 @@ def create_open_recording(
         topic=topic,
         consent_policy_version=consent_policy_version,
         audio_content=contribution_input.audio_content,
+        staged_audio=contribution_input.staged_audio,
+        duration_seconds=contribution_input.audio_duration_seconds,
         validated_audio=validated_audio,
-        creation_failure_message="The open recording could not be completed.",
     )
 
 

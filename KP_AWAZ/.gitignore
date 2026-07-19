@@ -22,6 +22,7 @@ backend/**/__pycache__/
 backend/.pytest_cache/
 
 backend/storage/audio/*
+backend/data/audio/raw/
 backend/storage/imports/*
 !backend/storage/audio/.gitkeep
 !backend/storage/imports/.gitkeep

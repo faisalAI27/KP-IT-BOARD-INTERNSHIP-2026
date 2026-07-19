@@ -17,6 +17,8 @@ AUDIO_MIME_EXTENSION_MAP: Mapping[str, str] = MappingProxyType(
         "audio/x-wav": "wav",
         "audio/mpeg": "mp3",
         "audio/mp4": "m4a",
+        "audio/aac": "aac",
+        "audio/flac": "flac",
     }
 )
 
@@ -28,6 +30,8 @@ AUDIO_MIME_FILENAME_EXTENSIONS: Mapping[str, frozenset[str]] = MappingProxyType(
         "audio/x-wav": frozenset({"wav"}),
         "audio/mpeg": frozenset({"mp3"}),
         "audio/mp4": frozenset({"m4a", "mp4"}),
+        "audio/aac": frozenset({"aac"}),
+        "audio/flac": frozenset({"flac"}),
     }
 )
 
@@ -47,17 +51,20 @@ class AudioValidationError(Exception):
 
 class EmptyAudioFileError(AudioValidationError):
     code = "EMPTY_AUDIO_FILE"
-    default_message = "The audio file must not be empty."
+    default_message = "No usable recording was received. Please record again."
 
 
 class UnsupportedAudioTypeError(AudioValidationError):
     code = "UNSUPPORTED_AUDIO_TYPE"
-    default_message = "The audio type is not supported."
+    default_message = "This audio format could not be stored by the platform."
 
 
 class AudioFileTooLargeError(AudioValidationError):
     code = "AUDIO_FILE_TOO_LARGE"
-    default_message = "The audio file exceeds the configured size limit."
+    default_message = (
+        "This recording is too large to upload. "
+        "Please record a shorter sample and try again."
+    )
 
 
 class AudioExtensionMismatchError(AudioValidationError):
@@ -67,7 +74,7 @@ class AudioExtensionMismatchError(AudioValidationError):
 
 class InvalidAudioSignatureError(AudioValidationError):
     code = "INVALID_AUDIO_SIGNATURE"
-    default_message = "The audio file header does not match its type."
+    default_message = "This audio format could not be stored by the platform."
 
 
 class InvalidAudioFilenameError(AudioValidationError):
@@ -81,6 +88,7 @@ class ValidatedAudio:
 
     original_filename: str
     mime_type: str
+    original_mime_type: str
     extension: str
     file_size: int
 
@@ -100,6 +108,18 @@ def normalize_audio_mime_type(mime_type: str) -> str:
     if not isinstance(mime_type, str) or not mime_type.strip():
         raise UnsupportedAudioTypeError()
     return mime_type.strip().split(";", maxsplit=1)[0].strip().lower()
+
+
+def normalize_original_audio_mime_type(mime_type: str) -> str:
+    """Return a bounded normalized declaration while retaining codec parameters."""
+
+    base_mime_type = normalize_audio_mime_type(mime_type)
+    validate_audio_mime_type(base_mime_type)
+    parts = [part.strip().lower() for part in mime_type.strip().split(";")]
+    normalized = ";".join(part for part in parts if part)
+    if not normalized.startswith(base_mime_type) or len(normalized) > 200:
+        raise UnsupportedAudioTypeError()
+    return normalized
 
 
 def validate_audio_mime_type(mime_type: str) -> str:
@@ -138,6 +158,17 @@ def validate_audio_file_size(content_length: int, max_size_mb: int | float) -> N
         raise AudioFileTooLargeError()
 
 
+def validate_audio_file_size_bytes(content_length: int, max_size_bytes: int) -> None:
+    """Apply the single operational byte limit used for new raw recordings."""
+
+    if content_length <= 0:
+        raise EmptyAudioFileError()
+    if not isinstance(max_size_bytes, int) or max_size_bytes <= 0:
+        raise AudioFileTooLargeError()
+    if content_length > max_size_bytes:
+        raise AudioFileTooLargeError()
+
+
 def validate_audio_signature(content: bytes, mime_type: str) -> None:
     """Perform a basic header check without claiming full media validity."""
 
@@ -159,6 +190,15 @@ def validate_audio_signature(content: bytes, mime_type: str) -> None:
         is_valid = content.startswith(b"ID3") or has_frame_sync
     elif normalized_mime_type == "audio/mp4":
         is_valid = b"ftyp" in content[4:32]
+    elif normalized_mime_type == "audio/aac":
+        has_adts_sync = (
+            len(content) >= 2
+            and content[0] == 0xFF
+            and content[1] & 0xF6 == 0xF0
+        )
+        is_valid = content.startswith(b"ADIF") or has_adts_sync
+    elif normalized_mime_type == "audio/flac":
+        is_valid = content.startswith(b"fLaC")
     else:
         is_valid = False
 
@@ -171,20 +211,48 @@ def validate_audio_upload(
     filename: str,
     mime_type: str,
     content: bytes,
-    max_size_mb: int | float,
+    max_size_mb: int | float | None = None,
+    max_size_bytes: int | None = None,
 ) -> ValidatedAudio:
     """Validate upload metadata, size, and basic signature without writing it."""
 
+    maximum_bytes = (
+        max_size_bytes
+        if max_size_bytes is not None
+        else int(max_size_mb * 1024 * 1024)
+        if max_size_mb is not None
+        else 0
+    )
+    return validate_audio_upload_metadata(
+        filename=filename,
+        mime_type=mime_type,
+        file_size=len(content),
+        signature_bytes=content[:64],
+        max_size_bytes=maximum_bytes,
+    )
+
+
+def validate_audio_upload_metadata(
+    *,
+    filename: str,
+    mime_type: str,
+    file_size: int,
+    signature_bytes: bytes,
+    max_size_bytes: int,
+) -> ValidatedAudio:
+    """Validate streamed upload metadata using only its initial signature bytes."""
+
     original_filename = extract_safe_audio_filename(filename)
     normalized_mime_type = normalize_audio_mime_type(mime_type)
+    original_mime_type = normalize_original_audio_mime_type(mime_type)
     extension = validate_audio_mime_type(normalized_mime_type)
-    validate_audio_filename_extension(original_filename, normalized_mime_type)
-    validate_audio_file_size(len(content), max_size_mb)
-    validate_audio_signature(content, normalized_mime_type)
+    validate_audio_file_size_bytes(file_size, max_size_bytes)
+    validate_audio_signature(signature_bytes, normalized_mime_type)
 
     return ValidatedAudio(
         original_filename=original_filename,
         mime_type=normalized_mime_type,
+        original_mime_type=original_mime_type,
         extension=extension,
-        file_size=len(content),
+        file_size=file_size,
     )

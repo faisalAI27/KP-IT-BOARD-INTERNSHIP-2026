@@ -26,7 +26,7 @@ def guided_data() -> dict[str, str]:
         "contributorName": "Faisal Imran",
         "language": "Pashto",
         "sentence": "هر غږ ارزښت لري.",
-        "sentenceSource": "provided",
+        "sentenceSource": "custom",
         "consentGiven": "true",
         "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }

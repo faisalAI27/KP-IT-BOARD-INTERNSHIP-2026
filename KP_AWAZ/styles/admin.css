@@ -508,6 +508,10 @@
   width: 100%;
 }
 
+.admin-audio .btn {
+  width: fit-content;
+}
+
 .admin-review {
   display: grid;
   gap: 12px;

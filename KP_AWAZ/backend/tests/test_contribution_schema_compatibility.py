@@ -99,6 +99,14 @@ def test_compatibility_update_adds_nullable_owner_and_index(
     assert columns["user_id"]["nullable"] is True
     assert columns["consent_policy_version"]["nullable"] is True
     assert columns["consent_timestamp"]["nullable"] is True
+    for raw_audio_column in [
+        "original_mime_type",
+        "audio_extension",
+        "audio_checksum_sha256",
+        "server_generated_filename",
+        "storage_format_version",
+    ]:
+        assert columns[raw_audio_column]["nullable"] is True
     assert any(index["column_names"] == ["user_id"] for index in indexes)
     assert inspect(engine).has_table("withdrawal_requests")
     withdrawal_columns = {
@@ -121,12 +129,25 @@ def test_compatibility_update_preserves_rows_and_leaves_legacy_owner_null(
         row = connection.execute(
             text(
                 "SELECT id, legacy_marker, user_id, consent_policy_version, "
-                "consent_timestamp "
+                "consent_timestamp, original_mime_type, audio_extension, "
+                "audio_checksum_sha256, server_generated_filename, "
+                "storage_format_version "
                 "FROM contributions WHERE id = :id"
             ),
             {"id": LEGACY_CONTRIBUTION_ID},
         ).one()
-    assert row == (LEGACY_CONTRIBUTION_ID, "preserve-me", None, None, None)
+    assert row == (
+        LEGACY_CONTRIBUTION_ID,
+        "preserve-me",
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
     engine.dispose()
 
 

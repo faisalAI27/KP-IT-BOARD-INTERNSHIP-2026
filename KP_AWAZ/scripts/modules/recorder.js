@@ -1,9 +1,9 @@
 export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
   "audio/webm;codecs=opus",
-  "audio/webm",
   "audio/ogg;codecs=opus",
-  "audio/ogg",
   "audio/mp4",
+  "audio/webm",
+  "audio/ogg",
 ]);
 
 const RECORDING_FAILURE_MESSAGE =
@@ -97,11 +97,16 @@ export function createRecorder({
   onCapture,
   onReset,
 }) {
-  const durationLimit = validateMaxDurationSeconds(maxDurationSeconds);
+  const durationLimit =
+    maxDurationSeconds === undefined || maxDurationSeconds === null
+      ? null
+      : validateMaxDurationSeconds(maxDurationSeconds);
   const durationMessage =
     typeof maxDurationMessage === "string" && maxDurationMessage.trim()
       ? maxDurationMessage.trim()
-      : `The ${durationLimit}-second recording limit was reached.`;
+      : durationLimit === null
+        ? ""
+        : `The ${durationLimit}-second recording limit was reached.`;
   const button = document.getElementById(buttonId);
   const timer = document.getElementById(timerId);
   const status = document.getElementById(statusId);
@@ -115,6 +120,7 @@ export function createRecorder({
   let starting = false;
   let playbackUrl = null;
   let audioBlob = null;
+  let capturedDurationSeconds = 0;
   let sessionId = 0;
   let destroyed = false;
 
@@ -149,8 +155,10 @@ export function createRecorder({
   }
 
   function clearPlayback() {
+    playback.pause?.();
     revokePlaybackUrl();
     audioBlob = null;
+    capturedDurationSeconds = 0;
     playback.removeAttribute("src");
     playback.hidden = true;
     playback.load();
@@ -188,9 +196,21 @@ export function createRecorder({
       return;
     }
 
+    const chunks = session.chunks.splice(0);
     const mimeType =
-      session.recorder.mimeType || session.selectedMimeType || "audio/webm";
-    audioBlob = new Blob(session.chunks, { type: mimeType });
+      chunks.find((chunk) => typeof chunk?.type === "string" && chunk.type)?.type ||
+      session.recorder.mimeType ||
+      session.selectedMimeType ||
+      "";
+    audioBlob = new Blob(chunks, { type: mimeType });
+    if (audioBlob.size <= 0) {
+      audioBlob = null;
+      callout.textContent = "Recording failed";
+      status.textContent = "No usable recording was received. Please record again.";
+      onReset?.();
+      return;
+    }
+    capturedDurationSeconds = secondsElapsed;
     revokePlaybackUrl();
     playbackUrl = URL.createObjectURL(audioBlob);
     playback.src = playbackUrl;
@@ -204,7 +224,11 @@ export function createRecorder({
       status.textContent = "Listen back, or record again if needed.";
     }
 
-    onCapture?.({ blob: audioBlob, url: playbackUrl });
+    onCapture?.({
+      blob: audioBlob,
+      url: playbackUrl,
+      durationSeconds: capturedDurationSeconds,
+    });
   }
 
   function requestStop(reason = "manual") {
@@ -349,9 +373,13 @@ export function createRecorder({
         return;
       }
 
-      secondsElapsed = Math.min(secondsElapsed + 1, durationLimit);
+      secondsElapsed = durationLimit === null
+        ? secondsElapsed + 1
+        : Math.min(secondsElapsed + 1, durationLimit);
       renderTimer();
-      if (secondsElapsed >= durationLimit) requestStop("automatic");
+      if (durationLimit !== null && secondsElapsed >= durationLimit) {
+        requestStop("automatic");
+      }
     }, 1000);
   }
 
@@ -379,6 +407,7 @@ export function createRecorder({
     clearPlayback();
     destroyed = true;
     button.removeEventListener("click", handleButtonClick);
+    playback.removeEventListener("error", handlePlaybackError);
   }
 
   function handleButtonClick() {
@@ -386,7 +415,14 @@ export function createRecorder({
     else start();
   }
 
+  function handlePlaybackError() {
+    if (!audioBlob) return;
+    status.textContent =
+      "This browser cannot play the original recording format directly.";
+  }
+
   button.addEventListener("click", handleButtonClick);
+  playback.addEventListener("error", handlePlaybackError);
   renderTimer();
 
   return {
@@ -395,6 +431,7 @@ export function createRecorder({
     reset,
     destroy,
     getBlob: () => audioBlob,
+    getDurationSeconds: () => capturedDurationSeconds,
     getUrl: () => playbackUrl,
     hasRecording: () => Boolean(audioBlob),
     isRecording: () => recording || starting,

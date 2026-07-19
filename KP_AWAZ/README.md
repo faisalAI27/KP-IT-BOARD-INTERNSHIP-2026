@@ -681,8 +681,35 @@ page module's runtime memory and is sent only through `X-Admin-Key`.
 
 ## Recording behavior
 
-Guided recordings have a maximum duration of 60 seconds. Open recordings have a maximum duration of 5 minutes. Recording stops automatically at the configured limit, and the completed recording remains available for playback and submission.
+KP AWAZ stores valid browser recordings in their original format. It does not
+resample, transcode, normalize, trim, denoise, or decide whether a recording is
+ready for model training. Stage B is responsible for resampling, format
+conversion, quality and noise analysis, transcript verification, and dataset
+splitting.
 
-Available recording formats depend on the browser's `MediaRecorder` support. The frontend prefers WebM with Opus, followed by WebM, OGG with Opus, OGG, and MP4. It uses the recorder's actual Blob MIME type to generate matching upload filenames such as `recording.webm`, `recording.ogg`, `recording.wav`, `recording.mp3`, or `recording.m4a`.
+Available formats depend on each browser's `MediaRecorder` implementation. The
+frontend asks for WebM/Opus, OGG/Opus, MP4, WebM, then OGG in that order. If a
+browser reports none of those choices, the recorder starts without a forced
+MIME type and uploads the actual MIME type on the resulting Blob. Chrome,
+Safari, Firefox, and mobile browsers may therefore create different original
+containers. The client sends binary multipart data with a generic filename;
+only FastAPI selects the controlled storage extension.
 
-No client-side audio conversion is performed.
+The backend accepts `audio/webm`, `audio/ogg`, `audio/mp4`, `audio/mpeg`,
+`audio/wav`, `audio/x-wav`, `audio/aac`, and `audio/flac`, including supported
+codec parameters after base-MIME normalization. It preserves exact upload bytes
+under a random server-generated name in the configurable raw-audio root,
+organized by UTC year and month. The single default operational limit is 50 MB;
+it is an infrastructure safeguard rather than a training-quality rule.
+
+Production deployments must place both SQLite and the configured raw-audio root
+on persistent, backed-up storage. Run the read-only storage audit from
+`backend/` with:
+
+```bash
+.venv/bin/python -m app.cli.audio_inventory --include-checksums
+```
+
+The command reports aggregate file, format, missing, orphan, and zero-byte
+counts without printing contributor identities, storage paths, or individual
+checksums. Existing legacy recording paths remain supported and are not moved.

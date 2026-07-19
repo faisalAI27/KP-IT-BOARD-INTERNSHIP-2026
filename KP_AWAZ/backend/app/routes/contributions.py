@@ -20,6 +20,12 @@ from app.services.contribution_service import (
 )
 from app.services.profile_service import ProfileServiceError, get_or_create_profile
 from app.services.supabase_auth import AuthenticatedUser
+from app.services.audio_storage import (
+    AudioStorageError,
+    StagedAudioUpload,
+    cleanup_staged_audio,
+    stage_audio_upload,
+)
 from app.utils.audio_validation import (
     AudioExtensionMismatchError,
     AudioFileTooLargeError,
@@ -32,28 +38,20 @@ from app.utils.audio_validation import (
 
 
 router = APIRouter(prefix="/contributions", tags=["Contributions"])
-UPLOAD_READ_CHUNK_SIZE = 64 * 1024
+async def read_bounded_upload(
+    upload: UploadFile, max_size_bytes: int
+) -> StagedAudioUpload:
+    """Compatibility entry point that now streams into bounded private staging."""
+
+    return await stage_audio_upload(
+        upload=upload,
+        max_size_bytes=max_size_bytes,
+    )
 
 
-async def read_bounded_upload(upload: UploadFile, max_size_mb: int | float) -> bytes:
-    """Read at most the configured bytes plus one byte for size detection."""
-
-    maximum_bytes = int(max_size_mb * 1024 * 1024)
-    read_limit = maximum_bytes + 1
-    chunks: list[bytes] = []
-    bytes_read = 0
-
-    while bytes_read < read_limit:
-        chunk = await upload.read(min(UPLOAD_READ_CHUNK_SIZE, read_limit - bytes_read))
-        if not chunk:
-            break
-        chunks.append(chunk)
-        bytes_read += len(chunk)
-
-    return b"".join(chunks)
-
-
-def _safe_error_response(error: ContributionServiceError | AudioValidationError) -> JSONResponse:
+def _safe_error_response(
+    error: ContributionServiceError | AudioValidationError | AudioStorageError,
+) -> JSONResponse:
     if isinstance(error, UnsupportedAudioTypeError):
         status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
     elif isinstance(error, AudioFileTooLargeError):
@@ -68,6 +66,8 @@ def _safe_error_response(error: ContributionServiceError | AudioValidationError)
         ),
     ):
         status_code = status.HTTP_400_BAD_REQUEST
+    elif isinstance(error, AudioStorageError):
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     else:
         status_code = error.http_status
 
@@ -93,40 +93,33 @@ async def submit_guided_voice_contribution(
     consentPolicyVersion: Annotated[str, Form()],
     audio: Annotated[UploadFile, File()],
     sentence_id: Annotated[str | None, Form(alias="sentenceId")] = None,
+    audioDurationSeconds: Annotated[float | None, Form(ge=0)] = None,
 ) -> ContributionCreatedResponse | JSONResponse:
     """Accept one guided recording using the existing frontend field names."""
 
-    try:
-        audio_content = await read_bounded_upload(
-            audio,
-            settings.max_guided_audio_size_mb,
-        )
-    except Exception:
-        error = ContributionCreationError()
-        return _safe_error_response(error)
-    finally:
-        try:
-            await audio.close()
-        except Exception:
-            pass
-
-    contribution_input = GuidedContributionInput(
-        contributor_name=contributor_name,
-        language=language,
-        sentence=sentence,
-        sentence_source=sentence_source,
-        sentence_id=sentence_id,
-        consent_given=consentGiven,
-        consent_policy_version=consentPolicyVersion,
-        audio_filename=audio.filename or "",
-        audio_mime_type=audio.content_type or "",
-        audio_content=audio_content,
-    )
-
+    staged_audio: StagedAudioUpload | None = None
     try:
         profile = get_or_create_profile(
             database=database,
             authenticated_user=user,
+        )
+        staged_audio = await read_bounded_upload(
+            audio,
+            settings.max_audio_upload_bytes,
+        )
+        contribution_input = GuidedContributionInput(
+            contributor_name=contributor_name,
+            language=language,
+            sentence=sentence,
+            sentence_source=sentence_source,
+            sentence_id=sentence_id,
+            consent_given=consentGiven,
+            consent_policy_version=consentPolicyVersion,
+            audio_filename=audio.filename or "recording",
+            audio_mime_type=audio.content_type or "",
+            audio_content=None,
+            audio_duration_seconds=audioDurationSeconds,
+            staged_audio=staged_audio,
         )
         contribution = create_guided_contribution(
             database,
@@ -135,11 +128,17 @@ async def submit_guided_voice_contribution(
         )
     except ProfileServiceError:
         raise
-    except (ContributionServiceError, AudioValidationError) as error:
+    except (ContributionServiceError, AudioValidationError, AudioStorageError) as error:
         return _safe_error_response(error)
     except Exception:
         database.rollback()
         return _safe_error_response(ContributionCreationError())
+    finally:
+        cleanup_staged_audio(staged_audio)
+        try:
+            await audio.close()
+        except Exception:
+            pass
 
     return ContributionCreatedResponse.model_validate(contribution)
 
@@ -158,40 +157,32 @@ async def submit_open_recording(
     consentPolicyVersion: Annotated[str, Form()],
     audio: Annotated[UploadFile, File()],
     topic: Annotated[str | None, Form()] = None,
+    audioDurationSeconds: Annotated[float | None, Form(ge=0)] = None,
 ) -> ContributionCreatedResponse | JSONResponse:
     """Accept one consented open recording with an optional topic."""
 
-    creation_error = ContributionCreationError(
-        "The open recording could not be completed."
-    )
-    try:
-        audio_content = await read_bounded_upload(
-            audio,
-            settings.max_open_audio_size_mb,
-        )
-    except Exception:
-        return _safe_error_response(creation_error)
-    finally:
-        try:
-            await audio.close()
-        except Exception:
-            pass
-
-    contribution_input = OpenRecordingInput(
-        contributor_name=contributorName,
-        language=language,
-        topic=topic,
-        consent_given=consentGiven,
-        consent_policy_version=consentPolicyVersion,
-        audio_filename=audio.filename or "",
-        audio_mime_type=audio.content_type or "",
-        audio_content=audio_content,
-    )
-
+    creation_error = ContributionCreationError()
+    staged_audio: StagedAudioUpload | None = None
     try:
         profile = get_or_create_profile(
             database=database,
             authenticated_user=user,
+        )
+        staged_audio = await read_bounded_upload(
+            audio,
+            settings.max_audio_upload_bytes,
+        )
+        contribution_input = OpenRecordingInput(
+            contributor_name=contributorName,
+            language=language,
+            topic=topic,
+            consent_given=consentGiven,
+            consent_policy_version=consentPolicyVersion,
+            audio_filename=audio.filename or "recording",
+            audio_mime_type=audio.content_type or "",
+            audio_content=None,
+            audio_duration_seconds=audioDurationSeconds,
+            staged_audio=staged_audio,
         )
         contribution = create_open_recording(
             database,
@@ -200,11 +191,17 @@ async def submit_open_recording(
         )
     except ProfileServiceError:
         raise
-    except (ContributionServiceError, AudioValidationError) as error:
+    except (ContributionServiceError, AudioValidationError, AudioStorageError) as error:
         return _safe_error_response(error)
     except Exception:
         database.rollback()
         return _safe_error_response(creation_error)
+    finally:
+        cleanup_staged_audio(staged_audio)
+        try:
+            await audio.close()
+        except Exception:
+            pass
 
     return ContributionCreatedResponse.model_validate(contribution)
 

@@ -215,6 +215,7 @@ export class AdminReview {
     this._audioGeneration = 0;
     this._reviewGeneration = 0;
     this._audioUrl = null;
+    this._audioPlaybackUnsupported = false;
   }
 
   initializeAdminReview() {
@@ -823,6 +824,7 @@ export class AdminReview {
       this._urlApi?.revokeObjectURL?.(this._audioUrl);
       this._audioUrl = null;
     }
+    this._audioPlaybackUnsupported = false;
   }
 
   _bindEvents() {
@@ -861,6 +863,11 @@ export class AdminReview {
     });
     this._bind(this._elements.adminRetryAudioButton, "click", () => {
       void this.retryAudio();
+    });
+    this._bind(this._elements.adminAudioPlayer, "error", () => {
+      if (!this._audioUrl) return;
+      this._audioPlaybackUnsupported = true;
+      this._renderAudio();
     });
     this._bind(this._elements.adminApproveButton, "click", () => {
       void this.review("approved");
@@ -925,6 +932,7 @@ export class AdminReview {
       "adminAudioStatus",
       "adminAudioPlayer",
       "adminRetryAudioButton",
+      "adminDownloadAudioButton",
       "adminReviewForm",
       "adminReviewNotice",
       "adminReviewBadge",
@@ -1145,11 +1153,15 @@ export class AdminReview {
     const selection = this._state.selection;
     const player = this._elements.adminAudioPlayer;
     const retry = this._elements.adminRetryAudioButton;
+    const download = this._elements.adminDownloadAudioButton;
     const ready = selection.status === "ready" && selection.audioStatus === "ready";
     const error = selection.status === "ready" && selection.audioStatus === "error";
     player.hidden = !ready;
     retry.hidden = !error;
     retry.disabled = selection.audioStatus === "loading";
+    download.hidden = !ready || !this._audioUrl;
+    if (ready && this._audioUrl) download.setAttribute("href", this._audioUrl);
+    else download.removeAttribute("href");
     if (ready && this._audioUrl && player.getAttribute?.("src") !== this._audioUrl) {
       player.setAttribute("src", this._audioUrl);
     }
@@ -1159,6 +1171,8 @@ export class AdminReview {
         ? "Loading the protected audio…"
         : error
           ? selection.audioError?.message ?? safeError("audio")
+          : ready && this._audioPlaybackUnsupported
+            ? "This browser cannot play the original recording format directly. Use the protected original-file action instead."
           : ready
             ? "Audio is ready to review."
             : "";

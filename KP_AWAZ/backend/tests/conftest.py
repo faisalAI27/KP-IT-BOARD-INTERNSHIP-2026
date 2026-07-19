@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, sessionmaker
 TEST_ROOT = Path(tempfile.mkdtemp(prefix="kp_awaz_tests_"))
 TEST_DATABASE = TEST_ROOT / "test_kp_awaz.db"
 TEST_STORAGE = TEST_ROOT / "storage"
+TEST_RAW_AUDIO_STORAGE = TEST_STORAGE / "raw-audio"
 TEST_ADMIN_API_KEY = "test-admin-key"
 TEST_SUPABASE_URL = "https://test-project.supabase.co"
 TEST_SUPABASE_PUBLISHABLE_KEY = "test-publishable-key"
@@ -21,6 +22,7 @@ TEST_SUPABASE_SECRET_KEY = "test-server-secret-key"
 
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DATABASE}"
 os.environ["STORAGE_ROOT"] = str(TEST_STORAGE)
+os.environ["RAW_AUDIO_STORAGE_ROOT"] = str(TEST_RAW_AUDIO_STORAGE)
 os.environ["ADMIN_API_KEY"] = TEST_ADMIN_API_KEY
 os.environ["SUPABASE_URL"] = TEST_SUPABASE_URL
 os.environ["SUPABASE_PUBLISHABLE_KEY"] = TEST_SUPABASE_PUBLISHABLE_KEY

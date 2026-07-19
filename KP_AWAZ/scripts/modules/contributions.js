@@ -113,9 +113,6 @@ export async function initContributions() {
     playbackId: "donateRecPlayback",
     calloutId: "donateRecCallout",
     idleStatus: "Tap the microphone when you are ready",
-    maxDurationSeconds: 60,
-    maxDurationMessage:
-      "The 60-second recording limit was reached. Listen back or record again.",
     canStart: () => accessController?.canContribute() ?? false,
     onStart: () => stopRecorderIfActive(openRecorder),
     onCapture: () => {
@@ -135,9 +132,6 @@ export async function initContributions() {
     playbackId: "openRecPlayback",
     calloutId: "openRecCallout",
     idleStatus: "Tap when you are ready to speak",
-    maxDurationSeconds: 300,
-    maxDurationMessage:
-      "The 5-minute recording limit was reached. Listen back or record again.",
     canStart: () => accessController?.canContribute() ?? false,
     onStart: () => stopRecorderIfActive(donateRecorder),
     onCapture: () => {
@@ -366,9 +360,15 @@ export async function initContributions() {
     button.removeAttribute("aria-busy");
   }
 
-  function showSubmissionError(element) {
+  function showSubmissionError(element, error) {
     element.textContent =
-      "We could not submit your recording. Your recording has not been counted.";
+      error?.code === "AUDIO_FILE_TOO_LARGE"
+        ? "This recording is too large to upload. Please record a shorter sample and try again."
+        : error?.code === "EMPTY_AUDIO_FILE"
+          ? "No usable recording was received. Please record again."
+          : error?.code === "UNSUPPORTED_AUDIO_TYPE"
+            ? "This audio format could not be stored by the platform."
+            : "We could not submit your recording. Your recording has not been counted.";
     element.hidden = false;
   }
 
@@ -540,7 +540,8 @@ export async function initContributions() {
     const submission = accessController.beginSubmission("guided");
     if (!submission) return;
 
-    setPending(submitDonationButton, true, "Submitting…");
+    setPending(submitDonationButton, true, "Uploading recording…");
+    let submitted = false;
 
     try {
       await submitVoiceDonation({
@@ -552,19 +553,25 @@ export async function initContributions() {
         consentGiven: donationConsent.checked,
         consentPolicyVersion: CONSENT_POLICY_VERSION,
         audioBlob: donateRecorder.getBlob(),
+        audioDurationSeconds: donateRecorder.getDurationSeconds(),
       });
 
       if (!accessController.finishSubmission(submission)) return;
-
-      donateFlowContent.hidden = true;
-      flowProgress.hidden = true;
-      donateSuccess.hidden = false;
-      announceContributionCreated();
-    } catch {
-      if (!accessController.finishSubmission(submission)) return;
-      showSubmissionError(donationError);
+      submitted = true;
+    } catch (error) {
+      if (accessController.finishSubmission(submission)) {
+        showSubmissionError(donationError, error);
+      }
+    } finally {
       setPending(submitDonationButton, false);
     }
+
+    if (!submitted) return;
+    donateRecorder.reset();
+    donateFlowContent.hidden = true;
+    flowProgress.hidden = true;
+    donateSuccess.hidden = false;
+    announceContributionCreated();
   });
 
   document
@@ -587,7 +594,8 @@ export async function initContributions() {
     const submission = accessController.beginSubmission("open");
     if (!submission) return;
 
-    setPending(submitOpenRecordingButton, true, "Submitting…");
+    setPending(submitOpenRecordingButton, true, "Uploading recording…");
+    let submitted = false;
 
     try {
       await submitOpenRecording({
@@ -597,19 +605,26 @@ export async function initContributions() {
         consentGiven: openRecordingConsent.checked,
         consentPolicyVersion: CONSENT_POLICY_VERSION,
         audioBlob: openRecorder.getBlob(),
+        audioDurationSeconds: openRecorder.getDurationSeconds(),
       });
 
       if (!accessController.finishSubmission(submission)) return;
-
-      recordSuccess.classList.add("show");
-      submitOpenRecordingButton.textContent = "Submitted";
-      submitOpenRecordingButton.removeAttribute("aria-busy");
-      announceContributionCreated();
-    } catch {
-      if (!accessController.finishSubmission(submission)) return;
-      showSubmissionError(recordError);
+      submitted = true;
+    } catch (error) {
+      if (accessController.finishSubmission(submission)) {
+        showSubmissionError(recordError, error);
+      }
+    } finally {
       setPending(submitOpenRecordingButton, false);
     }
+
+    if (!submitted) return;
+    openRecorder.reset();
+    recordSuccess.classList.add("show");
+    submitOpenRecordingButton.textContent = "Submitted";
+    submitOpenRecordingButton.disabled = true;
+    submitOpenRecordingButton.removeAttribute("aria-busy");
+    announceContributionCreated();
   });
 
   recordSoundForm.addEventListener("reset", () => {

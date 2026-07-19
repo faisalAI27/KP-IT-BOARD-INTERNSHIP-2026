@@ -1,6 +1,7 @@
 """Service tests for open-recording validation and atomic storage."""
 
 from pathlib import Path
+import hashlib
 
 import pytest
 from sqlalchemy import func, select
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
 from app.consent import CONSENT_POLICY_VERSION
-from app.models import Contribution
+from app.models import Contribution, PointLedgerEntry
 from app.schemas import ContributionCreatedResponse
 from app.services.audio_storage import (
     AudioStorageError,
@@ -27,7 +28,6 @@ from app.services.contribution_service import (
     create_open_recording as create_owned_open_recording,
 )
 from app.utils.audio_validation import (
-    AudioExtensionMismatchError,
     AudioFileTooLargeError,
     EmptyAudioFileError,
     InvalidAudioSignatureError,
@@ -39,6 +39,9 @@ WEBM_BYTES = b"\x1a\x45\xdf\xa3open-webm"
 OGG_BYTES = b"OggSopen-ogg"
 MP3_BYTES = b"ID3open-mp3"
 M4A_BYTES = b"\x00\x00\x00\x18ftypM4A open-m4a"
+WAV_BYTES = b"RIFF\x04\x00\x00\x00WAVEopen-wav"
+AAC_BYTES = b"\xff\xf1open-aac"
+FLAC_BYTES = b"fLaCopen-flac"
 OWNER_USER_ID = "0d5dd8f5-93df-462b-b234-a16973089092"
 
 
@@ -78,9 +81,15 @@ def contribution_count(database: Session) -> int:
     ("filename", "mime_type", "content", "extension"),
     [
         ("recording.webm", "audio/webm", WEBM_BYTES, "webm"),
+        ("recording.any", "audio/webm;codecs=opus", WEBM_BYTES, "webm"),
         ("recording.ogg", "audio/ogg", OGG_BYTES, "ogg"),
+        ("recording.any", "audio/ogg;codecs=opus", OGG_BYTES, "ogg"),
         ("recording.mp3", "audio/mpeg", MP3_BYTES, "mp3"),
         ("recording.m4a", "audio/mp4", M4A_BYTES, "m4a"),
+        ("recording.wav", "audio/wav", WAV_BYTES, "wav"),
+        ("recording.any", "audio/x-wav", WAV_BYTES, "wav"),
+        ("recording.aac", "audio/aac", AAC_BYTES, "aac"),
+        ("recording.flac", "audio/flac", FLAC_BYTES, "flac"),
     ],
 )
 def test_supported_open_audio_is_created_and_stored(
@@ -102,6 +111,8 @@ def test_supported_open_audio_is_created_and_stored(
     stored_path = resolve_audio_storage_path(contribution.audio_storage_key)
     assert contribution.contribution_type == "open_recording"
     assert contribution.status == "queued"
+    assert contribution.review_status == "pending"
+    assert contribution.user_id == OWNER_USER_ID
     assert contribution.consent_given is True
     assert contribution.consent_policy_version == CONSENT_POLICY_VERSION
     assert contribution.consent_timestamp == contribution.created_at
@@ -110,8 +121,15 @@ def test_supported_open_audio_is_created_and_stored(
     assert contribution.sentence_source is None
     assert contribution.duration_seconds is None
     assert contribution.audio_storage_key.endswith(f".{extension}")
+    assert contribution.audio_extension == extension
+    assert contribution.audio_checksum_sha256 == hashlib.sha256(content).hexdigest()
+    assert contribution.server_generated_filename == Path(
+        contribution.audio_storage_key
+    ).name
+    assert contribution.storage_format_version == "raw-v1"
     assert not Path(contribution.audio_storage_key).is_absolute()
     assert stored_path.read_bytes() == content
+    assert db_session.scalar(select(func.count()).select_from(PointLedgerEntry)) == 0
 
 
 def test_open_metadata_is_normalized_and_exact(db_session: Session) -> None:
@@ -129,6 +147,7 @@ def test_open_metadata_is_normalized_and_exact(db_session: Session) -> None:
     assert contribution.language == "Pashto"
     assert contribution.original_filename == "Recording.WEBM"
     assert contribution.mime_type == "audio/webm"
+    assert contribution.original_mime_type == "audio/webm;codecs=opus"
     assert contribution.file_size == len(WEBM_BYTES)
 
 
@@ -216,12 +235,14 @@ def test_invalid_audio_signature_is_rejected(db_session: Session) -> None:
         )
 
 
-def test_contradictory_audio_extension_is_rejected(db_session: Session) -> None:
-    with pytest.raises(AudioExtensionMismatchError):
-        create_open_recording(
-            db_session,
-            open_input(audio_filename="recording.wav"),
-        )
+def test_client_audio_extension_is_ignored(db_session: Session) -> None:
+    contribution = create_open_recording(
+        db_session,
+        open_input(audio_filename="recording.wav"),
+    )
+
+    assert contribution.audio_extension == "webm"
+    assert contribution.audio_storage_key.endswith(".webm")
 
 
 def test_empty_audio_is_rejected(db_session: Session) -> None:
@@ -232,21 +253,16 @@ def test_empty_audio_is_rejected(db_session: Session) -> None:
 def test_audio_over_open_limit_is_rejected(
     monkeypatch: pytest.MonkeyPatch, db_session: Session
 ) -> None:
-    monkeypatch.setattr(settings, "max_open_audio_size_mb", 1 / (1024 * 1024))
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
 
     with pytest.raises(AudioFileTooLargeError):
         create_open_recording(db_session, open_input())
 
 
-def test_audio_above_guided_but_within_open_limit_succeeds(
+def test_audio_at_universal_limit_succeeds(
     monkeypatch: pytest.MonkeyPatch, db_session: Session
 ) -> None:
-    monkeypatch.setattr(settings, "max_guided_audio_size_mb", 4 / (1024 * 1024))
-    monkeypatch.setattr(
-        settings,
-        "max_open_audio_size_mb",
-        len(WEBM_BYTES) / (1024 * 1024),
-    )
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", len(WEBM_BYTES))
 
     contribution = create_open_recording(db_session, open_input())
 
@@ -267,9 +283,11 @@ def test_database_failure_removes_audio_and_row(
     with pytest.raises(ContributionCreationError) as error:
         create_open_recording(db_session, open_input())
 
-    assert str(error.value) == "The open recording could not be completed."
+    assert str(error.value) == (
+        "The contribution could not be completed. Your recording was not counted."
+    )
     assert contribution_count(db_session) == 0
-    assert list((test_storage_root / "audio").rglob("*.*")) == []
+    assert list((test_storage_root / "raw-audio").rglob("contribution_*")) == []
 
 
 def test_storage_failure_leaves_no_contribution(
@@ -277,7 +295,7 @@ def test_storage_failure_leaves_no_contribution(
 ) -> None:
     monkeypatch.setattr(
         contribution_service_module,
-        "save_audio_file",
+        "store_audio_file",
         lambda **_: (_ for _ in ()).throw(AudioStorageError()),
     )
 

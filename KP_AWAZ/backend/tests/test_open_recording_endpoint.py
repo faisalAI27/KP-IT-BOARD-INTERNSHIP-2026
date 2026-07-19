@@ -123,6 +123,7 @@ def test_swagger_uses_exact_multipart_field_names(client: TestClient) -> None:
         "consentGiven",
         "consentPolicyVersion",
         "audio",
+        "audioDurationSeconds",
     }
     assert set(form_schema["required"]) == {
         "contributorName",
@@ -259,7 +260,7 @@ def test_unsupported_mime_returns_415(client: TestClient) -> None:
 def test_oversized_open_audio_returns_413(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(settings, "max_open_audio_size_mb", 1 / (1024 * 1024))
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
 
     response = post_open(client)
 
@@ -267,11 +268,14 @@ def test_oversized_open_audio_returns_413(
     assert response.json()["code"] == "AUDIO_FILE_TOO_LARGE"
 
 
-def test_contradictory_extension_returns_400(client: TestClient) -> None:
+def test_client_extension_is_ignored(client: TestClient, db_session: Session) -> None:
     response = post_open(client, filename="recording.wav")
+    contribution = db_session.get(Contribution, response.json()["id"])
 
-    assert response.status_code == 400
-    assert response.json()["code"] == "AUDIO_EXTENSION_MISMATCH"
+    assert response.status_code == 201
+    assert contribution is not None
+    assert contribution.audio_extension == "webm"
+    assert contribution.audio_storage_key.endswith(".webm")
 
 
 def test_invalid_signature_returns_400(client: TestClient) -> None:
@@ -314,12 +318,12 @@ def test_upload_file_is_closed_after_processing(
     assert captured_uploads[0].file.closed
 
 
-def test_reader_stops_at_open_limit_plus_one_byte(
+def test_reader_uses_a_bounded_streaming_chunk(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     requested_sizes: list[int] = []
     original_read = StarletteUploadFile.read
-    monkeypatch.setattr(settings, "max_open_audio_size_mb", 1 / (1024 * 1024))
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
 
     async def tracking_read(upload, size=-1):
         requested_sizes.append(size)
@@ -330,18 +334,13 @@ def test_reader_stops_at_open_limit_plus_one_byte(
     response = post_open(client)
 
     assert response.status_code == 413
-    assert requested_sizes == [2]
+    assert requested_sizes == [64 * 1024]
 
 
-def test_guided_and_open_endpoints_use_independent_size_limits(
+def test_guided_and_open_endpoints_share_the_universal_size_limit(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(settings, "max_guided_audio_size_mb", 4 / (1024 * 1024))
-    monkeypatch.setattr(
-        settings,
-        "max_open_audio_size_mb",
-        len(WEBM_BYTES) / (1024 * 1024),
-    )
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
     guided_response = client.post(
         GUIDED_ENDPOINT,
         headers=TEST_AUTHORIZATION,
@@ -349,7 +348,7 @@ def test_guided_and_open_endpoints_use_independent_size_limits(
             "contributorName": "Faisal Imran",
             "language": "Pashto",
             "sentence": "هر غږ ارزښت لري.",
-            "sentenceSource": "provided",
+            "sentenceSource": "custom",
             "consentGiven": "true",
             "consentPolicyVersion": CONSENT_POLICY_VERSION,
         },
@@ -360,7 +359,8 @@ def test_guided_and_open_endpoints_use_independent_size_limits(
 
     assert guided_response.status_code == 413
     assert guided_response.json()["code"] == "AUDIO_FILE_TOO_LARGE"
-    assert open_response.status_code == 201
+    assert open_response.status_code == 413
+    assert open_response.json()["code"] == "AUDIO_FILE_TOO_LARGE"
 
 
 def test_database_failure_returns_500_and_removes_audio(
@@ -379,11 +379,11 @@ def test_database_failure_returns_500_and_removes_audio(
 
     assert response.status_code == 500
     assert response.json() == {
-        "message": "The open recording could not be completed.",
+        "message": "The contribution could not be completed. Your recording was not counted.",
         "code": "CONTRIBUTION_CREATION_FAILED",
     }
     assert contribution_count(db_session) == 0
-    assert list((test_storage_root / "audio").rglob("*.*")) == []
+    assert list((test_storage_root / "raw-audio").rglob("contribution_*")) == []
 
 
 def test_storage_failure_returns_500_without_database_row(
@@ -393,7 +393,7 @@ def test_storage_failure_returns_500_without_database_row(
 ) -> None:
     monkeypatch.setattr(
         contribution_service_module,
-        "save_audio_file",
+        "commit_staged_audio_file",
         lambda **_: (_ for _ in ()).throw(AudioStorageError()),
     )
 
@@ -431,7 +431,7 @@ def test_existing_routes_continue_working(client: TestClient) -> None:
                 "contributorName": "Faisal Imran",
                 "language": "Pashto",
                 "sentence": "هر غږ ارزښت لري.",
-                "sentenceSource": "provided",
+                    "sentenceSource": "custom",
                 "consentGiven": "true",
                 "consentPolicyVersion": CONSENT_POLICY_VERSION,
             },

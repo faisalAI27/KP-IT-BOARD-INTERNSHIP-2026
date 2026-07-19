@@ -287,6 +287,30 @@ test("duplicate submission is prevented until the first completes", () => {
 });
 
 
+test("audio submissions clear button loading in finally without disabling the page", async () => {
+  const source = await readFile(
+    new URL("../../scripts/modules/contributions.js", import.meta.url),
+    "utf8",
+  );
+
+  assert.equal((source.match(/finally \{/g) ?? []).length >= 2, true);
+  assert.match(source, /finally \{\s*setPending\(submitDonationButton, false\);/);
+  assert.match(source, /finally \{\s*setPending\(submitOpenRecordingButton, false\);/);
+  assert.doesNotMatch(source, /document\.body\.inert|body\.style\.filter|filter:\s*blur/);
+});
+
+
+test("audio submission remains binary multipart without base64 or client extensions", async () => {
+  const source = await readFile(
+    new URL("../../scripts/services/contributions-api.js", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /formData\.append\("audio", audioBlob, "recording"\)/);
+  assert.doesNotMatch(source, /FileReader|readAsDataURL|btoa\(|\.webm"\)/);
+});
+
+
 test("authentication verification error keeps contribution unavailable", () => {
   const view = fixture(
     authState("error", null, {

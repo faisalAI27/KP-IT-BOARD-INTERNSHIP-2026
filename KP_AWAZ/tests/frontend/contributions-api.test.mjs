@@ -3,11 +3,10 @@ import { afterEach, test } from "node:test";
 
 import { appConfig } from "../../scripts/config.js";
 import {
-  AUDIO_MIME_EXTENSION_MAP,
   ApiError,
   CONSENT_POLICY_VERSION,
   ContributionsApi,
-  extensionForAudioMimeType,
+  SUPPORTED_RECORDING_MIME_TYPES,
   normalizeAudioMimeType,
   validateMyContributionsResponse,
 } from "../../scripts/services/contributions-api.js";
@@ -642,84 +641,106 @@ test("malformed contribution history responses are rejected", async (context) =>
 });
 
 
-test("audio/webm maps to webm", () => {
-  assert.equal(extensionForAudioMimeType("audio/webm"), "webm");
-});
-
-
-test("WebM codec parameters normalize and map to webm", () => {
+test("WebM codec parameters normalize to their base MIME", () => {
   assert.equal(
     normalizeAudioMimeType(" audio/webm;codecs=opus "),
     "audio/webm",
   );
-  assert.equal(extensionForAudioMimeType("audio/webm;codecs=opus"), "webm");
-});
-
-
-test("audio/ogg maps to ogg", () => {
-  assert.equal(extensionForAudioMimeType("audio/ogg"), "ogg");
-});
-
-
-test("OGG codec parameters normalize and map to ogg", () => {
-  assert.equal(extensionForAudioMimeType("audio/ogg; codecs=opus"), "ogg");
-});
-
-
-test("WAV MIME variants map to wav", () => {
-  assert.equal(extensionForAudioMimeType("audio/wav"), "wav");
-  assert.equal(extensionForAudioMimeType("audio/x-wav"), "wav");
-});
-
-
-test("audio/mpeg maps to mp3", () => {
-  assert.equal(extensionForAudioMimeType("audio/mpeg"), "mp3");
-});
-
-
-test("audio/mp4 maps to m4a", () => {
-  assert.equal(extensionForAudioMimeType("audio/mp4"), "m4a");
 });
 
 
 test("audio MIME casing and whitespace are normalized", () => {
   assert.equal(normalizeAudioMimeType("  Audio/MP4  "), "audio/mp4");
-  assert.equal(extensionForAudioMimeType("Audio/MP4"), "m4a");
 });
 
 
-test("missing audio MIME uses the documented webm fallback", () => {
-  assert.equal(extensionForAudioMimeType(""), "webm");
-  assert.equal(extensionForAudioMimeType(undefined), "webm");
+test("the browser upload allowlist includes all supported raw audio types", () => {
+  assert.deepEqual(SUPPORTED_RECORDING_MIME_TYPES, [
+    "audio/webm",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/mpeg",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/aac",
+    "audio/flac",
+  ]);
+  assert.equal(Object.isFrozen(SUPPORTED_RECORDING_MIME_TYPES), true);
 });
 
 
-test("known unsupported audio MIME throws a clear error", () => {
-  assert.throws(
-    () => extensionForAudioMimeType("audio/aac"),
-    /Unsupported audio MIME type: audio\/aac/,
-  );
-  assert.equal(Object.isFrozen(AUDIO_MIME_EXTENSION_MAP), true);
+test("missing or unsupported Blob MIME is rejected before fetch", () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  for (const type of ["", "video/webm", "application/octet-stream"]) {
+    assert.throws(
+      () => api.submitVoiceDonation(
+        voiceInput({ audioBlob: new Blob(["audio"], { type }) }),
+      ),
+      { code: "UNSUPPORTED_AUDIO_TYPE" },
+    );
+  }
+  assert.equal(fetchCalls, 0);
 });
 
 
-test("guided FormData filename matches the Blob MIME type", async () => {
+test("guided FormData uses a generic filename and preserves the Blob MIME", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
   await contributionApi.submitVoiceDonation(
-    voiceInput({ audioBlob: new Blob(["mp3"], { type: "audio/mpeg" }) }),
+    voiceInput({ audioBlob: new Blob(["aac"], { type: "audio/aac" }) }),
   );
 
-  assert.equal(request().options.body.get("audio").name, "recording.mp3");
+  const audio = request().options.body.get("audio");
+  assert.equal(audio.name, "recording");
+  assert.equal(audio.type, "audio/aac");
 });
 
 
-test("open FormData filename matches the Blob MIME type", async () => {
+test("open FormData never supplies a trusted extension", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
   await contributionApi.submitOpenRecording(
     openInput({ audioBlob: new Blob(["m4a"], { type: "audio/mp4" }) }),
   );
 
-  assert.equal(request().options.body.get("audio").name, "recording.m4a");
+  assert.equal(request().options.body.get("audio").name, "recording");
+});
+
+
+test("recording duration is sent only as finite nonnegative metadata", async () => {
+  const request = installJsonFetch(successBody, { status: 201 });
+
+  await contributionApi.submitVoiceDonation(
+    voiceInput({ audioDurationSeconds: 12.5 }),
+  );
+
+  assert.equal(request().options.body.get("audioDurationSeconds"), "12.5");
+});
+
+
+test("zero-byte Blob is rejected before fetch", () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  assert.throws(
+    () => api.submitOpenRecording(
+      openInput({ audioBlob: new Blob([], { type: "audio/webm" }) }),
+    ),
+    { code: "EMPTY_AUDIO_FILE" },
+  );
+  assert.equal(fetchCalls, 0);
 });

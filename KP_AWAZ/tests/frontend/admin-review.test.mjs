@@ -78,6 +78,7 @@ const ELEMENT_IDS = [
   "adminAudioStatus",
   "adminAudioPlayer",
   "adminRetryAudioButton",
+  "adminDownloadAudioButton",
   "adminReviewForm",
   "adminReviewNotice",
   "adminReviewBadge",
@@ -592,6 +593,25 @@ test("23 successful audio loading creates an object URL", async () => {
   await openItem(fixture);
   assert.equal(fixture.urlApi.calls.created.length, 1);
   assert.equal(element(fixture, "adminAudioPlayer").getAttribute("src"), "blob:admin-audio-1");
+});
+
+
+test("23a unsupported native playback keeps a protected original-file action", async () => {
+  const fixture = createFixture();
+  await connect(fixture);
+  await openItem(fixture);
+
+  element(fixture, "adminAudioPlayer").dispatch("error");
+
+  assert.match(
+    element(fixture, "adminAudioStatus").textContent,
+    /cannot play the original recording format directly/i,
+  );
+  assert.equal(element(fixture, "adminDownloadAudioButton").hidden, false);
+  assert.equal(
+    element(fixture, "adminDownloadAudioButton").getAttribute("href"),
+    "blob:admin-audio-1",
+  );
 });
 
 

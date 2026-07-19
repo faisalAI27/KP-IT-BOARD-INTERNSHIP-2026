@@ -326,11 +326,35 @@ test("supported recording MIME selection follows the preference order", () => {
   );
   assert.deepEqual(RECORDING_MIME_TYPE_PREFERENCES, [
     "audio/webm;codecs=opus",
-    "audio/webm",
     "audio/ogg;codecs=opus",
-    "audio/ogg",
     "audio/mp4",
+    "audio/webm",
+    "audio/ogg",
   ]);
+});
+
+
+test("OGG with Opus is selected when WebM is unsupported", () => {
+  FakeMediaRecorder.supportedTypes = new Set(["audio/ogg;codecs=opus"]);
+
+  assert.equal(
+    selectSupportedRecordingMimeType(FakeMediaRecorder),
+    "audio/ogg;codecs=opus",
+  );
+});
+
+
+test("MP4 is selected when WebM and OGG Opus are unsupported", () => {
+  FakeMediaRecorder.supportedTypes = new Set(["audio/mp4", "audio/ogg"]);
+
+  assert.equal(selectSupportedRecordingMimeType(FakeMediaRecorder), "audio/mp4");
+});
+
+
+test("no reported preferred MIME allows the browser default", () => {
+  FakeMediaRecorder.supportedTypes = new Set();
+
+  assert.equal(selectSupportedRecordingMimeType(FakeMediaRecorder), "");
 });
 
 
@@ -384,6 +408,32 @@ test("recorder construction omits MIME options when support checking is unavaila
   await fixture.recorder.start();
 
   assert.equal(FakeMediaRecorder.instances[0].options, undefined);
+});
+
+
+test("browser-default MediaRecorder submits its actual Blob MIME", async () => {
+  const environment = installEnvironment();
+  class DefaultMp4Recorder extends FakeMediaRecorder {
+    constructor(stream, options) {
+      super(stream, options);
+      this.mimeType = "audio/mp4";
+    }
+  }
+  DefaultMp4Recorder.supportedTypes = new Set();
+  Object.defineProperty(globalThis, "MediaRecorder", {
+    configurable: true,
+    value: DefaultMp4Recorder,
+  });
+  const fixture = createTestRecorder(environment, "default-mp4");
+
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+  fixture.recorder.stop();
+  emitCompletedRecording(instance, "mp4-audio");
+
+  assert.equal(instance.options, undefined);
+  assert.equal(fixture.recorder.getBlob().type, "audio/mp4");
+  assert.equal(fixture.captures[0].blob.type, "audio/mp4");
 });
 
 
@@ -474,6 +524,61 @@ test("manual stop is idempotent, clears timer, and finalizes playback", async ()
   assert.equal(fixture.element("playbackId").hidden, false);
   assert.equal(fixture.captures.length, 1);
   assert.equal(stream.tracks.every((track) => track.stopCalls === 1), true);
+});
+
+
+test("an empty recording is rejected without creating playback", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "empty");
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+
+  fixture.recorder.stop();
+  instance.emit("dataavailable", {
+    data: new Blob([], { type: instance.mimeType }),
+  });
+  instance.emit("stop");
+
+  assert.equal(fixture.recorder.hasRecording(), false);
+  assert.equal(fixture.captures.length, 0);
+  assert.equal(environment.createdUrls.length, 0);
+  assert.equal(fixture.element("playbackId").hidden, true);
+});
+
+
+test("captured duration is retained with the selected recording and cleared on reset", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "duration");
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+  environment.tick(2);
+  fixture.recorder.stop();
+  emitCompletedRecording(instance, "duration-audio");
+
+  assert.equal(fixture.recorder.getDurationSeconds(), 2);
+  assert.equal(fixture.captures[0].durationSeconds, 2);
+
+  fixture.recorder.reset();
+  assert.equal(fixture.recorder.getDurationSeconds(), 0);
+});
+
+
+test("playback failure keeps the original Blob and shows a safe fallback", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "playback-error");
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+  fixture.recorder.stop();
+  emitCompletedRecording(instance, "original-audio");
+  const originalBlob = fixture.recorder.getBlob();
+
+  fixture.element("playbackId").dispatch("error");
+
+  assert.equal(fixture.recorder.getBlob(), originalBlob);
+  assert.equal(
+    fixture.element("statusId").textContent,
+    "This browser cannot play the original recording format directly.",
+  );
 });
 
 

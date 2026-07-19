@@ -1,5 +1,6 @@
 """Multipart endpoint tests for guided voice contributions."""
 
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -87,6 +88,59 @@ def test_valid_webm_returns_201_and_queued(client: TestClient) -> None:
 
     assert response.status_code == 201
     assert response.json()["status"] == "queued"
+
+
+@pytest.mark.parametrize(
+    ("mime_type", "content", "extension"),
+    [
+        ("audio/webm;codecs=opus", WEBM_BYTES, "webm"),
+        ("audio/ogg", b"OggSguided-ogg", "ogg"),
+        ("audio/ogg;codecs=opus", b"OggSguided-ogg-opus", "ogg"),
+        ("audio/mp4", b"\x00\x00\x00\x18ftypM4A guided-m4a", "m4a"),
+        ("audio/mpeg", b"ID3guided-mp3", "mp3"),
+        ("audio/wav", b"RIFF\x04\x00\x00\x00WAVEguided-wav", "wav"),
+        ("audio/x-wav", b"RIFF\x04\x00\x00\x00WAVEguided-xwav", "wav"),
+        ("audio/aac", b"\xff\xf1guided-aac", "aac"),
+        ("audio/flac", b"fLaCguided-flac", "flac"),
+    ],
+)
+def test_supported_browser_audio_is_streamed_and_server_mapped(
+    mime_type: str,
+    content: bytes,
+    extension: str,
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    response = post_guided(
+        client,
+        filename="client-supplied-name.exe",
+        content=content,
+        mime_type=mime_type,
+    )
+    contribution = db_session.get(Contribution, response.json()["id"])
+
+    assert response.status_code == 201
+    assert contribution is not None
+    assert contribution.audio_extension == extension
+    assert contribution.audio_storage_key.endswith(f".{extension}")
+    assert contribution.audio_checksum_sha256 == hashlib.sha256(content).hexdigest()
+    stored_path = resolve_audio_storage_path(contribution.audio_storage_key)
+    assert stored_path.read_bytes() == content
+
+
+def test_browser_reported_duration_is_stored_when_available(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    data = valid_form_data()
+    data["audioDurationSeconds"] = "12.25"
+
+    response = post_guided(client, data=data)
+    contribution = db_session.get(Contribution, response.json()["id"])
+
+    assert response.status_code == 201
+    assert contribution is not None
+    assert contribution.duration_seconds == 12.25
 
 
 def test_valid_custom_sentence_returns_201(client: TestClient) -> None:
@@ -368,22 +422,29 @@ def test_unsupported_mime_returns_415(client: TestClient) -> None:
 
 
 def test_oversized_audio_returns_413(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    test_storage_root: Path,
 ) -> None:
-    monkeypatch.setattr(settings, "max_guided_audio_size_mb", 1 / (1024 * 1024))
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
 
     response = post_guided(client, content=WEBM_BYTES)
 
     assert response.status_code == 413
     assert response.json()["code"] == "AUDIO_FILE_TOO_LARGE"
+    assert [
+        path
+        for path in (test_storage_root / "raw-audio").rglob("*")
+        if path.is_file()
+    ] == []
 
 
-def test_audio_reader_stops_at_limit_plus_one_byte(
+def test_audio_reader_uses_a_bounded_streaming_chunk(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     requested_sizes: list[int] = []
     original_read = StarletteUploadFile.read
-    monkeypatch.setattr(settings, "max_guided_audio_size_mb", 1 / (1024 * 1024))
+    monkeypatch.setattr(settings, "max_audio_upload_bytes", 1)
 
     async def tracking_read(upload, size=-1):
         requested_sizes.append(size)
@@ -394,14 +455,17 @@ def test_audio_reader_stops_at_limit_plus_one_byte(
     response = post_guided(client, content=WEBM_BYTES)
 
     assert response.status_code == 413
-    assert requested_sizes == [2]
+    assert requested_sizes == [64 * 1024]
 
 
-def test_contradictory_extension_returns_400(client: TestClient) -> None:
+def test_client_extension_is_ignored(client: TestClient, db_session: Session) -> None:
     response = post_guided(client, filename="recording.wav")
+    contribution = db_session.get(Contribution, response.json()["id"])
 
-    assert response.status_code == 400
-    assert response.json()["code"] == "AUDIO_EXTENSION_MISMATCH"
+    assert response.status_code == 201
+    assert contribution is not None
+    assert contribution.audio_extension == "webm"
+    assert contribution.audio_storage_key.endswith(".webm")
 
 
 def test_invalid_signature_returns_400(client: TestClient) -> None:
@@ -461,17 +525,18 @@ def test_database_failure_returns_500_and_removes_audio(
     assert response.status_code == 500
     assert response.json()["code"] == "CONTRIBUTION_CREATION_FAILED"
     assert contribution_count(db_session) == 0
-    assert list((test_storage_root / "audio").rglob("*.*")) == []
+    assert list((test_storage_root / "raw-audio").rglob("contribution_*")) == []
 
 
 def test_storage_failure_returns_500_without_database_row(
     client: TestClient,
     db_session: Session,
     monkeypatch: pytest.MonkeyPatch,
+    test_storage_root: Path,
 ) -> None:
     monkeypatch.setattr(
         contribution_service_module,
-        "save_audio_file",
+        "commit_staged_audio_file",
         lambda **_: (_ for _ in ()).throw(AudioStorageError()),
     )
 
@@ -480,6 +545,11 @@ def test_storage_failure_returns_500_without_database_row(
     assert response.status_code == 500
     assert response.json()["code"] == "AUDIO_STORAGE_FAILED"
     assert contribution_count(db_session) == 0
+    assert [
+        path
+        for path in (test_storage_root / "raw-audio").rglob("*")
+        if path.is_file()
+    ] == []
 
 
 def test_existing_routes_continue_working(client: TestClient) -> None:

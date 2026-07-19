@@ -51,6 +51,10 @@ class Contribution(Base):
             name="ck_contribution_duration_non_negative",
         ),
         CheckConstraint(
+            "audio_checksum_sha256 IS NULL OR length(audio_checksum_sha256) = 64",
+            name="ck_contribution_audio_checksum_sha256_length",
+        ),
+        CheckConstraint(
             "status IN ('queued', 'approved', 'rejected', 'needs_review')",
             name="ck_contribution_status_valid",
         ),
@@ -105,6 +109,19 @@ class Contribution(Base):
     audio_storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    original_mime_type: Mapped[str | None] = mapped_column(
+        String(200), nullable=True
+    )
+    audio_extension: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    audio_checksum_sha256: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    server_generated_filename: Mapped[str | None] = mapped_column(
+        String(100), nullable=True
+    )
+    storage_format_version: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(

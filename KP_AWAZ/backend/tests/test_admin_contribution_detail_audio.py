@@ -134,6 +134,8 @@ def test_audio_invalid_admin_key_is_rejected(
         ("wav", "audio/x-wav", b"x-wav-review-audio"),
         ("mp3", "audio/mpeg", b"mp3-review-audio"),
         ("m4a", "audio/mp4", b"mp4-review-audio"),
+        ("aac", "audio/aac", b"aac-review-audio"),
+        ("flac", "audio/flac", b"flac-review-audio"),
     ],
 )
 def test_supported_audio_is_returned_with_correct_mime_type(
@@ -159,6 +161,7 @@ def test_supported_audio_is_returned_with_correct_mime_type(
     assert response.status_code == 200
     assert response.content == content
     assert response.headers["content-type"] == mime_type
+    assert response.headers["content-length"] == str(len(content))
     assert "inline" in response.headers["content-disposition"]
     assert "contribution-audio" in response.headers["content-disposition"]
 

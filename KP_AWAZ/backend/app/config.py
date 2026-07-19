@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         "http://127.0.0.1:4173",
     ]
     storage_root: Path = Path("storage")
+    raw_audio_storage_root: Path = BACKEND_ROOT / "data" / "audio" / "raw"
+    max_audio_upload_bytes: int = Field(default=52_428_800, gt=0)
+    # Legacy settings remain readable for deployments upgrading in place. New
+    # contribution uploads use MAX_AUDIO_UPLOAD_BYTES for every recording mode.
     max_audio_size_mb: int = 15
     max_guided_audio_size_mb: int = Field(default=15, gt=0)
     max_open_audio_size_mb: int = Field(default=50, gt=0)

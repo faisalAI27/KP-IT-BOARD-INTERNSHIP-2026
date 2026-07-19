@@ -248,7 +248,12 @@ The development admin key must be changed outside local development.
 
 ## Audio storage foundation
 
-The backend recognizes these audio MIME types and safe storage extensions:
+KP AWAZ preserves valid browser recordings exactly as received. It does not
+resample, re-encode, normalize, trim, denoise, or convert audio to a training
+format. Stage B owns later conversion, quality analysis, transcript verification,
+and dataset preparation.
+
+The centralized backend MIME mapping is:
 
 | MIME type | Stored extension |
 | --- | --- |
@@ -258,12 +263,43 @@ The backend recognizes these audio MIME types and safe storage extensions:
 | `audio/x-wav` | `.wav` |
 | `audio/mpeg` | `.mp3` |
 | `audio/mp4` | `.m4a` |
+| `audio/aac` | `.aac` |
+| `audio/flac` | `.flac` |
 
-An incoming `audio/mp4` filename may use `.m4a` or `.mp4`; storage consistently uses `.m4a`. A missing original extension is allowed when the MIME type and basic signature are valid.
+MIME case and parameters such as `audio/webm;codecs=opus` are normalized before
+mapping. The client filename and its extension do not select the storage name or
+extension; `audio/mp4` consistently becomes `.m4a`.
 
-Guided recordings default to a 15 MB maximum, while open recordings default to 50 MB. Files are stored using contribution UUIDs under date-based directories such as `storage/audio/2026/07/14/`. The database stores only a relative key such as `audio/2026/07/14/<contribution-id>.webm`; the safe original filename is metadata only. Timezone-aware timestamps are converted to UTC for directory selection, and naïve timestamps are treated as UTC.
+New recordings use the configurable `RAW_AUDIO_STORAGE_ROOT`, which defaults to
+`backend/data/audio/raw`. Files use cryptographically random server-generated
+names under UTC year/month directories, for example
+`raw/2026/07/contribution_<random-token>.webm`. Database rows store only the safe
+relative key and integrity metadata. Existing `storage/audio/YYYY/MM/DD/...`
+keys continue to resolve and existing files are not moved.
 
-Audio headers receive basic WebM, OGG, WAV, MP3, or MP4/M4A signature checks. These checks do not provide complete media validation, malware scanning, or proof that a file is decodable. FFmpeg is not required in this phase.
+`MAX_AUDIO_UPLOAD_BYTES` is the one operational limit for guided and open raw
+recordings and defaults to 52,428,800 bytes (50 MB). Uploads stream to a private
+temporary file, are hashed with SHA-256, receive a conservative container-header
+check, and are finalized without byte changes. This is abuse and infrastructure
+validation, not training-quality filtering. FFmpeg is neither installed nor
+required.
+
+New contribution metadata includes the base MIME, normalized original MIME,
+server-selected extension, exact byte count, browser-reported duration when
+available, SHA-256 checksum, server-generated filename, relative storage key,
+and storage-format version. None of the internal path or checksum fields is
+exposed through public APIs.
+
+Production must mount the raw-audio root on persistent storage and back it up
+together with SQLite. Audit both new and legacy storage without changing it:
+
+```bash
+.venv/bin/python -m app.cli.audio_inventory
+.venv/bin/python -m app.cli.audio_inventory --include-checksums
+```
+
+The optional checksum pass streams every file but prints only aggregate counts.
+The inventory never deletes missing, orphaned, or zero-byte files.
 
 ## Submit a guided voice contribution
 
@@ -273,7 +309,9 @@ Submit a guided recording with:
 POST /api/contributions/voice
 ```
 
-The multipart fields are `contributorName`, `language`, `sentence`, `sentenceSource`, optional `sentenceId`, `consent`, and `audio`.
+The multipart fields are `contributorName`, `language`, `sentence`,
+`sentenceSource`, optional `sentenceId`, `consentGiven`,
+`consentPolicyVersion`, optional `audioDurationSeconds`, and `audio`.
 
 ```bash
 curl -X POST \
@@ -282,14 +320,21 @@ curl -X POST \
   -F "language=Pashto" \
   -F "sentence=هر غږ ارزښت لري." \
   -F "sentenceSource=provided" \
-  -F "consent=true" \
+  -F "consentGiven=true" \
+  -F "consentPolicyVersion=1.0" \
   -F "audio=@recording.webm;type=audio/webm" \
   http://127.0.0.1:8000/api/contributions/voice
 ```
 
-`sentenceId` is currently optional for provided prompts. Custom sentences must not include it, and custom text is stored only as a contribution snapshot. Consent must resolve to true.
+An active `sentenceId` is required for a provided prompt. Custom sentences must
+not include it, and custom text is stored only as a contribution snapshot.
+Current versioned consent must resolve to true.
 
-Audio is checked for supported MIME type, filename-extension consistency, guided size limit, and a basic matching signature. Successful submissions return HTTP 201. Audio uses the contribution UUID as its filename, while the database stores only a relative storage key. Ownership is taken exclusively from the verified Bearer token; multipart user or profile IDs are never trusted.
+Audio is checked against the centralized MIME allowlist, one operational byte
+limit, and a basic matching signature. The client extension is ignored.
+Successful submissions return HTTP 201 and remain pending review. Ownership is
+taken exclusively from the verified Bearer token; multipart user or profile IDs
+are never trusted.
 
 ## Submit an open recording
 
@@ -299,7 +344,9 @@ Submit an open recording with:
 POST /api/contributions/open-recording
 ```
 
-The required multipart fields are `contributorName`, `language`, `consent`, and `audio`. The `topic` field is optional; an omitted or blank topic is stored as null.
+The required multipart fields are `contributorName`, `language`, `consentGiven`,
+`consentPolicyVersion`, and `audio`. The `topic` and `audioDurationSeconds`
+fields are optional; an omitted or blank topic is stored as null.
 
 ```bash
 curl -X POST \
@@ -307,12 +354,17 @@ curl -X POST \
   -F "contributorName=Faisal Imran" \
   -F "language=Pashto" \
   -F "topic=زما د کلي یوه کیسه" \
-  -F "consent=true" \
+  -F "consentGiven=true" \
+  -F "consentPolicyVersion=1.0" \
   -F "audio=@recording.webm;type=audio/webm" \
   http://127.0.0.1:8000/api/contributions/open-recording
 ```
 
-Explicit consent is required. Open recordings use the configured larger open-recording size limit and the same MIME, filename-extension, size, and basic signature checks as guided recordings. Audio is stored privately using the contribution UUID, and the database stores only its relative storage key. Successful submissions return HTTP 201 with the public contribution ID, queued status, and UTC creation time.
+Explicit current-version consent is required. Open and guided recordings use the
+same universal byte limit and MIME/signature checks. Audio is stored privately
+under a random generated name, and the database stores only its relative key.
+Successful submissions return HTTP 201 with the public contribution ID, queued
+status, and UTC creation time.
 
 ## My Contributions API
 

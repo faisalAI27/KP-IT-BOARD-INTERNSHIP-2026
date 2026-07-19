@@ -114,6 +114,19 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                     "ALTER TABLE contributions "
                     "ADD COLUMN consent_timestamp DATETIME"
                 )
+            raw_audio_columns = {
+                "original_mime_type": "VARCHAR(200)",
+                "audio_extension": "VARCHAR(10)",
+                "audio_checksum_sha256": "VARCHAR(64)",
+                "server_generated_filename": "VARCHAR(100)",
+                "storage_format_version": "VARCHAR(20)",
+            }
+            for column_name, column_type in raw_audio_columns.items():
+                if column_name not in column_names:
+                    connection.exec_driver_sql(
+                        f"ALTER TABLE contributions "
+                        f"ADD COLUMN {column_name} {column_type}"
+                    )
 
             connection.exec_driver_sql(
                 "UPDATE contributions SET review_status = 'pending' "
