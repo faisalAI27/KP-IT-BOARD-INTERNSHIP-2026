@@ -105,7 +105,9 @@ function publicFixture(initialState) {
 
 
 test("page categories contain the required public, auth-only, and protected pages", () => {
-  assert.deepEqual(PUBLIC_PAGES, ["index.html", "about.html", "how-it-works.html", "leaderboard.html"]);
+  assert.deepEqual(PUBLIC_PAGES, [
+    "index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html",
+  ]);
   assert.deepEqual(AUTH_ONLY_PAGES, ["auth.html"]);
   assert.deepEqual(PROTECTED_PAGES, [
     "dashboard.html", "contribute.html", "my-contributions.html", "profile.html", "settings.html",

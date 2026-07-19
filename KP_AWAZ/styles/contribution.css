@@ -1090,6 +1090,39 @@ audio {
   line-height: 1.55;
 }
 
+.consent-validation {
+  margin: 8px 14px 0;
+  color: #9d3e2a;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.consent-details {
+  margin: 10px 14px 0;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+
+.consent-details summary {
+  width: fit-content;
+  color: var(--pine-dark);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.consent-details p {
+  max-width: 62ch;
+  margin-top: 8px;
+}
+
+.consent-details a {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--terracotta-dark);
+  font-weight: 800;
+}
+
 .flow-success {
   padding: 58px 30px 64px;
   text-align: center;

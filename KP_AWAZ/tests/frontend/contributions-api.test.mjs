@@ -5,6 +5,7 @@ import { appConfig } from "../../scripts/config.js";
 import {
   AUDIO_MIME_EXTENSION_MAP,
   ApiError,
+  CONSENT_POLICY_VERSION,
   ContributionsApi,
   extensionForAudioMimeType,
   normalizeAudioMimeType,
@@ -77,7 +78,8 @@ function voiceInput(overrides = {}) {
     sentence: sentence.text,
     sentenceSource: "provided",
     sentenceId: sentence.id,
-    consent: true,
+    consentGiven: true,
+    consentPolicyVersion: CONSENT_POLICY_VERSION,
     audioBlob: new Blob(["guided-audio"], { type: "audio/webm" }),
     ...overrides,
   };
@@ -89,7 +91,8 @@ function openInput(overrides = {}) {
     contributorName: "Faisal Imran",
     language: "Pashto",
     topic: "زما د کلي یوه کیسه",
-    consent: true,
+    consentGiven: true,
+    consentPolicyVersion: CONSENT_POLICY_VERSION,
     audioBlob: new Blob(["open-audio"], { type: "audio/webm" }),
     ...overrides,
   };
@@ -145,21 +148,70 @@ test("guided custom submission omits sentenceId", async () => {
 });
 
 
-test("guided submission sends consent", async () => {
+test("guided submission sends only the current structured consent fields", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
   await contributionApi.submitVoiceDonation(voiceInput());
 
-  assert.equal(request().options.body.get("consent"), "true");
+  const body = request().options.body;
+  assert.equal(body.get("consentGiven"), "true");
+  assert.equal(body.get("consentPolicyVersion"), CONSENT_POLICY_VERSION);
+  assert.equal(body.has("consent"), false);
+  assert.equal(body.has("consentTimestamp"), false);
+  assert.equal(body.has("userId"), false);
 });
 
 
-test("open recording sends consent", async () => {
+test("open recording sends the current structured consent fields", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 
   await contributionApi.submitOpenRecording(openInput());
 
-  assert.equal(request().options.body.get("consent"), "true");
+  assert.equal(request().options.body.get("consentGiven"), "true");
+  assert.equal(
+    request().options.body.get("consentPolicyVersion"),
+    CONSENT_POLICY_VERSION,
+  );
+});
+
+
+test("unchecked consent blocks upload before fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  assert.throws(
+    () => api.submitVoiceDonation(voiceInput({ consentGiven: false })),
+    (error) => {
+      assert.equal(error.code, "CONSENT_REQUIRED");
+      assert.equal(error.message, "Please confirm the contribution consent before submitting.");
+      return true;
+    },
+  );
+  assert.equal(fetchCalls, 0);
+});
+
+
+test("noncurrent consent policy blocks upload before fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  assert.throws(
+    () => api.submitOpenRecording(openInput({ consentPolicyVersion: "0.9" })),
+    { code: "CONSENT_POLICY_VERSION_INVALID" },
+  );
+  assert.equal(fetchCalls, 0);
 });
 
 

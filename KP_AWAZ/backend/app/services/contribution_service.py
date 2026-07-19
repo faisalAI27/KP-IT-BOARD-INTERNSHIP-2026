@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution, Sentence
 from app.services.audio_storage import (
     AudioStorageError,
@@ -65,7 +66,12 @@ class InvalidSentenceSourceError(ContributionServiceError):
 
 class ConsentRequiredError(ContributionServiceError):
     code = "CONSENT_REQUIRED"
-    default_message = "Consent is required to submit a voice contribution."
+    default_message = "Please confirm the contribution consent before submitting."
+
+
+class InvalidConsentPolicyVersionError(ContributionServiceError):
+    code = "CONSENT_POLICY_VERSION_INVALID"
+    default_message = "Please review and accept the current contribution consent."
 
 
 class InvalidSentenceIdError(ContributionServiceError):
@@ -121,7 +127,8 @@ class GuidedContributionInput:
     sentence: str
     sentence_source: str
     sentence_id: str | None
-    consent: str | bool | None
+    consent_given: str | bool | None
+    consent_policy_version: str | None
     audio_filename: str
     audio_mime_type: str
     audio_content: bytes
@@ -134,7 +141,8 @@ class OpenRecordingInput:
     contributor_name: str
     language: str
     topic: str | None
-    consent: str | bool | None
+    consent_given: str | bool | None
+    consent_policy_version: str | None
     audio_filename: str
     audio_mime_type: str
     audio_content: bytes
@@ -192,12 +200,25 @@ def _validate_sentence_source(sentence_source: str) -> str:
     return normalized_source
 
 
-def _require_consent(consent: str | bool | None) -> None:
-    if consent is True:
-        return
-    if isinstance(consent, str) and consent.strip().lower() in TRUE_CONSENT_VALUES:
-        return
-    raise ConsentRequiredError()
+def _validate_consent(
+    consent_given: str | bool | None,
+    consent_policy_version: str | None,
+) -> str:
+    valid_consent = consent_given is True or (
+        isinstance(consent_given, str)
+        and consent_given.strip().lower() in TRUE_CONSENT_VALUES
+    )
+    if not valid_consent:
+        raise ConsentRequiredError()
+
+    normalized_version = (
+        consent_policy_version.strip()
+        if isinstance(consent_policy_version, str)
+        else ""
+    )
+    if normalized_version != CONSENT_POLICY_VERSION:
+        raise InvalidConsentPolicyVersionError()
+    return CONSENT_POLICY_VERSION
 
 
 def _validate_optional_sentence(
@@ -247,6 +268,7 @@ def _persist_contribution(
     sentence_text: str | None,
     sentence_source: str | None,
     topic: str | None,
+    consent_policy_version: str,
     audio_content: bytes,
     validated_audio: ValidatedAudio,
     creation_failure_message: str | None = None,
@@ -277,6 +299,8 @@ def _persist_contribution(
         sentence_source=sentence_source,
         topic=topic,
         consent_given=True,
+        consent_policy_version=consent_policy_version,
+        consent_timestamp=created_at,
         audio_storage_key=storage_key,
         original_filename=validated_audio.original_filename,
         mime_type=validated_audio.mime_type,
@@ -322,7 +346,10 @@ def create_guided_contribution(
     sentence_source = _validate_sentence_source(
         contribution_input.sentence_source
     )
-    _require_consent(contribution_input.consent)
+    consent_policy_version = _validate_consent(
+        contribution_input.consent_given,
+        contribution_input.consent_policy_version,
+    )
     verified_sentence_id, sentence_snapshot = _validate_optional_sentence(
         database,
         sentence_id=contribution_input.sentence_id,
@@ -347,6 +374,7 @@ def create_guided_contribution(
         sentence_text=sentence_snapshot,
         sentence_source=sentence_source,
         topic=None,
+        consent_policy_version=consent_policy_version,
         audio_content=contribution_input.audio_content,
         validated_audio=validated_audio,
     )
@@ -365,7 +393,10 @@ def create_open_recording(
     )
     language = _validate_language(contribution_input.language)
     topic = _validate_recording_topic(contribution_input.topic)
-    _require_consent(contribution_input.consent)
+    consent_policy_version = _validate_consent(
+        contribution_input.consent_given,
+        contribution_input.consent_policy_version,
+    )
     validated_audio = validate_audio_upload(
         filename=contribution_input.audio_filename,
         mime_type=contribution_input.audio_mime_type,
@@ -383,6 +414,7 @@ def create_open_recording(
         sentence_text=None,
         sentence_source=None,
         topic=topic,
+        consent_policy_version=consent_policy_version,
         audio_content=contribution_input.audio_content,
         validated_audio=validated_audio,
         creation_failure_message="The open recording could not be completed.",

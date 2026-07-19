@@ -164,9 +164,60 @@
 }
 
 .profile-score-card,
+.profile-consent-card,
 .workspace-profile-settings {
   border-radius: 25px 6px 25px 25px;
   background: rgba(255, 255, 255, 0.88);
+}
+
+.profile-consent-card {
+  padding: 25px;
+}
+
+.profile-consent-card h3 {
+  margin-top: 5px;
+  font-size: 1.35rem;
+}
+
+.profile-consent-facts {
+  display: grid;
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.profile-consent-facts > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 18px;
+}
+
+.profile-consent-facts dt,
+.profile-consent-note {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+
+.profile-consent-facts dd {
+  margin: 0;
+  color: var(--pine-dark);
+  font-size: 0.73rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.profile-consent-note {
+  margin-top: 14px;
+  line-height: 1.55;
+}
+
+.profile-consent-link {
+  display: inline-block;
+  margin-top: 15px;
+  color: var(--terracotta-dark);
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 .workspace-profile-settings {

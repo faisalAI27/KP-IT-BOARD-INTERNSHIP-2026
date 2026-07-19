@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution
 from app.schemas import ContributionCreatedResponse
 from app.services.audio_storage import (
@@ -19,6 +20,7 @@ from app.services.contribution_service import (
     ConsentRequiredError,
     ContributionCreationError,
     InvalidContributionLanguageError,
+    InvalidConsentPolicyVersionError,
     InvalidContributorNameError,
     InvalidRecordingTopicError,
     OpenRecordingInput,
@@ -58,7 +60,8 @@ def open_input(**values: object) -> OpenRecordingInput:
         "contributor_name": "Faisal Imran",
         "language": "Pashto",
         "topic": "زما د کلي یوه کیسه",
-        "consent": "true",
+        "consent_given": "true",
+        "consent_policy_version": CONSENT_POLICY_VERSION,
         "audio_filename": "recording.webm",
         "audio_mime_type": "audio/webm",
         "audio_content": WEBM_BYTES,
@@ -100,6 +103,8 @@ def test_supported_open_audio_is_created_and_stored(
     assert contribution.contribution_type == "open_recording"
     assert contribution.status == "queued"
     assert contribution.consent_given is True
+    assert contribution.consent_policy_version == CONSENT_POLICY_VERSION
+    assert contribution.consent_timestamp == contribution.created_at
     assert contribution.sentence_id is None
     assert contribution.sentence_text is None
     assert contribution.sentence_source is None
@@ -181,7 +186,15 @@ def test_false_or_missing_consent_is_rejected(
     consent: str | bool | None, db_session: Session
 ) -> None:
     with pytest.raises(ConsentRequiredError):
-        create_open_recording(db_session, open_input(consent=consent))
+        create_open_recording(db_session, open_input(consent_given=consent))
+
+
+def test_noncurrent_consent_version_is_rejected(db_session: Session) -> None:
+    with pytest.raises(InvalidConsentPolicyVersionError):
+        create_open_recording(
+            db_session,
+            open_input(consent_policy_version="0.9"),
+        )
 
 
 def test_unsupported_audio_type_is_rejected(db_session: Session) -> None:

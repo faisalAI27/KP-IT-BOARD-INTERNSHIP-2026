@@ -1,6 +1,7 @@
 export const PUBLIC_PAGES = Object.freeze([
   "index.html",
   "about.html",
+  "data-use.html",
   "how-it-works.html",
   "leaderboard.html",
 ]);

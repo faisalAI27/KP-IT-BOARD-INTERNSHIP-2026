@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   ProfileApi,
   ProfileApiError,
+  validateProfileConsentResponse,
   validateProfileStatisticsResponse,
 } from "../../scripts/services/profile-api.js";
 
@@ -28,6 +29,10 @@ const STATISTICS = Object.freeze({
   leaderboardOptIn: true,
   leaderboardEligible: true,
   publicRank: 3,
+});
+const CONSENT_SUMMARY = Object.freeze({
+  currentPolicyVersion: "1.0",
+  mostRecentConsentAt: "2026-07-18T08:30:00Z",
 });
 
 
@@ -109,6 +114,49 @@ test("contribution statistics GET uses the authenticated current-user endpoint",
   assert.equal(calls[0].options.method, "GET");
   assert.equal(calls[0].options.headers.Authorization, `Bearer ${ACCESS_TOKEN}`);
   assert.equal(calls[0].url.includes(ACCESS_TOKEN), false);
+});
+
+
+test("consent summary GET uses the private current-user endpoint", async () => {
+  const { api, calls } = fixture({
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ body: CONSENT_SUMMARY });
+    },
+  });
+
+  const result = await api.getMyConsentSummary();
+
+  assert.deepEqual(result, CONSENT_SUMMARY);
+  assert.equal(calls[0].url, "http://127.0.0.1:8000/api/profile/me/consent");
+  assert.equal(calls[0].options.method, "GET");
+  assert.equal(calls[0].options.headers.Authorization, `Bearer ${ACCESS_TOKEN}`);
+  assert.equal(calls[0].url.includes(ACCESS_TOKEN), false);
+});
+
+
+test("consent summary accepts null legacy date and rejects unsafe fields", () => {
+  assert.deepEqual(
+    validateProfileConsentResponse({
+      currentPolicyVersion: "1.0",
+      mostRecentConsentAt: null,
+      userId: "private-user",
+      consentGiven: true,
+    }),
+    { currentPolicyVersion: "1.0", mostRecentConsentAt: null },
+  );
+  for (const invalid of [
+    null,
+    {},
+    { ...CONSENT_SUMMARY, currentPolicyVersion: "" },
+    { ...CONSENT_SUMMARY, mostRecentConsentAt: "not-a-date" },
+    { ...CONSENT_SUMMARY, mostRecentConsentAt: 42 },
+  ]) {
+    assert.throws(
+      () => validateProfileConsentResponse(invalid),
+      (error) => error.code === "PROFILE_CONSENT_RESPONSE_INVALID",
+    );
+  }
 });
 
 

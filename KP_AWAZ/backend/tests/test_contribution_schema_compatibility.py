@@ -97,6 +97,8 @@ def test_compatibility_update_adds_nullable_owner_and_index(
     columns = {column["name"]: column for column in inspect(engine).get_columns("contributions")}
     indexes = inspect(engine).get_indexes("contributions")
     assert columns["user_id"]["nullable"] is True
+    assert columns["consent_policy_version"]["nullable"] is True
+    assert columns["consent_timestamp"]["nullable"] is True
     assert any(index["column_names"] == ["user_id"] for index in indexes)
     engine.dispose()
 
@@ -111,12 +113,13 @@ def test_compatibility_update_preserves_rows_and_leaves_legacy_owner_null(
     with engine.connect() as connection:
         row = connection.execute(
             text(
-                "SELECT id, legacy_marker, user_id "
+                "SELECT id, legacy_marker, user_id, consent_policy_version, "
+                "consent_timestamp "
                 "FROM contributions WHERE id = :id"
             ),
             {"id": LEGACY_CONTRIBUTION_ID},
         ).one()
-    assert row == (LEGACY_CONTRIBUTION_ID, "preserve-me", None)
+    assert row == (LEGACY_CONTRIBUTION_ID, "preserve-me", None, None, None)
     engine.dispose()
 
 

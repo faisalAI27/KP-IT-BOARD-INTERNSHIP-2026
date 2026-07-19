@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Contribution, Profile
+from app.consent import CONSENT_POLICY_VERSION
 from tests.conftest import (
     TEST_AUTHORIZATION,
     TEST_USER_ID,
@@ -26,7 +27,8 @@ def guided_data() -> dict[str, str]:
         "language": "Pashto",
         "sentence": "هر غږ ارزښت لري.",
         "sentenceSource": "provided",
-        "consent": "true",
+        "consentGiven": "true",
+        "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }
 
 
@@ -35,7 +37,8 @@ def open_data() -> dict[str, str]:
         "contributorName": "Faisal Imran",
         "language": "Pashto",
         "topic": "A village story",
-        "consent": "true",
+        "consentGiven": "true",
+        "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }
 
 

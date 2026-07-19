@@ -177,6 +177,9 @@ def test_response_uses_safe_camel_case_fields(
         "refresh_token",
         "_sa_instance_state",
         "reviewedat",
+        "consentgiven",
+        "consentpolicyversion",
+        "consenttimestamp",
     ]:
         assert forbidden not in serialized
     assert item["reviewStatus"] == "pending"

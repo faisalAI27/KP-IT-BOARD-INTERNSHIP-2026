@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution, Sentence
 from app.schemas import ContributionCreatedResponse
 from app.services.audio_storage import (
@@ -24,6 +25,7 @@ from app.services.contribution_service import (
     InvalidContributionLanguageError,
     InvalidContributionSentenceError,
     InvalidContributorNameError,
+    InvalidConsentPolicyVersionError,
     InvalidSentenceIdError,
     InvalidSentenceSourceError,
     SentenceLanguageMismatchError,
@@ -66,7 +68,8 @@ def guided_input(**values: object) -> GuidedContributionInput:
         "sentence": "هر غږ ارزښت لري.",
         "sentence_source": "provided",
         "sentence_id": None,
-        "consent": "true",
+        "consent_given": "true",
+        "consent_policy_version": CONSENT_POLICY_VERSION,
         "audio_filename": "recording.webm",
         "audio_mime_type": "audio/webm",
         "audio_content": WEBM_BYTES,
@@ -129,6 +132,8 @@ def test_supported_guided_audio_is_created_and_stored(
     assert contribution.contribution_type == "guided"
     assert contribution.status == "queued"
     assert contribution.consent_given is True
+    assert contribution.consent_policy_version == CONSENT_POLICY_VERSION
+    assert contribution.consent_timestamp == contribution.created_at
     assert contribution.topic is None
     assert contribution.duration_seconds is None
     assert contribution.audio_storage_key.endswith(f".{extension}")
@@ -280,7 +285,7 @@ def test_missing_or_false_consent_is_rejected(
     consent: str | bool | None, db_session: Session
 ) -> None:
     with pytest.raises(ConsentRequiredError):
-        create_guided_contribution(db_session, guided_input(consent=consent))
+        create_guided_contribution(db_session, guided_input(consent_given=consent))
 
 
 @pytest.mark.parametrize("consent", [True, "true", "1", "yes", "on", " YES "])
@@ -289,10 +294,22 @@ def test_true_consent_representations_are_accepted(
 ) -> None:
     contribution = create_guided_contribution(
         db_session,
-        guided_input(consent=consent),
+        guided_input(consent_given=consent),
     )
 
     assert contribution.consent_given is True
+
+
+@pytest.mark.parametrize("version", [None, "", "0.9", "1.0.0"])
+def test_missing_or_noncurrent_consent_version_is_rejected(
+    version: str | None,
+    db_session: Session,
+) -> None:
+    with pytest.raises(InvalidConsentPolicyVersionError):
+        create_guided_contribution(
+            db_session,
+            guided_input(consent_policy_version=version),
+        )
 
 
 @pytest.mark.parametrize("contributor_name", ["x", " ", "x" * 101])

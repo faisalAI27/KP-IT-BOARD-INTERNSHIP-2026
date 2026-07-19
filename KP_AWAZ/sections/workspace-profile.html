@@ -64,6 +64,42 @@
         </button>
       </div>
     </section>
+
+    <section
+      class="account-detail-card profile-consent-card"
+      id="profileConsentSection"
+      aria-labelledby="profileConsentTitle"
+      hidden
+    >
+      <span class="auth-kicker">Your recording consent</span>
+      <h3 id="profileConsentTitle">Data-use record</h3>
+      <dl class="profile-consent-facts">
+        <div>
+          <dt>Current policy</dt>
+          <dd id="profileConsentVersion">Loading…</dd>
+        </div>
+        <div>
+          <dt>Most recent consent</dt>
+          <dd id="profileConsentDate">Loading…</dd>
+        </div>
+      </dl>
+      <p class="profile-consent-note" id="profileConsentNote">
+        Consent is recorded when you submit a new recording.
+      </p>
+      <p
+        class="account-score-status"
+        id="profileConsentStatus"
+        role="status"
+        aria-live="polite"
+      >Loading consent record…</p>
+      <div class="account-score-error" id="profileConsentError" role="alert" hidden>
+        <span>We could not load your consent record.</span>
+        <button class="btn btn-quiet btn-sm" id="retryProfileConsentButton" type="button">
+          Retry
+        </button>
+      </div>
+      <a class="profile-consent-link" href="data-use.html">Read the current data-use explanation →</a>
+    </section>
   </div>
 
   <section

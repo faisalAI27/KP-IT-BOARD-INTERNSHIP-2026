@@ -11,6 +11,7 @@ from starlette.datastructures import UploadFile as StarletteUploadFile
 import app.routes.contributions as contribution_route_module
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution
 from app.services.audio_storage import AudioStorageError, resolve_audio_storage_path
 from tests.conftest import TEST_AUTHORIZATION, authenticate_test_user
@@ -31,7 +32,8 @@ def valid_form_data() -> dict[str, str]:
         "contributorName": "Faisal Imran",
         "language": "Pashto",
         "topic": "زما د کلي یوه کیسه",
-        "consent": "true",
+        "consentGiven": "true",
+        "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }
 
 
@@ -98,6 +100,8 @@ def test_database_row_and_audio_are_created(
     assert contribution is not None
     assert contribution.contribution_type == "open_recording"
     assert contribution.consent_given is True
+    assert contribution.consent_policy_version == CONSENT_POLICY_VERSION
+    assert contribution.consent_timestamp is not None
     assert contribution.sentence_id is None
     assert contribution.sentence_text is None
     assert contribution.sentence_source is None
@@ -116,18 +120,23 @@ def test_swagger_uses_exact_multipart_field_names(client: TestClient) -> None:
         "contributorName",
         "language",
         "topic",
-        "consent",
+        "consentGiven",
+        "consentPolicyVersion",
         "audio",
     }
     assert set(form_schema["required"]) == {
         "contributorName",
         "language",
-        "consent",
+        "consentGiven",
+        "consentPolicyVersion",
         "audio",
     }
 
 
-@pytest.mark.parametrize("missing_field", ["contributorName", "language", "consent"])
+@pytest.mark.parametrize(
+    "missing_field",
+    ["contributorName", "language", "consentGiven", "consentPolicyVersion"],
+)
 def test_missing_required_form_field_returns_422(
     missing_field: str, client: TestClient
 ) -> None:
@@ -197,7 +206,7 @@ def test_false_consent_returns_safe_400(
     consent: str, client: TestClient
 ) -> None:
     data = valid_form_data()
-    data["consent"] = consent
+    data["consentGiven"] = consent
 
     response = post_open(client, data=data)
 
@@ -210,11 +219,23 @@ def test_true_consent_representations_succeed(
     consent: str, client: TestClient
 ) -> None:
     data = valid_form_data()
-    data["consent"] = consent
+    data["consentGiven"] = consent
 
     response = post_open(client, data=data)
 
     assert response.status_code == 201
+
+
+def test_noncurrent_consent_policy_version_returns_safe_400(
+    client: TestClient,
+) -> None:
+    data = valid_form_data()
+    data["consentPolicyVersion"] = "0.9"
+
+    response = post_open(client, data=data)
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "CONSENT_POLICY_VERSION_INVALID"
 
 
 def test_empty_audio_returns_400(client: TestClient) -> None:
@@ -329,7 +350,8 @@ def test_guided_and_open_endpoints_use_independent_size_limits(
             "language": "Pashto",
             "sentence": "هر غږ ارزښت لري.",
             "sentenceSource": "provided",
-            "consent": "true",
+            "consentGiven": "true",
+            "consentPolicyVersion": CONSENT_POLICY_VERSION,
         },
         files={"audio": ("recording.webm", WEBM_BYTES, "audio/webm")},
     )
@@ -410,7 +432,8 @@ def test_existing_routes_continue_working(client: TestClient) -> None:
                 "language": "Pashto",
                 "sentence": "هر غږ ارزښت لري.",
                 "sentenceSource": "provided",
-                "consent": "true",
+                "consentGiven": "true",
+                "consentPolicyVersion": CONSENT_POLICY_VERSION,
             },
             files={"audio": ("recording.webm", WEBM_BYTES, "audio/webm")},
         ).status_code

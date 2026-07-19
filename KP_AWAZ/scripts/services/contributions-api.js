@@ -7,6 +7,9 @@ import {
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 const REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
+export const CONSENT_POLICY_VERSION = "1.0";
+export const CONSENT_REQUIRED_MESSAGE =
+  "Please confirm the contribution consent before submitting.";
 export const AUDIO_MIME_EXTENSION_MAP = Object.freeze({
   "audio/webm": "webm",
   "audio/ogg": "ogg",
@@ -225,6 +228,23 @@ function appendAudio(formData, audioBlob) {
   formData.append("audio", audioBlob, `recording.${extension}`);
 }
 
+export function appendCurrentConsent(
+  formData,
+  { consentGiven, consentPolicyVersion },
+) {
+  if (consentGiven !== true) {
+    throw new ApiError(CONSENT_REQUIRED_MESSAGE, { code: "CONSENT_REQUIRED" });
+  }
+  if (consentPolicyVersion !== CONSENT_POLICY_VERSION) {
+    throw new ApiError(
+      "Please review and accept the current contribution consent.",
+      { code: "CONSENT_POLICY_VERSION_INVALID" },
+    );
+  }
+  formData.append("consentGiven", "true");
+  formData.append("consentPolicyVersion", CONSENT_POLICY_VERSION);
+}
+
 export class ContributionsApi {
   constructor({
     apiBaseUrl = appConfig.api.baseUrl,
@@ -316,7 +336,8 @@ export class ContributionsApi {
     sentence,
     sentenceSource,
     sentenceId,
-    consent,
+    consentGiven,
+    consentPolicyVersion,
     audioBlob,
   }) {
     const formData = new FormData();
@@ -327,17 +348,24 @@ export class ContributionsApi {
     if (typeof sentenceId === "string" && sentenceId.trim()) {
       formData.append("sentenceId", sentenceId.trim());
     }
-    formData.append("consent", String(consent));
+    appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/voice", formData);
   }
 
-  submitOpenRecording({ contributorName, language, topic, consent, audioBlob }) {
+  submitOpenRecording({
+    contributorName,
+    language,
+    topic,
+    consentGiven,
+    consentPolicyVersion,
+    audioBlob,
+  }) {
     const formData = new FormData();
     formData.append("contributorName", contributorName);
     formData.append("language", language);
     formData.append("topic", topic);
-    formData.append("consent", String(consent));
+    appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/open-recording", formData);
   }

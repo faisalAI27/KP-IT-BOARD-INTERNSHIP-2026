@@ -323,8 +323,8 @@ pages with a shared responsive sidebar. Sign-out clears the private in-memory
 view and returns to `index.html`.
 
 Routing decisions are centralized in `scripts/services/route-guard.js`:
-`index.html`, `about.html`, `how-it-works.html`, and `leaderboard.html` are
-public for every visitor; `auth.html` redirects only a fully verified user;
+`index.html`, `about.html`, `data-use.html`, `how-it-works.html`, and
+`leaderboard.html` are public for every visitor; `auth.html` redirects only a fully verified user;
 `dashboard.html`, `contribute.html`, `my-contributions.html`, `profile.html`,
 and `settings.html` require verification. The root path is normalized to
 `index.html`, unsafe `next` values are rejected, and each page lifecycle allows
@@ -338,6 +338,21 @@ same verified Supabase user ID restores that durable data. Google and email
 accounts remain separate when Supabase gives them different user IDs; they
 share data only when Supabase intentionally represents them as the same linked
 identity.
+
+## Recording consent and data use
+
+Every new guided or open recording requires the contributor to accept consent
+policy version `1.0`. The frontend sends `consentGiven` and
+`consentPolicyVersion`; FastAPI validates them and records the accepted version
+and a server-generated timestamp on the authenticated contribution. Identity is
+always taken from the verified bearer token, never from a form field.
+
+Older contributions are not backfilled. A row without both a consent policy
+version and consent timestamp has legacy consent status unknown and is not
+externally release-ready, even if it was already reviewed. Review status and
+score are otherwise unchanged. Contributors can see the current policy version
+and their most recent structured consent date on `profile.html`. The public
+privacy and data-use explanation is available at `data-use.html`.
 
 ## Profile settings
 

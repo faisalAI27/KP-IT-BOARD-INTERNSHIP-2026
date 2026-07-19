@@ -147,7 +147,42 @@ def test_rejection_reason_over_500_characters_fails_constraint(
 
 
 def test_consent_defaults_to_false(db_session: Session) -> None:
-    assert store_contribution(db_session).consent_given is False
+    contribution = store_contribution(db_session)
+
+    assert contribution.consent_given is False
+    assert contribution.consent_policy_version is None
+    assert contribution.consent_timestamp is None
+    assert contribution.has_structured_consent is False
+    assert contribution.is_externally_release_ready is False
+
+
+def test_legacy_approved_contribution_is_not_externally_release_ready(
+    db_session: Session,
+) -> None:
+    contribution = store_contribution(
+        db_session,
+        consent_given=True,
+        review_status="approved",
+    )
+
+    assert contribution.has_structured_consent is False
+    assert contribution.is_externally_release_ready is False
+
+
+def test_approved_contribution_with_structured_consent_is_release_ready(
+    db_session: Session,
+) -> None:
+    now = datetime.now(timezone.utc)
+    contribution = store_contribution(
+        db_session,
+        consent_given=True,
+        consent_policy_version="1.0",
+        consent_timestamp=now,
+        review_status="approved",
+    )
+
+    assert contribution.has_structured_consent is True
+    assert contribution.is_externally_release_ready is True
 
 
 def test_generated_id_is_valid_uuid(db_session: Session) -> None:

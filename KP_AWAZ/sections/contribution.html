@@ -313,10 +313,30 @@
                   <input id="donation-consent" type="checkbox" required />
                   <span aria-hidden="true">✓</span>
                   <small>
-                    I confirm this is my voice and agree to contribute this recording
-                    to the KP Awaz language dataset.
+                    I voluntarily contribute this recording and understand that
+                    approved recordings may be used to support language and speech
+                    technology.
                   </small>
                 </label>
+                <div
+                  class="consent-validation"
+                  id="donationConsentError"
+                  role="alert"
+                  hidden
+                ></div>
+                <details class="consent-details">
+                  <summary>How this recording may be used</summary>
+                  <p>
+                    Every recording is reviewed. Approved recordings may be used for
+                    language and speech technology research and development. Submission
+                    does not guarantee public release, and Pending or Rejected recordings
+                    do not increase your score. You can request withdrawal through the
+                    supported process.
+                  </p>
+                  <a href="data-use.html" target="_blank" rel="noopener">
+                    Read the data-use explanation (policy 1.0)
+                  </a>
+                </details>
 
                 <div class="flow-actions">
                   <button class="btn btn-quiet btn-sm" type="button" data-previous-step="2">
@@ -410,10 +430,30 @@
                 <input id="open-recording-consent" type="checkbox" required />
                 <span aria-hidden="true">✓</span>
                 <small>
-                  I consent to this recording being stored and used for
-                  language-data and research purposes.
+                  I voluntarily contribute this recording and understand that
+                  approved recordings may be used to support language and speech
+                  technology.
                 </small>
               </label>
+              <div
+                class="consent-validation"
+                id="openRecordingConsentError"
+                role="alert"
+                hidden
+              ></div>
+              <details class="consent-details">
+                <summary>How this recording may be used</summary>
+                <p>
+                  Every recording is reviewed. Approved recordings may be used for
+                  language and speech technology research and development. Submission
+                  does not guarantee public release, and Pending or Rejected recordings
+                  do not increase your score. You can request withdrawal through the
+                  supported process.
+                </p>
+                <a href="data-use.html" target="_blank" rel="noopener">
+                  Read the data-use explanation (policy 1.0)
+                </a>
+              </details>
               <div class="form-foot">
                 <button class="btn btn-quiet btn-sm" type="reset">Reset</button>
                 <button class="btn btn-primary btn-sm" id="submitOpenRecording" type="submit" disabled>

@@ -37,6 +37,7 @@ await buildSupabaseVendorBundle();
 for (const pageName of [
   "index.html",
   "about.html",
+  "data-use.html",
   "how-it-works.html",
   "leaderboard.html",
   "auth.html",

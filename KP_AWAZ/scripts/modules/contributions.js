@@ -1,4 +1,6 @@
 import {
+  CONSENT_POLICY_VERSION,
+  CONSENT_REQUIRED_MESSAGE,
   getSentencePrompts,
   submitOpenRecording,
   submitVoiceDonation,
@@ -67,6 +69,7 @@ export async function initContributions() {
   const reviewPlayback = document.getElementById("reviewPlayback");
   const toReviewButton = document.getElementById("toReviewBtn");
   const donationConsent = document.getElementById("donation-consent");
+  const donationConsentError = document.getElementById("donationConsentError");
   const submitDonationButton = document.getElementById("submitDonation");
   const submitOpenRecordingButton = document.getElementById(
     "submitOpenRecording",
@@ -74,6 +77,9 @@ export async function initContributions() {
   const recordSoundForm = document.getElementById("recordSoundForm");
   const openRecordingConsent = document.getElementById(
     "open-recording-consent",
+  );
+  const openRecordingConsentError = document.getElementById(
+    "openRecordingConsentError",
   );
   const recordSuccess = document.getElementById("success-record");
   const recordError = document.getElementById("recordError");
@@ -366,6 +372,21 @@ export async function initContributions() {
     element.hidden = false;
   }
 
+  function validateConsent(input, errorElement) {
+    const valid = input.checked === true;
+    input.setCustomValidity(valid ? "" : CONSENT_REQUIRED_MESSAGE);
+    errorElement.textContent = valid ? "" : CONSENT_REQUIRED_MESSAGE;
+    errorElement.hidden = valid;
+    if (!valid) input.reportValidity();
+    return valid;
+  }
+
+  function clearConsentValidation(input, errorElement) {
+    input.setCustomValidity("");
+    errorElement.textContent = "";
+    errorElement.hidden = true;
+  }
+
   function announceContributionCreated() {
     dispatchContributionCreated();
   }
@@ -382,6 +403,7 @@ export async function initContributions() {
     sentenceIndex = 0;
     sentenceCount.textContent = "0 characters";
     donationError.hidden = true;
+    clearConsentValidation(donationConsent, donationConsentError);
     donateSuccess.hidden = true;
     donateFlowContent.hidden = false;
     flowProgress.hidden = false;
@@ -405,6 +427,8 @@ export async function initContributions() {
     recordSuccess.classList.remove("show");
     recordError.hidden = true;
     donationError.hidden = true;
+    clearConsentValidation(donationConsent, donationConsentError);
+    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
     submitDonationButton.disabled = true;
     submitOpenRecordingButton.disabled = true;
     submitDonationButton.removeAttribute("aria-busy");
@@ -471,6 +495,13 @@ export async function initContributions() {
     customSentence.setCustomValidity("");
   });
 
+  donationConsent.addEventListener("change", () => {
+    clearConsentValidation(donationConsent, donationConsentError);
+  });
+  openRecordingConsent.addEventListener("change", () => {
+    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
+  });
+
   toRecordButton.addEventListener("click", () => {
     if (!accessController.canContribute()) return;
     if (validateFirstStep()) showDonateStep(2);
@@ -500,7 +531,7 @@ export async function initContributions() {
       return;
     }
 
-    if (!donationConsent.reportValidity()) return;
+    if (!validateConsent(donationConsent, donationConsentError)) return;
 
     const sentenceSource = selectedSentenceSource();
     const sentence = getSelectedSentence();
@@ -518,7 +549,8 @@ export async function initContributions() {
         sentence: sentence.text,
         sentenceSource,
         sentenceId: sentenceSource === "provided" ? sentence.id : undefined,
-        consent: donationConsent.checked,
+        consentGiven: donationConsent.checked,
+        consentPolicyVersion: CONSENT_POLICY_VERSION,
         audioBlob: donateRecorder.getBlob(),
       });
 
@@ -550,10 +582,7 @@ export async function initContributions() {
 
     if (!openRecorder.hasRecording()) return;
     if (!recordSoundForm.reportValidity()) return;
-    if (!openRecordingConsent.checked) {
-      openRecordingConsent.reportValidity();
-      return;
-    }
+    if (!validateConsent(openRecordingConsent, openRecordingConsentError)) return;
 
     const submission = accessController.beginSubmission("open");
     if (!submission) return;
@@ -565,7 +594,8 @@ export async function initContributions() {
         contributorName: document.getElementById("record-name").value.trim(),
         language: document.getElementById("record-language-select").value,
         topic: document.getElementById("record-topic").value.trim(),
-        consent: openRecordingConsent.checked,
+        consentGiven: openRecordingConsent.checked,
+        consentPolicyVersion: CONSENT_POLICY_VERSION,
         audioBlob: openRecorder.getBlob(),
       });
 
@@ -584,6 +614,7 @@ export async function initContributions() {
 
   recordSoundForm.addEventListener("reset", () => {
     openRecordingConsent.checked = false;
+    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
     if (submitOpenRecordingButton.dataset.originalContent) {
       submitOpenRecordingButton.innerHTML =
         submitOpenRecordingButton.dataset.originalContent;

@@ -8,6 +8,7 @@ import {
 
 const PROFILE_PATH = "/profile/me";
 const PROFILE_STATISTICS_PATH = "/profile/me/statistics";
+const PROFILE_CONSENT_PATH = "/profile/me/consent";
 const ALLOWED_UPDATE_FIELDS = new Set([
   "displayName",
   "preferredLanguage",
@@ -126,6 +127,34 @@ export function validateProfileStatisticsResponse(payload, status = 200) {
 }
 
 
+export function validateProfileConsentResponse(payload, status = 200) {
+  const version =
+    typeof payload?.currentPolicyVersion === "string"
+      ? payload.currentPolicyVersion.trim()
+      : "";
+  const mostRecentConsentAt = payload?.mostRecentConsentAt;
+  const validTimestamp =
+    mostRecentConsentAt === null ||
+    (typeof mostRecentConsentAt === "string" &&
+      !Number.isNaN(Date.parse(mostRecentConsentAt)));
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    Array.isArray(payload) ||
+    !version ||
+    !validTimestamp
+  ) {
+    throw new ProfileApiError(
+      "The consent service returned an invalid response.",
+      { code: "PROFILE_CONSENT_RESPONSE_INVALID", status },
+    );
+  }
+
+  return { currentPolicyVersion: version, mostRecentConsentAt };
+}
+
+
 function prepareProfileUpdates(updates) {
   if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
     throw new ProfileApiError("At least one profile field must be supplied.", {
@@ -241,6 +270,13 @@ export class ProfileApi {
     });
   }
 
+  async getMyConsentSummary() {
+    return this._request("GET", null, {
+      path: PROFILE_CONSENT_PATH,
+      validate: validateProfileConsentResponse,
+    });
+  }
+
   async _request(
     method,
     payload = null,
@@ -293,3 +329,4 @@ export const getMyProfile = () => profileApi.getMyProfile();
 export const updateMyProfile = (updates) => profileApi.updateMyProfile(updates);
 export const getMyContributionStatistics = () =>
   profileApi.getMyContributionStatistics();
+export const getMyConsentSummary = () => profileApi.getMyConsentSummary();

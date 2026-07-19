@@ -1,5 +1,8 @@
 import { ProfileUI } from "./modules/profile-ui.js?v=20260717-member-workspace";
-import { getMyContributionStatistics } from "./services/profile-api.js?v=20260717-member-workspace";
+import {
+  getMyConsentSummary,
+  getMyContributionStatistics,
+} from "./services/profile-api.js?v=20260718-consent";
 import { getCurrentAuthState } from "./services/auth-service.js?v=20260717-auth-routing";
 import {
   destroyWorkspace,
@@ -12,6 +15,7 @@ import {
 let profileUI = null;
 let verifiedEmail = "";
 let impactLoading = false;
+let consentLoading = false;
 let profileUserId = "";
 
 
@@ -33,6 +37,18 @@ function formatMemberSince(value) {
 }
 
 
+function formatConsentDate(value) {
+  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+    return "None recorded";
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
+
+
 async function loadProfileImpact() {
   if (impactLoading) return;
   impactLoading = true;
@@ -50,7 +66,12 @@ async function loadProfileImpact() {
   status.textContent = "Loading contribution score…";
   try {
     const statistics = await getMyContributionStatistics();
-    if (!expectedUserId || getCurrentAuthState().backendUser?.id !== expectedUserId) return;
+    if (
+      !expectedUserId ||
+      getCurrentAuthState().backendUser?.id !== expectedUserId
+    ) {
+      return;
+    }
     score.textContent = `${statistics.approvedContributions} approved`;
     rank.textContent = statistics.publicRank ? `#${statistics.publicRank}` : "Not currently ranked";
     status.hidden = true;
@@ -62,6 +83,43 @@ async function loadProfileImpact() {
   } finally {
     impactLoading = false;
     refresh.disabled = false;
+  }
+}
+
+
+async function loadProfileConsent() {
+  if (consentLoading) return;
+  consentLoading = true;
+  const expectedUserId = profileUserId;
+  const section = document.getElementById("profileConsentSection");
+  const version = document.getElementById("profileConsentVersion");
+  const date = document.getElementById("profileConsentDate");
+  const note = document.getElementById("profileConsentNote");
+  const status = document.getElementById("profileConsentStatus");
+  const error = document.getElementById("profileConsentError");
+  const retry = document.getElementById("retryProfileConsentButton");
+  section.hidden = false;
+  retry.disabled = true;
+  error.hidden = true;
+  status.hidden = false;
+  status.textContent = "Loading consent record…";
+  try {
+    const consent = await getMyConsentSummary();
+    if (!expectedUserId || getCurrentAuthState().backendUser?.id !== expectedUserId) return;
+    version.textContent = `Version ${consent.currentPolicyVersion}`;
+    date.textContent = formatConsentDate(consent.mostRecentConsentAt);
+    note.textContent = consent.mostRecentConsentAt
+      ? "This is your latest structured consent for a submitted recording."
+      : "No structured consent is recorded yet. Older contributions have legacy consent status unknown.";
+    status.hidden = true;
+  } catch {
+    version.textContent = "Unavailable";
+    date.textContent = "Unavailable";
+    error.hidden = false;
+    status.hidden = true;
+  } finally {
+    consentLoading = false;
+    retry.disabled = false;
   }
 }
 
@@ -87,7 +145,11 @@ function initializeProfilePage({ state, profile }) {
   profileUI.initProfileUI();
   document.getElementById("refreshAccountScoreButton").addEventListener("click", loadProfileImpact);
   document.getElementById("retryAccountScoreButton").addEventListener("click", loadProfileImpact);
+  document
+    .getElementById("retryProfileConsentButton")
+    .addEventListener("click", loadProfileConsent);
   void loadProfileImpact();
+  void loadProfileConsent();
 }
 
 

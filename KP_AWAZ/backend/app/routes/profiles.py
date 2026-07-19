@@ -9,18 +9,42 @@ from app.dependencies import get_db, require_authenticated_user
 from app.schemas import (
     ProfileContributionStatisticsResponse,
     PersonalPointsResponse,
+    ProfileConsentSummaryResponse,
     ProfileResponse,
     ProfileUpdateRequest,
 )
 from app.services.contribution_statistics_service import (
     get_profile_contribution_statistics,
 )
-from app.services.profile_service import get_or_create_profile, update_profile
+from app.services.profile_service import (
+    get_or_create_profile,
+    get_profile_consent_summary,
+    update_profile,
+)
 from app.services.points_ledger_service import get_personal_points
 from app.services.supabase_auth import AuthenticatedUser
 
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
+
+
+@router.get("/me/consent", response_model=ProfileConsentSummaryResponse)
+def get_current_profile_consent(
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    database: Annotated[Session, Depends(get_db)],
+) -> ProfileConsentSummaryResponse:
+    """Return consent details belonging only to the verified caller."""
+
+    profile = get_or_create_profile(
+        database=database,
+        authenticated_user=user,
+    )
+    return ProfileConsentSummaryResponse.model_validate(
+        get_profile_consent_summary(
+            database=database,
+            owner_user_id=profile.id,
+        )
+    )
 
 
 @router.get("/me/points", response_model=PersonalPointsResponse)

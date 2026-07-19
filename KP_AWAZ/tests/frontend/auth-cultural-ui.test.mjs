@@ -960,7 +960,10 @@ test("OTP, errors, and trust links are accessible in markup", async () => {
   assert.match(html, /aria-describedby="signupOtpHelp signupOtpMessage"/);
   assert.match(html, /role="alert"[\s\S]*?aria-live="polite"/);
   assert.match(html, /href="index\.html"[\s\S]*?Back to KP AWAZ/);
-  assert.match(html, /href="about\.html">Read our privacy promise<\/a>/);
+  assert.match(
+    html,
+    /href="data-use\.html">Read our privacy and data-use explanation<\/a>/,
+  );
 });
 
 

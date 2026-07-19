@@ -11,7 +11,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("public and protected architecture contains every required page", async () => {
   const names = [
-    "index.html", "about.html", "how-it-works.html", "leaderboard.html",
+    "index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html",
     "auth.html", "forgot-password.html", "reset-password.html",
     "dashboard.html", "contribute.html", "my-contributions.html",
     "profile.html", "settings.html", "admin.html",
@@ -42,6 +42,34 @@ test("public homepage has no account modal or private contribution workflow", as
   assert.match(header, /href="how-it-works\.html"/);
   assert.match(header, /href="leaderboard\.html"/);
   assert.match(header, /href="auth\.html\?next=contribute\.html"[^>]*data-start-contributing/);
+});
+
+
+test("public data-use page and private profile expose the consent explanation safely", async () => {
+  const [dataUse, profilePartial, profileApp] = await Promise.all([
+    read("data-use.html"),
+    read("sections/workspace-profile.html"),
+    read("scripts/profile-page-app.js"),
+  ]);
+
+  for (const heading of [
+    "What we collect",
+    "Why voice data is collected",
+    "How review works",
+    "How approved recordings may be used",
+    "What remains private",
+    "Requesting withdrawal",
+  ]) {
+    assert.match(dataUse, new RegExp(heading));
+  }
+  assert.match(dataUse, /Policy 1\.0/);
+  assert.match(dataUse, /legacy consent status unknown/);
+  assert.match(profilePartial, /id="profileConsentVersion"/);
+  assert.match(profilePartial, /id="profileConsentDate"/);
+  assert.match(profilePartial, /href="data-use\.html"/);
+  assert.match(profileApp, /getMyConsentSummary\(\)/);
+  assert.match(profileApp, /legacy consent status unknown/);
+  assert.doesNotMatch(`${dataUse}\n${profilePartial}`, /accessToken|refreshToken|userId/);
 });
 
 

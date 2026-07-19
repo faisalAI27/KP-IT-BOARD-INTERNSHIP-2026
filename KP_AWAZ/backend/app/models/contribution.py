@@ -95,6 +95,12 @@ class Contribution(Base):
     consent_given: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    consent_policy_version: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )
+    consent_timestamp: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     audio_storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
     mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -138,6 +144,23 @@ class Contribution(Base):
         back_populates="contribution",
         passive_deletes=True,
     )
+
+    @property
+    def has_structured_consent(self) -> bool:
+        """Distinguish versioned consent from legacy boolean-only records."""
+
+        return bool(
+            self.consent_given
+            and isinstance(self.consent_policy_version, str)
+            and self.consent_policy_version.strip()
+            and self.consent_timestamp is not None
+        )
+
+    @property
+    def is_externally_release_ready(self) -> bool:
+        """Require approval and structured consent before any future export."""
+
+        return self.review_status == "approved" and self.has_structured_consent
 
 
 @event.listens_for(Contribution, "before_insert")

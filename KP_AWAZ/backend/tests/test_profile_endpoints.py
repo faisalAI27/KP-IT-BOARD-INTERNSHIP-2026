@@ -1,5 +1,7 @@
 """Protected endpoint tests for the current user's local profile."""
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -7,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_supabase_auth_client
 from app.main import app
-from app.models import Profile
+from app.consent import CONSENT_POLICY_VERSION
+from app.models import Contribution, Profile
 from app.routes import profiles
 from app.services.profile_service import ProfilePersistenceError
 from app.services.supabase_auth import AuthenticatedUser, InvalidAccessTokenError
@@ -69,6 +72,33 @@ def profile_count(database: Session) -> int:
     return database.scalar(select(func.count()).select_from(Profile)) or 0
 
 
+def add_contribution(
+    database: Session,
+    *,
+    owner_user_id: str,
+    consent_policy_version: str | None,
+    consent_timestamp: datetime | None,
+) -> Contribution:
+    contribution = Contribution(
+        user_id=owner_user_id,
+        contribution_type="guided",
+        contributor_name="Test Contributor",
+        language="Pashto",
+        sentence_text="هر غږ ارزښت لري.",
+        sentence_source="provided",
+        consent_given=True,
+        consent_policy_version=consent_policy_version,
+        consent_timestamp=consent_timestamp,
+        audio_storage_key="audio/test/consent.webm",
+        original_filename="recording.webm",
+        mime_type="audio/webm",
+        file_size=128,
+    )
+    database.add(contribution)
+    database.commit()
+    return contribution
+
+
 def test_missing_token_returns_401(client: TestClient) -> None:
     response = client.get("/api/profile/me")
 
@@ -84,6 +114,85 @@ def test_invalid_token_returns_401(client: TestClient) -> None:
 
     assert response.status_code == 401
     assert response.json()["code"] == "INVALID_ACCESS_TOKEN"
+
+
+def test_consent_summary_requires_authentication(client: TestClient) -> None:
+    response = client.get("/api/profile/me/consent")
+
+    assert response.status_code == 401
+    assert response.json()["code"] == "AUTHENTICATION_REQUIRED"
+
+
+def test_consent_summary_returns_current_version_and_latest_owner_record(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_as(user())
+    assert client.get("/api/profile/me", headers=authorization()).status_code == 200
+    other_profile = Profile(
+        id=OTHER_USER_ID,
+        email="other@example.com",
+        auth_provider="email",
+        display_name="Other User",
+    )
+    db_session.add(other_profile)
+    db_session.commit()
+    older = datetime(2026, 7, 17, 8, 0, tzinfo=timezone.utc)
+    latest = older + timedelta(hours=2)
+    add_contribution(
+        db_session,
+        owner_user_id=USER_ID,
+        consent_policy_version=CONSENT_POLICY_VERSION,
+        consent_timestamp=older,
+    )
+    add_contribution(
+        db_session,
+        owner_user_id=USER_ID,
+        consent_policy_version=CONSENT_POLICY_VERSION,
+        consent_timestamp=latest,
+    )
+    add_contribution(
+        db_session,
+        owner_user_id=OTHER_USER_ID,
+        consent_policy_version=CONSENT_POLICY_VERSION,
+        consent_timestamp=latest + timedelta(days=1),
+    )
+
+    response = client.get("/api/profile/me/consent", headers=authorization())
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "currentPolicyVersion": CONSENT_POLICY_VERSION,
+        "mostRecentConsentAt": "2026-07-17T10:00:00Z",
+    }
+    assert set(response.json()) == {
+        "currentPolicyVersion",
+        "mostRecentConsentAt",
+    }
+
+
+def test_legacy_consent_is_not_invented_in_private_summary(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_as(user())
+    assert client.get("/api/profile/me", headers=authorization()).status_code == 200
+    legacy = add_contribution(
+        db_session,
+        owner_user_id=USER_ID,
+        consent_policy_version=None,
+        consent_timestamp=None,
+    )
+
+    response = client.get("/api/profile/me/consent", headers=authorization())
+    db_session.refresh(legacy)
+
+    assert response.status_code == 200
+    assert response.json()["mostRecentConsentAt"] is None
+    assert legacy.consent_given is True
+    assert legacy.consent_policy_version is None
+    assert legacy.consent_timestamp is None
+    assert legacy.is_externally_release_ready is False
 
 
 def test_first_authenticated_get_creates_and_returns_profile(
@@ -306,9 +415,10 @@ def test_only_current_user_profile_routes_are_registered() -> None:
         if route.path.startswith("/api/profile")
     ]
 
-    assert len(profile_routes) == 4
+    assert len(profile_routes) == 5
     assert {path for path, _methods in profile_routes} == {
         "/api/profile/me",
+        "/api/profile/me/consent",
         "/api/profile/me/points",
         "/api/profile/me/statistics",
     }

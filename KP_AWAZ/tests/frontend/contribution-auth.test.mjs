@@ -159,6 +159,30 @@ test("contribution partial provides an accessible login-required status", async 
 });
 
 
+test("both recording flows require clear versioned consent before submission", async () => {
+  const [html, source] = await Promise.all([
+    readFile(new URL("../../sections/contribution.html", import.meta.url), "utf8"),
+    readFile(new URL("../../scripts/modules/contributions.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.equal((html.match(/type="checkbox" required/g) ?? []).length, 2);
+  assert.equal(
+    (
+      html.match(
+        /I voluntarily contribute this recording and understand that\s+approved recordings may be used to support language and speech\s+technology\./g,
+      ) ?? []
+    ).length,
+    2,
+  );
+  assert.match(html, /id="donationConsentError"[\s\S]*role="alert"/);
+  assert.match(html, /id="openRecordingConsentError"[\s\S]*role="alert"/);
+  assert.equal((html.match(/href="data-use\.html"/g) ?? []).length, 2);
+  assert.match(source, /if \(!validateConsent\(donationConsent, donationConsentError\)\) return;/);
+  assert.match(source, /if \(!validateConsent\(openRecordingConsent, openRecordingConsentError\)\) return;/);
+  assert.match(source, /consentPolicyVersion: CONSENT_POLICY_VERSION/);
+});
+
+
 test("signed-out users see login guidance and cannot contribute", () => {
   const view = fixture(authState("signed_out"));
 

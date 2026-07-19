@@ -44,6 +44,30 @@ class ProfileResponse(BaseModel):
         return value.astimezone(timezone.utc)
 
 
+class ProfileConsentSummaryResponse(BaseModel):
+    """Private current-policy and recent-consent details for one owner."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    current_policy_version: str = Field(alias="currentPolicyVersion")
+    most_recent_consent_at: datetime | None = Field(alias="mostRecentConsentAt")
+
+    @field_validator("most_recent_consent_at")
+    @classmethod
+    def normalize_optional_timestamp_to_utc(
+        cls,
+        value: datetime | None,
+    ) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None or value.utcoffset() is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+
 class ProfileUpdateRequest(BaseModel):
     """Owner-editable profile preferences; verified identity is excluded."""
 

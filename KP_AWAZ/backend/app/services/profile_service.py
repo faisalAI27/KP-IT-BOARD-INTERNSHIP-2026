@@ -3,9 +3,12 @@
 import re
 from datetime import datetime, timezone
 
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.consent import CONSENT_POLICY_VERSION
+from app.models import Contribution
 from app.models.profile import Profile
 from app.schemas.profile import ProfileUpdateRequest
 from app.services.supabase_auth import AuthenticatedUser
@@ -50,6 +53,12 @@ class InvalidLeaderboardPreferenceError(ProfileServiceError):
 class ProfilePersistenceError(ProfileServiceError):
     code = "PROFILE_PERSISTENCE_FAILED"
     message = "The profile could not be saved. Please try again."
+    http_status = 500
+
+
+class ProfileConsentQueryError(ProfileServiceError):
+    code = "PROFILE_CONSENT_QUERY_FAILED"
+    message = "Consent details could not be loaded. Please try again."
     http_status = 500
 
 
@@ -273,3 +282,30 @@ def update_profile(
     except SQLAlchemyError as error:
         database.rollback()
         raise ProfilePersistenceError() from error
+
+
+def get_profile_consent_summary(
+    *,
+    database: Session,
+    owner_user_id: str,
+) -> dict[str, object]:
+    """Return only the verified owner's latest structured consent timestamp."""
+
+    try:
+        most_recent_consent = database.scalar(
+            select(func.max(Contribution.consent_timestamp)).where(
+                Contribution.user_id == owner_user_id,
+                Contribution.consent_given.is_(True),
+                Contribution.consent_policy_version.is_not(None),
+                func.trim(Contribution.consent_policy_version) != "",
+                Contribution.consent_timestamp.is_not(None),
+            )
+        )
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise ProfileConsentQueryError() from error
+
+    return {
+        "currentPolicyVersion": CONSENT_POLICY_VERSION,
+        "mostRecentConsentAt": most_recent_consent,
+    }

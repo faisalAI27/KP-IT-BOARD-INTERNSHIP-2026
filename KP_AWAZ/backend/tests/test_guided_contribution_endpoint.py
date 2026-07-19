@@ -12,6 +12,7 @@ from starlette.datastructures import UploadFile as StarletteUploadFile
 import app.routes.contributions as contribution_route_module
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution, Sentence
 from app.services.audio_storage import AudioStorageError, resolve_audio_storage_path
 from app.utils.text_normalization import normalize_sentence_text
@@ -33,7 +34,8 @@ def valid_form_data() -> dict[str, str]:
         "language": "Pashto",
         "sentence": "هر غږ ارزښت لري.",
         "sentenceSource": "provided",
-        "consent": "true",
+        "consentGiven": "true",
+        "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }
 
 
@@ -129,6 +131,8 @@ def test_database_record_is_created(client: TestClient, db_session: Session) -> 
     assert contribution is not None
     assert contribution.contribution_type == "guided"
     assert contribution.consent_given is True
+    assert contribution.consent_policy_version == CONSENT_POLICY_VERSION
+    assert contribution.consent_timestamp is not None
     assert contribution.review_status == "pending"
     assert contribution.reviewed_at is None
     assert contribution.rejection_reason is None
@@ -167,7 +171,14 @@ def test_audio_file_is_created(client: TestClient, db_session: Session) -> None:
 
 @pytest.mark.parametrize(
     "missing_field",
-    ["contributorName", "language", "sentence", "sentenceSource", "consent"],
+    [
+        "contributorName",
+        "language",
+        "sentence",
+        "sentenceSource",
+        "consentGiven",
+        "consentPolicyVersion",
+    ],
 )
 def test_missing_required_form_field_returns_422(
     missing_field: str, client: TestClient
@@ -235,12 +246,24 @@ def test_invalid_sentence_source_returns_safe_400(client: TestClient) -> None:
 @pytest.mark.parametrize("consent", ["false", "0", "no", "off"])
 def test_false_consent_returns_safe_400(consent: str, client: TestClient) -> None:
     data = valid_form_data()
-    data["consent"] = consent
+    data["consentGiven"] = consent
 
     response = post_guided(client, data=data)
 
     assert response.status_code == 400
     assert response.json()["code"] == "CONSENT_REQUIRED"
+
+
+def test_noncurrent_consent_policy_version_returns_safe_400(
+    client: TestClient,
+) -> None:
+    data = valid_form_data()
+    data["consentPolicyVersion"] = "0.9"
+
+    response = post_guided(client, data=data)
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "CONSENT_POLICY_VERSION_INVALID"
 
 
 def test_custom_sentence_with_id_returns_400(client: TestClient) -> None:

@@ -17,7 +17,7 @@ class SchemaCompatibilityError(RuntimeError):
 
 
 def ensure_contribution_ownership_schema(engine: Engine) -> None:
-    """Add contribution ownership and review fields to existing SQLite databases."""
+    """Add required contribution fields without rewriting existing SQLite rows."""
 
     if engine.dialect.name != "sqlite":
         return
@@ -56,6 +56,16 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                 connection.exec_driver_sql(
                     "ALTER TABLE contributions "
                     "ADD COLUMN review_revision INTEGER NOT NULL DEFAULT 0"
+                )
+            if "consent_policy_version" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE contributions "
+                    "ADD COLUMN consent_policy_version VARCHAR(20)"
+                )
+            if "consent_timestamp" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE contributions "
+                    "ADD COLUMN consent_timestamp DATETIME"
                 )
 
             connection.exec_driver_sql(
