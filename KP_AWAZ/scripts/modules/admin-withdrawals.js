@@ -2,7 +2,7 @@ import {
   getAdminWithdrawalRequests,
   resolveAdminWithdrawalRequest,
 } from "../services/admin-review-api.js?v=20260719-withdrawals";
-import { subscribeAdminConnection } from "./admin-review.js?v=20260719-withdrawals";
+import { subscribeAdminConnection } from "./admin-review.js";
 
 
 const FILTERS = new Set(["requested", "approved", "declined", "all"]);

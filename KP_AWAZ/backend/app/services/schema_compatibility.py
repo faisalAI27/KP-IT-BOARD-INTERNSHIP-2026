@@ -16,6 +16,53 @@ class SchemaCompatibilityError(RuntimeError):
         super().__init__("The database schema could not be prepared safely.")
 
 
+def ensure_sentence_phrase_schema(engine: Engine) -> None:
+    """Add phrase-management fields without replacing existing sentence rows."""
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    optional_columns = {
+        "category": "VARCHAR(100)",
+        "dialect": "VARCHAR(100)",
+        "source": "VARCHAR(255)",
+        "difficulty": "VARCHAR(50)",
+        "updated_at": "DATETIME",
+    }
+    try:
+        with engine.begin() as connection:
+            schema = inspect(connection)
+            if not schema.has_table("sentences"):
+                return
+            column_names = {
+                column["name"] for column in schema.get_columns("sentences")
+            }
+            for column_name, column_type in optional_columns.items():
+                if column_name not in column_names:
+                    connection.exec_driver_sql(
+                        f"ALTER TABLE sentences ADD COLUMN {column_name} {column_type}"
+                    )
+            if "times_assigned" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE sentences ADD COLUMN times_assigned "
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+            connection.exec_driver_sql(
+                "UPDATE sentences SET times_assigned = 0 "
+                "WHERE times_assigned IS NULL OR times_assigned < 0"
+            )
+            connection.exec_driver_sql(
+                "UPDATE sentences SET updated_at = created_at "
+                "WHERE updated_at IS NULL"
+            )
+            connection.exec_driver_sql(
+                "CREATE INDEX IF NOT EXISTS ix_sentences_language_active_usage "
+                "ON sentences (language, is_active, times_assigned)"
+            )
+    except SQLAlchemyError as error:
+        raise SchemaCompatibilityError() from error
+
+
 def ensure_contribution_ownership_schema(engine: Engine) -> None:
     """Add required contribution fields without rewriting existing SQLite rows."""
 

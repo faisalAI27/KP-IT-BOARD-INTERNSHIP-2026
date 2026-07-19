@@ -29,6 +29,7 @@ from app.services.contribution_service import (
     InvalidSentenceIdError,
     InvalidSentenceSourceError,
     SentenceLanguageMismatchError,
+    SentenceIdRequiredError,
     SentenceNotFoundError,
     SentenceTextMismatchError,
     create_guided_contribution as create_owned_guided_contribution,
@@ -66,7 +67,7 @@ def guided_input(**values: object) -> GuidedContributionInput:
         "contributor_name": "Faisal Imran",
         "language": "Pashto",
         "sentence": "هر غږ ارزښت لري.",
-        "sentence_source": "provided",
+        "sentence_source": "custom",
         "sentence_id": None,
         "consent_given": "true",
         "consent_policy_version": CONSENT_POLICY_VERSION,
@@ -182,12 +183,12 @@ def test_custom_sentence_stores_null_id(db_session: Session) -> None:
     assert contribution.sentence_id is None
 
 
-def test_provided_sentence_without_id_succeeds(db_session: Session) -> None:
-    contribution = create_guided_contribution(db_session, guided_input())
-
-    assert contribution.sentence_source == "provided"
-    assert contribution.sentence_id is None
-    assert contribution.sentence_text == "هر غږ ارزښت لري."
+def test_provided_sentence_without_id_is_rejected(db_session: Session) -> None:
+    with pytest.raises(SentenceIdRequiredError):
+        create_guided_contribution(
+            db_session,
+            guided_input(sentence_source="provided"),
+        )
 
 
 def test_valid_provided_sentence_id_creates_relationship(
@@ -196,7 +197,7 @@ def test_valid_provided_sentence_id_creates_relationship(
     sentence = add_sentence(db_session)
     contribution = create_guided_contribution(
         db_session,
-        guided_input(sentence_id=sentence.id),
+        guided_input(sentence_id=sentence.id, sentence_source="provided"),
     )
 
     assert contribution.sentence_id == sentence.id
@@ -211,6 +212,7 @@ def test_valid_sentence_id_uses_canonical_database_snapshot(
         db_session,
         guided_input(
             sentence_id=sentence.id,
+            sentence_source="provided",
             sentence="زما ژبه زما پېژندنه ده.",
         ),
     )
@@ -222,7 +224,7 @@ def test_invalid_sentence_uuid_is_rejected(db_session: Session) -> None:
     with pytest.raises(InvalidSentenceIdError):
         create_guided_contribution(
             db_session,
-            guided_input(sentence_id="not-a-uuid"),
+            guided_input(sentence_id="not-a-uuid", sentence_source="provided"),
         )
 
 
@@ -230,7 +232,7 @@ def test_missing_sentence_record_is_rejected(db_session: Session) -> None:
     with pytest.raises(SentenceNotFoundError):
         create_guided_contribution(
             db_session,
-            guided_input(sentence_id=str(uuid4())),
+            guided_input(sentence_id=str(uuid4()), sentence_source="provided"),
         )
 
 
@@ -240,7 +242,7 @@ def test_inactive_sentence_is_rejected(db_session: Session) -> None:
     with pytest.raises(SentenceNotFoundError):
         create_guided_contribution(
             db_session,
-            guided_input(sentence_id=sentence.id),
+            guided_input(sentence_id=sentence.id, sentence_source="provided"),
         )
 
 
@@ -250,7 +252,11 @@ def test_sentence_language_mismatch_is_rejected(db_session: Session) -> None:
     with pytest.raises(SentenceLanguageMismatchError):
         create_guided_contribution(
             db_session,
-            guided_input(sentence_id=sentence.id, language="Pashto"),
+            guided_input(
+                sentence_id=sentence.id,
+                sentence_source="provided",
+                language="Pashto",
+            ),
         )
 
 
@@ -260,7 +266,11 @@ def test_sentence_text_mismatch_is_rejected(db_session: Session) -> None:
     with pytest.raises(SentenceTextMismatchError):
         create_guided_contribution(
             db_session,
-            guided_input(sentence_id=sentence.id, sentence="بله جمله"),
+            guided_input(
+                sentence_id=sentence.id,
+                sentence_source="provided",
+                sentence="بله جمله",
+            ),
         )
 
 

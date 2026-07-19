@@ -69,7 +69,7 @@ KP_AWAZ/
 ├── my-contributions.html      # Private review-history page
 ├── profile.html               # Private identity and privacy page
 ├── settings.html              # Private preferences and security page
-├── admin.html                 # Isolated contribution-review page
+├── admin.html                 # Isolated review and phrase-management page
 ├── sections/                  # One HTML partial per visible section
 ├── styles/                    # Foundation, section and responsive CSS
 ├── scripts/
@@ -639,6 +639,45 @@ and explain whether the contributor's score will update or remain unchanged.
 This is temporary internal API-key administration, not an admin-account system.
 The public leaderboard is available only on the contributor website and does
 not initialize or share state with this administrator page.
+
+## Pashto prompt-phrase backend
+
+Prompt phrases reuse the existing `sentences` table and public
+`GET /api/sentences` contract. Public delivery returns active phrases only,
+prefers phrases with fewer recorded assignments, and exposes no administrative
+metadata. An empty active collection safely returns `{"data": []}`.
+
+The following endpoints are protected by the existing `X-Admin-Key` header:
+
+- `POST /api/admin/phrases/import` accepts one UTF-8 `.csv`, `.json`, or `.txt`
+  file.
+- `GET /api/admin/phrases` provides paginated search, language/active filters,
+  ordering, and aggregate assignment/review counts.
+- `PATCH /api/admin/phrases/{phrase_id}` edits supported metadata or changes
+  active status without deleting history.
+- `GET /api/admin/phrases/export` returns UTF-8 CSV or JSON, with active-only
+  export enabled by default.
+
+Imports require phrase text, default missing language to Pashto, default missing
+active state to true, preserve original Unicode and punctuation, and prevent a
+duplicate normalized text/language pair. Optional category, dialect, source, and
+difficulty values remain null when not supplied. Existing sentence records are
+preserved.
+
+Provided-prompt recordings require an active phrase ID. FastAPI verifies the
+submitted language and text against that phrase, then stores both the phrase ID
+and canonical text snapshot on the contribution. Later phrase edits or disabling
+do not rewrite historical snapshots. Contributor-written custom sentences and
+open recordings retain their existing behavior; open recordings have no phrase
+ID.
+
+The protected `admin.html` workspace includes a focused **Phrase Management**
+tab alongside the unchanged contribution-review tools. It shows collection
+totals, paginated search and language/status filters, UTF-8 CSV/JSON/TXT import
+summaries, safe metadata editing, enable/disable actions, and backend-generated
+active/all CSV or JSON downloads. Phrase text is rendered as plain text with
+Pashto direction support. The administrator key continues to live only in the
+page module's runtime memory and is sent only through `X-Admin-Key`.
 
 ## Recording behavior
 

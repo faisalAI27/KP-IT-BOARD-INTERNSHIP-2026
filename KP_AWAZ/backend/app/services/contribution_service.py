@@ -83,6 +83,11 @@ class InvalidSentenceIdError(ContributionServiceError):
     default_message = "The sentence ID is invalid."
 
 
+class SentenceIdRequiredError(ContributionServiceError):
+    code = "SENTENCE_ID_REQUIRED"
+    default_message = "Select an active contribution phrase before submitting."
+
+
 class SentenceNotFoundError(ContributionServiceError):
     code = "SENTENCE_NOT_FOUND"
     default_message = "The requested active sentence was not found."
@@ -241,7 +246,7 @@ def _validate_optional_sentence(
         return None, submitted_sentence
 
     if not cleaned_sentence_id:
-        return None, submitted_sentence
+        raise SentenceIdRequiredError()
 
     try:
         canonical_sentence_id = str(UUID(cleaned_sentence_id))

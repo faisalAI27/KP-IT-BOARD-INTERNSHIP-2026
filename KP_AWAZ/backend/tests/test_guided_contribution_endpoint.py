@@ -33,7 +33,7 @@ def valid_form_data() -> dict[str, str]:
         "contributorName": "Faisal Imran",
         "language": "Pashto",
         "sentence": "هر غږ ارزښت لري.",
-        "sentenceSource": "provided",
+        "sentenceSource": "custom",
         "consentGiven": "true",
         "consentPolicyVersion": CONSENT_POLICY_VERSION,
     }
@@ -98,10 +98,13 @@ def test_valid_custom_sentence_returns_201(client: TestClient) -> None:
     assert response.status_code == 201
 
 
-def test_valid_provided_sentence_without_id_returns_201(client: TestClient) -> None:
-    response = post_guided(client)
+def test_provided_sentence_without_id_returns_400(client: TestClient) -> None:
+    data = valid_form_data()
+    data["sentenceSource"] = "provided"
+    response = post_guided(client, data=data)
 
-    assert response.status_code == 201
+    assert response.status_code == 400
+    assert response.json()["code"] == "SENTENCE_ID_REQUIRED"
 
 
 def test_valid_provided_sentence_with_id_returns_201(
@@ -109,6 +112,7 @@ def test_valid_provided_sentence_with_id_returns_201(
 ) -> None:
     sentence = add_sentence(db_session)
     data = valid_form_data()
+    data["sentenceSource"] = "provided"
     data["sentenceId"] = sentence.id
 
     response = post_guided(client, data=data)
@@ -278,6 +282,7 @@ def test_custom_sentence_with_id_returns_400(client: TestClient) -> None:
 
 def test_invalid_sentence_id_returns_400(client: TestClient) -> None:
     data = valid_form_data()
+    data["sentenceSource"] = "provided"
     data["sentenceId"] = "not-a-uuid"
 
     response = post_guided(client, data=data)
@@ -288,6 +293,7 @@ def test_invalid_sentence_id_returns_400(client: TestClient) -> None:
 
 def test_unknown_sentence_id_returns_404(client: TestClient) -> None:
     data = valid_form_data()
+    data["sentenceSource"] = "provided"
     data["sentenceId"] = str(uuid4())
 
     response = post_guided(client, data=data)
@@ -301,6 +307,7 @@ def test_inactive_sentence_id_returns_404(
 ) -> None:
     sentence = add_sentence(db_session, is_active=False)
     data = valid_form_data()
+    data["sentenceSource"] = "provided"
     data["sentenceId"] = sentence.id
 
     response = post_guided(client, data=data)
@@ -314,6 +321,7 @@ def test_sentence_language_mismatch_returns_400(
 ) -> None:
     sentence = add_sentence(db_session, language="Urdu")
     data = valid_form_data()
+    data["sentenceSource"] = "provided"
     data["sentenceId"] = sentence.id
 
     response = post_guided(client, data=data)
@@ -327,7 +335,13 @@ def test_sentence_text_mismatch_returns_400(
 ) -> None:
     sentence = add_sentence(db_session)
     data = valid_form_data()
-    data.update({"sentenceId": sentence.id, "sentence": "بله جمله"})
+    data.update(
+        {
+            "sentenceSource": "provided",
+            "sentenceId": sentence.id,
+            "sentence": "بله جمله",
+        }
+    )
 
     response = post_guided(client, data=data)
 

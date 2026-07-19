@@ -24,6 +24,7 @@ from app.routes import (
     contributions,
     health,
     leaderboard,
+    phrases,
     profiles,
     sentence_imports,
     sentences,
@@ -32,7 +33,10 @@ from app.routes import (
 from app.services.contribution_statistics_service import ContributionStatisticsError
 from app.services.profile_service import ProfileServiceError
 from app.services.points_ledger_service import PointsLedgerError
-from app.services.schema_compatibility import ensure_contribution_ownership_schema
+from app.services.schema_compatibility import (
+    ensure_contribution_ownership_schema,
+    ensure_sentence_phrase_schema,
+)
 from app.services.supabase_auth import SupabaseAuthError
 
 
@@ -42,6 +46,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
     Base.metadata.create_all(bind=engine)
     ensure_contribution_ownership_schema(engine)
+    ensure_sentence_phrase_schema(engine)
     yield
 
 
@@ -146,6 +151,7 @@ app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(leaderboard.router, prefix=settings.api_prefix)
 app.include_router(sentences.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
+app.include_router(phrases.router, prefix=settings.api_prefix)
 app.include_router(sentence_imports.router, prefix=settings.api_prefix)
 app.include_router(contributions.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)

@@ -20,6 +20,12 @@ from app.schemas.profile import (
     ProfileUpdateRequest,
 )
 from app.schemas.points import PersonalPointsResponse, PointLedgerItemResponse
+from app.schemas.phrase import (
+    AdminPhraseListResponse,
+    AdminPhraseResponse,
+    PhraseImportSummaryResponse,
+    PhraseUpdateRequest,
+)
 from app.schemas.sentence import SentenceListResponse, SentenceResponse
 from app.schemas.sentence_import import (
     ImportFileResultResponse,
@@ -45,6 +51,8 @@ from app.schemas.withdrawal import (
 
 __all__ = [
     "AdminHealthResponse",
+    "AdminPhraseListResponse",
+    "AdminPhraseResponse",
     "AdminWithdrawalRequestListResponse",
     "AdminWithdrawalRequestResponse",
     "AdminWithdrawalResolutionRequest",
@@ -65,6 +73,8 @@ __all__ = [
     "PersonalLeaderboardCurrentUserResponse",
     "PersonalLeaderboardItemResponse",
     "PointLedgerItemResponse",
+    "PhraseImportSummaryResponse",
+    "PhraseUpdateRequest",
     "ProfileResponse",
     "ProfileConsentSummaryResponse",
     "ProfileContributionStatisticsResponse",

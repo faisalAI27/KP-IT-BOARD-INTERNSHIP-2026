@@ -3,11 +3,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
 from app.schemas import SentenceListResponse
-from app.services.sentence_service import get_active_sentences
+from app.services.sentence_service import SentenceDeliveryError, get_active_sentences
 from app.utils.text_normalization import normalize_language_name
 
 
@@ -19,7 +20,7 @@ def list_sentences(
     database: Annotated[Session, Depends(get_db)],
     language: Annotated[str, Query(min_length=1, max_length=100)] = "Pashto",
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-) -> SentenceListResponse:
+) -> SentenceListResponse | JSONResponse:
     """Return active prompts for the requested language."""
 
     try:
@@ -30,9 +31,15 @@ def list_sentences(
             detail=str(error),
         ) from error
 
-    sentences = get_active_sentences(
-        database,
-        language=cleaned_language,
-        limit=limit,
-    )
+    try:
+        sentences = get_active_sentences(
+            database,
+            language=cleaned_language,
+            limit=limit,
+        )
+    except SentenceDeliveryError as error:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": error.message, "code": error.code},
+        )
     return SentenceListResponse(data=sentences)
