@@ -4,7 +4,7 @@ from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models import Contribution, WithdrawalRequest
+from app.models import Contribution, Profile, WithdrawalRequest
 from app.services.withdrawal_service import EXPORT_EXCLUSION_STATUSES
 
 
@@ -14,7 +14,7 @@ class DatasetExportQueryError(RuntimeError):
 
 
 def export_eligible_contributions_statement():
-    """Build the single authoritative eligibility query used by future exports."""
+    """Build the database-level eligibility query used by internal exporters."""
 
     exclusion_exists = exists(
         select(WithdrawalRequest.id).where(
@@ -32,12 +32,18 @@ def export_eligible_contributions_statement():
             ),
         )
     )
+    verified_owner_exists = exists(
+        select(Profile.id).where(Profile.id == Contribution.user_id)
+    )
     return select(Contribution).where(
         Contribution.review_status == "approved",
+        Contribution.user_id.is_not(None),
+        verified_owner_exists,
         Contribution.consent_given.is_(True),
         Contribution.consent_policy_version.is_not(None),
         func.trim(Contribution.consent_policy_version) != "",
         Contribution.consent_timestamp.is_not(None),
+        Contribution.reviewed_at.is_not(None),
         ~exclusion_exists,
     )
 

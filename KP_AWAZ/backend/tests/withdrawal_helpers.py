@@ -60,6 +60,7 @@ def add_withdrawal_contribution(
         file_size=128,
         status="queued",
         review_status=review_status,
+        reviewed_at=created_at if review_status == "approved" else None,
         created_at=created_at,
         updated_at=created_at,
     )

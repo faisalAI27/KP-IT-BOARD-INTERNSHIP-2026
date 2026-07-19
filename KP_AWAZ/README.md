@@ -387,6 +387,41 @@ Protected administrator endpoints:
 - `GET /api/admin/withdrawals`
 - `PATCH /api/admin/withdrawals/{request_id}`
 
+## Internal approved-dataset export
+
+The backend includes a read-only command-line exporter for internal model-training
+preparation. It has no public download endpoint. The exporter includes only
+approved contributions with authenticated ownership, structured consent, safe
+supported audio, valid stored metadata, and no requested or approved withdrawal.
+It uses export-local sample and speaker identifiers and never writes a reversible
+identity map.
+
+Inspect development data without creating output:
+
+```bash
+cd backend
+.venv/bin/python -m app.cli.export_dataset \
+  --output ../exports/kp_awaz_approved_dataset \
+  --audio-mode original \
+  --dry-run \
+  --include-checksums
+```
+
+Create the internal export after reviewing the dry-run counts:
+
+```bash
+.venv/bin/python -m app.cli.export_dataset \
+  --output ../exports/kp_awaz_approved_dataset \
+  --audio-mode original \
+  --include-checksums
+```
+
+The deterministic seed defaults to `42`. A non-empty output directory is refused
+unless `--overwrite` is explicitly provided. When fewer than three eligible
+speakers exist, only `splits/all.csv` is created; otherwise train, validation,
+and test files are speaker-disjoint. Generated `exports/` directories are ignored
+by Git.
+
 ## Profile settings
 
 After Supabase restores or creates a session, FastAPI verifies the signed-in user and guarantees that one local profile exists through `GET /api/auth/me` before the frontend requests profile data. `GET /api/profile/me` remains safe to call directly and also creates the profile when needed. Existing profile preferences and edited display names are never replaced by later provider metadata.
