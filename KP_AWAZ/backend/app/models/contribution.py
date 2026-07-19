@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from app.models.point_ledger_entry import PointLedgerEntry
     from app.models.profile import Profile
     from app.models.sentence import Sentence
+    from app.models.withdrawal_request import WithdrawalRequest
 
 
 class Contribution(Base):
@@ -144,6 +145,10 @@ class Contribution(Base):
         back_populates="contribution",
         passive_deletes=True,
     )
+    withdrawal_requests: Mapped[list["WithdrawalRequest"]] = relationship(
+        back_populates="contribution",
+        passive_deletes=True,
+    )
 
     @property
     def has_structured_consent(self) -> bool:
@@ -158,7 +163,7 @@ class Contribution(Base):
 
     @property
     def is_externally_release_ready(self) -> bool:
-        """Require approval and structured consent before any future export."""
+        """Return base readiness; export services also enforce withdrawal state."""
 
         return self.review_status == "approved" and self.has_structured_consent
 

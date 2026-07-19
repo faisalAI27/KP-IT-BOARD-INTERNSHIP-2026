@@ -8,6 +8,7 @@ import {
 const PAGE_LIMIT = 20;
 const REVIEW_FILTERS = new Set(["pending", "approved", "rejected", "all"]);
 const AUTH_ERROR_CODES = new Set(["ADMIN_KEY_REQUIRED", "INVALID_ADMIN_KEY"]);
+const adminConnectionListeners = new Set();
 
 const defaultAdminApi = Object.freeze({
   listContributions: getAdminContributions,
@@ -15,6 +16,21 @@ const defaultAdminApi = Object.freeze({
   getContributionAudio: getAdminContributionAudio,
   reviewContribution: reviewAdminContribution,
 });
+
+
+function notifyAdminConnection(connected, adminKey = null) {
+  const state = Object.freeze({
+    connected: Boolean(connected),
+    adminKey: connected && typeof adminKey === "string" ? adminKey : null,
+  });
+  for (const listener of [...adminConnectionListeners]) {
+    try {
+      listener(state);
+    } catch {
+      // A secondary protected panel must not interrupt the main review workspace.
+    }
+  }
+}
 
 
 function emptyQueue() {
@@ -282,6 +298,7 @@ export class AdminReview {
       this._state.pendingTotal = this._state.queue.total;
       this._state.pendingStatus = "ready";
       this._render();
+      notifyAdminConnection(true, key);
       return true;
     } catch (error) {
       if (!this._isConnectionCurrent(generation, lifecycleId, key)) return false;
@@ -294,6 +311,7 @@ export class AdminReview {
         ? "The admin key was not accepted. Enter it again to reconnect."
         : safeError("connection");
       this._render();
+      notifyAdminConnection(false);
       this._elements.adminKeyInput.focus?.();
       return false;
     }
@@ -307,6 +325,7 @@ export class AdminReview {
     nextState.connectionMessage = message;
     nextState.connectionStatus = message ? "error" : "idle";
     this._state = nextState;
+    notifyAdminConnection(false);
     this._elements.adminKeyInput.value = "";
     this._elements.adminRejectionReason.value = "";
     this._render();
@@ -602,6 +621,7 @@ export class AdminReview {
     }
     this._bindings = [];
     this._state = initialState();
+    notifyAdminConnection(false);
     if (this._elements) {
       this._elements.adminKeyInput.value = "";
       this._elements.adminRejectionReason.value = "";
@@ -1187,6 +1207,21 @@ export class AdminReview {
 
 
 let adminReviewInstance = null;
+
+
+export function subscribeAdminConnection(listener) {
+  if (typeof listener !== "function") return () => {};
+  adminConnectionListeners.add(listener);
+  const connected = Boolean(
+    adminReviewInstance?._state?.connectionStatus === "connected" &&
+      adminReviewInstance?._state?.adminKey,
+  );
+  listener({
+    connected,
+    adminKey: connected ? adminReviewInstance._state.adminKey : null,
+  });
+  return () => adminConnectionListeners.delete(listener);
+}
 
 
 export function initializeAdminReview(options = {}) {

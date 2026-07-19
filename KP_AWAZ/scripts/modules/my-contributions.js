@@ -66,6 +66,11 @@ function safeHistoryItem(item) {
       typeof item?.rejectionReason === "string"
         ? item.rejectionReason.trim() || null
         : null,
+    withdrawalStatus: ["none", "requested", "approved", "declined"].includes(
+      item?.withdrawalStatus,
+    )
+      ? item.withdrawalStatus
+      : "none",
     createdAt: typeof item?.createdAt === "string" ? item.createdAt : "",
   };
 }
@@ -184,6 +189,14 @@ export function contributionReviewHelper(value) {
     return "Rejected recordings do not count toward your contribution score.";
   }
   return "Stored safely and waiting for administrator review. It does not count toward your score yet.";
+}
+
+
+export function formatContributionWithdrawalStatus(value) {
+  if (value === "requested") return "Withdrawal requested";
+  if (value === "approved") return "Withdrawal approved";
+  if (value === "declined") return "Withdrawal declined";
+  return "";
 }
 
 
@@ -656,6 +669,16 @@ export class MyContributions {
     metadata.append(this._createMetadataRow("File", item.originalFilename));
     metadata.append(this._createMetadataRow("Format", item.mimeType));
     card.append(heading, reviewHelper, metadata);
+    const withdrawalLabel = formatContributionWithdrawalStatus(
+      item.withdrawalStatus,
+    );
+    if (withdrawalLabel) {
+      const withdrawal = this._root.createElement("p");
+      withdrawal.className = "my-contribution-withdrawal";
+      withdrawal.setAttribute("data-status", item.withdrawalStatus);
+      withdrawal.textContent = withdrawalLabel;
+      card.append(withdrawal);
+    }
     if (item.reviewStatus === "rejected" && item.rejectionReason) {
       const feedback = this._root.createElement("div");
       feedback.className = "my-contribution-feedback";

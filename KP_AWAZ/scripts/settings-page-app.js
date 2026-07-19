@@ -1,9 +1,11 @@
 import { getCurrentAuthState, updatePassword } from "./services/auth-service.js?v=20260717-auth-routing";
 import { updateMyProfile } from "./services/profile-api.js?v=20260717-member-workspace";
 import { destroyWorkspace, initializeWorkspace, updateWorkspaceIdentity } from "./modules/workspace-shell.js?v=20260717-auth-routing";
+import { WithdrawalSettings } from "./modules/withdrawal-settings.js?v=20260719-withdrawals";
 
 
 let generation = 0;
+let withdrawalSettings = null;
 
 
 function message(id, value, tone) {
@@ -46,6 +48,8 @@ function initializeSettings({ profile, state }) {
   language.value = profile.preferredLanguage;
   if (!language.value) language.value = "Pashto";
   optIn.checked = profile.leaderboardOptIn;
+  withdrawalSettings = new WithdrawalSettings();
+  withdrawalSettings.initialize({ expectedUserId });
 
   preferenceForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -98,5 +102,5 @@ function initializeSettings({ profile, state }) {
 }
 
 
-window.addEventListener("beforeunload", () => { generation += 1; clearPasswords(); destroyWorkspace(); }, { once: true });
+window.addEventListener("beforeunload", () => { generation += 1; clearPasswords(); withdrawalSettings?.destroy(); withdrawalSettings = null; destroyWorkspace(); }, { once: true });
 void initializeWorkspace({ page: "settings", onReady: initializeSettings }).catch(() => { document.body.dataset.workspaceState = "error"; });

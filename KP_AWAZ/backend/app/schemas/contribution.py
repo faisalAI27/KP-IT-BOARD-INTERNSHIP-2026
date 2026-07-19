@@ -56,6 +56,9 @@ class MyContributionResponse(BaseModel):
         alias="reviewStatus"
     )
     rejection_reason: str | None = Field(alias="rejectionReason")
+    withdrawal_status: Literal[
+        "none", "requested", "approved", "declined"
+    ] = Field(default="none", alias="withdrawalStatus")
     created_at: datetime = Field(alias="createdAt")
 
     @model_validator(mode="after")

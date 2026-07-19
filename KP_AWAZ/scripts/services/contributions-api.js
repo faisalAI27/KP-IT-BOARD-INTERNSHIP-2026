@@ -7,6 +7,12 @@ import {
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 const REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
+const WITHDRAWAL_STATUSES = new Set([
+  "none",
+  "requested",
+  "approved",
+  "declined",
+]);
 export const CONSENT_POLICY_VERSION = "1.0";
 export const CONSENT_REQUIRED_MESSAGE =
   "Please confirm the contribution consent before submitting.";
@@ -133,6 +139,10 @@ function safeContributionItem(item) {
       ? item.reviewStatus.trim().toLowerCase()
       : "";
   const rejectionReason = optionalString(item.rejectionReason);
+  const withdrawalStatus =
+    typeof item.withdrawalStatus === "string"
+      ? item.withdrawalStatus.trim().toLowerCase()
+      : "";
   const valid =
     typeof item.id === "string" &&
     item.id.trim() &&
@@ -154,6 +164,7 @@ function safeContributionItem(item) {
     REVIEW_STATUSES.has(reviewStatus) &&
     rejectionReason !== undefined &&
     (reviewStatus === "rejected" || rejectionReason === null) &&
+    WITHDRAWAL_STATUSES.has(withdrawalStatus) &&
     typeof item.createdAt === "string" &&
     !Number.isNaN(Date.parse(item.createdAt));
   if (!valid) return null;
@@ -173,6 +184,7 @@ function safeContributionItem(item) {
       reviewStatus === "rejected" && typeof rejectionReason === "string"
         ? rejectionReason.trim() || null
         : null,
+    withdrawalStatus,
     createdAt: item.createdAt,
   };
 }

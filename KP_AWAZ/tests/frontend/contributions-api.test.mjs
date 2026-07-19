@@ -43,6 +43,7 @@ const historyItem = {
   status: "queued",
   reviewStatus: "pending",
   rejectionReason: null,
+  withdrawalStatus: "none",
   createdAt: successBody.createdAt,
 };
 const historyBody = {
@@ -629,6 +630,7 @@ test("malformed contribution history responses are rejected", async (context) =>
     { ...historyBody, items: [{ ...historyItem, durationSeconds: -1 }] },
     { ...historyBody, items: [{ ...historyItem, reviewStatus: "reviewing" }] },
     { ...historyBody, items: [{ ...historyItem, rejectionReason: undefined }] },
+    { ...historyBody, items: [{ ...historyItem, withdrawalStatus: "deleting" }] },
   ]) {
     await context.test(JSON.stringify(body), () => {
       assert.throws(

@@ -354,6 +354,39 @@ score are otherwise unchanged. Contributors can see the current policy version
 and their most recent structured consent date on `profile.html`. The public
 privacy and data-use explanation is available at `data-use.html`.
 
+## Contributor withdrawal requests
+
+Authenticated contributors can use **Settings → Data and Privacy** to request
+withdrawal for one recording they own or for all recordings they own at the
+time of the request. The browser sends no user ID; FastAPI derives ownership
+from the verified bearer token. Requests use the states `requested`,
+`approved`, and `declined`; `none` is the effective private history state when
+no request applies. The optional contributor reason is limited to 500
+characters.
+
+Creating a request is non-destructive and does not change contribution review
+status, score, points, or stored audio. My Contributions privately displays the
+effective withdrawal state. Public sentence, leaderboard, and contribution
+responses expose no withdrawal data.
+
+The protected administrator workspace lists withdrawal requests through the
+existing `X-Admin-Key` header and can approve exclusion or decline a request
+with safe internal reasoning. Requested and approved records are excluded by
+the canonical dataset export-eligibility query. An approved withdrawal means
+exclude the affected data from future exports while retaining the source
+record for audit; permanent deletion requires a separate secure product and
+operational decision.
+
+Owner endpoints:
+
+- `POST /api/withdrawals/me`
+- `GET /api/withdrawals/me`
+
+Protected administrator endpoints:
+
+- `GET /api/admin/withdrawals`
+- `PATCH /api/admin/withdrawals/{request_id}`
+
 ## Profile settings
 
 After Supabase restores or creates a session, FastAPI verifies the signed-in user and guarantees that one local profile exists through `GET /api/auth/me` before the frontend requests profile data. `GET /api/profile/me` remains safe to call directly and also creates the profile when needed. Existing profile preferences and edited display names are never replaced by later provider metadata.

@@ -25,5 +25,79 @@
     <p id="googlePasswordNotice" class="settings-notice" hidden>Google manages sign-in for this account. KP AWAZ does not ask you to create a separate password here.</p>
   </section>
 
-  <aside class="settings-card settings-data-card" aria-labelledby="dataUseTitle"><span class="settings-number">03</span><h2 id="dataUseTitle">How donated data may be used</h2><p>Approved voice contributions may support language and speech technology for low-resource languages. Recordings remain separate from passwords and authentication credentials.</p><p>Signing out removes the browser session and private screen state. It does not delete your profile, recordings, reviews, score, or rank.</p><a href="data-use.html">Read the privacy and data-use explanation →</a></aside>
+  <section
+    class="settings-card settings-withdrawal-card"
+    id="withdrawalSettingsSection"
+    aria-labelledby="withdrawalSettingsTitle"
+  >
+    <div class="settings-withdrawal-heading">
+      <div>
+        <span class="settings-number">03</span>
+        <h2 id="withdrawalSettingsTitle">Data and Privacy</h2>
+        <p>
+          Request that one recording—or all recordings you currently own—be
+          excluded from future dataset exports.
+        </p>
+      </div>
+      <button
+        class="settings-secondary"
+        id="refreshWithdrawalStatusButton"
+        type="button"
+      >Refresh status</button>
+    </div>
+
+    <div class="settings-withdrawal-warning" role="note">
+      <strong>Administrator review is required.</strong>
+      <p>
+        A request does not immediately delete source audio. Requested and approved
+        recordings are excluded from future exports while the source record is kept
+        for audit.
+      </p>
+    </div>
+
+    <label for="withdrawalContributionSelect">
+      Request withdrawal for one recording
+      <select id="withdrawalContributionSelect">
+        <option value="">Loading your recordings…</option>
+      </select>
+    </label>
+    <label for="withdrawalReason">
+      Optional reason
+      <textarea
+        id="withdrawalReason"
+        rows="3"
+        maxlength="500"
+        placeholder="Share a short reason if it helps the review."
+      ></textarea>
+    </label>
+    <div class="settings-withdrawal-actions">
+      <button
+        class="settings-primary"
+        id="requestOneWithdrawalButton"
+        type="button"
+        disabled
+      >Request for selected recording</button>
+      <button
+        class="settings-danger"
+        id="requestAllWithdrawalButton"
+        type="button"
+        disabled
+      >Request withdrawal for all recordings</button>
+    </div>
+    <div
+      class="settings-message"
+      id="withdrawalSettingsStatus"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
+
+    <div class="settings-withdrawal-history">
+      <h3>Current request status</h3>
+      <p id="withdrawalRequestEmpty">No withdrawal requests have been submitted.</p>
+      <ul id="withdrawalRequestList"></ul>
+    </div>
+  </section>
+
+  <aside class="settings-card settings-data-card" aria-labelledby="dataUseTitle"><span class="settings-number">04</span><h2 id="dataUseTitle">How donated data may be used</h2><p>Approved voice contributions may support language and speech technology for low-resource languages. Recordings remain separate from passwords and authentication credentials.</p><p>Signing out removes the browser session and private screen state. It does not delete your profile, recordings, reviews, score, rank, or withdrawal requests.</p><a href="data-use.html">Read the privacy and data-use explanation →</a></aside>
 </div>

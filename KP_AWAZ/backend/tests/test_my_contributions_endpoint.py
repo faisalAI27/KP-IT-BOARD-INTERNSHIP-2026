@@ -164,6 +164,7 @@ def test_response_uses_safe_camel_case_fields(
         "status",
         "reviewStatus",
         "rejectionReason",
+        "withdrawalStatus",
         "createdAt",
     }
     assert item["id"] == contribution.id
@@ -184,6 +185,7 @@ def test_response_uses_safe_camel_case_fields(
         assert forbidden not in serialized
     assert item["reviewStatus"] == "pending"
     assert item["rejectionReason"] is None
+    assert item["withdrawalStatus"] == "none"
 
 
 def test_rejected_owner_receives_review_status_and_private_reason(

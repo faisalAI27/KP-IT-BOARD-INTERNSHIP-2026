@@ -16,6 +16,7 @@ from app.models import (  # noqa: F401 - registers metadata
     PointLedgerEntry,
     Profile,
     Sentence,
+    WithdrawalRequest,
 )
 from app.routes import (
     admin,
@@ -26,6 +27,7 @@ from app.routes import (
     profiles,
     sentence_imports,
     sentences,
+    withdrawals,
 )
 from app.services.contribution_statistics_service import ContributionStatisticsError
 from app.services.profile_service import ProfileServiceError
@@ -148,3 +150,4 @@ app.include_router(sentence_imports.router, prefix=settings.api_prefix)
 app.include_router(contributions.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(profiles.router, prefix=settings.api_prefix)
+app.include_router(withdrawals.router, prefix=settings.api_prefix)

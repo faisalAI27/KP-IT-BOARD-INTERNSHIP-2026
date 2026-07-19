@@ -528,6 +528,74 @@
   color: var(--ink-soft);
 }
 
+.admin-withdrawals {
+  margin-top: 24px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-withdrawals > .admin-filter-list,
+.admin-withdrawals > .admin-status {
+  margin-top: 16px;
+}
+
+.admin-withdrawal-list {
+  display: grid;
+  margin-top: 18px;
+  gap: 12px;
+}
+
+.admin-withdrawal-card {
+  display: grid;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper-soft);
+  gap: 9px;
+}
+
+.admin-withdrawal-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-withdrawal-card__heading strong {
+  color: var(--pine-dark);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.admin-withdrawal-card__meta,
+.admin-withdrawal-card__reason {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.admin-withdrawal-card label {
+  display: grid;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.admin-withdrawal-card textarea {
+  min-height: 74px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.admin-withdrawal-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .btn-small {
   min-height: 38px;
   padding: 9px 15px;
@@ -646,6 +714,11 @@
   }
 
   .admin-review__actions {
+    display: grid;
+  }
+
+  .admin-withdrawal-card__heading,
+  .admin-withdrawal-card__actions {
     display: grid;
   }
 }

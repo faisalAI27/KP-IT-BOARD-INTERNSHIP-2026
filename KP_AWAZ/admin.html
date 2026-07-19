@@ -9,7 +9,7 @@
     />
     <title>Contribution review | KP Awaz</title>
     <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/admin.css?v=20260717-member-workspace" />
+    <link rel="stylesheet" href="styles/admin.css?v=20260719-withdrawals" />
   </head>
   <body class="admin-page">
     <a class="skip-link" href="#adminMain">Skip to review workspace</a>
@@ -222,9 +222,46 @@
             <p>Choose an item from the queue to inspect its metadata and protected audio.</p>
           </aside>
         </div>
+
+        <section
+          id="adminWithdrawalPanel"
+          class="admin-withdrawals"
+          aria-labelledby="adminWithdrawalTitle"
+        >
+          <div class="admin-panel-heading">
+            <div>
+              <span class="admin-eyebrow">Data and privacy</span>
+              <h2 id="adminWithdrawalTitle">Withdrawal requests</h2>
+              <p id="adminWithdrawalSummary" class="admin-panel-summary">
+                Connect securely to review requests.
+              </p>
+            </div>
+            <button
+              id="adminRefreshWithdrawalsButton"
+              class="btn btn-secondary btn-small"
+              type="button"
+            >
+              Refresh requests
+            </button>
+          </div>
+
+          <div class="admin-filter-list" role="group" aria-label="Filter withdrawal requests">
+            <button class="admin-filter is-active" type="button" data-withdrawal-filter="requested" aria-pressed="true">Requested</button>
+            <button class="admin-filter" type="button" data-withdrawal-filter="approved" aria-pressed="false">Approved</button>
+            <button class="admin-filter" type="button" data-withdrawal-filter="declined" aria-pressed="false">Declined</button>
+            <button class="admin-filter" type="button" data-withdrawal-filter="all" aria-pressed="false">All</button>
+          </div>
+
+          <p id="adminWithdrawalStatus" class="admin-status" role="status" aria-live="polite"></p>
+          <div id="adminWithdrawalEmpty" class="admin-empty" hidden>
+            <strong>No withdrawal requests in this view.</strong>
+            <p>Choose another status or refresh the protected queue.</p>
+          </div>
+          <ul id="adminWithdrawalList" class="admin-withdrawal-list"></ul>
+        </section>
       </section>
     </main>
 
-    <script type="module" src="scripts/admin-app.js?v=20260717-member-workspace"></script>
+    <script type="module" src="scripts/admin-app.js?v=20260719-withdrawals"></script>
   </body>
 </html>

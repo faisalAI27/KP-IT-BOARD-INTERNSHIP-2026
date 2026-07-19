@@ -1,7 +1,7 @@
 import {
   destroyMyContributions,
   initializeMyContributions,
-} from "./modules/my-contributions.js?v=20260717-member-workspace";
+} from "./modules/my-contributions.js?v=20260719-withdrawals";
 import {
   destroyWorkspace,
   initializeWorkspace,

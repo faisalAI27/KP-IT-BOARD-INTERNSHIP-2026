@@ -22,6 +22,10 @@ from app.utils.text_normalization import (
     normalize_language_name,
     normalize_sentence_text,
 )
+from app.services.withdrawal_service import (
+    WithdrawalServiceError,
+    attach_withdrawal_statuses,
+)
 
 
 TRUE_CONSENT_VALUES = frozenset({"true", "1", "yes", "on"})
@@ -444,7 +448,12 @@ def get_user_contributions(
                 .offset(offset)
             ).all()
         )
-    except SQLAlchemyError as error:
+        attach_withdrawal_statuses(
+            database=database,
+            owner_user_id=owner_user_id,
+            contributions=items,
+        )
+    except (SQLAlchemyError, WithdrawalServiceError) as error:
         database.rollback()
         raise ContributionQueryError() from error
     return items, int(total or 0)

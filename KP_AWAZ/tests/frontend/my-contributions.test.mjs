@@ -10,6 +10,7 @@ import {
   formatContributionDate,
   formatContributionDuration,
   formatContributionReviewStatus,
+  formatContributionWithdrawalStatus,
   formatContributionType,
 } from "../../scripts/modules/my-contributions.js";
 import {
@@ -34,6 +35,7 @@ const ITEM_A = Object.freeze({
   status: "queued",
   reviewStatus: "pending",
   rejectionReason: null,
+  withdrawalStatus: "none",
   createdAt: "2026-07-15T10:20:00Z",
 });
 const ITEM_B = Object.freeze({
@@ -517,6 +519,22 @@ test("approved contribution explains that it counts toward score", async () => {
   assert.match(renderedText(fixture), /Approved/);
   assert.match(renderedText(fixture), /count toward your contribution score/);
   assert.equal(formatContributionReviewStatus("approved"), "Approved");
+});
+
+
+test("private history shows an applicable withdrawal request without changing review status", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([{ ...ITEM_B, withdrawalStatus: "requested" }]),
+  });
+  await settle();
+
+  assert.match(renderedText(fixture), /Withdrawal requested/);
+  assert.match(renderedText(fixture), /Approved/);
+  assert.equal(
+    formatContributionWithdrawalStatus("requested"),
+    "Withdrawal requested",
+  );
 });
 
 

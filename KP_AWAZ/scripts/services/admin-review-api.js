@@ -7,6 +7,8 @@ import {
 const SAFE_REQUEST_ERROR = "The admin request could not be completed. Please try again.";
 const ADMIN_FILTERS = new Set(["pending", "approved", "rejected", "all"]);
 const REVIEW_STATUSES = new Set(["approved", "rejected"]);
+const WITHDRAWAL_FILTERS = new Set(["requested", "approved", "declined", "all"]);
+const WITHDRAWAL_RESOLUTIONS = new Set(["approved", "declined"]);
 const AUDIO_MIME_TYPES = new Set([
   "audio/webm",
   "audio/ogg",
@@ -50,11 +52,33 @@ function validContributionId(contributionId) {
 }
 
 
+function validWithdrawalRequestId(requestId) {
+  const id = typeof requestId === "string" ? requestId.trim() : "";
+  if (!id) {
+    throw new AdminReviewApiError("A withdrawal request ID is required.", {
+      code: "INVALID_WITHDRAWAL_REQUEST_ID",
+    });
+  }
+  return id;
+}
+
+
 function validFilter(status) {
   const filter = typeof status === "string" ? status.trim().toLowerCase() : "";
   if (!ADMIN_FILTERS.has(filter)) {
     throw new AdminReviewApiError("The review filter is invalid.", {
       code: "INVALID_REVIEW_FILTER",
+    });
+  }
+  return filter;
+}
+
+
+function validWithdrawalFilter(status) {
+  const filter = typeof status === "string" ? status.trim().toLowerCase() : "";
+  if (!WITHDRAWAL_FILTERS.has(filter)) {
+    throw new AdminReviewApiError("The withdrawal filter is invalid.", {
+      code: "INVALID_WITHDRAWAL_FILTER",
     });
   }
   return filter;
@@ -183,6 +207,99 @@ export function validateAdminContributionPage(body, expectedStatus, status = 200
     });
   }
 
+  return {
+    items,
+    total: body.total,
+    limit: body.limit,
+    offset: body.offset,
+    status: responseStatus,
+  };
+}
+
+
+export function validateAdminWithdrawalRequest(item, status = 200) {
+  const scope = typeof item?.scope === "string" ? item.scope.trim().toLowerCase() : "";
+  const requestStatus =
+    typeof item?.status === "string" ? item.status.trim().toLowerCase() : "";
+  const ownerDisplayName = optionalString(item?.ownerDisplayName);
+  const contributionSummary = optionalString(item?.contributionSummary);
+  const reason = optionalString(item?.reason);
+  const resolutionReason = optionalString(item?.resolutionReason);
+  const valid =
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    typeof item.id === "string" &&
+    Boolean(item.id.trim()) &&
+    ["contribution", "all"].includes(scope) &&
+    ["requested", "approved", "declined"].includes(requestStatus) &&
+    typeof ownerDisplayName === "string" &&
+    Boolean(ownerDisplayName.trim()) &&
+    contributionSummary !== undefined &&
+    Number.isInteger(item.affectedContributionCount) &&
+    item.affectedContributionCount >= 0 &&
+    reason !== undefined &&
+    typeof item.requestedAt === "string" &&
+    !Number.isNaN(Date.parse(item.requestedAt)) &&
+    (item.resolvedAt === null ||
+      (typeof item.resolvedAt === "string" &&
+        !Number.isNaN(Date.parse(item.resolvedAt)))) &&
+    resolutionReason !== undefined;
+  if (!valid) {
+    throw new AdminReviewApiError(
+      "The admin API returned an invalid withdrawal request.",
+      { code: "INVALID_ADMIN_WITHDRAWAL_RESPONSE", status },
+    );
+  }
+  return {
+    id: item.id.trim(),
+    scope,
+    status: requestStatus,
+    ownerDisplayName: ownerDisplayName.trim(),
+    contributionSummary:
+      contributionSummary === null ? null : contributionSummary.trim() || null,
+    affectedContributionCount: item.affectedContributionCount,
+    reason: reason === null ? null : reason.trim() || null,
+    requestedAt: item.requestedAt,
+    resolvedAt: item.resolvedAt,
+    resolutionReason:
+      resolutionReason === null ? null : resolutionReason.trim() || null,
+  };
+}
+
+
+export function validateAdminWithdrawalPage(body, expectedStatus, status = 200) {
+  const filter = validWithdrawalFilter(expectedStatus);
+  let items = null;
+  if (Array.isArray(body?.items)) {
+    try {
+      items = body.items.map((item) => validateAdminWithdrawalRequest(item, status));
+    } catch {
+      items = null;
+    }
+  }
+  const responseStatus =
+    typeof body?.status === "string" ? body.status.trim().toLowerCase() : "";
+  const valid =
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    items &&
+    Number.isInteger(body.total) &&
+    body.total >= 0 &&
+    Number.isInteger(body.limit) &&
+    body.limit >= 1 &&
+    body.limit <= 100 &&
+    Number.isInteger(body.offset) &&
+    body.offset >= 0 &&
+    responseStatus === filter &&
+    items.length <= body.limit;
+  if (!valid) {
+    throw new AdminReviewApiError(
+      "The admin withdrawal queue returned an invalid response.",
+      { code: "INVALID_ADMIN_WITHDRAWAL_QUEUE_RESPONSE", status },
+    );
+  }
   return {
     items,
     total: body.total,
@@ -367,6 +484,68 @@ export class AdminReviewApi {
     });
     return validateAdminContribution(response);
   }
+
+  async listWithdrawalRequests({
+    adminKey,
+    status = "requested",
+    limit = 20,
+    offset = 0,
+  }) {
+    const filter = validWithdrawalFilter(status);
+    const safeLimit = paginationValue(limit, {
+      name: "limit",
+      defaultValue: 20,
+      minimum: 1,
+      maximum: 100,
+    });
+    const safeOffset = paginationValue(offset, {
+      name: "offset",
+      defaultValue: 0,
+      minimum: 0,
+    });
+    const query = new URLSearchParams({
+      status: filter,
+      limit: String(safeLimit),
+      offset: String(safeOffset),
+    });
+    const response = await this._request(`/admin/withdrawals?${query}`, { adminKey });
+    return validateAdminWithdrawalPage(response, filter);
+  }
+
+  async resolveWithdrawalRequest({
+    adminKey,
+    requestId,
+    status,
+    resolutionReason = "",
+  }) {
+    const id = encodeURIComponent(validWithdrawalRequestId(requestId));
+    const resolution = typeof status === "string" ? status.trim().toLowerCase() : "";
+    if (!WITHDRAWAL_RESOLUTIONS.has(resolution)) {
+      throw new AdminReviewApiError("The withdrawal decision is invalid.", {
+        code: "INVALID_WITHDRAWAL_RESOLUTION",
+      });
+    }
+    const reason =
+      typeof resolutionReason === "string" ? resolutionReason.trim() : "";
+    if (resolution === "declined" && !reason) {
+      throw new AdminReviewApiError("A safe internal reason is required.", {
+        code: "WITHDRAWAL_RESOLUTION_REASON_REQUIRED",
+      });
+    }
+    if (reason.length > 500) {
+      throw new AdminReviewApiError("The internal reason is too long.", {
+        code: "INVALID_WITHDRAWAL_RESOLUTION_REASON",
+      });
+    }
+    const payload = { status: resolution };
+    if (reason) payload.resolutionReason = reason;
+    const response = await this._request(`/admin/withdrawals/${id}`, {
+      adminKey,
+      method: "PATCH",
+      body: payload,
+    });
+    return validateAdminWithdrawalRequest(response);
+  }
 }
 
 
@@ -393,4 +572,14 @@ export function getAdminContributionAudio(options) {
 
 export function reviewAdminContribution(options) {
   return defaultAdminReviewApi.reviewContribution(options);
+}
+
+
+export function getAdminWithdrawalRequests(options) {
+  return defaultAdminReviewApi.listWithdrawalRequests(options);
+}
+
+
+export function resolveAdminWithdrawalRequest(options) {
+  return defaultAdminReviewApi.resolveWithdrawalRequest(options);
 }

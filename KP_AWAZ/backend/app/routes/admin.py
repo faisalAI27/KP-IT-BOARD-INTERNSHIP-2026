@@ -11,6 +11,9 @@ from app.schemas import (
     AdminContributionListResponse,
     AdminContributionResponse,
     AdminHealthResponse,
+    AdminWithdrawalRequestListResponse,
+    AdminWithdrawalRequestResponse,
+    AdminWithdrawalResolutionRequest,
     ContributionReviewRequest,
 )
 from app.services.admin_contribution_review_service import (
@@ -19,6 +22,13 @@ from app.services.admin_contribution_review_service import (
     get_admin_contribution,
     get_contribution_audio_file,
     list_admin_contributions,
+)
+from app.services.withdrawal_service import (
+    AdminWithdrawalRecord,
+    WithdrawalServiceError,
+    admin_record_for_request,
+    list_admin_withdrawal_requests,
+    resolve_withdrawal_request,
 )
 
 
@@ -38,6 +48,33 @@ def _safe_review_error(error: AdminContributionReviewError) -> JSONResponse:
     return JSONResponse(
         status_code=error.http_status,
         content={"message": error.message, "code": error.code},
+    )
+
+
+def _safe_withdrawal_error(error: WithdrawalServiceError) -> JSONResponse:
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
+
+def _withdrawal_response(
+    record: AdminWithdrawalRecord,
+) -> AdminWithdrawalRequestResponse:
+    request = record.request
+    return AdminWithdrawalRequestResponse.model_validate(
+        {
+            "id": request.id,
+            "scope": request.scope,
+            "status": request.status,
+            "ownerDisplayName": record.owner_display_name,
+            "contributionSummary": record.contribution_summary,
+            "affectedContributionCount": record.affected_contribution_count,
+            "reason": request.reason,
+            "requestedAt": request.requested_at,
+            "resolvedAt": request.resolved_at,
+            "resolutionReason": request.resolution_reason,
+        }
     )
 
 
@@ -138,3 +175,59 @@ def review_admin_contribution(
     except AdminContributionReviewError as error:
         return _safe_review_error(error)
     return AdminContributionResponse.from_contribution(contribution)
+
+
+@router.get(
+    "/withdrawals",
+    response_model=AdminWithdrawalRequestListResponse,
+)
+def admin_withdrawal_list(
+    _authenticated: Annotated[None, Depends(require_admin_api_key)],
+    database: Annotated[Session, Depends(get_db)],
+    withdrawal_status: Annotated[str, Query(alias="status")] = "requested",
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AdminWithdrawalRequestListResponse | JSONResponse:
+    """Return reviewable withdrawal requests only to a configured administrator."""
+
+    try:
+        records, total, normalized_status = list_admin_withdrawal_requests(
+            database=database,
+            status=withdrawal_status,
+            limit=limit,
+            offset=offset,
+        )
+    except WithdrawalServiceError as error:
+        return _safe_withdrawal_error(error)
+    return AdminWithdrawalRequestListResponse(
+        items=[_withdrawal_response(record) for record in records],
+        total=total,
+        limit=limit,
+        offset=offset,
+        status=normalized_status,
+    )
+
+
+@router.patch(
+    "/withdrawals/{request_id}",
+    response_model=AdminWithdrawalRequestResponse,
+)
+def resolve_admin_withdrawal(
+    request_id: str,
+    request: AdminWithdrawalResolutionRequest,
+    _authenticated: Annotated[None, Depends(require_admin_api_key)],
+    database: Annotated[Session, Depends(get_db)],
+) -> AdminWithdrawalRequestResponse | JSONResponse:
+    """Approve export exclusion or decline one request without deleting audio."""
+
+    try:
+        stored = resolve_withdrawal_request(
+            database=database,
+            request_id=request_id,
+            status=request.status,
+            resolution_reason=request.resolutionReason,
+        )
+        record = admin_record_for_request(database=database, request=stored)
+    except WithdrawalServiceError as error:
+        return _safe_withdrawal_error(error)
+    return _withdrawal_response(record)

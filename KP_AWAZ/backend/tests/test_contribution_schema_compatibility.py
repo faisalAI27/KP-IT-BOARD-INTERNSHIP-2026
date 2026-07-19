@@ -100,6 +100,13 @@ def test_compatibility_update_adds_nullable_owner_and_index(
     assert columns["consent_policy_version"]["nullable"] is True
     assert columns["consent_timestamp"]["nullable"] is True
     assert any(index["column_names"] == ["user_id"] for index in indexes)
+    assert inspect(engine).has_table("withdrawal_requests")
+    withdrawal_columns = {
+        column["name"]: column
+        for column in inspect(engine).get_columns("withdrawal_requests")
+    }
+    assert withdrawal_columns["contribution_id"]["nullable"] is True
+    assert withdrawal_columns["resolved_at"]["nullable"] is True
     engine.dispose()
 
 

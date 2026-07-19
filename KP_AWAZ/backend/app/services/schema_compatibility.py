@@ -3,7 +3,7 @@
 from sqlalchemy import Engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import PointLedgerEntry
+from app.models import PointLedgerEntry, WithdrawalRequest
 from app.services.points_ledger_service import (
     backfill_approved_contribution_points_connection,
 )
@@ -120,6 +120,10 @@ def ensure_contribution_ownership_schema(engine: Engine) -> None:
                 )
 
             PointLedgerEntry.__table__.create(
+                bind=connection,
+                checkfirst=True,
+            )
+            WithdrawalRequest.__table__.create(
                 bind=connection,
                 checkfirst=True,
             )
