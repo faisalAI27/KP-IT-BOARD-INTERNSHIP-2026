@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -37,6 +38,7 @@ from app.services.schema_compatibility import (
     ensure_contribution_ownership_schema,
     ensure_sentence_phrase_schema,
 )
+from app.services.runtime_configuration import prepare_runtime_storage
 from app.services.supabase_auth import SupabaseAuthError
 
 
@@ -44,6 +46,7 @@ from app.services.supabase_auth import SupabaseAuthError
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Prepare database tables when the application starts."""
 
+    prepare_runtime_storage(settings)
     Base.metadata.create_all(bind=engine)
     ensure_contribution_ownership_schema(engine)
     ensure_sentence_phrase_schema(engine)
@@ -51,6 +54,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+logger = logging.getLogger("kp_awaz")
 
 
 @app.exception_handler(RequestValidationError)
@@ -139,12 +143,28 @@ async def points_ledger_error_handler(
     )
 
 
+@app.exception_handler(Exception)
+async def unexpected_error_handler(request: Request, _: Exception) -> JSONResponse:
+    """Return a stable public error and log no body, headers, query, or secrets."""
+
+    route = request.scope.get("route")
+    route_name = getattr(route, "path", "unmatched-route")
+    logger.error("Unhandled request failure route=%s status=500", route_name)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "message": "The request could not be completed.",
+            "code": "INTERNAL_SERVER_ERROR",
+        },
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.frontend_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["Accept", "Authorization", "Content-Type", "X-Admin-Key"],
 )
 
 app.include_router(health.router, prefix=settings.api_prefix)

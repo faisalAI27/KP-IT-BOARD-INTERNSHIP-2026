@@ -224,6 +224,7 @@ export class AuthService {
     fetchImpl = (...args) => globalThis.fetch(...args),
     locationOrigin = globalThis.location?.origin,
     redirectUrl = null,
+    passwordResetRedirectUrl = null,
     requestTimeoutMs = AUTH_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
@@ -239,6 +240,7 @@ export class AuthService {
     this._fetch = fetchImpl;
     this._locationOrigin = locationOrigin;
     this._redirectUrl = redirectUrl;
+    this._passwordResetRedirectUrl = passwordResetRedirectUrl;
     this._requestTimeoutMs = requestTimeoutMs;
     this._listeners = new Set();
     this._unsubscribeAuth = null;
@@ -721,7 +723,12 @@ export class AuthService {
     const client = this._ensureClient();
     let redirectTo;
     try {
-      redirectTo = new URL("/reset-password.html", this._locationOrigin).href;
+      const configuredRedirect =
+        typeof this._passwordResetRedirectUrl === "string" &&
+        this._passwordResetRedirectUrl.trim()
+          ? this._passwordResetRedirectUrl.trim()
+          : appConfig.auth.passwordResetRedirectUrl;
+      redirectTo = new URL(configuredRedirect, this._locationOrigin).href;
     } catch {
       throw new AuthServiceError(
         "We could not start password recovery. Please try again.",

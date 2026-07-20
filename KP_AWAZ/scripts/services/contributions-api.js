@@ -1,6 +1,7 @@
 import { appConfig } from "../config.js";
 import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
 import {
+  AUDIO_UPLOAD_REQUEST_TIMEOUT_MS,
   API_REQUEST_TIMEOUT_MS,
   fetchWithRequestTimeout,
 } from "./request-timeout.js?v=20260718-stabilization";
@@ -278,18 +279,20 @@ export class ContributionsApi {
     fetchImpl = (...args) => globalThis.fetch(...args),
     getAccessToken = getCurrentAccessToken,
     requestTimeoutMs = API_REQUEST_TIMEOUT_MS,
+    audioUploadTimeoutMs = AUDIO_UPLOAD_REQUEST_TIMEOUT_MS,
   } = {}) {
     this._apiBaseUrl =
       typeof apiBaseUrl === "string" ? apiBaseUrl.trim().replace(/\/+$/, "") : "";
     this._fetch = fetchImpl;
     this._getAccessToken = getAccessToken;
     this._requestTimeoutMs = requestTimeoutMs;
+    this._audioUploadTimeoutMs = audioUploadTimeoutMs;
   }
 
-  async _fetchApi(url, options) {
+  async _fetchApi(url, options, timeoutMs = this._requestTimeoutMs) {
     try {
       return await fetchWithRequestTimeout(this._fetch, url, options, {
-        timeoutMs: this._requestTimeoutMs,
+        timeoutMs,
       });
     } catch {
       throw new ApiError("The KP AWAZ backend could not be reached.", {
@@ -302,14 +305,18 @@ export class ContributionsApi {
   async _postForm(path, formData) {
     const accessToken = requiredAccessToken(this._getAccessToken);
 
-    const response = await this._fetchApi(`${this._apiBaseUrl}${path}`, {
-      method: "POST",
-      body: formData,
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const response = await this._fetchApi(
+      `${this._apiBaseUrl}${path}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+      this._audioUploadTimeoutMs,
+    );
     const body = await readJson(response);
     if (!response.ok || response.status !== 201) {
       throw apiErrorFromResponse(response, body, SAFE_REQUEST_ERROR, accessToken);

@@ -4,6 +4,7 @@ scripts/vendor/
 .DS_Store
 
 /backups/
+/KP_AWAZ_BACKUPS/
 /exports/
 /backend/exports/
 

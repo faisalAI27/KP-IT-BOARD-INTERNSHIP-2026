@@ -3,9 +3,126 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildSupabaseVendorBundle } from "./build-supabase-vendor.mjs";
+import { appConfig as developmentConfig } from "../scripts/config.js";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "dist");
+const buildEnvironment = (process.env.KP_AWAZ_BUILD_ENV ?? "development")
+  .trim()
+  .toLowerCase();
+
+function publicEnvironment(name, fallback = "") {
+  const configured = process.env[name];
+  return typeof configured === "string" && configured.trim()
+    ? configured.trim()
+    : fallback;
+}
+
+function positiveIntegerEnvironment(name, fallback) {
+  const rawValue = publicEnvironment(name, String(fallback));
+  const value = Number(rawValue);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`Invalid public build configuration: ${name}`);
+  }
+  return value;
+}
+
+function validatePublicBuildConfiguration(config) {
+  if (!["development", "production"].includes(buildEnvironment)) {
+    throw new Error("KP_AWAZ_BUILD_ENV must be development or production");
+  }
+  if (buildEnvironment !== "production") return;
+
+  for (const [name, value] of [
+    ["KP_AWAZ_API_BASE_URL", config.api.baseUrl],
+    ["KP_AWAZ_FRONTEND_BASE_URL", config.frontendBaseUrl],
+    ["KP_AWAZ_SUPABASE_URL", config.auth.supabaseUrl],
+    ["KP_AWAZ_SUPABASE_PUBLISHABLE_KEY", config.auth.supabasePublishableKey],
+    ["KP_AWAZ_APP_VERSION", config.version],
+  ]) {
+    if (!value) throw new Error(`Missing public build configuration: ${name}`);
+  }
+  for (const [name, value] of [
+    ["KP_AWAZ_API_BASE_URL", config.api.baseUrl],
+    ["KP_AWAZ_FRONTEND_BASE_URL", config.frontendBaseUrl],
+    ["KP_AWAZ_SUPABASE_URL", config.auth.supabaseUrl],
+  ]) {
+    let parsed;
+    try {
+      parsed = new URL(value);
+    } catch {
+      throw new Error(`Invalid public build configuration: ${name}`);
+    }
+    if (parsed.protocol !== "https:") {
+      throw new Error(`Production public URL must use HTTPS: ${name}`);
+    }
+    if (
+      ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname) ||
+      parsed.username ||
+      parsed.password
+    ) {
+      throw new Error(`Production public URL must not be local: ${name}`);
+    }
+  }
+}
+
+function productionAppConfig() {
+  const production = buildEnvironment === "production";
+  const frontendBaseUrl = publicEnvironment("KP_AWAZ_FRONTEND_BASE_URL", "")
+    .replace(/\/+$/, "");
+  const config = {
+    environment: buildEnvironment,
+    version: publicEnvironment("KP_AWAZ_APP_VERSION", production ? "" : "1.0.0"),
+    frontendBaseUrl,
+    api: {
+      baseUrl: publicEnvironment(
+        "KP_AWAZ_API_BASE_URL",
+        production ? "" : "/api",
+      ).replace(/\/+$/, ""),
+      requestTimeoutMs: positiveIntegerEnvironment(
+        "KP_AWAZ_API_TIMEOUT_MS",
+        developmentConfig.api.requestTimeoutMs,
+      ),
+      audioUploadTimeoutMs: positiveIntegerEnvironment(
+        "KP_AWAZ_AUDIO_UPLOAD_TIMEOUT_MS",
+        developmentConfig.api.audioUploadTimeoutMs,
+      ),
+    },
+    auth: {
+      supabaseUrl: publicEnvironment(
+        "KP_AWAZ_SUPABASE_URL",
+        production ? "" : developmentConfig.auth.supabaseUrl,
+      ).replace(/\/+$/, ""),
+      supabasePublishableKey: publicEnvironment(
+        "KP_AWAZ_SUPABASE_PUBLISHABLE_KEY",
+        production ? "" : developmentConfig.auth.supabasePublishableKey,
+      ),
+      redirectUrl: frontendBaseUrl
+        ? `${frontendBaseUrl}/dashboard.html`
+        : "/dashboard.html",
+      passwordResetRedirectUrl: frontendBaseUrl
+        ? `${frontendBaseUrl}/reset-password.html`
+        : "/reset-password.html",
+    },
+  };
+  validatePublicBuildConfiguration(config);
+  return config;
+}
+
+async function writeRuntimeConfiguration(config) {
+  const serialized = `Object.freeze({
+  environment: ${JSON.stringify(config.environment)},
+  version: ${JSON.stringify(config.version)},
+  frontendBaseUrl: ${JSON.stringify(config.frontendBaseUrl)},
+  api: Object.freeze(${JSON.stringify(config.api, null, 2)}),
+  auth: Object.freeze(${JSON.stringify(config.auth, null, 2)}),
+})`;
+  await writeFile(
+    resolve(outputRoot, "scripts", "config.js"),
+    `export const appConfig = ${serialized};\n`,
+    "utf8",
+  );
+}
 
 async function assemblePage(pageName) {
   const templatePath = resolve(projectRoot, pageName);
@@ -32,6 +149,8 @@ async function copyRuntimeAssets() {
   }
 }
 
+const runtimeConfig = productionAppConfig();
+
 await rm(outputRoot, { recursive: true, force: true });
 await buildSupabaseVendorBundle();
 for (const pageName of [
@@ -53,4 +172,5 @@ for (const pageName of [
   await assemblePage(pageName);
 }
 await copyRuntimeAssets();
+await writeRuntimeConfiguration(runtimeConfig);
 console.log(`Production files created in ${outputRoot}`);

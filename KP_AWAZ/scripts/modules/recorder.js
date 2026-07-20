@@ -19,7 +19,7 @@ export function getRecordingCapability({
       supported: false,
       callout: "Secure page required",
       message:
-        "Open KP AWAZ at http://127.0.0.1:4173, or use HTTPS after deployment, to enable microphone access.",
+        "Open KP AWAZ from its official HTTPS address to enable microphone access.",
     };
   }
 
@@ -28,7 +28,7 @@ export function getRecordingCapability({
       supported: false,
       callout: "Microphone unavailable",
       message:
-        "Open KP AWAZ directly in a current browser at http://127.0.0.1:4173. File and embedded previews may block microphone access.",
+        "Open KP AWAZ directly in a current browser. File and embedded previews may block microphone access.",
     };
   }
 
@@ -55,7 +55,7 @@ function microphoneFailureMessage(error) {
     return "The microphone is busy or unavailable. Close other recording apps, then try again.";
   }
   if (error?.name === "SecurityError") {
-    return "This page is not allowed to use the microphone. Open it directly at http://127.0.0.1:4173.";
+    return "This page is not allowed to use the microphone. Open KP AWAZ directly from its official address.";
   }
   return "Allow microphone access in your browser, then try again.";
 }

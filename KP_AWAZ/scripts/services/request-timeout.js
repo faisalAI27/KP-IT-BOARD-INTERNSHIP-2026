@@ -1,5 +1,10 @@
+import { appConfig } from "../config.js";
+
+
 export const AUTH_REQUEST_TIMEOUT_MS = 12_000;
-export const API_REQUEST_TIMEOUT_MS = 20_000;
+export const API_REQUEST_TIMEOUT_MS = appConfig.api.requestTimeoutMs;
+export const AUDIO_UPLOAD_REQUEST_TIMEOUT_MS =
+  appConfig.api.audioUploadTimeoutMs;
 export const AUTH_REQUEST_TIMEOUT_MESSAGE =
   "We could not complete the authentication request. Please try again.";
 

@@ -6,7 +6,7 @@ import csv
 import hashlib
 import json
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 import pytest
@@ -20,7 +20,7 @@ from app.services.dataset_exporter import (
     OutputDirectoryNotEmptyError,
     export_approved_dataset,
 )
-from tests.conftest import TEST_DATABASE, TEST_STORAGE
+from tests.conftest import TEST_DATABASE, TEST_RAW_AUDIO_STORAGE, TEST_STORAGE
 
 
 WEBM_BYTES = b"\x1a\x45\xdf\xa3" + b"privacy-safe-webm-audio"
@@ -61,7 +61,7 @@ def add_profile(
 
 
 def canonical_key(contribution_id: str, extension: str = "webm") -> str:
-    return f"audio/2026/07/19/{contribution_id}.{extension}"
+    return f"raw/2026/07/contribution_{contribution_id.replace('-', '')}.{extension}"
 
 
 def add_contribution(
@@ -81,11 +81,17 @@ def add_contribution(
         storage_key = f"audio/../../private/{contribution_id}.webm"
     else:
         storage_key = canonical_key(contribution_id)
-        if audio_state != "missing":
-            save_audio_file(
+        if audio_state == "empty":
+            empty_path = TEST_RAW_AUDIO_STORAGE.joinpath(
+                *PurePosixPath(storage_key).parts[1:]
+            )
+            empty_path.parent.mkdir(parents=True, exist_ok=True)
+            empty_path.touch()
+        elif audio_state != "missing":
+            storage_key = save_audio_file(
                 contribution_id=contribution_id,
                 extension="webm",
-                content=b"" if audio_state == "empty" else WEBM_BYTES,
+                content=WEBM_BYTES,
                 created_at=CREATED_AT,
             )
     contribution = Contribution(

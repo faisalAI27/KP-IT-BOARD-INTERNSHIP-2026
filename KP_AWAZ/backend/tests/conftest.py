@@ -20,7 +20,9 @@ TEST_SUPABASE_URL = "https://test-project.supabase.co"
 TEST_SUPABASE_PUBLISHABLE_KEY = "test-publishable-key"
 TEST_SUPABASE_SECRET_KEY = "test-server-secret-key"
 
+os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DATABASE}"
+os.environ["FRONTEND_BASE_URL"] = "https://frontend.example.test"
 os.environ["STORAGE_ROOT"] = str(TEST_STORAGE)
 os.environ["RAW_AUDIO_STORAGE_ROOT"] = str(TEST_RAW_AUDIO_STORAGE)
 os.environ["ADMIN_API_KEY"] = TEST_ADMIN_API_KEY

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Self
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,7 +26,9 @@ class Settings(BaseSettings):
 
     app_name: str = "KP AWAZ API"
     api_prefix: str = "/api"
+    environment: str = "development"
     database_url: str = DEFAULT_DATABASE_URL
+    frontend_base_url: str = "http://127.0.0.1:4173"
     frontend_origins: list[str] = [
         "http://localhost:4173",
         "http://127.0.0.1:4173",
@@ -66,9 +69,44 @@ class Settings(BaseSettings):
     def parse_frontend_origins(cls, value: str | list[str]) -> list[str]:
         """Convert a comma-separated environment value into a clean list."""
 
-        if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+        candidates = value.split(",") if isinstance(value, str) else value
+        normalized_origins: list[str] = []
+        for candidate in candidates:
+            origin = candidate.strip().rstrip("/")
+            parsed = urlsplit(origin)
+            if (
+                not origin
+                or origin == "*"
+                or parsed.scheme not in {"http", "https"}
+                or not parsed.netloc
+                or parsed.path
+                or parsed.query
+                or parsed.fragment
+                or parsed.username
+                or parsed.password
+            ):
+                raise ValueError("FRONTEND_ORIGINS must contain explicit HTTP origins")
+            origin = f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+            if origin not in normalized_origins:
+                normalized_origins.append(origin)
+        return normalized_origins
+
+    @field_validator("environment")
+    @classmethod
+    def normalize_environment(cls, value: str) -> str:
+        """Limit behavior switches to the supported runtime environments."""
+
+        environment = value.strip().lower()
+        if environment not in {"development", "test", "production"}:
+            raise ValueError("ENVIRONMENT must be development, test, or production")
+        return environment
+
+    @field_validator("frontend_base_url")
+    @classmethod
+    def normalize_frontend_base_url(cls, value: str) -> str:
+        """Normalize the externally visible frontend URL without accepting secrets."""
+
+        return value.strip().rstrip("/")
 
     @field_validator("supabase_url")
     @classmethod

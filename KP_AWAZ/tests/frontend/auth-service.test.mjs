@@ -771,6 +771,22 @@ test("password recovery normalizes email and uses the allowed reset page", async
 });
 
 
+test("password recovery respects the configured production reset URL", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake, {
+    locationOrigin: "https://app.example.test",
+    passwordResetRedirectUrl: "https://voice.example.test/reset-password.html",
+  });
+
+  await service.requestPasswordReset("person@example.com");
+
+  assert.equal(
+    fake.calls.passwordReset[0].options.redirectTo,
+    "https://voice.example.test/reset-password.html",
+  );
+});
+
+
 test("verified password-recovery session can update password through Supabase only", async () => {
   const fake = createFakeSupabase({ initialSession: session() });
   const service = createService(fake);

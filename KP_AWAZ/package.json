@@ -7,6 +7,7 @@
     "build": "node tools/build.mjs",
     "build:supabase": "node tools/build-supabase-vendor.mjs",
     "postinstall": "npm run build:supabase",
+    "scan:secrets": "node tools/secret-scan.mjs",
     "test": "node --test tests/frontend/*.test.mjs"
   },
   "dependencies": {

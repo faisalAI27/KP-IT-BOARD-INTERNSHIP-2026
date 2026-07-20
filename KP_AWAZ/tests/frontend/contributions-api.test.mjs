@@ -334,6 +334,26 @@ test("requests use the configured base URL", async () => {
 });
 
 
+test("audio uploads use their longer dedicated timeout", async () => {
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    requestTimeoutMs: 1,
+    audioUploadTimeoutMs: 100,
+    fetchImpl: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return new Response(JSON.stringify(successBody), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  });
+
+  const result = await api.submitOpenRecording(openInput());
+
+  assert.equal(result.id, successBody.id);
+});
+
+
 test("multipart requests do not set a manual Content-Type header", async () => {
   const request = installJsonFetch(successBody, { status: 201 });
 

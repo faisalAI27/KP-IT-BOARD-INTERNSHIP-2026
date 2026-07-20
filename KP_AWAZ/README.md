@@ -107,6 +107,12 @@ generates the browser-compatible Supabase vendor module, and copies the runtime
 assets. Development stays modular while production avoids client-side partial
 requests.
 
+A deployable production build is configured through the public
+`KP_AWAZ_*` build variables and deliberately fails if production URLs or public
+Supabase configuration are missing. See
+[`docs/deployment.md`](docs/deployment.md) for the exact variables, persistent
+mounts, container command, Supabase redirects, backups, and release checks.
+
 The focused vendor bundle can also be regenerated directly with:
 
 ```bash
@@ -117,12 +123,15 @@ It is generated from the installed official `@supabase/supabase-js` package. The
 
 ## Backend connection
 
-The active API URL is centralized in `scripts/config.js`. Update `baseUrl` there when the API is hosted somewhere other than the local FastAPI address.
+The active API URL is centralized in `scripts/config.js` for development and is
+generated from `KP_AWAZ_API_BASE_URL` in a production build. Do not edit built
+files or hardcode a production domain in service modules.
 
 UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
 
 Authentication requests use a 12-second bound. Other API service requests use a
-20-second bound and abort the browser request before showing a safe retry state.
+20-second bound; original-audio uploads have a separate 120-second default so a
+normal recording is not constrained by the JSON request timeout.
 
 ## Authentication interface
 

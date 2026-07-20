@@ -14,7 +14,7 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,6 +22,11 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models import Contribution, Profile, WithdrawalRequest
+from app.services.audio_storage import (
+    AudioStorageError,
+    get_raw_audio_storage_root,
+    resolve_audio_storage_path,
+)
 from app.services.dataset_export_service import (
     export_eligible_contributions_statement,
 )
@@ -165,7 +170,7 @@ def _is_relative_to(candidate: Path, parent: Path) -> bool:
 def _validate_output_path(
     *,
     output: Path,
-    audio_root: Path,
+    audio_roots: tuple[Path, ...],
     database_path: Path | None,
     dry_run: bool,
     overwrite: bool,
@@ -173,7 +178,7 @@ def _validate_output_path(
     if output.exists() and output.is_symlink():
         raise UnsafeExportOutputError("The export output cannot be a symbolic link.")
     resolved = output.expanduser().resolve(strict=False)
-    protected_paths = [audio_root]
+    protected_paths = list(audio_roots)
     if database_path is not None:
         protected_paths.append(database_path.resolve())
     for protected in protected_paths:
@@ -203,40 +208,11 @@ def _validate_output_path(
 def _safe_audio_path(
     *,
     storage_key: str,
-    audio_root: Path,
-    audio_subdirectory: str,
 ) -> Path:
-    if not isinstance(storage_key, str) or not storage_key or "\\" in storage_key:
-        raise ValueError("unsafe storage key")
-    key = PurePosixPath(storage_key)
-    if (
-        key.is_absolute()
-        or ".." in key.parts
-        or key.as_posix() != storage_key
-        or len(key.parts) != 5
-        or key.parts[0] != audio_subdirectory
-    ):
-        raise ValueError("unsafe storage key")
-    year, month, day, filename = key.parts[1:]
     try:
-        datetime(int(year), int(month), int(day))
-        canonical_id = str(UUID(Path(filename).stem))
-    except (TypeError, ValueError, AttributeError) as error:
+        return resolve_audio_storage_path(storage_key)
+    except AudioStorageError as error:
         raise ValueError("unsafe storage key") from error
-    if (
-        len(year) != 4
-        or len(month) != 2
-        or len(day) != 2
-        or Path(filename).name != filename
-        or canonical_id != Path(filename).stem
-        or not Path(filename).suffix
-    ):
-        raise ValueError("unsafe storage key")
-    candidate = audio_root.joinpath(*key.parts[1:])
-    resolved_candidate = candidate.resolve(strict=False)
-    if resolved_candidate != candidate or not _is_relative_to(candidate, audio_root):
-        raise ValueError("unsafe storage key")
-    return candidate
 
 
 def _as_utc(value: datetime) -> datetime:
@@ -312,8 +288,6 @@ def _prepare_candidate(
     *,
     profile_ids: set[str],
     active_withdrawals: list[WithdrawalRequest],
-    audio_root: Path,
-    audio_subdirectory: str,
 ) -> tuple[PreparedSample | None, str | None]:
     if contribution.review_status == "pending":
         return None, "pending_review"
@@ -351,8 +325,6 @@ def _prepare_candidate(
     try:
         source_path = _safe_audio_path(
             storage_key=contribution.audio_storage_key,
-            audio_root=audio_root,
-            audio_subdirectory=audio_subdirectory,
         )
     except (TypeError, ValueError):
         return None, "unsafe_audio_path"
@@ -645,11 +617,14 @@ def export_approved_dataset(
         if audio_root is not None
         else (settings.storage_root / settings.audio_storage_subdirectory).resolve()
     )
-    subdirectory = audio_subdirectory or settings.audio_storage_subdirectory
+    _ = audio_subdirectory  # Retained for CLI compatibility with older callers.
+    resolved_audio_roots = tuple(
+        dict.fromkeys((resolved_audio_root, get_raw_audio_storage_root()))
+    )
     resolved_database_path = database_path.resolve() if database_path is not None else None
     resolved_output = _validate_output_path(
         output=output,
-        audio_root=resolved_audio_root,
+        audio_roots=resolved_audio_roots,
         database_path=resolved_database_path,
         dry_run=dry_run,
         overwrite=overwrite,
@@ -659,7 +634,9 @@ def export_approved_dataset(
         if resolved_database_path is not None and resolved_database_path.exists()
         else None
     )
-    audio_tree_before = _tree_fingerprint(resolved_audio_root)
+    audio_tree_before = tuple(
+        _tree_fingerprint(root) for root in resolved_audio_roots
+    )
 
     try:
         contributions = list(
@@ -696,8 +673,6 @@ def export_approved_dataset(
             contribution,
             profile_ids=profile_ids,
             active_withdrawals=active_withdrawals,
-            audio_root=resolved_audio_root,
-            audio_subdirectory=subdirectory,
         )
         if sample is None:
             exclusion_counts[exclusion or "invalid_metadata"] += 1
@@ -709,7 +684,7 @@ def export_approved_dataset(
             prepared.append(sample)
 
     sensitive_values = {
-        resolved_audio_root.as_posix(),
+        *(root.as_posix() for root in resolved_audio_roots),
         *(contribution.id for contribution in contributions),
         *(contribution.audio_storage_key for contribution in contributions),
         *(profile.id for profile in profiles),
@@ -749,12 +724,14 @@ def export_approved_dataset(
         "source_preservation": {
             "database_unchanged": database_unchanged,
             "audio_tree_unchanged": True,
-            "audio_files_checked": len(audio_tree_before),
+            "audio_files_checked": sum(len(tree) for tree in audio_tree_before),
         },
     }
 
     if dry_run:
-        audio_tree_after = _tree_fingerprint(resolved_audio_root)
+        audio_tree_after = tuple(
+            _tree_fingerprint(root) for root in resolved_audio_roots
+        )
         if audio_tree_before != audio_tree_after:
             raise SourcePreservationError("Source audio changed during export inspection.")
         return report
@@ -800,7 +777,9 @@ def export_approved_dataset(
                 )
 
         _write_readme(staging / "README.md", report)
-        audio_tree_after = _tree_fingerprint(resolved_audio_root)
+        audio_tree_after = tuple(
+            _tree_fingerprint(root) for root in resolved_audio_roots
+        )
         if audio_tree_before != audio_tree_after:
             raise SourcePreservationError("Source audio changed during export.")
         for sample in prepared:

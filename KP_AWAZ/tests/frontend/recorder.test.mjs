@@ -376,7 +376,8 @@ test("recording capability explains insecure and embedded previews", () => {
   });
 
   assert.equal(insecure.supported, false);
-  assert.match(insecure.message, /http:\/\/127\.0\.0\.1:4173/);
+  assert.match(insecure.message, /official HTTPS address/);
+  assert.doesNotMatch(insecure.message, /localhost|127\.0\.0\.1/);
   assert.equal(embedded.supported, false);
   assert.match(embedded.message, /File and embedded previews/);
 });

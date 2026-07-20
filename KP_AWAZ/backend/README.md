@@ -2,6 +2,10 @@
 
 This directory contains the FastAPI backend for KP Awaz. It provides environment-based settings, SQLAlchemy 2 database setup, SQLite support, CORS, health and sentence endpoints, seed data, and isolated backend tests.
 
+Production configuration, one-writer SQLite operation, persistent audio mounts,
+container startup, readiness, backup/restore, and release checks are documented
+in [`../docs/deployment.md`](../docs/deployment.md).
+
 ## Move into the backend
 
 ```bash
@@ -66,6 +70,10 @@ Expected response:
   "service": "KP AWAZ API"
 }
 ```
+
+Readiness is available at `http://127.0.0.1:8000/api/readiness`. It checks the
+database connection and storage-directory access without returning paths,
+secrets, or data counts.
 
 ## Database storage
 
