@@ -742,6 +742,45 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-success);
 }
 
+.workspace-verification-actions {
+  display: grid;
+  padding: 12px;
+  border: 1px solid rgba(20, 58, 45, 0.16);
+  border-radius: 11px;
+  background: rgba(243, 234, 219, 0.56);
+  gap: 8px;
+}
+
+.workspace-verification-actions button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--auth-deep-green);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.workspace-verification-actions .access-secondary {
+  border: 1px solid rgba(20, 58, 45, 0.22);
+  background: var(--auth-white);
+  text-decoration: none;
+}
+
+.workspace-verification-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.workspace-verification-actions button:focus-visible {
+  outline: 3px solid var(--auth-gold-pale);
+  outline-offset: 2px;
+}
+
 .account-status-failure {
   display: flex;
   justify-content: flex-end;

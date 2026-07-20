@@ -1,18 +1,22 @@
 import {
   destroyAccountAccess,
   initializeAccountAccess,
-} from "./modules/account-access.js?v=20260717-auth-routing";
+  prefillAccountSignInEmail,
+} from "./modules/account-access.js?v=20260720-recovery-otp";
 import {
   destroyAuthCulturalPanel,
   initializeAuthCulturalPanel,
 } from "./modules/auth-cultural-panel.js?v=20260717-cultural-hero";
-import { destroyAuthService } from "./services/auth-service.js?v=20260717-auth-routing";
+import { destroyAuthService } from "./services/auth-service.js?v=20260720-recovery-otp";
+import { consumeRecoveryEmailForSignIn } from "./services/recovery-handoff.js";
 
 
 async function bootstrap() {
   try {
     initializeAuthCulturalPanel();
     await initializeAccountAccess();
+    const recoveredEmail = consumeRecoveryEmailForSignIn();
+    if (recoveredEmail) prefillAccountSignInEmail(recoveredEmail);
     document.body.dataset.pageState = "ready";
   } catch {
     document.body.dataset.pageState = "error";

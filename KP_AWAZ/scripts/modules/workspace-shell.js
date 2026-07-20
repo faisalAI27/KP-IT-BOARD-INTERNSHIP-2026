@@ -13,6 +13,7 @@ import {
   routeDecision,
 } from "../services/route-guard.js?v=20260717-auth-routing";
 import { withRequestTimeout } from "../services/request-timeout.js?v=20260717-auth-routing";
+import { appConfig } from "../config.js";
 
 
 const WORKSPACE_PAGES = new Set([
@@ -203,9 +204,12 @@ export class WorkspaceShell {
     } catch {
       if (this._destroyed || this._navigating) return null;
       this._root.body.dataset.workspaceState = "error";
+      if (appConfig.environment === "development") {
+        this._root.body.dataset.authDiagnostic = "profile_load_failed";
+      }
       this._elements.guard.hidden = false;
       this._elements.guardMessage.textContent =
-        "We could not load your dashboard. Please try again.";
+        "Your account is verified, but your profile could not be loaded. Please try again.";
       return null;
     }
   }

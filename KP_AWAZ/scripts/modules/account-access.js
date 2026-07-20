@@ -6,12 +6,14 @@ import {
   getCurrentAuthState,
   initializeAuthService,
   resendSignupOtp,
+  signOut,
   signInWithGoogle,
   signInWithPassword,
   signUpWithPassword,
   subscribeToAuthChanges,
   verifySignupOtp,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+  verifyCurrentUserWithBackend,
+} from "../services/auth-service.js?v=20260720-recovery-otp";
 import { updateMyProfile } from "../services/profile-api.js?v=20260717-member-workspace";
 import {
   navigateOnce,
@@ -38,7 +40,9 @@ const SAFE_MESSAGES = Object.freeze({
   PASSWORD_SIGN_UP_FAILED:
     "We could not create your account. Please try again.",
   PASSWORD_SIGN_IN_FAILED:
-    "We could not sign you in. Please check your information and try again.",
+    "We could not sign you in with that email and password.",
+  BACKEND_VERIFICATION_FAILED:
+    "You signed in successfully, but KP AWAZ could not open your workspace. Please try again.",
   INVALID_SIGNUP_OTP: "Enter the complete six-digit code.",
   INVALID_OR_EXPIRED_SIGNUP_OTP:
     "Invalid or expired code. Request a new code and try again.",
@@ -173,11 +177,13 @@ const defaultAuthApi = Object.freeze({
   getCurrentAuthState,
   initializeAuthService,
   resendSignupOtp,
+  signOut,
   signInWithGoogle,
   signInWithPassword,
   signUpWithPassword,
   subscribeToAuthChanges,
   verifySignupOtp,
+  verifyCurrentUserWithBackend,
 });
 
 
@@ -218,6 +224,8 @@ export class AccountAccess {
     this._existingAccount = false;
     this._accountStatusFailed = false;
     this._resendAvailableAt = 0;
+    this._workspaceVerificationFailed = false;
+    this._workspaceActions = null;
     this._destination = resolveWorkspaceDestination(location?.search);
     this._navigating = false;
   }
@@ -226,6 +234,7 @@ export class AccountAccess {
     if (this._initialized) return true;
     this._elements = this._resolveElements();
     if (!this._elements) return false;
+    this._workspaceActions = this._createWorkspaceVerificationActions();
 
     this._initialized = true;
     this._destroyed = false;
@@ -265,8 +274,26 @@ export class AccountAccess {
     this._activeDisplayName = "";
     this._existingAccount = false;
     this._accountStatusFailed = false;
+    this._workspaceVerificationFailed = false;
+    this._workspaceActions = null;
     this._action = null;
     this._success = false;
+  }
+
+  prefillSignInEmail(email) {
+    if (!this._elements || this._destroyed) return false;
+    const normalizedEmail =
+      typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (!normalizedEmail) return false;
+    this._mode = "sign_in";
+    this._workspaceVerificationFailed = false;
+    this._clearSignupState();
+    this._clearMessages();
+    this._elements.signInEmail.value = normalizedEmail;
+    this._elements.signInPassword.value = "";
+    this._render();
+    this._elements.signInPassword.focus?.();
+    return true;
   }
 
   _resolveElements() {
@@ -379,6 +406,17 @@ export class AccountAccess {
       event.preventDefault();
       void this._signIn();
     });
+    if (this._workspaceActions) {
+      this._listen(this._workspaceActions.retry, "click", () => {
+        void this._retryWorkspaceVerification();
+      });
+      this._listen(this._workspaceActions.signOut, "click", () => {
+        void this._signOutAfterWorkspaceFailure();
+      });
+      this._listen(this._workspaceActions.returnToSignIn, "click", () => {
+        this._returnAfterWorkspaceFailure();
+      });
+    }
     this._listen(this._elements.googleButton, "click", () => {
       void this._continueWithGoogle();
     });
@@ -434,6 +472,38 @@ export class AccountAccess {
   _listen(element, type, listener) {
     element.addEventListener(type, listener);
     this._bindings.push({ element, type, listener });
+  }
+
+  _createWorkspaceVerificationActions() {
+    if (!this._root?.createElement || !this._elements.signInForm?.append) {
+      return null;
+    }
+    const container = this._root.createElement("div");
+    container.className = "workspace-verification-actions";
+    container.hidden = true;
+    container.setAttribute("aria-label", "Workspace verification options");
+
+    const retry = this._root.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Retry workspace verification";
+    retry.className = "access-secondary";
+
+    const signOutButton = this._root.createElement("button");
+    signOutButton.type = "button";
+    signOutButton.textContent = "Sign out";
+
+    const returnToSignIn = this._root.createElement("button");
+    returnToSignIn.type = "button";
+    returnToSignIn.textContent = "Return to Sign In";
+
+    container.append(retry, signOutButton, returnToSignIn);
+    this._elements.signInForm.append(container);
+    return {
+      container,
+      retry,
+      signOut: signOutButton,
+      returnToSignIn,
+    };
   }
 
   _handleTabKeydown(event) {
@@ -492,6 +562,7 @@ export class AccountAccess {
     if (mode === this._mode && this._createStep === "details") return;
     this._mode = mode;
     this._success = false;
+    this._workspaceVerificationFailed = false;
     this._clearSecrets();
     this._clearMessages();
     if (mode === "sign_in") this._clearSignupState();
@@ -628,6 +699,7 @@ export class AccountAccess {
     }
 
     try {
+      this._workspaceVerificationFailed = false;
       await this._auth.signInWithPassword({
         email: this._elements.signInEmail.value,
         password: this._elements.signInPassword.value,
@@ -636,14 +708,62 @@ export class AccountAccess {
       this._showSuccessAndNavigate();
     } catch (error) {
       this._elements.signInPassword.value = "";
+      this._workspaceVerificationFailed =
+        error?.code === "BACKEND_VERIFICATION_FAILED";
       this._setMessage(
         this._elements.signInMessage,
         safeErrorMessage(error, "We could not sign in. Please try again."),
+        "error",
+        error?.diagnostic,
+      );
+    } finally {
+      this._finishAction();
+    }
+  }
+
+  async _retryWorkspaceVerification() {
+    if (!this._workspaceVerificationFailed || !this._beginAction("workspace_retry")) {
+      return;
+    }
+    try {
+      await this._auth.verifyCurrentUserWithBackend();
+      this._workspaceVerificationFailed = false;
+      this._showSuccessAndNavigate();
+    } catch (error) {
+      this._workspaceVerificationFailed = true;
+      this._setMessage(
+        this._elements.signInMessage,
+        SAFE_MESSAGES.BACKEND_VERIFICATION_FAILED,
+        "error",
+        error?.diagnostic,
+      );
+    } finally {
+      this._finishAction();
+    }
+  }
+
+  async _signOutAfterWorkspaceFailure() {
+    if (!this._beginAction("workspace_sign_out")) return;
+    try {
+      await this._auth.signOut();
+      this._returnAfterWorkspaceFailure();
+    } catch {
+      this._setMessage(
+        this._elements.signInMessage,
+        "We could not sign out safely. Please try again.",
         "error",
       );
     } finally {
       this._finishAction();
     }
+  }
+
+  _returnAfterWorkspaceFailure() {
+    this._workspaceVerificationFailed = false;
+    this._elements.signInPassword.value = "";
+    this._setMessage(this._elements.signInMessage, "", "");
+    this._render();
+    this._elements.signInPassword.focus?.();
   }
 
   async _continueWithGoogle() {
@@ -818,9 +938,11 @@ export class AccountAccess {
     }
   }
 
-  _setMessage(element, message, tone) {
+  _setMessage(element, message, tone, diagnostic = null) {
     element.textContent = message;
     element.dataset.tone = tone;
+    if (diagnostic) element.dataset.authDiagnostic = diagnostic;
+    else delete element.dataset.authDiagnostic;
     element.hidden = !message;
   }
 
@@ -923,6 +1045,8 @@ export class AccountAccess {
     const creating = checkingAccount || this._action === "create";
     const verifying = this._action === "verify";
     const signingIn = this._action === "sign_in";
+    const retryingWorkspace = this._action === "workspace_retry";
+    const signingOutWorkspace = this._action === "workspace_sign_out";
     const usingGoogle = this._action === "google";
     const resending = this._action === "resend";
     this._elements.createForm.setAttribute("aria-busy", String(creating));
@@ -973,6 +1097,19 @@ export class AccountAccess {
     );
     this._elements.signInSubmitLabel.textContent =
       this._action === "sign_in" ? "Signing you in…" : "Sign in to workspace";
+    if (this._workspaceActions) {
+      this._workspaceActions.container.hidden = !this._workspaceVerificationFailed;
+      this._workspaceActions.retry.disabled = retryingWorkspace || signingOutWorkspace;
+      this._workspaceActions.signOut.disabled = retryingWorkspace || signingOutWorkspace;
+      this._workspaceActions.returnToSignIn.disabled =
+        retryingWorkspace || signingOutWorkspace;
+      this._workspaceActions.retry.textContent = retryingWorkspace
+        ? "Retrying workspace verification…"
+        : "Retry workspace verification";
+      this._workspaceActions.signOut.textContent = signingOutWorkspace
+        ? "Signing out…"
+        : "Sign out";
+    }
     this._elements.googleButton.setAttribute(
       "aria-busy",
       String(usingGoogle),
@@ -995,4 +1132,6 @@ const accountAccess = new AccountAccess();
 
 
 export const initializeAccountAccess = () => accountAccess.initialize();
+export const prefillAccountSignInEmail = (email) =>
+  accountAccess.prefillSignInEmail(email);
 export const destroyAccountAccess = () => accountAccess.destroy();

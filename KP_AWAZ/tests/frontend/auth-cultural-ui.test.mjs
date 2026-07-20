@@ -81,6 +81,7 @@ class FakeElement extends FakeEventTarget {
     this.valid = true;
     this.validationMessage = "";
     this.value = "";
+    this.children = [];
   }
 
   setAttribute(name, value) {
@@ -110,6 +111,10 @@ class FakeElement extends FakeEventTarget {
   reportValidity() {
     this.reportValidityCalls += 1;
     return this.valid;
+  }
+
+  append(...elements) {
+    this.children.push(...elements);
   }
 }
 
@@ -196,6 +201,10 @@ class FakeDocument extends FakeEventTarget {
   getElementById(id) {
     return this.elements.get(id) ?? null;
   }
+
+  createElement() {
+    return new FakeElement();
+  }
 }
 
 
@@ -207,8 +216,10 @@ function createAccountFixture(overrides = {}) {
     profile: [],
     resend: [],
     signIn: [],
+    signOut: 0,
     signUp: [],
     verify: [],
+    workspaceVerify: 0,
   };
   const listeners = new Set();
   const authApi = {
@@ -236,6 +247,14 @@ function createAccountFixture(overrides = {}) {
     },
     async signInWithPassword(details) {
       calls.signIn.push(details);
+      return { ok: true };
+    },
+    async verifyCurrentUserWithBackend() {
+      calls.workspaceVerify += 1;
+      return { id: "verified-user" };
+    },
+    async signOut() {
+      calls.signOut += 1;
       return { ok: true };
     },
     async signInWithGoogle() {
@@ -741,6 +760,19 @@ test("returning password sign-in never enters OTP and redirects after success", 
 });
 
 
+test("recovery return prefills normalized email and focuses an empty password", async () => {
+  const fixture = createAccountFixture();
+  await fixture.account.initialize();
+  byId(fixture, "passwordSignInPassword").value = "must-clear";
+
+  assert.equal(fixture.account.prefillSignInEmail(" Person@Example.com "), true);
+  assert.equal(byId(fixture, "passwordSignInEmail").value, "person@example.com");
+  assert.equal(byId(fixture, "passwordSignInPassword").value, "");
+  assert.equal(byId(fixture, "passwordSignInPassword").focusCalls, 1);
+  assert.equal(byId(fixture, "accountOtpStep").hidden, true);
+});
+
+
 test("Google OAuth remains independent from the signup OTP flow", async () => {
   const fixture = createAccountFixture();
   await fixture.account.initialize();
@@ -802,6 +834,44 @@ test("password sign-in loading always clears after failure", async () => {
   assert.equal(byId(fixture, "passwordSignInEmail").disabled, false);
   assert.equal(byId(fixture, "passwordSignInPassword").disabled, false);
   assert.equal(byId(fixture, "passwordSignInForm").getAttribute("aria-busy"), "false");
+  assert.equal(
+    byId(fixture, "passwordSignInMessage").textContent,
+    "We could not sign you in with that email and password.",
+  );
+});
+
+
+test("backend verification failure has distinct retry and sign-out actions", async () => {
+  const fixture = createAccountFixture({
+    authApi: {
+      async signInWithPassword() {
+        throw {
+          code: "BACKEND_VERIFICATION_FAILED",
+          diagnostic: "backend_verification_failed",
+        };
+      },
+    },
+  });
+  await fixture.account.initialize();
+  byId(fixture, "passwordSignInEmail").value = "person@example.com";
+  byId(fixture, "passwordSignInPassword").value = "strong-password";
+  byId(fixture, "passwordSignInForm").dispatch("submit");
+  await flush();
+
+  assert.equal(
+    byId(fixture, "passwordSignInMessage").textContent,
+    "You signed in successfully, but KP AWAZ could not open your workspace. Please try again.",
+  );
+  assert.equal(
+    byId(fixture, "passwordSignInMessage").dataset.authDiagnostic,
+    "backend_verification_failed",
+  );
+  assert.equal(fixture.account._workspaceActions.container.hidden, false);
+
+  fixture.account._workspaceActions.retry.dispatch("click");
+  await flush();
+  assert.equal(fixture.calls.workspaceVerify, 1);
+  assert.equal(byId(fixture, "accountSuccessState").hidden, false);
 });
 
 

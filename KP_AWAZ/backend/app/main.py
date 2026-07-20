@@ -57,6 +57,25 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 logger = logging.getLogger("kp_awaz")
 
 
+DEVELOPMENT_LAN_FRONTEND_ORIGIN_REGEX = (
+    r"^http://(?:"
+    r"10(?:\.[0-9]{1,3}){3}|"
+    r"192\.168(?:\.[0-9]{1,3}){2}|"
+    r"172\.(?:1[6-9]|2[0-9]|3[01])(?:\.[0-9]{1,3}){2}"
+    r"):4173$"
+)
+
+
+def development_lan_frontend_origin_regex(environment: str) -> str | None:
+    """Permit the documented private-LAN demo origin only in development."""
+
+    return (
+        DEVELOPMENT_LAN_FRONTEND_ORIGIN_REGEX
+        if environment == "development"
+        else None
+    )
+
+
 @app.exception_handler(RequestValidationError)
 async def request_validation_error_handler(
     _: Request,
@@ -162,6 +181,7 @@ async def unexpected_error_handler(request: Request, _: Exception) -> JSONRespon
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.frontend_origins,
+    allow_origin_regex=development_lan_frontend_origin_regex(settings.environment),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Accept", "Authorization", "Content-Type", "X-Admin-Key"],

@@ -17,7 +17,7 @@ npm install
 ```bash
 cd KP_AWAZ/backend
 source .venv/bin/activate
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Terminal 2 — Frontend
@@ -28,6 +28,20 @@ python3 -m http.server 4173
 ```
 
 Then open `http://127.0.0.1:4173`.
+
+For the supervisor demo, serve a fresh assembled build instead of a previous
+`dist/` directory:
+
+```bash
+npm run build
+python3 -m http.server 4173 --directory dist --bind 0.0.0.0
+```
+
+Open `http://localhost:4173` or `http://127.0.0.1:4173`. During local-network
+testing, a private-LAN URL on port 4173 automatically uses that same hostname
+for FastAPI on port 8000. This private-LAN CORS allowance exists only in the
+development environment; production continues to require explicit HTTPS
+origins.
 
 Contributor pages are available at:
 
@@ -241,9 +255,12 @@ Google client secrets must never be placed in frontend files.
 
 Password recovery starts on `forgot-password.html` and always shows the same
 account-neutral success copy. Supabase sends the recovery message to the
-allowlisted `reset-password.html` URL. That page exposes its new-password form
-only after Supabase emits a password-recovery session and FastAPI verifies the
-access token. Password fields are cleared on failure, success, and navigation.
+allowlisted `reset-password.html` URL. The user enters the hosted email
+template's six-digit token, Supabase verifies it with recovery type, and only
+then does the shared recovery interface expose the new-password form. Recovery
+codes and passwords remain Supabase-only and are cleared on cancellation,
+failure where appropriate, success, and navigation. See
+`docs/supabase-email-templates.md` for the hosted template checklist.
 
 ### Required Supabase account configuration
 
@@ -256,8 +273,9 @@ interface:
 2. Under **Authentication → Emails → Templates → Confirm signup**, render
    `{{ .Token }}` as the six-digit code instead of requiring
    `{{ .ConfirmationURL }}`.
-3. Add the deployed `reset-password.html` address to the redirect allow list and
-   keep the recovery email template enabled.
+3. Under **Authentication → Emails → Templates → Reset password**, render
+   `{{ .Token }}`, add the deployed `reset-password.html` address to the
+   redirect allow list, and keep the recovery email template enabled.
 4. Keep custom SMTP configured so recipients outside the Supabase project team
    can receive codes.
 

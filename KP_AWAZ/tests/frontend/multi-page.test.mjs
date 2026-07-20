@@ -82,7 +82,7 @@ test("all contributor pages use the verified workspace route guard", async () =>
   const shell = await read("scripts/modules/workspace-shell.js");
   assert.match(shell, /protectedAuthDestination\(filename\)/);
   assert.match(shell, /this\._navigate\("index\.html", \{ replace: true \}\)/);
-  assert.match(shell, /We could not load your dashboard\. Please try again\./);
+  assert.match(shell, /Your account is verified, but your profile could not be loaded\. Please try again\./);
   assert.doesNotMatch(shell, /preferredLanguage:\s*"Pashto"/);
 });
 
@@ -102,17 +102,20 @@ test("production contribution services contain no mock data path", async () => {
 
 
 test("recovery pages use Supabase-only password controls and generic account messaging", async () => {
-  const [forgot, reset, forgotSource, resetSource] = await Promise.all([
+  const [forgot, reset, forgotSource, resetSource, recoveryCard, recoverySource] = await Promise.all([
     read("forgot-password.html"), read("reset-password.html"),
     read("scripts/forgot-password-page.js"), read("scripts/reset-password-page.js"),
+    read("sections/password-recovery-card.html"),
+    read("scripts/modules/password-recovery.js"),
   ]);
-  assert.match(forgot, /Send reset instructions/);
-  assert.match(forgotSource, /If an account is associated with that email/);
-  assert.match(reset, /autocomplete="new-password"/);
-  assert.match(reset, /id="resetPasswordConfirm"/);
-  assert.match(resetSource, /isPasswordRecoverySession/);
-  assert.match(resetSource, /updatePassword\(password\.value\)/);
-  assert.doesNotMatch(`${forgotSource}\n${resetSource}`, /localStorage|sessionStorage|document\.cookie|console\./);
+  assert.match(forgot, /sections\/password-recovery-card\.html/);
+  assert.match(reset, /sections\/password-recovery-card\.html/);
+  assert.match(recoveryCard, /Send recovery code/);
+  assert.match(recoveryCard, /autocomplete="new-password"/);
+  assert.match(recoveryCard, /id="recoveryPasswordConfirm"/);
+  assert.match(recoverySource, /verifyRecoveryOtp/);
+  assert.match(recoverySource, /updatePassword\(this\._elements\.password\.value\)/);
+  assert.doesNotMatch(`${forgotSource}\n${resetSource}\n${recoverySource}`, /localStorage|document\.cookie|console\./);
 });
 
 

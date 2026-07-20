@@ -189,7 +189,7 @@ test("signed-in public routing updates links without navigating away", async () 
 test("signed-out public routing exposes Sign In and safe contribution links", async () => {
   const fixture = publicFixture(signedOut);
   await fixture.routing.initialize();
-  assert.equal(fixture.accountLabel.textContent, "Sign in");
+  assert.equal(fixture.accountLabel.textContent, "Sign In");
   assert.equal(fixture.accountButton.getAttribute("href"), "auth.html");
   assert.equal(fixture.profileLink.hidden, true);
   assert.equal(

@@ -68,6 +68,10 @@ function validatePublicBuildConfiguration(config) {
 
 function productionAppConfig() {
   const production = buildEnvironment === "production";
+  if (!production) {
+    validatePublicBuildConfiguration(developmentConfig);
+    return developmentConfig;
+  }
   const frontendBaseUrl = publicEnvironment("KP_AWAZ_FRONTEND_BASE_URL", "")
     .replace(/\/+$/, "");
   const config = {
@@ -77,7 +81,7 @@ function productionAppConfig() {
     api: {
       baseUrl: publicEnvironment(
         "KP_AWAZ_API_BASE_URL",
-        production ? "" : "/api",
+        "",
       ).replace(/\/+$/, ""),
       requestTimeoutMs: positiveIntegerEnvironment(
         "KP_AWAZ_API_TIMEOUT_MS",
@@ -91,11 +95,11 @@ function productionAppConfig() {
     auth: {
       supabaseUrl: publicEnvironment(
         "KP_AWAZ_SUPABASE_URL",
-        production ? "" : developmentConfig.auth.supabaseUrl,
+        "",
       ).replace(/\/+$/, ""),
       supabasePublishableKey: publicEnvironment(
         "KP_AWAZ_SUPABASE_PUBLISHABLE_KEY",
-        production ? "" : developmentConfig.auth.supabasePublishableKey,
+        "",
       ),
       redirectUrl: frontendBaseUrl
         ? `${frontendBaseUrl}/dashboard.html`
@@ -172,5 +176,7 @@ for (const pageName of [
   await assemblePage(pageName);
 }
 await copyRuntimeAssets();
-await writeRuntimeConfiguration(runtimeConfig);
-console.log(`Production files created in ${outputRoot}`);
+if (buildEnvironment === "production") {
+  await writeRuntimeConfiguration(runtimeConfig);
+}
+console.log(`Frontend files created in ${outputRoot}`);

@@ -31,6 +31,28 @@
   z-index: 2;
 }
 
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--pine-dark);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-kicker::before {
+  width: 9px;
+  height: 9px;
+  border: 3px solid rgba(62, 98, 89, 0.16);
+  border-radius: 50%;
+  background: var(--pine);
+  content: "";
+  box-sizing: content-box;
+}
+
 .hero h1 {
   max-width: 680px;
   font-size: clamp(3.05rem, 4.8vw, 4.75rem);
@@ -52,49 +74,29 @@
   gap: 12px;
 }
 
-.hero-facts {
+.hero-principles {
   display: flex;
-  max-width: 620px;
-  margin-top: 44px;
-  padding-top: 25px;
-  border-top: 1px solid var(--line);
-  gap: 0;
-}
-
-.hero-fact {
-  display: flex;
-  flex: 1;
+  margin-top: 36px;
   align-items: center;
-  gap: 10px;
-  padding-right: 18px;
+  flex-wrap: wrap;
+  gap: 10px 18px;
 }
 
-.hero-fact + .hero-fact {
-  padding-left: 20px;
-  border-left: 1px solid var(--line);
-}
-
-.hero-fact strong,
-.fact-symbol {
-  color: var(--terracotta);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.fact-symbol {
-  color: var(--pine);
-  font-size: 2.15rem;
-}
-
-.hero-fact span:last-child {
+.hero-principles span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--ink-soft);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.025em;
-  line-height: 1.35;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.hero-principles span::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--honey);
+  content: "";
 }
 
 .hero-art {
@@ -133,55 +135,6 @@
   height: 100%;
   object-fit: cover;
   object-position: center 54%;
-}
-
-.art-chip {
-  position: absolute;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 185px;
-  padding: 13px 15px;
-  border: 1px solid rgba(46, 38, 32, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 14px 35px rgba(46, 38, 32, 0.14);
-  color: var(--ink-soft);
-  font-size: 0.73rem;
-  line-height: 1.35;
-  backdrop-filter: blur(10px);
-}
-
-.art-chip strong {
-  display: block;
-  color: var(--ink);
-  font-size: 0.79rem;
-}
-
-.chip-top {
-  top: 67px;
-  right: -16px;
-}
-
-.chip-icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  background: rgba(193, 97, 61, 0.1);
-  color: var(--terracotta);
-}
-
-.chip-icon svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
 }
 
 .section-ridge {

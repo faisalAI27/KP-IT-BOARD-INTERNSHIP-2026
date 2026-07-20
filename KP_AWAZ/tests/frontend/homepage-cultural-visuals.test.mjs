@@ -8,14 +8,14 @@ const heroCssUrl = new URL("../../styles/hero.css", import.meta.url);
 const responsiveCssUrl = new URL("../../styles/responsive.css", import.meta.url);
 
 
-test("homepage uses the approved KP Awaz tagline exactly", async () => {
+test("homepage uses the final public mission heading exactly", async () => {
   const hero = await readFile(heroUrl, "utf8");
 
   assert.match(
     hero,
-    /<h1>Our voices, our language, our Khyber Pakhtunkhwa\.<\/h1>/,
+    /<h1>Let technology hear Khyber Pakhtunkhwa\.<\/h1>/,
   );
-  assert.doesNotMatch(hero, /Every voice|mountain(?:&rsquo;|')s memory/i);
+  assert.doesNotMatch(hero, /8 languages|supported languages/i);
 });
 
 

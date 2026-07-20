@@ -5,7 +5,7 @@ import {
   initializeLeaderboard,
 } from "./modules/leaderboard.js?v=20260717-member-workspace";
 import { loadPartials } from "./modules/partials.js?v=20260717-member-workspace";
-import { PublicRouting } from "./modules/public-routing.js?v=20260717-auth-routing";
+import { PublicRouting } from "./modules/public-routing.js?v=20260720-public-polish";
 
 
 let routing = null;

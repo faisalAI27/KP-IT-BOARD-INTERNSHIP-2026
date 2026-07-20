@@ -246,3 +246,32 @@ def test_auth_me_is_registered_once() -> None:
     registered_paths = [route.path for route in app.routes]
 
     assert registered_paths.count("/api/auth/me") == 1
+
+
+@pytest.mark.parametrize(
+    "private_field",
+    [
+        {"password": "must-remain-supabase-only"},
+        {"otp": "000000"},
+    ],
+)
+def test_auth_me_does_not_accept_password_or_otp_payloads(
+    client: TestClient,
+    private_field: dict[str, str],
+) -> None:
+    response = client.post("/api/auth/me", json=private_field)
+
+    assert response.status_code == 405
+    serialized = response.text.lower()
+    assert "must-remain-supabase-only" not in serialized
+    assert "000000" not in serialized
+
+
+def test_backend_registers_no_password_recovery_or_otp_endpoint() -> None:
+    registered_paths = {route.path.lower() for route in app.routes}
+
+    assert not any(
+        private_term in path
+        for path in registered_paths
+        for private_term in ("password-reset", "password-recovery", "verify-otp")
+    )

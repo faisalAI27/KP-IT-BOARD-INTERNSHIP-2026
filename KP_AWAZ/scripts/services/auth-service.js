@@ -38,14 +38,29 @@ const AUTH_EVENTS = new Set([
   "USER_UPDATED",
   "PASSWORD_RECOVERY",
 ]);
+const SAFE_DEVELOPMENT_DIAGNOSTICS = new Set([
+  "supabase_sign_in_failed",
+  "backend_verification_failed",
+  "profile_load_failed",
+  "request_timeout",
+  "network_unavailable",
+]);
 
 
 export class AuthServiceError extends Error {
-  constructor(message, { code = "AUTH_ERROR", status = 0 } = {}) {
+  constructor(
+    message,
+    { code = "AUTH_ERROR", status = 0, diagnostic = null } = {},
+  ) {
     super(message);
     this.name = "AuthServiceError";
     this.code = code;
     this.status = status;
+    this.diagnostic =
+      appConfig.environment === "development" &&
+      SAFE_DEVELOPMENT_DIAGNOSTICS.has(diagnostic)
+        ? diagnostic
+        : null;
   }
 }
 
@@ -106,7 +121,7 @@ function safeBackendUser(payload) {
 
 
 function publicError(error) {
-  return {
+  const result = {
     message:
       typeof error?.message === "string" && error.message.trim()
         ? error.message.trim()
@@ -117,6 +132,10 @@ function publicError(error) {
         : "AUTH_ERROR",
     status: Number.isInteger(error?.status) ? error.status : 0,
   };
+  if (SAFE_DEVELOPMENT_DIAGNOSTICS.has(error?.diagnostic)) {
+    result.diagnostic = error.diagnostic;
+  }
+  return result;
 }
 
 
@@ -140,6 +159,7 @@ function sessionRestoreError() {
 function requestTimeoutError() {
   return new AuthServiceError(AUTH_REQUEST_TIMEOUT_MESSAGE, {
     code: "AUTH_REQUEST_TIMEOUT",
+    diagnostic: "request_timeout",
   });
 }
 
@@ -169,6 +189,11 @@ function normalizeEmail(email) {
 
 function normalizeEmailOtp(otp) {
   return typeof otp === "string" ? otp.replace(/[\s-]+/g, "") : "";
+}
+
+
+function normalizeRecoveryOtp(otp) {
+  return typeof otp === "string" ? otp.trim().replace(/\s+/g, "") : "";
 }
 
 
@@ -215,6 +240,13 @@ function requireValidDisplayName(displayName) {
 }
 
 
+function backendVerificationDiagnostic(error) {
+  if (error?.code === "AUTH_REQUEST_TIMEOUT") return "request_timeout";
+  if (error?.code === "AUTH_BACKEND_UNAVAILABLE") return "network_unavailable";
+  return "backend_verification_failed";
+}
+
+
 export class AuthService {
   constructor({
     apiBaseUrl = appConfig.api.baseUrl,
@@ -255,6 +287,7 @@ export class AuthService {
     this._verifiedAccessToken = null;
     this._emailOtpVerificationActive = false;
     this._passwordVerificationActive = false;
+    this._recoveryOtpVerificationActive = false;
     this._passwordRecoveryActive = false;
     this._state = {
       status: "loading",
@@ -276,8 +309,7 @@ export class AuthService {
   isPasswordRecoverySession() {
     return Boolean(
       this._passwordRecoveryActive &&
-        this._state.status === "signed_in" &&
-        this._backendUser,
+        this.getCurrentAccessToken(),
     );
   }
 
@@ -700,18 +732,35 @@ export class AuthService {
         throw preserveRequestTimeout(
           error,
           new AuthServiceError(
-            "We could not sign you in. Please check your information and try again.",
-            { code: "PASSWORD_SIGN_IN_FAILED" },
+            "We could not sign you in with that email and password.",
+            {
+              code: "PASSWORD_SIGN_IN_FAILED",
+              diagnostic: "supabase_sign_in_failed",
+            },
           ),
         );
       }
       if (result?.error || !result?.data?.session) {
         throw new AuthServiceError(
-          "We could not sign you in. Please check your information and try again.",
-          { code: "PASSWORD_SIGN_IN_FAILED" },
+          "We could not sign you in with that email and password.",
+          {
+            code: "PASSWORD_SIGN_IN_FAILED",
+            diagnostic: "supabase_sign_in_failed",
+          },
         );
       }
-      await this._verifyInteractiveSession(result.data.session);
+      try {
+        await this._verifyInteractiveSession(result.data.session);
+      } catch (error) {
+        throw new AuthServiceError(
+          "You signed in successfully, but KP AWAZ could not open your workspace. Please try again.",
+          {
+            code: "BACKEND_VERIFICATION_FAILED",
+            status: Number.isInteger(error?.status) ? error.status : 0,
+            diagnostic: backendVerificationDiagnostic(error),
+          },
+        );
+      }
       return { ok: true, email: cleanedEmail };
     } finally {
       this._passwordVerificationActive = false;
@@ -750,14 +799,73 @@ export class AuthService {
         ),
       );
     }
-    return { ok: true };
+    return { ok: true, email: cleanedEmail };
+  }
+
+  async verifyRecoveryOtp(email, otp) {
+    const cleanedEmail = requireValidEmail(email);
+    const cleanedOtp = normalizeRecoveryOtp(otp);
+    if (!EMAIL_OTP_PATTERN.test(cleanedOtp)) {
+      throw new AuthServiceError("Enter the complete six-digit recovery code.", {
+        code: "INVALID_RECOVERY_OTP",
+      });
+    }
+
+    const client = this._ensureClient();
+    this._recoveryOtpVerificationActive = true;
+    try {
+      let result;
+      try {
+        result = await this._runRequest(() =>
+          client.auth.verifyOtp({
+            email: cleanedEmail,
+            token: cleanedOtp,
+            type: "recovery",
+          }),
+        );
+      } catch (error) {
+        throw preserveRequestTimeout(
+          error,
+          new AuthServiceError(
+            "The recovery code is invalid or has expired. Request a new code and try again.",
+            { code: "RECOVERY_OTP_VERIFY_FAILED" },
+          ),
+        );
+      }
+
+      if (result?.error) {
+        throw new AuthServiceError(
+          "The recovery code is invalid or has expired. Request a new code and try again.",
+          { code: "INVALID_OR_EXPIRED_RECOVERY_OTP" },
+        );
+      }
+      const session = result?.data?.session ?? (await this._loadSession());
+      if (
+        !session ||
+        typeof session.access_token !== "string" ||
+        !session.access_token.trim()
+      ) {
+        throw new AuthServiceError(
+          "The recovery code is invalid or has expired. Request a new code and try again.",
+          { code: "RECOVERY_OTP_VERIFY_FAILED" },
+        );
+      }
+
+      this._replaceSession(session);
+      this._backendUser = null;
+      this._verifiedAccessToken = null;
+      this._passwordRecoveryActive = true;
+      this._publish("recovery");
+      return { ok: true, email: cleanedEmail };
+    } finally {
+      this._recoveryOtpVerificationActive = false;
+    }
   }
 
   async updatePassword(password) {
     const safePassword = requireValidPassword(password);
     if (
-      this._state.status !== "signed_in" ||
-      !this._backendUser ||
+      !this._passwordRecoveryActive ||
       !this.getCurrentAccessToken()
     ) {
       throw new AuthServiceError("A verified session is required.", {
@@ -925,6 +1033,7 @@ export class AuthService {
     this._verifiedAccessToken = null;
     this._emailOtpVerificationActive = false;
     this._passwordVerificationActive = false;
+    this._recoveryOtpVerificationActive = false;
     this._passwordRecoveryActive = false;
     this._unsubscribeAuth?.();
     this._unsubscribeAuth = null;
@@ -1022,7 +1131,9 @@ export class AuthService {
     if (this._destroyed) return;
     if (
       event === "SIGNED_IN" &&
-      (this._emailOtpVerificationActive || this._passwordVerificationActive)
+      (this._emailOtpVerificationActive ||
+        this._passwordVerificationActive ||
+        this._recoveryOtpVerificationActive)
     ) {
       return;
     }
@@ -1034,7 +1145,12 @@ export class AuthService {
     }
 
     if (event === "PASSWORD_RECOVERY") {
+      this._replaceSession(session);
+      this._backendUser = null;
+      this._verifiedAccessToken = null;
       this._passwordRecoveryActive = true;
+      this._publish("recovery");
+      return;
     }
 
     const epoch = this._replaceSession(session);
@@ -1112,6 +1228,8 @@ export const signInWithPassword = (input) =>
   authService.signInWithPassword(input);
 export const requestPasswordReset = (email) =>
   authService.requestPasswordReset(email);
+export const verifyRecoveryOtp = (email, otp) =>
+  authService.verifyRecoveryOtp(email, otp);
 export const updatePassword = (password) => authService.updatePassword(password);
 export const signOut = () => authService.signOut();
 export const subscribeToAuthChanges = (callback) =>

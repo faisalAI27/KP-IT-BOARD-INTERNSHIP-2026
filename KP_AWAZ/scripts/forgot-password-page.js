@@ -1,51 +1,36 @@
 import {
-  destroyAuthService,
-  requestPasswordReset,
-} from "./services/auth-service.js?v=20260717-auth-routing";
+  destroyAuthCulturalPanel,
+  initializeAuthCulturalPanel,
+} from "./modules/auth-cultural-panel.js?v=20260717-cultural-hero";
+import { loadPartials } from "./modules/partials.js?v=20260717-member-workspace";
+import { PasswordRecovery } from "./modules/password-recovery.js?v=20260720-recovery-otp";
+import { destroyAuthService } from "./services/auth-service.js?v=20260720-recovery-otp";
 
 
-const SAFE_SUCCESS = "If an account is associated with that email, password-reset instructions have been sent.";
+const recovery = new PasswordRecovery();
 
 
-const form = document.getElementById("forgotPasswordForm");
-const input = document.getElementById("recoveryEmail");
-const submit = document.getElementById("recoverySubmit");
-const label = document.getElementById("recoverySubmitLabel");
-const message = document.getElementById("recoveryMessage");
-
-
-function showMessage(value, tone = "success") {
-  message.textContent = value;
-  message.dataset.tone = tone;
-  message.hidden = false;
+async function bootstrap() {
+  try {
+    await loadPartials();
+    initializeAuthCulturalPanel();
+    if (!recovery.initialize()) throw new Error("Recovery interface unavailable.");
+    document.body.dataset.pageState = "ready";
+  } catch {
+    document.body.dataset.pageState = "error";
+  }
 }
 
 
-form?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (submit.disabled || !form.reportValidity()) return;
-  submit.disabled = true;
-  label.textContent = "Sending safely…";
-  message.hidden = true;
-  try {
-    await requestPasswordReset(input.value);
-    form.reset();
-    showMessage(SAFE_SUCCESS);
-  } catch (error) {
-    showMessage(
-      error?.code === "INVALID_EMAIL"
-        ? "Enter a valid email address."
-        : "We could not send reset instructions. Please try again.",
-      "error",
-    );
-  } finally {
-    submit.disabled = false;
-    label.textContent = "Send reset instructions";
-  }
-});
+window.addEventListener(
+  "beforeunload",
+  () => {
+    recovery.destroy();
+    destroyAuthCulturalPanel();
+    destroyAuthService();
+  },
+  { once: true },
+);
 
 
-window.addEventListener("beforeunload", () => {
-  form?.reset();
-  destroyAuthService();
-}, { once: true });
+void bootstrap();

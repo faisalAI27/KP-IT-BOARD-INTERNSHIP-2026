@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from types import SimpleNamespace
 
 from fastapi import Request
@@ -10,7 +11,10 @@ import pytest
 from pydantic import ValidationError
 
 from app.config import Settings, settings
-from app.main import unexpected_error_handler
+from app.main import (
+    development_lan_frontend_origin_regex,
+    unexpected_error_handler,
+)
 
 
 def test_cors_preflight_allows_only_configured_headers_and_methods(
@@ -51,6 +55,20 @@ def test_cors_does_not_approve_unknown_origin(client: TestClient) -> None:
 def test_wildcard_cors_configuration_is_rejected() -> None:
     with pytest.raises(ValidationError, match="explicit HTTP origins"):
         Settings(_env_file=None, environment="development", frontend_origins=["*"])
+
+
+def test_private_lan_demo_origin_is_allowed_only_in_development() -> None:
+    pattern = development_lan_frontend_origin_regex("development")
+
+    assert pattern is not None
+    assert re.fullmatch(pattern, "http://172.20.10.6:4173")
+    assert re.fullmatch(pattern, "http://192.168.1.50:4173")
+    assert re.fullmatch(pattern, "http://10.0.0.12:4173")
+    assert not re.fullmatch(pattern, "http://172.20.10.6:8000")
+    assert not re.fullmatch(pattern, "https://172.20.10.6:4173")
+    assert not re.fullmatch(pattern, "http://203.0.113.5:4173")
+    assert development_lan_frontend_origin_regex("test") is None
+    assert development_lan_frontend_origin_regex("production") is None
 
 
 def test_unexpected_error_response_never_echoes_internal_details() -> None:

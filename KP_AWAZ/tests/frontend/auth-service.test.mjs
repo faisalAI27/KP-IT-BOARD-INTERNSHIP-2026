@@ -743,7 +743,7 @@ test("password authentication failures never expose raw Supabase errors", async 
     (error) =>
       error.code === "PASSWORD_SIGN_IN_FAILED" &&
       error.message ===
-        "We could not sign you in. Please check your information and try again." &&
+        "We could not sign you in with that email and password." &&
       !error.message.includes(REFRESH_TOKEN),
   );
   await assert.rejects(
@@ -763,7 +763,7 @@ test("password recovery normalizes email and uses the allowed reset page", async
 
   const result = await service.requestPasswordReset(" Person@Example.com ");
 
-  assert.deepEqual(result, { ok: true });
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
   assert.deepEqual(fake.calls.passwordReset, [{
     email: "person@example.com",
     options: { redirectTo: "https://app.example.test/reset-password.html" },
@@ -799,6 +799,75 @@ test("verified password-recovery session can update password through Supabase on
 
   assert.deepEqual(fake.calls.updateUser, [{ password: "a-secure-new-password" }]);
   assert.equal(service.isPasswordRecoverySession(), false);
+});
+
+
+test("six-digit recovery OTP uses recovery type and never calls FastAPI", async () => {
+  const fake = createFakeSupabase();
+  let backendCalls = 0;
+  const service = createService(fake, {
+    fetchImpl: async () => {
+      backendCalls += 1;
+      return jsonResponse(verifiedUser());
+    },
+  });
+
+  const result = await service.verifyRecoveryOtp(
+    " Person@Example.com ",
+    " 123 456 ",
+  );
+
+  assert.deepEqual(result, { ok: true, email: "person@example.com" });
+  assert.deepEqual(fake.calls.otp, [{
+    email: "person@example.com",
+    token: "123456",
+    type: "recovery",
+  }]);
+  assert.equal(backendCalls, 0);
+  assert.equal(service.isPasswordRecoverySession(), true);
+});
+
+
+test("recovery OTP rejects letters and incomplete values before Supabase", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake);
+
+  for (const otp of ["12345", "12a456", "123-456"]) {
+    await assert.rejects(service.verifyRecoveryOtp("person@example.com", otp), {
+      code: "INVALID_RECOVERY_OTP",
+    });
+  }
+  assert.equal(fake.calls.otp.length, 0);
+});
+
+
+test("FastAPI failure after password acceptance is not reported as a password failure", async () => {
+  const fake = createFakeSupabase();
+  const service = createService(fake, {
+    fetchImpl: async () => {
+      throw new Error("backend offline");
+    },
+  });
+
+  await assert.rejects(
+    service.signInWithPassword({
+      email: "Person@Example.com",
+      password: " password-kept-exactly ",
+    }),
+    (error) => {
+      assert.equal(error.code, "BACKEND_VERIFICATION_FAILED");
+      assert.equal(
+        error.message,
+        "You signed in successfully, but KP AWAZ could not open your workspace. Please try again.",
+      );
+      return true;
+    },
+  );
+  assert.deepEqual(fake.calls.passwordSignIn, [{
+    email: "person@example.com",
+    password: " password-kept-exactly ",
+  }]);
+  assert.equal(service.getCurrentAccessToken(), ACCESS_TOKEN);
 });
 
 

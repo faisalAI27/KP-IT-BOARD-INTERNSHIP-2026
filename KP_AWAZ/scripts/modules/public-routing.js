@@ -59,7 +59,7 @@ export class PublicRouting {
     accountButton.dataset.authKind = verified ? "account" : "signed-out";
     accountButton.setAttribute("href", verified ? "dashboard.html" : "auth.html");
     accountButton.removeAttribute("aria-disabled");
-    if (accountLabel) accountLabel.textContent = verified ? "Dashboard" : "Sign in";
+    if (accountLabel) accountLabel.textContent = verified ? "Dashboard" : "Sign In";
     if (profileLink) profileLink.hidden = !verified;
   }
 }

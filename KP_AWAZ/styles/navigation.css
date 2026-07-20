@@ -86,6 +86,10 @@
   color: var(--terracotta-dark);
 }
 
+.links .mobile-contribute-link {
+  display: none;
+}
+
 .nav-cta {
   display: flex;
   align-items: center;

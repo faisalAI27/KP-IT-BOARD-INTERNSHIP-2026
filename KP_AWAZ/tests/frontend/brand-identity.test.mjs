@@ -46,21 +46,23 @@ test("full-color identity uses the approved earthy palette and integrated symbol
 });
 
 test("the correct lockup is used on light, dark, and authentication surfaces", async () => {
-  const [header, footer, auth, workspace, forgot, reset] = await Promise.all([
+  const [header, footer, auth, workspace, forgot, reset, recoveryCard] = await Promise.all([
     read("sections/header.html"),
     read("sections/footer.html"),
     read("auth.html"),
     read("sections/workspace-sidebar.html"),
     read("forgot-password.html"),
     read("reset-password.html"),
+    read("sections/password-recovery-card.html"),
   ]);
 
   assert.match(header, /assets\/images\/logo-primary\.svg/);
   assert.match(footer, /assets\/images\/logo-monochrome-light\.svg/);
   assert.match(auth, /assets\/images\/logo-primary\.svg/);
   assert.match(workspace, /assets\/images\/logo-monochrome-light\.svg/);
-  assert.match(forgot, /assets\/images\/logo-primary\.svg/);
-  assert.match(reset, /assets\/images\/logo-primary\.svg/);
+  assert.match(forgot, /sections\/password-recovery-card\.html/);
+  assert.match(reset, /sections\/password-recovery-card\.html/);
+  assert.match(recoveryCard, /assets\/images\/logo-primary\.svg/);
 });
 
 test("brand guidance records meaning, usage, minimum size, and accessibility", async () => {
