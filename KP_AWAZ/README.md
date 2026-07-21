@@ -1,18 +1,466 @@
-# KP Awaz Frontend
+# KP AWAZ — Working MVP
 
-The frontend is organized so visual sections, interaction logic, data, and backend communication can evolve independently.
+KP AWAZ is a community voice-contribution platform for Pashto and the local
+languages of Khyber Pakhtunkhwa. Contributors create a verified account, read a
+prompt or provide their own words, record audio in the browser, give versioned
+consent, and submit the recording for administrator review.
+
+This repository contains the complete Stage A MVP:
+
+- A 14-page static frontend built with HTML, CSS, and JavaScript modules
+- Supabase email/password, six-digit OTP, password recovery, and Google OAuth
+- A FastAPI application with SQLAlchemy and SQLite
+- Original-format private audio storage
+- Contributor profiles, ownership, consent, review states, and withdrawals
+- Administrator contribution review and Pashto phrase management
+- Approved-contribution scoring and a privacy-safe public leaderboard
+- Backup, storage-health, restore, and internal export command-line tools
+
+The MVP collects and preserves recordings. It does **not** convert audio into a
+training format, automatically judge speech quality, train an AI model, publish
+recordings, or permanently delete data from a browser action.
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    Browser[Static multi-page frontend] -->|Auth SDK| Supabase[Supabase Auth]
+    Browser -->|JSON or multipart over /api| API[FastAPI]
+    API -->|Verify bearer token| Supabase
+    API -->|SQLAlchemy| SQLite[(SQLite metadata)]
+    API -->|Original bytes| Audio[(Private raw-audio storage)]
+    Admin[Administrator page] -->|X-Admin-Key| API
+    Build[Node build] --> Dist[dist/ static release]
+```
+
+The responsibilities are intentionally separated:
+
+| Layer | Responsibility |
+| --- | --- |
+| HTML pages and `sections/` | Semantic page structure and reusable partials |
+| `styles/` | Shared design tokens, public styles, workspace styles, responsive behavior, and final visual polish |
+| Page applications in `scripts/*-app.js` | Bootstrap one page and coordinate its modules |
+| `scripts/modules/` | UI state, rendering, recording, navigation, and lifecycle cleanup |
+| `scripts/services/` | Validate browser data and perform all Supabase or FastAPI communication |
+| `backend/app/routes/` | HTTP contracts, authentication dependencies, and safe response envelopes |
+| `backend/app/services/` | Business rules, ownership, storage, review, scoring, phrases, and withdrawals |
+| `backend/app/models/` | Persistent SQLAlchemy models and database constraints |
+| SQLite | Profiles, phrases, contribution metadata, consent, reviews, points, and withdrawals |
+| Raw-audio directory | Private original recording bytes, separate from SQLite |
+
+The normal frontend dependency direction is:
+
+```text
+HTML page
+  → page application
+    → UI module
+      → service adapter
+        → FastAPI or Supabase
+```
+
+UI modules do not contain backend URLs, and service adapters do not render the
+page. This makes it possible to change a backend contract or a visual component
+without turning the application back into one large file.
+
+## Current MVP capabilities
+
+### Public experience
+
+- `index.html` — cultural homepage and project mission
+- `about.html` — project purpose and Stage A/Stage B boundary
+- `how-it-works.html` — the real contribution and review journey
+- `data-use.html` — consent, privacy, review, and withdrawal explanation
+- `leaderboard.html` — public approved-contribution rankings
+
+Public pages remain public for signed-in users. Restoring a session changes the
+available navigation actions; it does not force a visitor away from the
+homepage.
+
+### Authentication
+
+- `auth.html` — returning password login, account creation, signup OTP, and Google OAuth
+- `forgot-password.html` — password-recovery request
+- `reset-password.html` — six-digit recovery OTP and new-password form
+
+Supabase owns credentials and browser sessions. FastAPI does not receive
+passwords, OTPs, refresh tokens, Google provider tokens, or SMTP credentials.
+After Supabase returns a session, the frontend sends only its access token in
+the `Authorization: Bearer` header to `GET /api/auth/me`. FastAPI verifies the
+token and creates or synchronizes exactly one local application profile.
+
+### Contributor workspace
+
+- `dashboard.html` — profile summary, review counts, recent submissions, score, and leaderboard preview
+- `contribute.html` — guided and open-recording contribution workflows
+- `my-contributions.html` — private paginated history, review state, feedback, and withdrawal state
+- `profile.html` — display name, preferred language, leaderboard privacy, score, rank, and consent summary
+- `settings.html` — preferences, password controls, sign out, and withdrawal requests
+
+Every workspace page uses the shared `WorkspaceShell`. It restores the Supabase
+session, verifies it with FastAPI, loads the local profile, and only then marks
+the private page ready. A signed-out visitor is redirected to `auth.html` with
+an allowlisted local return destination.
+
+### Administrator workspace
+
+`admin.html` is separate from contributor authentication. Its current internal
+authentication mechanism is the configured `ADMIN_API_KEY`, kept only in page
+memory and sent in the `X-Admin-Key` header.
+
+The administrator can:
+
+- Filter and inspect pending, approved, rejected, or all contributions
+- Play audio through a protected backend route
+- Approve a contribution
+- Reject a contribution with a safe reason
+- Review and resolve withdrawal requests
+- Import Pashto phrases from UTF-8 TXT, CSV, or JSON
+- Search, filter, enable, disable, and edit phrases
+- Export the phrase collection as CSV or JSON
+
+The admin key is never placed in URLs, local storage, session storage, cookies,
+HTML, or generated downloads.
+
+## How the main workflows work
+
+### 1. New email account
+
+```text
+Display name + email + password
+  → POST /api/auth/account-status
+  → Supabase password signup
+  → six-digit email verification code
+  → Supabase verifyOtp(type: email)
+  → Supabase session
+  → GET /api/auth/me with bearer token
+  → local profile created
+  → dashboard.html
+```
+
+The account-status endpoint returns only whether an account exists. It uses a
+server-only Supabase credential and an in-process rate limit. Existing accounts
+are directed to password login, Google login, or recovery rather than creating
+a second account.
+
+The signup email template must render `{{ .Token }}`. OTP and password values
+remain in live form state only and are cleared after success, cancellation,
+mode changes, sign-out, or module destruction.
+
+### 2. Returning login and Google OAuth
+
+A returning password login goes directly from Supabase password verification to
+the shared FastAPI `/api/auth/me` verification. It does not request another OTP.
+
+Google OAuth is independent from email OTP. After Google redirects back, the
+same session restoration, backend verification, and profile-loading flow runs.
+Provider metadata may initialize a new profile but does not overwrite a display
+name the contributor later edited locally.
+
+### 3. Guided contribution
+
+```text
+GET /api/sentences?language=Pashto
+  → least-used active phrases returned
+  → contributor selects provided or custom text
+  → MediaRecorder captures supported browser audio
+  → contributor listens or re-records
+  → required consent is checked
+  → multipart POST /api/contributions/voice
+  → backend verifies bearer-token owner
+  → upload streams to bounded private staging
+  → MIME, size, extension, and basic signature validated
+  → exact bytes stored under a server-generated name
+  → metadata committed with review_status=pending
+```
+
+When a provided phrase is used, its ID is stored with the contribution. The
+contribution also keeps a sentence-text snapshot so later phrase edits do not
+rewrite what the contributor actually read.
+
+Phrase delivery favors the least-used active phrases and increments
+`times_assigned`. Disabled phrases remain in the database for history but are no
+longer offered to contributors.
+
+### 4. Open recording
+
+Open recording follows the same authentication, consent, validation, storage,
+and pending-review rules through `POST /api/contributions/open-recording`. It
+stores the contributor's topic when supplied instead of requiring a phrase.
+
+### 5. Original audio storage
+
+The browser chooses the best supported MediaRecorder format. The backend
+accepts supported WebM, Ogg, MP4, MPEG/MP3, WAV, AAC, and FLAC audio when the
+declared type and basic file signature agree.
+
+The backend does not resample, re-encode, normalize, trim, denoise, or convert
+recordings. It stores the exact uploaded bytes and records a SHA-256 checksum.
+Training-format conversion belongs to later Stage B processing.
+
+### 6. Administrator review and scoring
+
+New recordings begin as `pending`. Submission itself changes no score.
+
+```text
+Admin loads protected pending queue
+  → protected audio playback
+  → PATCH review decision
+  → contribution review revision increases
+  → review and point-ledger event commit together
+  → contributor statistics and leaderboard recalculate from database state
+```
+
+An approval creates a `+1` append-only point event for an owned contribution.
+Removing approval creates a `-1` reversal. Reapproving can add a later `+1`
+event. The public leaderboard ranks current approved owned contributions, while
+the private ledger preserves the review history. Legacy unowned contributions
+never affect a contributor's private score or public rank.
+
+### 7. Consent and withdrawal
+
+Every new submission requires consent policy version `1.0`. FastAPI stores:
+
+- `consent_given`
+- `consent_policy_version`
+- A server-generated `consent_timestamp`
+
+Existing rows without the complete structured fields remain `legacy consent
+status unknown`; their review state and score are not rewritten.
+
+A verified contributor may request withdrawal for one owned contribution or
+all contributions they own. The request is non-destructive and uses
+`requested`, `approved`, or `declined` states. Requested and approved records
+are excluded from internal dataset export by default. Audio and audit records
+remain stored unless a separate reviewed deletion process is performed.
+
+## Persistent data model
+
+| Table | Purpose | Important relationships |
+| --- | --- | --- |
+| `profiles` | Application preferences for a verified Supabase user | Owns contributions, point events, and withdrawal requests |
+| `sentences` | Unicode prompt phrases and management metadata | Optionally linked from guided contributions |
+| `contributions` | Ownership, prompt snapshot, consent, audio metadata, and review state | Belongs to a profile when authenticated; may reference a sentence |
+| `point_ledger_entries` | Append-only approval awards and reversals | Belongs to one profile and contribution revision |
+| `withdrawal_requests` | Reviewable single-recording or all-recordings exclusion request | Belongs to a profile and optionally one contribution |
+| `import_batches` | Audit summary for the older multi-TXT sentence import workflow | Records counts and import status |
+
+Important ownership rule: the browser never chooses a `user_id` or profile ID.
+FastAPI derives ownership only from the verified Supabase access token.
+
+Important privacy rule: public leaderboard responses contain only rank, opted-in
+display name, and approved contribution count. They exclude email, user/profile
+IDs, provider, audio metadata, review history, consent records, withdrawal
+records, and point-ledger history.
+
+## Storage layout
+
+Development defaults are anchored to the backend directory, not the terminal's
+current working directory:
+
+```text
+backend/
+├── kp_awaz.db                         # Active development SQLite database
+├── data/audio/raw/YYYY/MM/            # All new original-format recordings
+│   └── contribution_<random-id>.<ext>
+├── storage/audio/YYYY/MM/DD/           # Compatible legacy recording storage
+├── storage/imports/                    # Stored legacy import source files
+└── .env                                # Ignored local server configuration
+```
+
+SQLite stores only a safe relative audio key and metadata. Audio bytes are not
+stored in SQLite and are not served publicly. Protected administrator playback
+resolves a validated storage key inside an allowlisted root and streams the file
+through FastAPI.
+
+To inspect storage safely during development:
+
+```bash
+cd backend
+.venv/bin/python -m app.cli.storage_health --include-checksums
+.venv/bin/python -m app.cli.audio_inventory --include-checksums
+sqlite3 kp_awaz.db ".tables"
+sqlite3 kp_awaz.db ".schema contributions"
+find data/audio/raw -type f
+```
+
+The health and inventory tools are read-only and report aggregate state without
+printing contributor identities or phrase text.
+
+Production must use persistent mounted paths for both SQLite and raw audio.
+SQLite remains the Stage A metadata store, so run one writable backend worker.
+Do not horizontally scale writes until the metadata database is migrated to a
+service designed for concurrent writers.
+
+## Frontend architecture
+
+### Page shells
+
+Source HTML stays small by loading reusable fragments from `sections/` during
+development. `scripts/modules/partials.js` fetches those fragments with
+`cache: "no-store"`. The production build assembles the same fragments into each
+page so deployed pages do not depend on client-side partial requests.
+
+### Page applications
+
+Each real page has a small coordinator:
+
+- `scripts/app.js` — homepage bootstrap
+- `scripts/public-page-app.js` — public secondary pages
+- `scripts/auth-page.js` — sign-in and signup
+- `scripts/forgot-password-page.js` and `reset-password-page.js` — recovery
+- `scripts/dashboard-app.js` — overview data
+- `scripts/contribute-page-app.js` — workspace plus recording modules
+- `scripts/contributions-page-app.js` — private history
+- `scripts/profile-page-app.js` — profile, score, consent, and rank
+- `scripts/settings-page-app.js` — preferences, password controls, and withdrawal
+- `scripts/admin-app.js` — review, withdrawal, and phrase administration
+
+Page applications initialize modules after the required partials and verified
+session are ready. They also destroy modules on unload so media tracks, object
+URLs, subscriptions, timers, and in-memory secrets are cleaned up.
+
+### UI modules
+
+Important modules include:
+
+- `account-access.js` — password signup/login and six-digit signup OTP
+- `password-recovery.js` — recovery OTP and password update
+- `workspace-shell.js` — protected routing, profile identity, sidebar, sign out
+- `recorder.js` — MediaRecorder selection, limits, playback, reset, and cleanup
+- `contributions.js` — three-step guided and open submission flows
+- `my-contributions.js` — private paginated review history
+- `leaderboard.js` — public table, top-three showcase, and current-user context
+- `profile-ui.js` — editable local profile preferences
+- `withdrawal-settings.js` — owner withdrawal workflow
+- `admin-review.js`, `admin-withdrawals.js`, `admin-phrases.js` — admin features
+
+### Service adapters
+
+All browser network contracts live in `scripts/services/`. They normalize
+inputs, create the exact request, validate the response shape, remove unexpected
+private fields, apply safe timeouts, and convert failures into safe UI errors.
+
+`scripts/config.js` derives the development API origin from the browser host on
+port `8000`. A production build generates `dist/scripts/config.js` from the
+public `KP_AWAZ_*` build variables. Do not hardcode API origins inside modules.
+
+### Styling
+
+`styles/foundation.css` contains the shared KP AWAZ palette, spacing,
+typography, radii, shadows, and accessibility foundations. Public, workspace,
+page-specific, responsive, and final-polish files build on those tokens. The
+approved homepage and authentication images remain local assets with explicit
+responsive dimensions and fallbacks.
+
+## Backend architecture
+
+### Request pipeline
+
+```text
+FastAPI route
+  → dependency (database, bearer authentication, or admin key)
+  → Pydantic request validation
+  → domain service
+  → SQLAlchemy model and/or private file storage
+  → reduced response schema
+```
+
+Routes remain thin. Business behavior such as audio finalization, phrase
+deduplication, ownership checks, review transitions, point events, and
+withdrawal resolution lives in `backend/app/services/`.
+
+Application startup:
+
+1. Loads settings from `backend/.env`.
+2. Validates production-only security and persistent-path requirements.
+3. Creates required storage directories.
+4. Creates missing SQLAlchemy tables.
+5. Applies narrowly scoped compatibility checks for older ownership and phrase schemas.
+6. Starts the API with explicit CORS origins and a safe error envelope.
+
+### API map
+
+All routes use the `/api` prefix.
+
+Public or pre-authentication routes:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Process liveness |
+| `GET` | `/readiness` | Database and storage accessibility |
+| `GET` | `/sentences` | Active, least-used phrase delivery |
+| `GET` | `/leaderboard` | Privacy-safe public ranking |
+| `POST` | `/auth/account-status` | Rate-limited existing-email check |
+
+Bearer-authenticated contributor routes:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/auth/me` | Verify Supabase session and ensure local profile |
+| `GET` | `/profile/me` | Read or create the caller's profile |
+| `PATCH` | `/profile/me` | Update supported caller-owned preferences |
+| `GET` | `/profile/me/statistics` | Private contribution counts and rank context |
+| `GET` | `/profile/me/consent` | Caller-only consent summary |
+| `GET` | `/profile/me/points` | Caller-only balance and ledger history |
+| `GET` | `/leaderboard/me/context` | Ranked page containing the caller when eligible |
+| `POST` | `/contributions/voice` | Guided recording submission |
+| `POST` | `/contributions/open-recording` | Open recording submission |
+| `GET` | `/contributions/me` | Caller-only contribution history |
+| `POST` | `/withdrawals/me` | Create a caller-owned withdrawal request |
+| `GET` | `/withdrawals/me` | List caller-owned withdrawal requests |
+
+`X-Admin-Key` protected routes:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| `GET` | `/admin/health` | Validate configured administrator access |
+| `GET` | `/admin/contributions` | Paginated review queue |
+| `GET` | `/admin/contributions/{id}` | Safe contribution detail |
+| `GET` | `/admin/contributions/{id}/audio` | Protected original-audio playback |
+| `PATCH` | `/admin/contributions/{id}/review` | Approve or reject |
+| `GET` | `/admin/withdrawals` | List withdrawal requests |
+| `PATCH` | `/admin/withdrawals/{id}` | Approve exclusion or decline a request |
+| `GET` | `/admin/phrases` | Search and page the phrase collection |
+| `POST` | `/admin/phrases/import` | Import TXT, CSV, or JSON phrases |
+| `PATCH` | `/admin/phrases/{id}` | Edit or enable/disable a phrase |
+| `GET` | `/admin/phrases/export` | Download CSV or JSON phrase collection |
+| `POST` | `/admin/sentences/import` | Backward-compatible multi-TXT import |
+
+Interactive OpenAPI documentation is available locally at
+`http://127.0.0.1:8000/docs`.
 
 ## Run locally
 
-The frontend now uses the real FastAPI backend. Start both applications in separate terminals.
+### Prerequisites
 
-Install the frontend packages first. This also generates the local Supabase browser vendor module:
+- Node.js and npm
+- Python 3.13
+- A configured Supabase project for live authentication
+- Microphone permission in a supported browser
+
+### First-time setup
+
+Install frontend dependencies. This also builds the local browser-compatible
+Supabase vendor module:
 
 ```bash
+cd KP_AWAZ
 npm install
 ```
 
-### Terminal 1 — Backend
+Create the backend environment when it does not already exist:
+
+```bash
+cd backend
+python3.13 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+```
+
+Do not overwrite an existing `backend/.env`. Configure its Supabase and admin
+placeholders locally, and never commit the file.
+
+### Terminal 1 — FastAPI
 
 ```bash
 cd KP_AWAZ/backend
@@ -20,410 +468,167 @@ source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Terminal 2 — Frontend
+Verify:
+
+```bash
+curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:8000/api/readiness
+```
+
+### Terminal 2 — Frontend source
 
 ```bash
 cd KP_AWAZ
 python3 -m http.server 4173
 ```
 
-Then open `http://127.0.0.1:4173`.
+Open `http://127.0.0.1:4173`. Do not open an HTML file directly because the
+development pages load section partials over HTTP.
 
-For the supervisor demo, serve a fresh assembled build instead of a previous
-`dist/` directory:
+### Fresh assembled demo
 
 ```bash
+cd KP_AWAZ
 npm run build
 python3 -m http.server 4173 --directory dist --bind 0.0.0.0
 ```
 
-Open `http://localhost:4173` or `http://127.0.0.1:4173`. During local-network
-testing, a private-LAN URL on port 4173 automatically uses that same hostname
-for FastAPI on port 8000. This private-LAN CORS allowance exists only in the
-development environment; production continues to require explicit HTTPS
-origins.
+The build creates all 14 pages in `dist/`, generates the Supabase vendor bundle,
+assembles partials, and copies runtime assets. Use a new build for demos so a
+previous `dist/` directory or browser cache does not hide recent changes.
 
-Contributor pages are available at:
+If Chrome retains an old page, first rebuild and then use a hard refresh:
+`Command + Shift + R` on macOS or `Ctrl + Shift + R` on Windows/Linux.
 
-- `http://127.0.0.1:4173/auth.html` — password account creation, email
-  verification, password sign-in, and Google sign-in
-- `http://127.0.0.1:4173/dashboard.html` — authenticated overview
-- `http://127.0.0.1:4173/contribute.html` — protected recording studio
-- `http://127.0.0.1:4173/my-contributions.html` — private review history
-- `http://127.0.0.1:4173/profile.html` — profile and leaderboard privacy
-- `http://127.0.0.1:4173/settings.html` — preferences and account security
+## Configuration
 
-Opening a private page without a verified session redirects to `auth.html` and
-returns to the requested page after sign-in.
+### Backend environment
 
-The separate administrator review page is available at
-`http://127.0.0.1:4173/admin.html`. Enter the value configured as
-`ADMIN_API_KEY` in the running backend; never place a real key in source code or
-documentation.
+Use `backend/.env.example` as the safe reference. Important values include:
 
-Backend Swagger is available at `http://127.0.0.1:8000/docs`, and backend health is available at `http://127.0.0.1:8000/api/health`.
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Optional development override; production requires an absolute persistent SQLite URL |
+| `RAW_AUDIO_STORAGE_ROOT` | Storage root for every new recording |
+| `MAX_AUDIO_UPLOAD_BYTES` | Operational upload limit, currently 50 MiB by default |
+| `FRONTEND_BASE_URL` / `FRONTEND_ORIGINS` | Redirect and CORS origins |
+| `ADMIN_API_KEY` | Internal admin access; use a long random secret |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_PUBLISHABLE_KEY` | Publishable key used for token verification |
+| `SUPABASE_SECRET_KEY` | Server-only account-status lookup credential |
 
-The backend must be running for sentence prompts and recording submissions to work. Production frontend paths always use the real API.
+Frontend code may contain only the Supabase URL and publishable key. The admin
+key, Supabase secret key, SMTP values, Google client secret, passwords, OTPs,
+access tokens, and refresh tokens must not be committed or embedded in frontend
+assets.
 
-Do not open `index.html` directly. The development page loads HTML section partials over HTTP.
+### Supabase dashboard
 
-## Project structure
+Configure:
 
-```text
-KP_AWAZ/
-├── index.html                 # Public archive homepage
-├── about.html                 # Mission and responsible-data page
-├── how-it-works.html          # Contribution and scoring explanation
-├── leaderboard.html           # Complete public rankings
-├── auth.html                  # Dedicated contributor account entrance
-├── forgot-password.html       # Password-recovery request
-├── reset-password.html        # Verified recovery-session password update
-├── dashboard.html             # Private contributor overview
-├── contribute.html            # Private recording studio
-├── my-contributions.html      # Private review-history page
-├── profile.html               # Private identity and privacy page
-├── settings.html              # Private preferences and security page
-├── admin.html                 # Isolated review and phrase-management page
-├── sections/                  # One HTML partial per visible section
-├── styles/                    # Foundation, section and responsive CSS
-├── scripts/
-│   ├── app.js                 # Application bootstrap
-│   ├── config.js              # API and browser-auth configuration
-│   ├── modules/               # Navigation, FAQ, recorder and contribution UI
-│   └── services/              # All backend communication
-├── assets/images/             # Brand and culturally rooted page imagery
-├── docs/                      # Architecture and API contracts
-└── tools/                     # Production and Supabase vendor build scripts
-```
+- Email/password signups with Confirm Email enabled
+- Six-digit signup template using `{{ .Token }}`
+- Six-digit recovery template using `{{ .Token }}`
+- Custom SMTP for recipients outside the project team
+- Google provider when Google login is required
+- Local and deployed dashboard/recovery URLs in the redirect allowlist
 
-The main-page hero uses the locally stored, optimized
-`assets/images/kp-community-voice-hero.jpg` illustration. Its arched responsive
-crop connects community voice recording with the people, landscape, materials,
-and warmth of Khyber Pakhtunkhwa while keeping the existing earthy palette.
+See [`docs/supabase-email-templates.md`](docs/supabase-email-templates.md) for
+the current template checklist.
 
-## Brand identity
+## Security and privacy boundaries
 
-The KP AWAZ logo system uses a cultural gateway, KP mountain peaks, and an
-integrated voice waveform. Full-color, horizontal, stacked, icon-only, and
-monochrome SVG assets live in `assets/images/`. Meaning, colors, minimum sizes,
-accessibility, and frontend usage are documented in
-[`docs/brand-identity.md`](docs/brand-identity.md).
+- Supabase verifies identity; FastAPI verifies every protected access token.
+- FastAPI derives ownership from the verified token, never from client IDs.
+- The admin key is accepted only through `X-Admin-Key`.
+- New audio names and extensions are generated server-side.
+- Uploads are streamed with a size bound and validated before finalization.
+- Storage keys are relative, canonical, and traversal-resistant.
+- Raw audio is private and has no public static route.
+- Public leaderboard data is deliberately reduced.
+- Rejection reasons and withdrawal states are private to the owner/admin flows.
+- Consent is versioned and timestamped by the server.
+- Withdrawal is reviewable and non-destructive.
+- Safe error responses do not echo request bodies, headers, tokens, paths, or secrets.
+- Production startup fails closed for insecure origins, ephemeral storage paths,
+  weak/missing admin configuration, or missing Supabase server configuration.
 
-## Production build
+## Tests and verification
+
+Frontend:
 
 ```bash
+npm test
 npm run build
+npm run scan:secrets
 ```
 
-This creates `dist/` and assembles every public, authentication, recovery,
-contributor-workspace, and standalone administrator page,
-generates the browser-compatible Supabase vendor module, and copies the runtime
-assets. Development stays modular while production avoids client-side partial
-requests.
-
-A deployable production build is configured through the public
-`KP_AWAZ_*` build variables and deliberately fails if production URLs or public
-Supabase configuration are missing. See
-[`docs/deployment.md`](docs/deployment.md) for the exact variables, persistent
-mounts, container command, Supabase redirects, backups, and release checks.
-
-The focused vendor bundle can also be regenerated directly with:
+Backend:
 
 ```bash
-npm run build:supabase
+cd backend
+.venv/bin/python -m pytest
+.venv/bin/python -m compileall app
 ```
 
-It is generated from the installed official `@supabase/supabase-js` package. The generated source vendor directory and `node_modules` are not committed.
+Repository formatting check:
 
-## Backend connection
-
-The active API URL is centralized in `scripts/config.js` for development and is
-generated from `KP_AWAZ_API_BASE_URL` in a production build. Do not edit built
-files or hardcode a production domain in service modules.
-
-UI modules must not call `fetch` directly. Add or update calls in `scripts/services/` so backend changes remain isolated.
-
-Authentication requests use a 12-second bound. Other API service requests use a
-20-second bound; original-audio uploads have a separate 120-second default so a
-normal recording is not constrained by the JSON request timeout.
-
-## Authentication interface
-
-The public site has no authentication modal. Signed-out **Start contributing**
-links open `auth.html?next=contribute.html`; after successful authentication the
-allowlisted destination opens. A restored verified session changes only the
-public header actions—the homepage and other public pages remain available and
-never redirect automatically. A verified contributor can choose Dashboard,
-Account, or Start contributing explicitly.
-
-`auth.html` provides the full account entrance. A new contributor supplies a
-display name, email, and 8–72 character password. Supabase Auth creates the
-credential account and sends a six-digit signup verification code. The page
-verifies that code with OTP type `email`, obtains the resulting Supabase
-session, and runs the same FastAPI `GET /api/auth/me` verification used by
-Google and returning password sign-in. Only then does it save the initial display
-name and enter `dashboard.html`. Returning contributors can sign in with email
-and password; Google OAuth behavior is unchanged.
-
-Before password signup, the browser sends only the normalized email to
-`POST /api/auth/account-status`. FastAPI performs a server-only Supabase Auth
-Admin lookup and returns only `accountExists`. A confirmed existing account
-never reaches `signUp()` or the OTP screen; the contributor is guided to
-password sign-in, the unchanged Google option, or password recovery. A new
-email continues through the existing signup and six-digit verification flow.
-If the lookup is unavailable or inconclusive, signup remains blocked and the
-form offers a safe retry.
-
-The current Admin list API is paginated. KP AWAZ checks at most 10 pages of up
-to 1,000 users; reaching that bound is treated as unavailable rather than
-incorrectly reporting that an account is new. The public endpoint is limited
-to five checks per minute per direct client address in the current single
-backend process. A horizontally scaled deployment should replace that
-in-process guard with a shared limiter before increasing traffic.
-
-Showing an exact existing-account message intentionally creates an account
-enumeration tradeoff. Rate limiting, generic provider-neutral wording, a short
-upstream timeout, strict input validation, and a boolean-only response reduce
-the exposure, but they do not eliminate it. The server-only Supabase credential
-must stay in the ignored backend environment file; it is never part of browser
-configuration, frontend assets, URLs, storage, or logs.
-
-### Cultural authentication visual
-
-The account entrance places one centered, opaque authentication card over an
-original full-viewport editorial illustration; it no longer uses a split-screen
-layout. KP-inspired mountains, a hujra setting, carved wood, woven textiles, a
-rabāb, community conversation, and a microphone surround the card. A warm
-sound wave becoming connected points represents community speech moving into
-preserved language data and future technology.
-
-Responsive local assets provide separate desktop and portrait-mobile WebP
-compositions plus a progressive JPEG fallback. Authentication initializes
-without waiting for the artwork, and a forest-green CSS mountain and textile
-fallback preserves contrast if it cannot load. The Google button uses the
-official multicolor Google G from Google's pre-approved Android/Web sign-in
-asset bundle, stored locally without recoloring.
-
-The functional card remains sign-in-first and changes context for account
-creation, signup OTP, loading, error, and verified-success states. Keyboard
-users can move between the Sign In and Create Account tabs with arrow, Home,
-and End keys; Escape safely leaves OTP verification.
-
-Passwords and signup codes remain only in live form controls while needed.
-They are cleared after requests, successful verification, mode changes, page
-destruction, and navigation. They are never written to browser storage, URLs,
-logs, the FastAPI API, or application profile state. Signup-code resending uses
-only the active normalized email and has a 60-second client cooldown.
-
-Supabase manages browser session persistence, Google URL-session detection, and
-token refresh. The confirmation email must render `{{ .Token }}` so the user can
-enter the delivered signup code. The account interface is displayed as fully
-signed in only after FastAPI `GET /api/auth/me` verifies the resulting session.
-
-Authentication provider calls, session restoration, and FastAPI verification
-use a centralized 12-second frontend timeout. A timeout keeps any existing
-session intact, releases the active form controls, and shows only: “We could not
-complete the authentication request. Please try again.” Provider and backend
-errors never leave a page-wide overlay, blur, scroll lock, or inert document.
-Only the submitted form is marked busy, and its loading state is cleared in a
-`finally` block. Backend verification is single-flight per access token and is
-cached only in memory for the current page lifecycle.
-
-Email codes are held only by the OTP input while needed. They are cleared after
-success, cancellation, sign-out, email changes, and UI destruction; they are
-never written to browser storage, URLs, logs, or FastAPI requests. Resending
-uses the same normalized email and becomes available after a 60-second
-cooldown.
-
-Google sign-in requires the Google provider to be enabled and configured in the
-Supabase dashboard before live use. Its redirect behavior is unchanged. For
-local development, the configured Google redirect is
-`http://127.0.0.1:4173/dashboard.html`.
-
-Google OAuth and email/password signup are independent entry methods. **Continue with
-Google** calls only Google's normal OAuth flow; KP AWAZ does not request or
-verify an email OTP, force an account chooser, force repeated consent, add
-unnecessary scopes, or retain Google provider tokens. Google may still show its
-own chooser or consent screen when Google considers it necessary. After either
-method succeeds, the same restored Supabase session, FastAPI `/api/auth/me`
-verification, profile loading, and private navigation lifecycle is used.
-
-If the Google OAuth application is still in Testing mode, every account used
-for testing must be added manually under **Google Cloud → Google Auth Platform
-→ Audience → Test users**. Test users are not managed by application code, and
-Google client secrets must never be placed in frontend files.
-
-Password recovery starts on `forgot-password.html` and always shows the same
-account-neutral success copy. Supabase sends the recovery message to the
-allowlisted `reset-password.html` URL. The user enters the hosted email
-template's six-digit token, Supabase verifies it with recovery type, and only
-then does the shared recovery interface expose the new-password form. Recovery
-codes and passwords remain Supabase-only and are cleared on cancellation,
-failure where appropriate, success, and navigation. See
-`docs/supabase-email-templates.md` for the hosted template checklist.
-
-### Required Supabase account configuration
-
-The hosted Supabase project must be configured manually to match the six-digit
-interface:
-
-1. Under **Authentication → Sign In / Providers → Email**, enable the email
-   provider, new signups, Confirm Email, an 8-character-or-stronger password
-   minimum, and six-digit OTPs.
-2. Under **Authentication → Emails → Templates → Confirm signup**, render
-   `{{ .Token }}` as the six-digit code instead of requiring
-   `{{ .ConfirmationURL }}`.
-3. Under **Authentication → Emails → Templates → Reset password**, render
-   `{{ .Token }}`, add the deployed `reset-password.html` address to the
-   redirect allow list, and keep the recovery email template enabled.
-4. Keep custom SMTP configured so recipients outside the Supabase project team
-   can receive codes.
-
-Suggested Confirm signup subject: `Verify your KP AWAZ account`.
-
-```html
-<h2>Verify your KP AWAZ account</h2>
-<p>Enter this six-digit code on KP AWAZ:</p>
-<div style="margin:24px 0;padding:16px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px">
-  {{ .Token }}
-</div>
-<p>If you did not create this account, you can ignore this email.</p>
-<p>Our voices, our language, our Khyber Pakhtunkhwa.</p>
+```bash
+git diff --check
 ```
 
-For password-account creation, keep **Confirm email** enabled and configure the
-Supabase confirmation template to render the same `{{ .Token }}` six-digit
-value. The dedicated page verifies it with type `email`; it never accepts or
-renders `TokenHash`.
+Tests cover authentication lifecycle, OTP handling, routing, profile ownership,
+recording MIME selection and cleanup, contribution uploads, consent,
+withdrawals, phrase management, review transitions, points, leaderboard
+privacy, storage safety, backups, production configuration, and build output.
 
-Never place SMTP usernames, passwords, provider API keys, project secrets, or
-real OTP values in code, tests, documentation examples, or frontend
-configuration. The application accepts the six-digit token only in the
-in-memory input; `TokenHash` is neither displayed nor accepted.
+## Operations
 
-Frontend authentication uses only the Supabase project URL and publishable key. A service-role key must never appear in frontend configuration, browser code, logs, or production files.
+### Seed initial sentences
 
-Authentication configuration is centralized under `appConfig.auth` in `scripts/config.js` with these fields:
-
-```text
-supabaseUrl
-supabasePublishableKey
-redirectUrl
+```bash
+cd backend
+.venv/bin/python -m scripts.seed_sentences
 ```
 
-The configured relative `redirectUrl` resolves against the deployed origin and
-currently returns Google OAuth to `dashboard.html`. Empty Supabase configuration does not stop navigation or FAQ
-features from initializing, but recording remains unavailable until
-authentication is configured and the user is verified.
+The seed is idempotent and does not run automatically at API startup.
 
-### Contributor workspace
+### Backup
 
-The contributor experience is now split into real page boundaries instead of
-growing the public page into a single large application:
+Pause writes/uploads or stop the single backend process, then write outside the
+active database and audio roots:
 
-- `dashboard.html` loads the verified profile, dynamic review statistics,
-  approved-contribution score, three most recent submissions, and leaderboard preview.
-- `contribute.html` reuses the guided and open recorder with authenticated uploads.
-- `my-contributions.html` reuses the existing paginated private history module,
-  including review states and administrator feedback.
-- `profile.html` shows private identity, contributor-since date, supported profile
-  edits, approved score, and public rank.
-- `settings.html` manages preferred language, leaderboard visibility, password
-  updates for password-capable accounts, data-use information, and sign out.
-- `sections/workspace-sidebar.html` is shared by every private page; page shells,
-  feature modules, service adapters, and styles remain separate.
+```bash
+cd backend
+.venv/bin/python -m app.cli.backup_data \
+  --output /secure-backups/kp-awaz/<timestamp>
+```
 
-The dashboard does not invent word counts, speech duration, XP levels, or
-unsupported donation types. Every number shown comes from the current backend
-contracts. Private pages verify the restored Supabase session with FastAPI
-before requesting profile data and redirect signed-out users to the account
-entrance with a local allowlisted return destination. While this check runs,
-they show a lightweight “Loading your contributor workspace…” shell instead of
-revealing, fading, or disabling the private page. The shared sidebar includes a
-**Visit Public Website** link back to `index.html`.
+The backup uses SQLite's backup API, copies raw and legacy audio, verifies
+checksums and SQLite integrity, and excludes `.env` and credentials.
 
-### Public and private navigation
+### Restore
 
-Public navigation links to Home, About, How it works, Leaderboard, account
-access, and the contribution journey. Authenticated work is kept on protected
-pages with a shared responsive sidebar. Sign-out clears the private in-memory
-view and returns to `index.html`.
+Restore only while the API is stopped and only into new unused destinations:
 
-Routing decisions are centralized in `scripts/services/route-guard.js`:
-`index.html`, `about.html`, `data-use.html`, `how-it-works.html`, and
-`leaderboard.html` are public for every visitor; `auth.html` redirects only a fully verified user;
-`dashboard.html`, `contribute.html`, `my-contributions.html`, `profile.html`,
-and `settings.html` require verification. The root path is normalized to
-`index.html`, unsafe `next` values are rejected, and each page lifecycle allows
-at most one redirect for a transition. `admin.html` remains independent and
-continues to use only its existing runtime admin API-key mechanism.
+```bash
+cd backend
+.venv/bin/python -m app.cli.restore_data \
+  --backup /secure-backups/kp-awaz/<timestamp> \
+  --database-destination /restore/database/kp_awaz.db \
+  --raw-audio-destination /restore/audio/raw \
+  --legacy-audio-destination /restore/legacy/audio \
+  --confirm-restore
+```
 
-Sign-out clears only the Supabase browser session and private in-memory UI. It
-does not delete the local profile, profile preferences, contribution ownership,
-recording files, review state, or point-ledger entries. Signing back in with the
-same verified Supabase user ID restores that durable data. Google and email
-accounts remain separate when Supabase gives them different user IDs; they
-share data only when Supabase intentionally represents them as the same linked
-identity.
+### Internal approved-data export
 
-## Recording consent and data use
+This is a read-only internal CLI, not a public download feature. It exports only
+approved, owned, consented, non-withdrawn records with safe existing original
+audio. It creates export-local sample and speaker IDs and excludes account
+identity fields.
 
-Every new guided or open recording requires the contributor to accept consent
-policy version `1.0`. The frontend sends `consentGiven` and
-`consentPolicyVersion`; FastAPI validates them and records the accepted version
-and a server-generated timestamp on the authenticated contribution. Identity is
-always taken from the verified bearer token, never from a form field.
-
-Older contributions are not backfilled. A row without both a consent policy
-version and consent timestamp has legacy consent status unknown and is not
-externally release-ready, even if it was already reviewed. Review status and
-score are otherwise unchanged. Contributors can see the current policy version
-and their most recent structured consent date on `profile.html`. The public
-privacy and data-use explanation is available at `data-use.html`.
-
-## Contributor withdrawal requests
-
-Authenticated contributors can use **Settings → Data and Privacy** to request
-withdrawal for one recording they own or for all recordings they own at the
-time of the request. The browser sends no user ID; FastAPI derives ownership
-from the verified bearer token. Requests use the states `requested`,
-`approved`, and `declined`; `none` is the effective private history state when
-no request applies. The optional contributor reason is limited to 500
-characters.
-
-Creating a request is non-destructive and does not change contribution review
-status, score, points, or stored audio. My Contributions privately displays the
-effective withdrawal state. Public sentence, leaderboard, and contribution
-responses expose no withdrawal data.
-
-The protected administrator workspace lists withdrawal requests through the
-existing `X-Admin-Key` header and can approve exclusion or decline a request
-with safe internal reasoning. Requested and approved records are excluded by
-the canonical dataset export-eligibility query. An approved withdrawal means
-exclude the affected data from future exports while retaining the source
-record for audit; permanent deletion requires a separate secure product and
-operational decision.
-
-Owner endpoints:
-
-- `POST /api/withdrawals/me`
-- `GET /api/withdrawals/me`
-
-Protected administrator endpoints:
-
-- `GET /api/admin/withdrawals`
-- `PATCH /api/admin/withdrawals/{request_id}`
-
-## Internal approved-dataset export
-
-The backend includes a read-only command-line exporter for internal model-training
-preparation. It has no public download endpoint. The exporter includes only
-approved contributions with authenticated ownership, structured consent, safe
-supported audio, valid stored metadata, and no requested or approved withdrawal.
-It uses export-local sample and speaker identifiers and never writes a reversible
-identity map.
-
-Inspect development data without creating output:
+Dry run:
 
 ```bash
 cd backend
@@ -434,309 +639,72 @@ cd backend
   --include-checksums
 ```
 
-Create the internal export after reviewing the dry-run counts:
+No WAV conversion or training-quality filtering is implemented in this Stage A
+command.
 
-```bash
-.venv/bin/python -m app.cli.export_dataset \
-  --output ../exports/kp_awaz_approved_dataset \
-  --audio-mode original \
-  --include-checksums
+## Production notes
+
+The production architecture uses:
+
+- An atomically deployed static `dist/` frontend
+- One FastAPI/Uvicorn writable worker
+- An absolute persistent SQLite path
+- A separate absolute persistent raw-audio path
+- HTTPS frontend/API origins
+- Platform-managed server secrets
+- Private audio access through protected FastAPI routes only
+
+Production build configuration uses the public `KP_AWAZ_*` variables described
+in [`docs/deployment.md`](docs/deployment.md). That guide also covers Docker,
+CORS, Supabase redirects, persistent mounts, health checks, backup/restore,
+rollback, caching, and release smoke tests.
+
+## Repository structure
+
+```text
+KP_AWAZ/
+├── *.html                         # 14 real public/auth/workspace/admin pages
+├── sections/                      # Reusable semantic HTML partials
+├── styles/                        # Shared, page-specific, responsive, and polish CSS
+├── scripts/
+│   ├── *-app.js                   # Page coordinators
+│   ├── modules/                   # UI state and lifecycle behavior
+│   └── services/                  # Supabase and FastAPI contracts
+├── assets/                        # Local logos and approved cultural imagery
+├── backend/
+│   ├── app/
+│   │   ├── routes/                # FastAPI HTTP layer
+│   │   ├── schemas/               # Pydantic request/response contracts
+│   │   ├── services/              # Business and storage rules
+│   │   ├── models/                # SQLAlchemy tables
+│   │   └── cli/                   # Operational commands
+│   ├── tests/                     # Backend regression suite
+│   ├── data/audio/raw/            # Ignored new recording storage
+│   ├── storage/                   # Ignored compatible legacy/import storage
+│   └── kp_awaz.db                 # Ignored development database
+├── tests/frontend/                # Node frontend regression suite
+├── tools/                         # Build and secret-scan tools
+├── docs/                          # Architecture, deployment, brand, and runbooks
+└── dist/                          # Ignored assembled production output
 ```
 
-The deterministic seed defaults to `42`. A non-empty output directory is refused
-unless `--overwrite` is explicitly provided. When fewer than three eligible
-speakers exist, only `splits/all.csv` is created; otherwise train, validation,
-and test files are speaker-disjoint. Generated `exports/` directories are ignored
-by Git.
+## Further documentation
 
-## Profile settings
+- [`docs/architecture.md`](docs/architecture.md) — original frontend separation decisions
+- [`docs/backend-contract.md`](docs/backend-contract.md) — contribution API contract details
+- [`docs/deployment.md`](docs/deployment.md) — production release and persistent storage
+- [`docs/manual-mvp-verification.md`](docs/manual-mvp-verification.md) — real-browser verification checklist
+- [`docs/brand-identity.md`](docs/brand-identity.md) — KP AWAZ logo and palette
+- [`docs/supabase-email-templates.md`](docs/supabase-email-templates.md) — signup and recovery email templates
+- `http://127.0.0.1:8000/docs` — live OpenAPI documentation when FastAPI is running
 
-After Supabase restores or creates a session, FastAPI verifies the signed-in user and guarantees that one local profile exists through `GET /api/auth/me` before the frontend requests profile data. `GET /api/profile/me` remains safe to call directly and also creates the profile when needed. Existing profile preferences and edited display names are never replaced by later provider metadata.
+## Current MVP boundaries
 
-Profile settings are available in the dedicated signed-in **My Account**
-section alongside the verified email when available, current score, and Sign
-out. Users can edit their display name, preferred language, and whether their
-display name may appear on the public leaderboard. Leaderboard visibility is
-private by default. Contribution history is not rendered inside Account. The
-profile form includes loading, retry, validation, save, and no-change feedback
-without blocking the rest of the site.
-
-Supabase remains responsible for authentication and browser session management. FastAPI stores only application-specific profile preferences and the safe identity metadata needed to associate the profile with the verified Supabase user. Access tokens are not stored in the profile table or in profile UI state.
-
-## Authenticated contributions
-
-Guided and open contribution recording now requires a signed-in user whose Supabase session has been verified by FastAPI. Signed-out users see a sign-in prompt, recording controls remain unavailable, and microphone permission is not requested. Signing out during a recording releases the microphone and discards unsent audio.
-
-Uploads send the current access token only in the `Authorization: Bearer` header. The frontend never sends a user ID or profile ID. FastAPI derives ownership exclusively from the verified token, creates or synchronizes the local profile when needed, and stores the verified profile ID with new contribution metadata. The two contributions created before ownership support remain unowned legacy records.
-
-New submissions enter a private pending-review queue. Review actions are
-protected by the backend admin key and are available only through the separate
-administrator page described below. Approved contribution statistics and the
-privacy-safe public leaderboard are calculated dynamically by the backend.
-Approved owned contributions also receive private append-only points. Rewards
-are not implemented yet.
-
-After either upload succeeds, the contributor remains in the recording flow and
-sees that the recording is waiting for administrator review. Submission itself
-does not increase the score. The history, account score, and an opened personal
-leaderboard context request fresh backend state after submission; they never add
-a point optimistically in browser state.
-
-Signed-in users can view their private submission history in its own **My
-Contributions** section using the separate header control. The interface loads
-ten results at a time from `GET /api/contributions/me` and preserves loading,
-empty, safe error, retry, refresh, and Load more states. It does not preload the
-history merely because a user signs in. A successful guided or open-recording
-upload marks closed history as needing refresh, or refreshes it when the section
-is already open.
-
-Each history card shows `Pending review`, `Approved`, or `Rejected`. Pending
-recordings are safely stored but do not score yet; approved recordings count;
-rejected recordings do not count. A rejection reason is shown as plain text only
-to the verified owner and only for a rejected item. Pending and approved items
-never render rejection text. The summary above the history uses
-`GET /api/profile/me/statistics` for total, pending, approved, and rejected
-counts rather than deriving counts from the current history page.
-
-The backend filters history by the identity derived from the bearer token. The frontend neither sends nor accepts a user ID for history requests, so one account cannot select or view another account's contributions. The two legacy unowned contributions do not appear in any user's history. Audio playback is not included because the history response does not provide a safe playable URL. Audio files remain separate from SQLite; SQLite stores their safe relative keys, contribution metadata, and nullable ownership.
-
-## Contribution statistics and public leaderboard
-
-Authenticated users can retrieve only their own dynamic review counts with:
-
-```bash
-curl \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  "http://127.0.0.1:8000/api/profile/me/statistics"
-```
-
-`GET /api/profile/me/statistics` returns total, pending, approved, and rejected
-contribution counts together with the current leaderboard opt-in choice,
-eligibility, and public rank. FastAPI derives ownership from the verified token;
-the endpoint does not accept a user ID.
-
-The public backend leaderboard requires no login:
-
-```bash
-curl "http://127.0.0.1:8000/api/leaderboard?limit=20&offset=0"
-```
-
-A profile is eligible only when it has opted in and owns at least one currently
-approved contribution. Pending, rejected, opted-out, and legacy unowned
-contributions are excluded by the database query. Entries are ordered by
-approved contribution count descending, with dense ranks for ties and a stable
-display-name order within each tie.
-
-Only `rank`, `displayName`, and `approvedContributions` are public. Profile IDs,
-emails, authentication providers, audio metadata, and private review counts are
-never returned. Disabling leaderboard visibility removes the profile on the next
-request without changing its recordings, ownership, review decisions, or private
-statistics.
-
-Counts are aggregated from the contribution rows on every request; mutable
-counter columns are not stored in profiles. The public leaderboard continues to
-rank approved contribution counts rather than points.
-
-The scoring rule is fixed: one currently approved contribution owned by the
-verified profile equals one point. A new pending submission adds zero; approval
-adds one; changing approval to rejection removes one; and approving again adds
-one back. Rejected, pending, legacy unowned, and orphaned contributions always
-count as zero.
-
-### Public Leaderboard
-
-The contributor website includes a public **Leaderboard** section that requires
-no login. It uses a structured semantic table with Rank, a bold Contributor
-name, and Approved contributions columns. Compact rank badges are consistently
-sized on desktop and mobile. The table loads 20 eligible contributors at a time
-and provides loading, empty, safe error, retry, refresh, and Load more states.
-Manual refresh reflects recent profile-privacy or administrator-review changes
-without continuous polling.
-
-Each public row displays only:
-
-- Rank
-- Display name
-- Approved contribution count
-
-The frontend respects the dense rank returned by FastAPI, including tied ranks,
-and keeps duplicate display names as separate entries. Only contributors who
-opt into leaderboard visibility and own at least one approved recording appear.
-No user/profile identifiers, email, provider, review history, audio metadata, or
-private contribution points are displayed.
-
-Private scores remain available only to their signed-in owners in **My
-Account**. Public ranking is based solely on currently approved contribution
-count. Rewards are not implemented.
-
-The section also loads a separate public top-three showcase with
-`GET /api/leaderboard?limit=3&offset=0`. It remains public and visible after
-sign-out. The semantic table below it remains the complete ranked view.
-
-When a verified user opens Leaderboard, the frontend requests:
-
-```http
-GET /api/leaderboard/me/context?limit=20
-```
-
-FastAPI derives the current profile from the bearer token and returns the
-bounded page containing that profile. Only the server-provided
-`isCurrentUser` marker is used to highlight the row and add the **You** badge;
-display names are never used as identity keys. Dense public rank remains
-separate from deterministic row position, so tied users share rank while page
-lookup remains stable. Opted-out users or users with no approved recordings
-receive no public page, but see their own private approved count and an Account
-link explaining how eligibility works. This authenticated response still
-excludes user/profile IDs, emails, provider metadata, tokens, and audio data.
-
-## Private contribution points
-
-One approved contribution owned by a verified profile equals one private point.
-Pending and rejected contributions award no points, and legacy unowned
-contributions are excluded. Leaderboard opt-out does not remove privately owned
-points.
-
-Points are recorded as immutable ledger events. Approval creates a `+1` award,
-removing approval creates a `-1` reversal, and reapproval creates another `+1`
-award. Existing approved owned contributions receive one idempotent backfill
-event. Earlier entries are never edited or deleted, and balances are calculated
-with `SUM(points_delta)` rather than stored on profiles.
-
-Authenticated users can retrieve only their own balance and ledger data:
-
-```bash
-curl \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  "http://127.0.0.1:8000/api/profile/me/points?limit=20&offset=0"
-```
-
-`GET /api/profile/me/points` returns `balance`, paginated `items`, `total`,
-`limit`, and `offset`. Items contain `id`, `entryType`, `pointsDelta`,
-`contributionId`, and `createdAt`. They do not expose user IDs, emails, tokens,
-review reasons, or audio paths.
-
-The stored event types are represented by the API as `approvalAward`,
-`approvalReversal`, and `approvedBackfill`.
-
-### Account score
-
-The contributor interface displays only the top-level backend `balance` in a
-compact **Current score** card inside My Account. It requests the points endpoint
-with `limit=1&offset=0`, does not calculate the score from the returned page,
-and never renders or stores ledger items in UI state. The card provides loading,
-safe error, retry, and refresh behavior with correct `point`/`points` wording.
-The contributor-facing explanation states that only recordings approved by an
-administrator are included.
-
-The backend append-only ledger remains unchanged as the internal accounting
-mechanism, but contributor-facing approval, reversal, backfill, date, delta,
-and pagination cards are intentionally not displayed. One currently approved,
-owned contribution equals one point; pending, rejected, and legacy unowned
-contributions do not award points. Scores are private, have no monetary value,
-and do not affect the public approved-contribution leaderboard.
-
-## Administrator contribution review
-
-The administrator interface is intentionally separate from the contributor
-application and does not initialize Supabase login, profile settings, My
-Contributions, or either recorder. To use it locally:
-
-1. Start FastAPI and the frontend server using the commands above.
-2. Open `http://127.0.0.1:4173/admin.html`.
-3. Enter the backend's configured admin key at runtime.
-
-The key is sent only in the `X-Admin-Key` request header and is kept only in the
-admin module's memory for the current page session. It is not written to browser
-storage, cookies, configuration, request URLs, or request JSON. Disconnecting,
-refreshing, or closing the page clears it and requires entry again.
-
-The workspace supports backend-filtered pending, approved, rejected, and all
-queues; 20-item page navigation; safe contribution metadata; protected Blob
-audio playback; approval; rejection with a required reason; and correction of
-earlier decisions. Audio object URLs are revoked when changing or closing the
-selection, disconnecting, or destroying the page module. There is no public
-audio URL or download action, and rejected recordings remain stored.
-
-The initial view is the newest-first Pending queue. A visible `Pending reviews`
-count uses the backend's total for the pending filter and is refreshed when the
-admin connects, changes filters, records a decision, or explicitly refreshes.
-Successful decisions remove an item from the Pending view, preserve its audio,
-and explain whether the contributor's score will update or remain unchanged.
-
-This is temporary internal API-key administration, not an admin-account system.
-The public leaderboard is available only on the contributor website and does
-not initialize or share state with this administrator page.
-
-## Pashto prompt-phrase backend
-
-Prompt phrases reuse the existing `sentences` table and public
-`GET /api/sentences` contract. Public delivery returns active phrases only,
-prefers phrases with fewer recorded assignments, and exposes no administrative
-metadata. An empty active collection safely returns `{"data": []}`.
-
-The following endpoints are protected by the existing `X-Admin-Key` header:
-
-- `POST /api/admin/phrases/import` accepts one UTF-8 `.csv`, `.json`, or `.txt`
-  file.
-- `GET /api/admin/phrases` provides paginated search, language/active filters,
-  ordering, and aggregate assignment/review counts.
-- `PATCH /api/admin/phrases/{phrase_id}` edits supported metadata or changes
-  active status without deleting history.
-- `GET /api/admin/phrases/export` returns UTF-8 CSV or JSON, with active-only
-  export enabled by default.
-
-Imports require phrase text, default missing language to Pashto, default missing
-active state to true, preserve original Unicode and punctuation, and prevent a
-duplicate normalized text/language pair. Optional category, dialect, source, and
-difficulty values remain null when not supplied. Existing sentence records are
-preserved.
-
-Provided-prompt recordings require an active phrase ID. FastAPI verifies the
-submitted language and text against that phrase, then stores both the phrase ID
-and canonical text snapshot on the contribution. Later phrase edits or disabling
-do not rewrite historical snapshots. Contributor-written custom sentences and
-open recordings retain their existing behavior; open recordings have no phrase
-ID.
-
-The protected `admin.html` workspace includes a focused **Phrase Management**
-tab alongside the unchanged contribution-review tools. It shows collection
-totals, paginated search and language/status filters, UTF-8 CSV/JSON/TXT import
-summaries, safe metadata editing, enable/disable actions, and backend-generated
-active/all CSV or JSON downloads. Phrase text is rendered as plain text with
-Pashto direction support. The administrator key continues to live only in the
-page module's runtime memory and is sent only through `X-Admin-Key`.
-
-## Recording behavior
-
-KP AWAZ stores valid browser recordings in their original format. It does not
-resample, transcode, normalize, trim, denoise, or decide whether a recording is
-ready for model training. Stage B is responsible for resampling, format
-conversion, quality and noise analysis, transcript verification, and dataset
-splitting.
-
-Available formats depend on each browser's `MediaRecorder` implementation. The
-frontend asks for WebM/Opus, OGG/Opus, MP4, WebM, then OGG in that order. If a
-browser reports none of those choices, the recorder starts without a forced
-MIME type and uploads the actual MIME type on the resulting Blob. Chrome,
-Safari, Firefox, and mobile browsers may therefore create different original
-containers. The client sends binary multipart data with a generic filename;
-only FastAPI selects the controlled storage extension.
-
-The backend accepts `audio/webm`, `audio/ogg`, `audio/mp4`, `audio/mpeg`,
-`audio/wav`, `audio/x-wav`, `audio/aac`, and `audio/flac`, including supported
-codec parameters after base-MIME normalization. It preserves exact upload bytes
-under a random server-generated name in the configurable raw-audio root,
-organized by UTC year and month. The single default operational limit is 50 MB;
-it is an infrastructure safeguard rather than a training-quality rule.
-
-Production deployments must place both SQLite and the configured raw-audio root
-on persistent, backed-up storage. Run the read-only storage audit from
-`backend/` with:
-
-```bash
-.venv/bin/python -m app.cli.audio_inventory --include-checksums
-```
-
-The command reports aggregate file, format, missing, orphan, and zero-byte
-counts without printing contributor identities, storage paths, or individual
-checksums. Existing legacy recording paths remain supported and are not moved.
+- SQLite is intentionally retained for Stage A and assumes one writable API process.
+- Administrator access currently uses one internal API key rather than role-based accounts.
+- Audio is preserved in its browser-produced format; Stage B owns conversion and quality analysis.
+- Review is manual; submissions are never automatically approved.
+- Withdrawal excludes data from future internal exports but does not automatically delete source records.
+- The leaderboard publishes only opted-in names and approved contribution counts.
+- Points have no monetary or reward redemption behavior.
+- The internal exporter is not a public dataset-download endpoint.
