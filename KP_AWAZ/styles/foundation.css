@@ -1,21 +1,69 @@
 :root {
-  --paper: #faf6ef;
-  --paper-soft: #f1eadb;
-  --card: #ffffff;
-  --ink: #2e2620;
-  --ink-soft: #6b5d4f;
-  --terracotta: #c1613d;
-  --terracotta-dark: #9c4b2e;
-  --pine: #3e6259;
+  color-scheme: light;
+
+  /* KP AWAZ palette: forest, earth, clay, gold, and warm paper. */
+  --forest-deep: #173e34;
+  --forest: #3e6259;
+  --forest-soft: #e9f0ec;
+  --pine: var(--forest);
   --pine-dark: #2a4740;
-  --honey: #e7a94c;
+  --ivory: #faf6ef;
+  --cream: #f1eadb;
+  --surface: #ffffff;
+  --surface-muted: #f7f0e5;
+  --earth: #2e2620;
+  --earth-soft: #6b5d4f;
+  --clay: #c1613d;
+  --clay-dark: #9c4b2e;
+  --gold: #e7a94c;
+
+  /* Backward-compatible component tokens. */
+  --paper: var(--ivory);
+  --paper-soft: var(--cream);
+  --card: var(--surface);
+  --ink: var(--earth);
+  --ink-soft: var(--earth-soft);
+  --terracotta: var(--clay);
+  --terracotta-dark: var(--clay-dark);
+  --honey: var(--gold);
+
   --line: rgba(46, 38, 32, 0.12);
   --line-strong: rgba(46, 38, 32, 0.2);
+  --line-forest: rgba(62, 98, 89, 0.22);
+  --focus-ring: rgba(193, 97, 61, 0.35);
+
+  /* Shared spacing rhythm. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 7rem;
+
+  --font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-pashto: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
+
+  --shadow-xs: 0 4px 14px rgba(46, 38, 32, 0.045);
   --shadow-sm: 0 10px 30px rgba(46, 38, 32, 0.07);
   --shadow-md: 0 22px 60px rgba(46, 38, 32, 0.12);
+  --shadow-lg: 0 30px 80px rgba(34, 43, 37, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(62, 98, 89, 0.1);
+
+  --radius-xs: 8px;
   --radius-sm: 12px;
   --radius: 20px;
   --radius-lg: 30px;
+  --radius-pill: 999px;
+
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --duration-fast: 160ms;
+  --duration-standard: 240ms;
 }
 
 *,
@@ -35,9 +83,7 @@ body {
   overflow-x: hidden;
   background: var(--paper);
   color: var(--ink);
-  font-family:
-    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
@@ -58,7 +104,7 @@ h2,
 h3,
 h4 {
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-weight: 700;
   text-wrap: balance;
 }
@@ -99,7 +145,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(193, 97, 61, 0.35);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 4px;
 }
 

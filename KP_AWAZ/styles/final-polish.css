@@ -1,0 +1,651 @@
+/*
+ * Final presentation layer for public, contributor, and administrator pages.
+ * Authentication pages intentionally do not load this file: their approved
+ * visual treatment remains unchanged.
+ */
+
+body:not(.access-page) {
+  letter-spacing: -0.006em;
+}
+
+body:not(.access-page) :where(input, select, textarea, button) {
+  accent-color: var(--pine);
+}
+
+body:not(.access-page) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+body:not(.access-page) :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+  border-color: var(--pine);
+  outline: 0;
+  box-shadow: var(--shadow-focus);
+}
+
+body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-button) {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+/* Public website */
+.nav {
+  box-shadow: 0 8px 30px rgba(46, 38, 32, 0.035);
+  backdrop-filter: blur(18px) saturate(115%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+}
+
+.nav::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(231, 169, 76, 0.72), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.logo,
+.workspace-brand,
+.admin-brand {
+  transition: opacity var(--duration-fast) ease;
+}
+
+.logo:hover,
+.workspace-brand:hover,
+.admin-brand:hover {
+  opacity: 0.86;
+}
+
+.links a,
+.nav-private-link {
+  letter-spacing: 0.005em;
+}
+
+.hero {
+  background:
+    radial-gradient(circle at 8% 80%, rgba(231, 169, 76, 0.08), transparent 24rem),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.28), transparent 58%);
+}
+
+.hero-copy h1,
+.story-hero h1,
+.process-hero h1,
+.data-use-hero h1 {
+  color: #29231e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.hero-kicker,
+.story-kicker,
+.eyebrow-line,
+.workspace-eyebrow,
+.admin-eyebrow {
+  letter-spacing: 0.145em;
+}
+
+.hero-principles {
+  width: fit-content;
+  padding: 10px 14px;
+  border: 1px solid rgba(62, 98, 89, 0.12);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.mission-card,
+.language-focus,
+.trust-section,
+.public-pattern-band,
+.final-cta {
+  background-color: var(--forest-deep);
+}
+
+.mission-card,
+.why-card,
+.step,
+.stage-grid article,
+.data-use-grid article,
+.future-use-grid li,
+.leaderboard-panel,
+.leaderboard-showcase {
+  border-color: rgba(46, 38, 32, 0.105);
+}
+
+.why-card,
+.step,
+.stage-grid article,
+.data-use-grid article,
+.future-use-grid li {
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform var(--duration-standard) var(--ease-standard),
+    border-color var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+.mission-values li,
+.hero-principles,
+.trust-points,
+.collection-context dl,
+.score-rule dl {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.faq-item {
+  border-color: rgba(46, 38, 32, 0.11);
+}
+
+.faq-q {
+  transition: color var(--duration-fast) ease;
+}
+
+.faq-q:hover {
+  color: var(--terracotta-dark);
+}
+
+.foot-grid a,
+.foot-bottom a {
+  text-underline-offset: 4px;
+  transition: color var(--duration-fast) ease;
+}
+
+.foot-grid a:hover,
+.foot-bottom a:hover {
+  color: #ffd594;
+}
+
+.story-hero,
+.process-hero,
+.data-use-hero {
+  border-bottom: 1px solid rgba(62, 98, 89, 0.09);
+}
+
+.process-list li,
+.responsibility-grid article,
+.data-use-grid article {
+  position: relative;
+  overflow: hidden;
+}
+
+.process-list li::after,
+.responsibility-grid article::after,
+.data-use-grid article::after {
+  position: absolute;
+  right: -44px;
+  bottom: -56px;
+  width: 116px;
+  height: 116px;
+  border: 1px solid rgba(231, 169, 76, 0.14);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+/* Contributor workspace */
+body.workspace-body {
+  background-color: #fbf7f0;
+  background-image:
+    radial-gradient(circle at 92% 4%, rgba(231, 169, 76, 0.075), transparent 24rem),
+    linear-gradient(90deg, rgba(62, 98, 89, 0.032) 1px, transparent 1px),
+    linear-gradient(rgba(62, 98, 89, 0.032) 1px, transparent 1px);
+}
+
+.workspace-sidebar {
+  border-right: 1px solid rgba(231, 169, 76, 0.09);
+  box-shadow: 18px 0 55px rgba(19, 48, 40, 0.1);
+}
+
+.workspace-navigation {
+  scrollbar-color: rgba(231, 169, 76, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.workspace-navigation a {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.workspace-navigation a.is-active {
+  box-shadow: inset 3px 0 0 rgba(231, 169, 76, 0.88);
+}
+
+.workspace-navigation .workspace-record-link {
+  box-shadow: inset 0 0 0 1px rgba(231, 169, 76, 0.035);
+}
+
+.workspace-sign-out {
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
+}
+
+.workspace-sign-out:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.workspace-main {
+  padding-top: clamp(var(--space-7), 6vw, 5.125rem);
+}
+
+.workspace-page-header {
+  position: relative;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.workspace-page-header::after {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 76px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--terracotta), var(--honey));
+  content: "";
+}
+
+.workspace-page-header h1 {
+  letter-spacing: -0.045em;
+}
+
+.workspace-header-link,
+.workspace-link-button {
+  box-shadow: var(--shadow-xs);
+}
+
+.workspace-guard,
+.workspace-loading-shell,
+.dashboard-panel,
+.review-compass article,
+.dashboard-actions a,
+.workspace-main .my-contributions-panel,
+.workspace-main .my-contribution-card,
+.profile-score-card,
+.profile-consent-card,
+.workspace-profile-settings,
+.settings-card {
+  border-color: rgba(46, 38, 32, 0.105);
+}
+
+.dashboard-panel,
+.review-compass article,
+.dashboard-actions a,
+.workspace-main .my-contributions-panel,
+.profile-score-card,
+.profile-consent-card,
+.workspace-profile-settings,
+.settings-card {
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-portrait-card,
+.settings-data-card {
+  background-color: var(--forest-deep);
+  box-shadow: 0 26px 64px rgba(23, 62, 52, 0.17);
+}
+
+.profile-portrait-card::after,
+.settings-data-card::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(120deg, transparent 0 62%, rgba(231, 169, 76, 0.035) 62% 63%, transparent 63%);
+  background-size: 54px 54px;
+  content: "";
+  pointer-events: none;
+}
+
+.settings-data-card > *,
+.profile-portrait-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.review-compass article,
+.dashboard-actions a,
+.dashboard-panel {
+  transition:
+    transform var(--duration-standard) var(--ease-standard),
+    border-color var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+.stat-sigil,
+.recent-voice-mark,
+.profile-portrait-avatar,
+.workspace-avatar {
+  box-shadow: inset 0 0 0 1px rgba(62, 98, 89, 0.08);
+}
+
+.dashboard-panel-status,
+.dashboard-leaderboard-list li,
+.dashboard-recent-list li,
+.profile-consent-facts > div,
+.profile-private-facts div,
+.settings-withdrawal-history li {
+  border-color: rgba(46, 38, 32, 0.095);
+}
+
+/* Contribution studio */
+.contribute-page-content .contribute-section {
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  border: 1px solid rgba(46, 38, 32, 0.08);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: var(--shadow-xs);
+}
+
+.feature-tabs {
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: rgba(241, 234, 219, 0.62);
+}
+
+.feature-tab {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.feature-tab.active {
+  border-color: var(--line-forest);
+  background: var(--card);
+  box-shadow: var(--shadow-xs);
+}
+
+.form-panel {
+  border-color: rgba(46, 38, 32, 0.11);
+  box-shadow: var(--shadow-lg);
+}
+
+.form-panel-head,
+.flow-progress {
+  background-color: rgba(250, 246, 239, 0.62);
+}
+
+.provided-sentence-card,
+.reading-card,
+.review-card,
+.rec-box,
+.sentence-choice {
+  border-color: rgba(62, 98, 89, 0.16);
+}
+
+.pashto-sentence,
+.reading-card > p,
+.review-sentence p,
+.admin-phrase-text[dir="rtl"] {
+  font-family: var(--font-pashto);
+}
+
+.provided-sentence-card,
+.reading-card,
+.review-card {
+  box-shadow: var(--shadow-xs);
+}
+
+.rec-btn {
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 12px 28px rgba(193, 97, 61, 0.28),
+    0 0 0 1px rgba(193, 97, 61, 0.16);
+}
+
+.rec-btn:focus-visible {
+  outline-offset: 5px;
+}
+
+.consent-check {
+  border: 1px solid rgba(231, 169, 76, 0.19);
+}
+
+/* Private history, profile, and settings */
+.workspace-main .my-contributions-summary-grid > div,
+.workspace-main .my-contribution-card,
+.account-detail-card,
+.settings-withdrawal-history li {
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+.workspace-main .my-contribution-card:focus-visible,
+.workspace-main .my-contribution-card:hover {
+  border-color: var(--line-forest);
+  box-shadow: 0 12px 28px rgba(46, 38, 32, 0.08);
+}
+
+.workspace-profile-settings :where(input, select),
+.settings-card :where(input, select, textarea),
+.account-detail-card :where(input, select, textarea) {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.profile-consent-card,
+.settings-withdrawal-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-consent-card::after,
+.settings-withdrawal-card::after {
+  position: absolute;
+  top: -36px;
+  right: -36px;
+  width: 104px;
+  height: 104px;
+  border: 1px solid rgba(231, 169, 76, 0.18);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+/* Leaderboard */
+.leaderboard-section {
+  background-color: var(--paper-soft);
+}
+
+.leaderboard-showcase,
+.leaderboard-panel {
+  box-shadow: 0 24px 64px rgba(23, 62, 52, 0.14);
+}
+
+.leaderboard-podium-card {
+  border-color: rgba(231, 169, 76, 0.17);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-table-wrapper {
+  border-color: rgba(250, 246, 239, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.leaderboard-entry {
+  transition: background-color var(--duration-fast) ease;
+}
+
+/* Administrator workspace */
+.admin-page {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at top left, rgba(231, 169, 76, 0.13), transparent 32rem),
+    linear-gradient(90deg, rgba(62, 98, 89, 0.026) 1px, transparent 1px),
+    linear-gradient(rgba(62, 98, 89, 0.026) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+}
+
+.admin-header {
+  position: sticky;
+  z-index: 45;
+  top: 0;
+  box-shadow: 0 8px 28px rgba(46, 38, 32, 0.045);
+}
+
+.admin-connect,
+.admin-queue,
+.admin-detail,
+.admin-selection-prompt,
+.admin-withdrawals,
+.admin-phrases {
+  border-color: rgba(46, 38, 32, 0.105);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-connect__copy {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-connect__copy::after {
+  position: absolute;
+  right: -72px;
+  bottom: -72px;
+  width: 210px;
+  height: 210px;
+  border: 1px solid rgba(231, 169, 76, 0.16);
+  border-radius: 50%;
+  box-shadow: 0 0 0 30px rgba(231, 169, 76, 0.025);
+  content: "";
+  pointer-events: none;
+}
+
+.admin-section-tabs,
+.admin-filter,
+.admin-contribution-card,
+.admin-icon-button,
+.admin-phrase-card,
+.admin-phrase-filters,
+.admin-phrase-stats > div {
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.admin-section-tab.is-active,
+.admin-filter.is-active {
+  box-shadow: 0 7px 18px rgba(42, 71, 64, 0.19);
+}
+
+.admin-contribution-card.is-selected {
+  box-shadow: inset 3px 0 0 var(--pine), var(--shadow-xs);
+}
+
+.admin-phrase-card,
+.admin-phrase-filters,
+.admin-phrase-stats > div,
+.admin-withdrawal-card {
+  background: rgba(247, 240, 229, 0.82);
+}
+
+.admin-table-wrap {
+  box-shadow: var(--shadow-xs);
+}
+
+.admin-phrase-table th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+}
+
+.admin-phrase-table tbody tr {
+  transition: background-color var(--duration-fast) ease;
+}
+
+.admin-phrase-table tbody tr:hover {
+  background: rgba(62, 98, 89, 0.045);
+}
+
+.admin-phrase-dialog {
+  box-shadow: var(--shadow-lg);
+}
+
+@media (hover: hover) {
+  .why-card:hover,
+  .step:hover,
+  .stage-grid article:hover,
+  .data-use-grid article:hover,
+  .future-use-grid li:hover,
+  .review-compass article:hover,
+  .dashboard-panel:hover,
+  .dashboard-actions a:hover {
+    border-color: var(--line-forest);
+    box-shadow: 0 17px 42px rgba(46, 38, 32, 0.085);
+    transform: translateY(-3px);
+  }
+
+  .feature-tab:hover,
+  .admin-contribution-card:hover {
+    box-shadow: var(--shadow-xs);
+  }
+}
+
+@media (max-width: 900px) {
+  .nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .workspace-page-header {
+    padding-bottom: var(--space-4);
+  }
+
+  .admin-header {
+    position: relative;
+  }
+}
+
+@media (max-width: 680px) {
+  .hero-principles {
+    width: 100%;
+    justify-content: center;
+    border-radius: var(--radius);
+  }
+
+  .workspace-main {
+    padding-top: 5.5rem;
+  }
+
+  .contribute-page-content .contribute-section,
+  .form-panel,
+  .workspace-main .my-contributions-panel,
+  .settings-card {
+    border-radius: var(--radius);
+  }
+
+  .contribute-page-content .contribute-section {
+    padding: var(--space-4);
+  }
+
+  .feature-tabs {
+    padding: 5px;
+  }
+
+  .admin-phrase-table th {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not(.access-page) *,
+  body:not(.access-page) *::before,
+  body:not(.access-page) *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
