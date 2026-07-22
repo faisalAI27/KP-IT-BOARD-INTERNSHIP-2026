@@ -504,6 +504,31 @@ test("a pending microphone request can be cancelled without creating a recorder"
 });
 
 
+test("pending microphone permission has a clear cancellable state", async () => {
+  const environment = installEnvironment();
+  const pendingStream = new FakeStream();
+  let resolveMicrophone;
+  navigator.mediaDevices.getUserMedia = () => new Promise((resolve) => {
+    resolveMicrophone = resolve;
+  });
+  const fixture = createTestRecorder(environment, "permission-state");
+
+  const pendingStart = fixture.recorder.start();
+  assert.equal(fixture.element("calloutId").textContent, "Requesting microphone");
+  assert.equal(fixture.element("buttonId").attributes.get("aria-busy"), "true");
+  assert.equal(
+    fixture.element("buttonId").attributes.get("aria-label"),
+    "Cancel microphone request",
+  );
+
+  fixture.recorder.stop();
+  resolveMicrophone(pendingStream);
+  await pendingStart;
+  assert.equal(fixture.element("buttonId").attributes.has("aria-busy"), false);
+  assert.equal(pendingStream.tracks.every((track) => track.stopCalls === 1), true);
+});
+
+
 test("manual stop is idempotent, clears timer, and finalizes playback", async () => {
   const environment = installEnvironment();
   const fixture = createTestRecorder(environment);
@@ -580,6 +605,24 @@ test("playback failure keeps the original Blob and shows a safe fallback", async
     fixture.element("statusId").textContent,
     "This browser cannot play the original recording format directly.",
   );
+});
+
+
+test("playback events announce playing and ready states", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "playback-state");
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+  fixture.recorder.stop();
+  emitCompletedRecording(instance, "playable-audio");
+
+  fixture.element("playbackId").dispatch("play");
+  assert.equal(fixture.element("calloutId").textContent, "Playing recording");
+  assert.match(fixture.element("statusId").textContent, /Listening back/);
+
+  fixture.element("playbackId").dispatch("ended");
+  assert.equal(fixture.element("calloutId").textContent, "Recording ready");
+  assert.match(fixture.element("statusId").textContent, /record again/);
 });
 
 

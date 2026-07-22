@@ -1,4 +1,4 @@
-import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260717-member-workspace";
+import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260722-focused-recording";
 import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260717-auth-routing";
 
 
@@ -10,5 +10,7 @@ window.addEventListener("beforeunload", () => {
 
 void initializeWorkspace({
   page: "contribute",
-  onReady: async () => { await initContributions(); },
+  onReady: async ({ profile }) => {
+    await initContributions({ profile, search: window.location.search });
+  },
 }).catch(() => { document.body.dataset.workspaceState = "error"; });

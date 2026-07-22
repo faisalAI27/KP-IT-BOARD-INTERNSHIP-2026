@@ -1,3 +1,5 @@
+import { createAudioVisualizer } from "./audio-visualizer.js?v=20260722-web-audio";
+
 export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
   "audio/webm;codecs=opus",
   "audio/ogg;codecs=opus",
@@ -89,6 +91,7 @@ export function createRecorder({
   statusId,
   playbackId,
   calloutId,
+  visualizerCanvasId,
   idleStatus,
   maxDurationSeconds,
   maxDurationMessage,
@@ -112,6 +115,7 @@ export function createRecorder({
   const status = document.getElementById(statusId);
   const playback = document.getElementById(playbackId);
   const callout = document.getElementById(calloutId);
+  const visualizer = createAudioVisualizer({ canvas: visualizerCanvasId });
 
   let activeSession = null;
   let timerHandle = null;
@@ -139,6 +143,8 @@ export function createRecorder({
   function setIdleButton() {
     recording = false;
     button.classList.remove("recording");
+    button.classList.remove("requesting");
+    button.removeAttribute("aria-busy");
     button.setAttribute("aria-label", "Start recording");
   }
 
@@ -172,6 +178,7 @@ export function createRecorder({
 
     sessionId += 1;
     clearTimer();
+    visualizer.stop();
     setIdleButton();
     session.chunks.length = 0;
     releaseStream(session.stream);
@@ -183,6 +190,7 @@ export function createRecorder({
 
   function finishRecording(session) {
     releaseStream(session.stream);
+    visualizer.stop();
     if (session.id !== sessionId || activeSession !== session) return;
 
     clearTimer();
@@ -238,6 +246,7 @@ export function createRecorder({
     session.stopRequested = true;
     session.stopReason = reason;
     clearTimer();
+    visualizer.stop();
     setIdleButton();
 
     if (reason === "automatic") {
@@ -260,6 +269,7 @@ export function createRecorder({
     sessionId += 1;
     starting = false;
     clearTimer();
+    visualizer.stop();
     setIdleButton();
     activeSession = null;
 
@@ -300,6 +310,11 @@ export function createRecorder({
     starting = true;
     onStart?.();
     clearTimer();
+    button.classList.add("requesting");
+    button.setAttribute("aria-busy", "true");
+    button.setAttribute("aria-label", "Cancel microphone request");
+    callout.textContent = "Requesting microphone";
+    status.textContent = "Allow microphone access in your browser to begin.";
     const currentSessionId = ++sessionId;
     let stream;
     try {
@@ -307,6 +322,7 @@ export function createRecorder({
     } catch (error) {
       if (currentSessionId !== sessionId || destroyed) return;
       starting = false;
+      setIdleButton();
       callout.textContent = "Microphone unavailable";
       status.textContent = microphoneFailureMessage(error);
       return;
@@ -318,6 +334,8 @@ export function createRecorder({
     }
 
     starting = false;
+    button.classList.remove("requesting");
+    button.removeAttribute("aria-busy");
 
     const selectedMimeType = selectSupportedRecordingMimeType();
     let recorder;
@@ -327,6 +345,7 @@ export function createRecorder({
         : new MediaRecorder(stream);
     } catch {
       releaseStream(stream);
+      setIdleButton();
       callout.textContent = "Recording failed";
       status.textContent = RECORDING_FAILURE_MESSAGE;
       return;
@@ -360,6 +379,7 @@ export function createRecorder({
     }
 
     recording = true;
+    visualizer.start(stream);
     secondsElapsed = 0;
     renderTimer();
     button.classList.add("recording");
@@ -405,9 +425,13 @@ export function createRecorder({
     if (destroyed) return;
     discardActiveSession();
     clearPlayback();
+    visualizer.destroy();
     destroyed = true;
     button.removeEventListener("click", handleButtonClick);
     playback.removeEventListener("error", handlePlaybackError);
+    playback.removeEventListener("play", handlePlaybackStart);
+    playback.removeEventListener("pause", handlePlaybackStop);
+    playback.removeEventListener("ended", handlePlaybackStop);
   }
 
   function handleButtonClick() {
@@ -421,8 +445,23 @@ export function createRecorder({
       "This browser cannot play the original recording format directly.";
   }
 
+  function handlePlaybackStart() {
+    if (!audioBlob) return;
+    callout.textContent = "Playing recording";
+    status.textContent = "Listening back to your recording.";
+  }
+
+  function handlePlaybackStop() {
+    if (!audioBlob || recording || starting) return;
+    callout.textContent = "Recording ready";
+    status.textContent = "Listen back, or record again if needed.";
+  }
+
   button.addEventListener("click", handleButtonClick);
   playback.addEventListener("error", handlePlaybackError);
+  playback.addEventListener("play", handlePlaybackStart);
+  playback.addEventListener("pause", handlePlaybackStop);
+  playback.addEventListener("ended", handlePlaybackStop);
   renderTimer();
 
   return {

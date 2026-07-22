@@ -34,6 +34,24 @@ body.workspace-body {
   box-shadow: 16px 0 50px rgba(19, 48, 40, 0.08);
 }
 
+.workspace-sidebar::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 5px;
+  opacity: 0.42;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--gold) 0 8px,
+    transparent 8px 15px,
+    var(--clay) 15px 18px,
+    transparent 18px 26px
+  );
+  content: "";
+  pointer-events: none;
+}
+
 .workspace-brand {
   display: flex;
   align-items: center;
@@ -108,6 +126,11 @@ body.workspace-body {
   background: rgba(255, 255, 255, 0.065);
   color: white;
   transform: translateX(2px);
+}
+
+.workspace-navigation a:active,
+.workspace-sign-out:active {
+  opacity: 0.82;
 }
 
 .workspace-navigation a.is-active {

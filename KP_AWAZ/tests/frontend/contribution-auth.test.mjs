@@ -143,19 +143,12 @@ test("contribution partial provides an accessible login-required status", async 
   assert.match(html, /id="contributionAuthStatus"[\s\S]*role="status"/);
   assert.match(html, /id="contributionAuthMessage"/);
   assert.match(html, /id="contributionSignInButton"[\s\S]*Sign in/);
-  assert.equal((html.match(/id="toReviewBtn"/g) ?? []).length, 1);
-  assert.equal(
-    (html.match(/Recording submitted successfully\./g) ?? []).length,
-    2,
-  );
-  assert.equal(
-    (
-      html.match(
-        /Your contribution is waiting for administrator review\. Your score\s+will increase after it is approved\./g,
-      ) ?? []
-    ).length,
-    2,
-  );
+  assert.doesNotMatch(html, /id="toReviewBtn"|class="flow-progress"/);
+  assert.match(html, /id="donateWaveform"[\s\S]*aria-hidden="true"/);
+  assert.match(html, /id="openWaveform"[\s\S]*aria-hidden="true"/);
+  assert.match(html, /Your recording has been submitted\./);
+  assert.match(html, /Recording submitted\./);
+  assert.equal((html.match(/Under review/g) ?? []).length, 2);
 });
 
 
@@ -165,11 +158,11 @@ test("both recording flows require clear versioned consent before submission", a
     readFile(new URL("../../scripts/modules/contributions.js", import.meta.url), "utf8"),
   ]);
 
-  assert.equal((html.match(/type="checkbox" required/g) ?? []).length, 2);
+  assert.equal((html.match(/type="checkbox"[^>]*required/g) ?? []).length, 2);
   assert.equal(
     (
       html.match(
-        /I voluntarily contribute this recording and understand that\s+approved recordings may be used to support language and speech\s+technology\./g,
+        /I consent to share this recording with KP AWAZ\./g,
       ) ?? []
     ).length,
     2,
@@ -177,6 +170,7 @@ test("both recording flows require clear versioned consent before submission", a
   assert.match(html, /id="donationConsentError"[\s\S]*role="alert"/);
   assert.match(html, /id="openRecordingConsentError"[\s\S]*role="alert"/);
   assert.equal((html.match(/href="data-use\.html"/g) ?? []).length, 2);
+  assert.equal((html.match(/Consent policy version 1\.0\./g) ?? []).length, 2);
   assert.match(source, /if \(!validateConsent\(donationConsent, donationConsentError\)\) return;/);
   assert.match(source, /if \(!validateConsent\(openRecordingConsent, openRecordingConsentError\)\) return;/);
   assert.match(source, /consentPolicyVersion: CONSENT_POLICY_VERSION/);

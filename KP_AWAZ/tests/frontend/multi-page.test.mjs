@@ -96,7 +96,7 @@ test("production contribution services contain no mock data path", async () => {
   assert.doesNotMatch(`${config}\n${contributionApi}`, /useMock|mockDelayMs|pashto-sentences/);
   assert.match(
     contributionModule,
-    /We could not submit your recording\. Your recording has not been counted\./,
+    /We could not submit your recording\. It has not been counted; please try again\./,
   );
 });
 
@@ -119,12 +119,14 @@ test("recovery pages use Supabase-only password controls and generic account mes
 });
 
 
-test("dashboard uses approved contribution count and real private services", async () => {
+test("focused dashboard routes both recording modes and uses only private contributor services", async () => {
   const [html, source] = await Promise.all([read("dashboard.html"), read("scripts/dashboard-app.js")]);
-  assert.match(html, /href="contribute\.html"/);
-  assert.match(html, /id="dashboardLeaderboardList"/);
+  assert.match(html, /href="contribute\.html\?mode=guided"/);
+  assert.match(html, /href="contribute\.html\?mode=custom"/);
+  assert.doesNotMatch(html, /dashboardLeaderboardList|voice-orbit|profile-compass|dashboardRejectedCount/);
+  assert.match(html, /id="dashboardRecentList"/);
   assert.match(source, /statistics\.approvedContributions/);
   assert.match(source, /getMyContributions/);
-  assert.match(source, /getPublicLeaderboard/);
+  assert.doesNotMatch(source, /getPublicLeaderboard/);
   assert.doesNotMatch(source, /getMyPoints/);
 });

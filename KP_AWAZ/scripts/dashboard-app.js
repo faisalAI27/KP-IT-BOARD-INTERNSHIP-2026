@@ -8,7 +8,6 @@ import {
   formatContributionType,
 } from "./modules/my-contributions.js?v=20260717-member-workspace";
 import { getMyContributions } from "./services/contributions-api.js?v=20260717-member-workspace";
-import { getPublicLeaderboard } from "./services/leaderboard-api.js?v=20260717-member-workspace";
 import { getMyContributionStatistics } from "./services/profile-api.js?v=20260717-member-workspace";
 import { getCurrentAuthState } from "./services/auth-service.js?v=20260717-auth-routing";
 
@@ -23,16 +22,6 @@ function renderStatistics(statistics) {
   text("dashboardTotalCount", statistics.totalContributions);
   text("dashboardPendingCount", statistics.pendingContributions);
   text("dashboardApprovedCount", statistics.approvedContributions);
-  text("dashboardRejectedCount", statistics.rejectedContributions);
-  text(
-    "dashboardVisibility",
-    statistics.leaderboardOptIn ? "Name is visible" : "Private by default",
-  );
-  text(
-    "dashboardRank",
-    statistics.publicRank ? `#${statistics.publicRank}` : "Not currently ranked",
-  );
-  text("dashboardPointBalance", statistics.approvedContributions);
 }
 
 
@@ -67,7 +56,11 @@ function renderRecent(response) {
     copy.append(heading, detail);
     const badge = document.createElement("b");
     badge.dataset.status = item.reviewStatus;
-    badge.textContent = formatContributionReviewStatus(item.reviewStatus);
+    badge.textContent = item.reviewStatus === "pending"
+      ? "Under review"
+      : item.reviewStatus === "rejected"
+        ? "Please try again"
+        : formatContributionReviewStatus(item.reviewStatus);
     row.append(mark, copy, badge);
     return row;
   });
@@ -78,49 +71,18 @@ function renderRecent(response) {
 }
 
 
-function renderLeaderboard(response) {
-  const list = document.getElementById("dashboardLeaderboardList");
-  const status = document.getElementById("dashboardLeaderboardStatus");
-  if (!list || !status) return;
-  if (!response.items.length) {
-    status.textContent = "No approved public contributors are ranked yet.";
-    list.hidden = true;
-    return;
-  }
-  list.replaceChildren(...response.items.slice(0, 3).map((item) => {
-    const row = document.createElement("li");
-    const rank = document.createElement("span");
-    rank.textContent = `#${item.rank}`;
-    const name = document.createElement("strong");
-    name.textContent = item.displayName;
-    const score = document.createElement("b");
-    score.textContent = `${item.approvedContributions} approved`;
-    row.append(rank, name, score);
-    return row;
-  }));
-  list.hidden = false;
-  status.hidden = true;
-}
-
-
 function safePanelFailure(message) {
   const status = document.getElementById("dashboardRecentStatus");
   if (status) status.textContent = message;
 }
 
 
-async function loadOverview({ profile, state }) {
+async function loadOverview({ state }) {
   const expectedUserId = state.backendUser.id;
-  text("dashboardLanguage", profile?.preferredLanguage ?? "Pashto");
-  text(
-    "dashboardVisibility",
-    profile?.leaderboardOptIn ? "Name is visible" : "Private by default",
-  );
 
-  const [statisticsResult, recentResult, leaderboardResult] = await Promise.allSettled([
+  const [statisticsResult, recentResult] = await Promise.allSettled([
     getMyContributionStatistics(),
     getMyContributions({ limit: 3, offset: 0 }),
-    getPublicLeaderboard({ limit: 3, offset: 0 }),
   ]);
   if (getCurrentAuthState().backendUser?.id !== expectedUserId) return;
 
@@ -131,16 +93,12 @@ async function loadOverview({ profile, state }) {
       "dashboardTotalCount",
       "dashboardPendingCount",
       "dashboardApprovedCount",
-      "dashboardRejectedCount",
     ]) text(id, "Unavailable");
-    text("dashboardRank", "Unavailable");
   }
 
   if (recentResult.status === "fulfilled") renderRecent(recentResult.value);
   else safePanelFailure("We could not load recent recordings. Open My Contributions to retry.");
 
-  if (leaderboardResult.status === "fulfilled") renderLeaderboard(leaderboardResult.value);
-  else text("dashboardLeaderboardStatus", "The leaderboard preview could not be loaded. Open the full leaderboard to retry.");
 }
 
 

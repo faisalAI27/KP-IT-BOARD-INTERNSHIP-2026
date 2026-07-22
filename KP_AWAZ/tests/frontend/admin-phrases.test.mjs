@@ -561,7 +561,7 @@ test("no-active-phrase contributor response remains safe and supports custom tex
     new URL("../../scripts/modules/contributions.js", import.meta.url),
     "utf8",
   );
-  assert.match(source, /if \(prompts\.length === 0\) makeCustomSentenceAvailable\(NO_SENTENCE_PROMPTS\)/);
-  assert.match(source, /No sentence prompts are currently available/);
+  assert.match(source, /if \(!prompts\.length\)/);
+  assert.match(source, /No reviewed sentences are available right now/);
   assert.match(source, /sentenceId: sentenceSource === "provided" \? sentence\.id : undefined/);
 });

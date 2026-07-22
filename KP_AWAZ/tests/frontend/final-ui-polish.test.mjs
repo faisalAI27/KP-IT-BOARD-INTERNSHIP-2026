@@ -88,7 +88,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
 });
 
 
-test("dashboard keeps its original deep-green surfaces without a polish override", async () => {
+test("dashboard keeps its production deep-green identity without a polish override", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
@@ -98,8 +98,8 @@ test("dashboard keeps its original deep-green surfaces without a polish override
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?#173e34;[\s\S]*?}/);
   assert.match(
     dashboardCss,
-    /\.voice-trail-card\s*{[\s\S]*?rgba\(22, 62, 52, 0\.98\)[\s\S]*?rgba\(31, 77, 65, 0\.94\)[\s\S]*?}/,
+    /\.dashboard-contribute-hub\s*{[\s\S]*?background:\s*#173e34;[\s\S]*?}/,
   );
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
-  assert.doesNotMatch(polishCss, /\.voice-trail-card(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
+  assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
 });

@@ -7,46 +7,42 @@ import {
 } from "../services/contributions-api.js?v=20260717-member-workspace";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
 import { dispatchContributionCreated } from "./my-contributions.js?v=20260717-member-workspace";
-import { createRecorder, stopRecorderIfActive } from "./recorder.js";
+import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260722-web-audio";
 
 const SENTENCE_LOAD_ERROR =
-  "Sentence prompts could not be loaded. Make sure the KP AWAZ backend is running, then try again.";
+  "Sentence prompts could not be loaded. Try again, or use your own Pashto sentence below.";
 const NO_SENTENCE_PROMPTS =
-  "No sentence prompts are currently available. You may write your own sentence or try again later.";
+  "No reviewed sentences are available right now. You can still use your own Pashto sentence.";
+const VALID_CONTRIBUTION_MODES = new Set(["guided", "custom"]);
 
 let activeContributionCleanup = null;
 
+export function normalizeContributionMode(search = "") {
+  const raw = String(search || "");
+  const query = raw.startsWith("?") ? raw : `?${raw}`;
+  const mode = new URLSearchParams(query).get("mode");
+  return VALID_CONTRIBUTION_MODES.has(mode) ? mode : "guided";
+}
 
 export function destroyContributions() {
   activeContributionCleanup?.();
 }
 
-export async function initContributions() {
+export async function initContributions({
+  profile = {},
+  search = globalThis.location?.search ?? "",
+} = {}) {
   if (activeContributionCleanup) return true;
   const contributionPanel = document.getElementById("contribution-panel");
   if (!contributionPanel) return false;
 
-  const featureTabs = document.querySelectorAll("[data-feature]");
-  const featurePanels = document.querySelectorAll("[data-feature-panel]");
+  const initialMode = normalizeContributionMode(search);
   const donateForm = document.getElementById("donateForm");
-  const donateFlowContent = document.getElementById("donateFlowContent");
   const donateSuccess = document.getElementById("success-donate");
   const donationError = document.getElementById("donationError");
-  const flowProgress = document.querySelector(".flow-progress");
-  const flowScreens = document.querySelectorAll("[data-flow-step]");
-  const stepIndicators = document.querySelectorAll("[data-step-indicator]");
-  const sentenceSourceInputs = document.querySelectorAll(
-    'input[name="sentence-source"]',
-  );
-  const providedSentenceInput = document.querySelector(
-    'input[name="sentence-source"][value="provided"]',
-  );
-  const customSentenceInput = document.querySelector(
-    'input[name="sentence-source"][value="custom"]',
-  );
-  const providedSentenceSource = document.getElementById(
-    "providedSentenceSource",
-  );
+  const providedSentenceInput = document.querySelector('input[name="sentence-source"][value="provided"]');
+  const customSentenceInput = document.querySelector('input[name="sentence-source"][value="custom"]');
+  const providedSentenceSource = document.getElementById("providedSentenceSource");
   const customSentenceSource = document.getElementById("customSentenceSource");
   const providedSentence = document.getElementById("providedSentence");
   const providedMeaning = document.getElementById("providedMeaning");
@@ -55,43 +51,31 @@ export async function initContributions() {
   const sentencePromptMessage = document.getElementById("sentencePromptMessage");
   const retrySentencePrompts = document.getElementById("retrySentencePrompts");
   const customSentence = document.getElementById("custom-sentence");
+  const contributionModeLabel = document.getElementById("contributionModeLabel");
+  const contributionModeDescription = document.getElementById("contributionModeDescription");
+  const switchSentenceMode = document.getElementById("switchSentenceMode");
+  const customSentenceError = document.getElementById("customSentenceError");
   const sentenceCount = document.getElementById("sentenceCount");
   const donorName = document.getElementById("donor-name");
   const donorLanguage = document.getElementById("donor-language");
-  const donorLanguageHint = document.getElementById("donorLanguageHint");
-  const toRecordButton = document.getElementById("toRecordBtn");
-  const recordSentence = document.getElementById("recordSentence");
-  const recordLanguage = document.getElementById("recordLanguage");
-  const reviewName = document.getElementById("reviewName");
-  const reviewLanguage = document.getElementById("reviewLanguage");
+  const donateReview = document.getElementById("donateReview");
   const reviewSentence = document.getElementById("reviewSentence");
-  const reviewAvatar = document.getElementById("reviewAvatar");
-  const reviewPlayback = document.getElementById("reviewPlayback");
-  const toReviewButton = document.getElementById("toReviewBtn");
   const donationConsent = document.getElementById("donation-consent");
   const donationConsentError = document.getElementById("donationConsentError");
   const submitDonationButton = document.getElementById("submitDonation");
-  const submitOpenRecordingButton = document.getElementById(
-    "submitOpenRecording",
-  );
   const recordSoundForm = document.getElementById("recordSoundForm");
-  const openRecordingConsent = document.getElementById(
-    "open-recording-consent",
-  );
-  const openRecordingConsentError = document.getElementById(
-    "openRecordingConsentError",
-  );
+  const openRecordingDisclosure = document.querySelector(".open-recording-disclosure");
+  const recordName = document.getElementById("record-name");
+  const recordLanguage = document.getElementById("record-language-select");
+  const openReview = document.getElementById("openReview");
+  const openRecordingConsent = document.getElementById("open-recording-consent");
+  const openRecordingConsentError = document.getElementById("openRecordingConsentError");
+  const submitOpenRecordingButton = document.getElementById("submitOpenRecording");
   const recordSuccess = document.getElementById("success-record");
   const recordError = document.getElementById("recordError");
-  const contributionAuthStatus = document.getElementById(
-    "contributionAuthStatus",
-  );
-  const contributionAuthMessage = document.getElementById(
-    "contributionAuthMessage",
-  );
-  const contributionSignInButton = document.getElementById(
-    "contributionSignInButton",
-  );
+  const contributionAuthStatus = document.getElementById("contributionAuthStatus");
+  const contributionAuthMessage = document.getElementById("contributionAuthMessage");
+  const contributionSignInButton = document.getElementById("contributionSignInButton");
   const donateRecordButton = document.getElementById("donateRecBtn");
   const openRecordButton = document.getElementById("openRecBtn");
 
@@ -101,61 +85,39 @@ export async function initContributions() {
   let sentencePromptsLoading = false;
   let authVerified = false;
   let destroyed = false;
-
   let donateRecorder;
   let openRecorder;
   let accessController;
 
-  donateRecorder = createRecorder({
-    buttonId: "donateRecBtn",
-    timerId: "donateRecTimer",
-    statusId: "donateRecStatus",
-    playbackId: "donateRecPlayback",
-    calloutId: "donateRecCallout",
-    idleStatus: "Tap the microphone when you are ready",
-    canStart: () => accessController?.canContribute() ?? false,
-    onStart: () => stopRecorderIfActive(openRecorder),
-    onCapture: () => {
-      toReviewButton.disabled = !authVerified;
-    },
-    onReset: () => {
-      toReviewButton.disabled = true;
-      reviewPlayback.removeAttribute("src");
-      reviewPlayback.load();
-    },
-  });
-
-  openRecorder = createRecorder({
-    buttonId: "openRecBtn",
-    timerId: "openRecTimer",
-    statusId: "openRecStatus",
-    playbackId: "openRecPlayback",
-    calloutId: "openRecCallout",
-    idleStatus: "Tap when you are ready to speak",
-    canStart: () => accessController?.canContribute() ?? false,
-    onStart: () => stopRecorderIfActive(donateRecorder),
-    onCapture: () => {
-      submitOpenRecordingButton.disabled = !authVerified;
-    },
-    onReset: () => {
-      submitOpenRecordingButton.disabled = true;
-    },
-  });
-
   function selectedSentenceSource() {
-    return document.querySelector('input[name="sentence-source"]:checked').value;
+    return document.querySelector('input[name="sentence-source"]:checked')?.value ?? "provided";
+  }
+
+  function selectedMode() {
+    return selectedSentenceSource() === "custom" ? "custom" : "guided";
+  }
+
+  function applyProfileDefaults() {
+    donorName.value = typeof profile.displayName === "string" ? profile.displayName.trim() : "Contributor";
+    donorLanguage.value = "Pashto";
+    recordName.value = donorName.value;
+    const preferred = typeof profile.preferredLanguage === "string" ? profile.preferredLanguage.trim() : "";
+    if ([...recordLanguage.options].some((option) => option.value === preferred)) {
+      recordLanguage.value = preferred;
+    } else {
+      recordLanguage.value = "Pashto";
+    }
   }
 
   function getSelectedSentence() {
     if (selectedSentenceSource() === "custom") {
       return {
         id: null,
-        language: donorLanguage.value,
+        language: "Pashto",
         text: customSentence.value.trim(),
         meaning: "Contributor-written sentence",
       };
     }
-
     return pashtoSentences[sentenceIndex] ?? null;
   }
 
@@ -165,21 +127,37 @@ export async function initContributions() {
     providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
   }
 
-  function updateSentenceSource() {
-    const useCustomSentence = selectedSentenceSource() === "custom";
+  function setMode(mode, { updateAddress = false, focus = false } = {}) {
+    const useCustomSentence = mode === "custom";
+    providedSentenceInput.checked = !useCustomSentence;
+    customSentenceInput.checked = useCustomSentence;
     providedSentenceSource.hidden = useCustomSentence;
     customSentenceSource.hidden = !useCustomSentence;
     customSentence.disabled = !useCustomSentence;
     customSentence.required = useCustomSentence;
-    donorLanguage.disabled = !useCustomSentence;
-    toRecordButton.disabled =
-      !authVerified || (!useCustomSentence && !sentencePromptsReady);
+    nextSentenceButton.disabled = useCustomSentence || !sentencePromptsReady || pashtoSentences.length < 2;
+    contributionModeLabel.textContent = useCustomSentence
+      ? "Your own Pashto sentence"
+      : "Reviewed Pashto sentence";
+    contributionModeDescription.textContent = useCustomSentence
+      ? "Write the words below, then record them."
+      : "Your sentence is ready below.";
+    switchSentenceMode.textContent = useCustomSentence
+      ? "Use a reviewed sentence instead"
+      : "Use my own sentence instead";
 
-    if (!useCustomSentence) donorLanguage.value = "Pashto";
+    if (updateAddress && globalThis.history?.replaceState && globalThis.location) {
+      const url = new URL(globalThis.location.href);
+      url.searchParams.set("mode", useCustomSentence ? "custom" : "guided");
+      globalThis.history.replaceState(globalThis.history.state, "", url);
+    }
 
-    donorLanguageHint.textContent = useCustomSentence
-      ? "Choose the language you wrote in"
-      : "Provided prompts are in Pashto";
+    if (focus) {
+      window.requestAnimationFrame(() => {
+        const target = useCustomSentence ? customSentence : providedSentence;
+        target.focus({ preventScroll: true });
+      });
+    }
   }
 
   function showSentencePromptStatus(message, { retry = true } = {}) {
@@ -195,15 +173,145 @@ export async function initContributions() {
     retrySentencePrompts.disabled = false;
   }
 
-  function beginSentencePromptLoading() {
-    sentencePromptsLoading = true;
-    sentencePromptsReady = false;
-    providedSentenceInput.disabled = true;
-    nextSentenceButton.disabled = true;
-    providedSentence.textContent = "";
-    providedMeaning.textContent = "Loading sentence prompts…";
-    showSentencePromptStatus("Loading sentence prompts…", { retry: false });
-    updateSentenceSource();
+  function validateCustomSentence({ focus = false } = {}) {
+    if (selectedSentenceSource() !== "custom") return true;
+    const valid = customSentence.value.trim().length >= 3;
+    const message = valid ? "" : "Write at least 3 characters before recording.";
+    customSentence.setCustomValidity(message);
+    customSentenceError.textContent = message;
+    customSentenceError.hidden = valid;
+    if (!valid && focus) customSentence.focus();
+    return valid;
+  }
+
+  function validateCurrentSentence({ focus = false } = {}) {
+    if (selectedSentenceSource() === "custom") return validateCustomSentence({ focus });
+    if (sentencePromptsReady && getSelectedSentence()) return true;
+    showSentencePromptStatus(SENTENCE_LOAD_ERROR);
+    if (focus) retrySentencePrompts.focus();
+    return false;
+  }
+
+  function clearConsentValidation(input, errorElement) {
+    input.setCustomValidity("");
+    errorElement.textContent = "";
+    errorElement.hidden = true;
+  }
+
+  function validateConsent(input, errorElement) {
+    const valid = input.checked === true;
+    input.setCustomValidity(valid ? "" : CONSENT_REQUIRED_MESSAGE);
+    errorElement.textContent = valid ? "" : CONSENT_REQUIRED_MESSAGE;
+    errorElement.hidden = valid;
+    if (!valid) input.focus();
+    return valid;
+  }
+
+  function showSubmissionError(element, error) {
+    element.textContent = error?.code === "AUDIO_FILE_TOO_LARGE"
+      ? "This recording is too large to upload. Record a shorter sample and try again."
+      : error?.code === "EMPTY_AUDIO_FILE"
+        ? "No usable recording was received. Record it again and retry."
+        : error?.code === "UNSUPPORTED_AUDIO_TYPE"
+          ? "This audio format could not be stored. Try again in a current browser."
+          : "We could not submit your recording. It has not been counted; please try again.";
+    element.hidden = false;
+    element.focus?.();
+  }
+
+  function setPending(button, isPending, pendingLabel = "Uploading recording…") {
+    if (isPending) {
+      button.dataset.originalLabel = button.textContent.trim();
+      button.textContent = pendingLabel;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      return;
+    }
+    button.textContent = button.dataset.originalLabel || "I agree and submit recording";
+    button.removeAttribute("aria-busy");
+  }
+
+  function hideDonateReview() {
+    donateReview.hidden = true;
+    donationConsent.checked = false;
+    clearConsentValidation(donationConsent, donationConsentError);
+    submitDonationButton.disabled = true;
+  }
+
+  function hideOpenReview() {
+    openReview.hidden = true;
+    openRecordingConsent.checked = false;
+    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
+    submitOpenRecordingButton.disabled = true;
+  }
+
+  donateRecorder = createRecorder({
+    buttonId: "donateRecBtn",
+    timerId: "donateRecTimer",
+    statusId: "donateRecStatus",
+    playbackId: "donateRecPlayback",
+    calloutId: "donateRecCallout",
+    visualizerCanvasId: "donateWaveform",
+    idleStatus: "Tap the microphone when you are ready",
+    canStart: () => (accessController?.canContribute() ?? false) && validateCurrentSentence({ focus: true }),
+    onStart: () => stopRecorderIfActive(openRecorder),
+    onCapture: () => {
+      const sentence = getSelectedSentence();
+      reviewSentence.textContent = sentence?.text ?? "";
+      donateReview.hidden = false;
+      submitDonationButton.disabled = !authVerified;
+    },
+    onReset: hideDonateReview,
+  });
+
+  openRecorder = createRecorder({
+    buttonId: "openRecBtn",
+    timerId: "openRecTimer",
+    statusId: "openRecStatus",
+    playbackId: "openRecPlayback",
+    calloutId: "openRecCallout",
+    visualizerCanvasId: "openWaveform",
+    idleStatus: "Tap when you are ready to speak",
+    canStart: () => accessController?.canContribute() ?? false,
+    onStart: () => stopRecorderIfActive(donateRecorder),
+    onCapture: () => {
+      openReview.hidden = false;
+      submitOpenRecordingButton.disabled = !authVerified;
+    },
+    onReset: hideOpenReview,
+  });
+
+  function resetDonationFlow({ mode = initialMode } = {}) {
+    donateForm.reset();
+    donateForm.classList.remove("is-submitted");
+    donateRecorder.reset();
+    applyProfileDefaults();
+    sentenceIndex = 0;
+    sentenceCount.textContent = "0 / 300";
+    customSentenceError.hidden = true;
+    donationError.hidden = true;
+    donateSuccess.hidden = true;
+    setMode(mode);
+    if (sentencePromptsReady) renderProvidedSentence();
+  }
+
+  function clearContributionSession() {
+    resetDonationFlow();
+    recordSoundForm.reset();
+    applyProfileDefaults();
+    openRecorder.reset();
+    recordSuccess.classList.remove("show");
+    recordError.hidden = true;
+    submitDonationButton.disabled = true;
+    submitOpenRecordingButton.disabled = true;
+  }
+
+  function updateContributionAccess({ verified }) {
+    authVerified = verified;
+    donateRecordButton.disabled = !verified;
+    openRecordButton.disabled = !verified;
+    submitDonationButton.disabled = !verified || !donateRecorder.hasRecording();
+    submitOpenRecordingButton.disabled = !verified || !openRecorder.hasRecording();
   }
 
   function makeCustomSentenceAvailable(message) {
@@ -214,339 +322,100 @@ export async function initContributions() {
     nextSentenceButton.disabled = true;
     providedSentence.textContent = "";
     providedMeaning.textContent = "";
-
-    if (providedSentenceInput.checked) {
-      providedSentenceInput.checked = false;
-      customSentenceInput.checked = true;
-    }
-
     showSentencePromptStatus(message);
-    updateSentenceSource();
-  }
-
-  function useLoadedSentencePrompts(prompts) {
-    pashtoSentences = prompts;
-    sentenceIndex = 0;
-    sentencePromptsReady = true;
-    providedSentenceInput.disabled = false;
-    nextSentenceButton.disabled = prompts.length < 2;
-    renderProvidedSentence();
-    hideSentencePromptStatus();
-    updateSentenceSource();
+    switchSentenceMode.hidden = true;
+    if (selectedSentenceSource() === "provided") setMode("custom", { updateAddress: true });
   }
 
   async function loadSentencePrompts() {
     if (destroyed || sentencePromptsLoading) return;
-
-    beginSentencePromptLoading();
+    sentencePromptsLoading = true;
+    sentencePromptsReady = false;
+    providedSentenceInput.disabled = true;
+    nextSentenceButton.disabled = true;
+    providedMeaning.textContent = "Loading a reviewed sentence…";
+    showSentencePromptStatus("Loading a reviewed sentence…", { retry: false });
     try {
       const prompts = await getSentencePrompts("Pashto");
       if (destroyed) return;
-      if (prompts.length === 0) makeCustomSentenceAvailable(NO_SENTENCE_PROMPTS);
-      else useLoadedSentencePrompts(prompts);
+      if (!prompts.length) {
+        makeCustomSentenceAvailable(NO_SENTENCE_PROMPTS);
+        return;
+      }
+      pashtoSentences = prompts;
+      sentenceIndex = 0;
+      sentencePromptsReady = true;
+      providedSentenceInput.disabled = false;
+      switchSentenceMode.hidden = false;
+      renderProvidedSentence();
+      hideSentencePromptStatus();
+      setMode(selectedMode());
     } catch {
-      if (destroyed) return;
-      makeCustomSentenceAvailable(SENTENCE_LOAD_ERROR);
+      if (!destroyed) makeCustomSentenceAvailable(SENTENCE_LOAD_ERROR);
     } finally {
       sentencePromptsLoading = false;
     }
   }
 
-  function validateFirstStep() {
-    if (!donorName.reportValidity() || !donorLanguage.reportValidity()) return false;
-
-    if (selectedSentenceSource() === "provided" && !getSelectedSentence()) {
-      showSentencePromptStatus(SENTENCE_LOAD_ERROR);
-      return false;
-    }
-
-    if (
-      selectedSentenceSource() === "custom" &&
-      customSentence.value.trim().length < 3
-    ) {
-      customSentence.setCustomValidity(
-        "Please enter a sentence before continuing.",
-      );
-      customSentence.reportValidity();
-      return false;
-    }
-
-    customSentence.setCustomValidity("");
-    return true;
-  }
-
-  function updateReadingPrompt() {
-    const sentence = getSelectedSentence();
-    if (!sentence) return;
-
-    const language = donorLanguage.value;
-    const isPashto = language === "Pashto";
-
-    recordSentence.textContent = sentence.text;
-    recordSentence.lang = isPashto ? "ps" : "";
-    recordSentence.dir = isPashto ? "rtl" : "auto";
-    recordLanguage.textContent = language;
-  }
-
-  function contributorInitials(name) {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    return parts
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "KA";
-  }
-
-  function updateReview() {
-    const sentence = getSelectedSentence();
-    if (!sentence) return;
-
-    const isPashto = donorLanguage.value === "Pashto";
-
-    reviewName.textContent = donorName.value.trim();
-    reviewLanguage.textContent = `${donorLanguage.value} contribution`;
-    reviewAvatar.textContent = contributorInitials(donorName.value);
-    reviewSentence.textContent = sentence.text;
-    reviewSentence.lang = isPashto ? "ps" : "";
-    reviewSentence.dir = isPashto ? "rtl" : "auto";
-    reviewPlayback.src = donateRecorder.getUrl();
-    reviewPlayback.load();
-  }
-
-  function showDonateStep(step) {
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    document.activeElement?.blur?.();
-
-    flowScreens.forEach((screen) => {
-      const isSelected = Number(screen.dataset.flowStep) === step;
-      screen.hidden = !isSelected;
-      screen.classList.toggle("active", isSelected);
-    });
-
-    stepIndicators.forEach((indicator) => {
-      const indicatorStep = Number(indicator.dataset.stepIndicator);
-      indicator.classList.toggle("active", indicatorStep === step);
-      indicator.classList.toggle("complete", indicatorStep < step);
-
-      if (indicatorStep === step) indicator.setAttribute("aria-current", "step");
-      else indicator.removeAttribute("aria-current");
-    });
-
-    if (step === 2) updateReadingPrompt();
-    if (step === 3) updateReview();
-
-    window.requestAnimationFrame(() => {
-      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
-      document.documentElement.style.scrollBehavior = "auto";
-      window.scrollTo(scrollX, scrollY);
-      document.documentElement.style.scrollBehavior = previousScrollBehavior;
-    });
-  }
-
-  function setPending(button, isPending, pendingLabel) {
-    if (isPending) {
-      button.dataset.originalContent = button.innerHTML;
-      button.textContent = pendingLabel;
-      button.disabled = true;
-      button.setAttribute("aria-busy", "true");
-      return;
-    }
-
-    if (button.dataset.originalContent) {
-      button.innerHTML = button.dataset.originalContent;
-    }
-    button.disabled = false;
-    button.removeAttribute("aria-busy");
-  }
-
-  function showSubmissionError(element, error) {
-    element.textContent =
-      error?.code === "AUDIO_FILE_TOO_LARGE"
-        ? "This recording is too large to upload. Please record a shorter sample and try again."
-        : error?.code === "EMPTY_AUDIO_FILE"
-          ? "No usable recording was received. Please record again."
-          : error?.code === "UNSUPPORTED_AUDIO_TYPE"
-            ? "This audio format could not be stored by the platform."
-            : "We could not submit your recording. Your recording has not been counted.";
-    element.hidden = false;
-  }
-
-  function validateConsent(input, errorElement) {
-    const valid = input.checked === true;
-    input.setCustomValidity(valid ? "" : CONSENT_REQUIRED_MESSAGE);
-    errorElement.textContent = valid ? "" : CONSENT_REQUIRED_MESSAGE;
-    errorElement.hidden = valid;
-    if (!valid) input.reportValidity();
-    return valid;
-  }
-
-  function clearConsentValidation(input, errorElement) {
-    input.setCustomValidity("");
-    errorElement.textContent = "";
-    errorElement.hidden = true;
-  }
-
-  function announceContributionCreated() {
-    dispatchContributionCreated();
-  }
-
-  function resetDonationFlow() {
-    donateForm.reset();
+  switchSentenceMode.addEventListener("click", () => {
     donateRecorder.reset();
-    if (submitDonationButton.dataset.originalContent) {
-      submitDonationButton.innerHTML =
-        submitDonationButton.dataset.originalContent;
-    }
-    submitDonationButton.disabled = !authVerified;
-    submitDonationButton.removeAttribute("aria-busy");
-    sentenceIndex = 0;
-    sentenceCount.textContent = "0 characters";
-    donationError.hidden = true;
-    clearConsentValidation(donationConsent, donationConsentError);
-    donateSuccess.hidden = true;
-    donateFlowContent.hidden = false;
-    flowProgress.hidden = false;
-
-    if (sentencePromptsReady) {
-      providedSentenceInput.disabled = false;
-      renderProvidedSentence();
-    } else {
-      providedSentenceInput.checked = false;
-      customSentenceInput.checked = true;
-    }
-
-    updateSentenceSource();
-    showDonateStep(1);
-  }
-
-  function clearContributionSession() {
-    resetDonationFlow();
-    recordSoundForm.reset();
-    openRecorder.reset();
-    recordSuccess.classList.remove("show");
-    recordError.hidden = true;
-    donationError.hidden = true;
-    clearConsentValidation(donationConsent, donationConsentError);
-    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
-    submitDonationButton.disabled = true;
-    submitOpenRecordingButton.disabled = true;
-    submitDonationButton.removeAttribute("aria-busy");
-    submitOpenRecordingButton.removeAttribute("aria-busy");
-  }
-
-  function updateContributionAccess({ verified }) {
-    authVerified = verified;
-    donateRecordButton.disabled = !verified;
-    openRecordButton.disabled = !verified;
-    toReviewButton.disabled = !verified || !donateRecorder.hasRecording();
-    submitDonationButton.disabled = !verified;
-    submitOpenRecordingButton.disabled =
-      !verified || !openRecorder.hasRecording();
-    updateSentenceSource();
-  }
-
-  featureTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const selectedFeature = tab.dataset.feature;
-
-      featureTabs.forEach((item) => {
-        const isSelected = item === tab;
-        item.classList.toggle("active", isSelected);
-        item.setAttribute("aria-selected", String(isSelected));
-        item.tabIndex = isSelected ? 0 : -1;
-      });
-
-      featurePanels.forEach((panel) => {
-        const isSelected = panel.dataset.featurePanel === selectedFeature;
-        panel.hidden = !isSelected;
-        panel.classList.toggle("active", isSelected);
-      });
-
-      contributionPanel.setAttribute("aria-labelledby", tab.id);
-
-      if (selectedFeature === "donate") openRecorder.stop();
-      else donateRecorder.stop();
-    });
-  });
-
-  sentenceSourceInputs.forEach((input) => {
-    input.addEventListener("change", () => {
-      donateRecorder.reset();
-      updateSentenceSource();
-    });
+    const nextMode = selectedMode() === "custom" ? "guided" : "custom";
+    setMode(nextMode, { updateAddress: true, focus: true });
   });
 
   nextSentenceButton.addEventListener("click", () => {
-    if (!sentencePromptsReady || pashtoSentences.length === 0) return;
-
+    if (!sentencePromptsReady || !pashtoSentences.length) return;
     donateRecorder.reset();
     sentenceIndex = (sentenceIndex + 1) % pashtoSentences.length;
     renderProvidedSentence();
+    providedSentence.focus({ preventScroll: true });
   });
-
   retrySentencePrompts.addEventListener("click", loadSentencePrompts);
 
   customSentence.addEventListener("input", () => {
-    if (donateRecorder.hasRecording() || donateRecorder.isRecording()) {
-      donateRecorder.reset();
-    }
-    sentenceCount.textContent = `${customSentence.value.length} characters`;
+    if (donateRecorder.hasRecording() || donateRecorder.isRecording()) donateRecorder.reset();
+    sentenceCount.textContent = `${customSentence.value.length} / 300`;
     customSentence.setCustomValidity("");
+    customSentenceError.hidden = true;
   });
+  customSentence.addEventListener("blur", () => validateCustomSentence());
 
-  donationConsent.addEventListener("change", () => {
-    clearConsentValidation(donationConsent, donationConsentError);
+  donationConsent.addEventListener("change", () => clearConsentValidation(donationConsent, donationConsentError));
+  openRecordingConsent.addEventListener("change", () => clearConsentValidation(openRecordingConsent, openRecordingConsentError));
+  document.getElementById("donateRecordAgain").addEventListener("click", () => {
+    donateRecorder.reset();
+    donateRecordButton.focus();
   });
-  openRecordingConsent.addEventListener("change", () => {
-    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
+  document.getElementById("openRecordAgain").addEventListener("click", () => {
+    openRecorder.reset();
+    openRecordButton.focus();
   });
-
-  toRecordButton.addEventListener("click", () => {
-    if (!accessController.canContribute()) return;
-    if (validateFirstStep()) showDonateStep(2);
-  });
-
-  document.querySelectorAll("[data-previous-step]").forEach((button) => {
-    button.addEventListener("click", () => {
-      showDonateStep(Number(button.dataset.previousStep));
-    });
-  });
-
-  toReviewButton.addEventListener("click", () => {
-    if (donateRecorder.hasRecording()) showDonateStep(3);
+  openRecordingDisclosure.addEventListener("toggle", () => {
+    if (!openRecordingDisclosure.open) openRecorder.reset();
   });
 
   donateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     donationError.hidden = true;
-
-    if (!accessController.canContribute()) {
-      contributionAuthStatus.hidden = false;
-      return;
-    }
-
+    if (!accessController.canContribute()) return;
+    if (!validateCurrentSentence({ focus: true })) return;
     if (!donateRecorder.hasRecording()) {
-      showDonateStep(2);
+      donateRecordButton.focus();
       return;
     }
-
     if (!validateConsent(donationConsent, donationConsentError)) return;
 
     const sentenceSource = selectedSentenceSource();
     const sentence = getSelectedSentence();
     if (!sentence) return;
-
     const submission = accessController.beginSubmission("guided");
     if (!submission) return;
-
-    setPending(submitDonationButton, true, "Uploading recording…");
+    setPending(submitDonationButton, true);
     let submitted = false;
-
     try {
       await submitVoiceDonation({
         contributorName: donorName.value.trim(),
-        language: donorLanguage.value,
+        language: "Pashto",
         sentence: sentence.text,
         sentenceSource,
         sentenceId: sentenceSource === "provided" ? sentence.id : undefined,
@@ -555,91 +424,75 @@ export async function initContributions() {
         audioBlob: donateRecorder.getBlob(),
         audioDurationSeconds: donateRecorder.getDurationSeconds(),
       });
-
-      if (!accessController.finishSubmission(submission)) return;
-      submitted = true;
+      submitted = accessController.finishSubmission(submission);
     } catch (error) {
-      if (accessController.finishSubmission(submission)) {
-        showSubmissionError(donationError, error);
-      }
+      if (accessController.finishSubmission(submission)) showSubmissionError(donationError, error);
     } finally {
       setPending(submitDonationButton, false);
+      submitDonationButton.disabled = !authVerified || !donateRecorder.hasRecording();
     }
-
     if (!submitted) return;
     donateRecorder.reset();
-    donateFlowContent.hidden = true;
-    flowProgress.hidden = true;
+    donateForm.classList.add("is-submitted");
     donateSuccess.hidden = false;
-    announceContributionCreated();
+    donateSuccess.setAttribute("tabindex", "-1");
+    donateSuccess.focus({ preventScroll: true });
+    dispatchContributionCreated();
   });
 
-  document
-    .getElementById("donateAgainBtn")
-    .addEventListener("click", resetDonationFlow);
+  document.getElementById("donateAgainBtn").addEventListener("click", () => {
+    resetDonationFlow({ mode: selectedMode() });
+    (selectedMode() === "custom" ? customSentence : providedSentence).focus({ preventScroll: true });
+  });
 
   recordSoundForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     recordError.hidden = true;
-
-    if (!accessController.canContribute()) {
-      contributionAuthStatus.hidden = false;
+    if (!accessController.canContribute()) return;
+    if (!recordSoundForm.reportValidity()) return;
+    if (!openRecorder.hasRecording()) {
+      openRecordButton.focus();
       return;
     }
-
-    if (!openRecorder.hasRecording()) return;
-    if (!recordSoundForm.reportValidity()) return;
     if (!validateConsent(openRecordingConsent, openRecordingConsentError)) return;
-
     const submission = accessController.beginSubmission("open");
     if (!submission) return;
-
-    setPending(submitOpenRecordingButton, true, "Uploading recording…");
+    setPending(submitOpenRecordingButton, true);
     let submitted = false;
-
     try {
       await submitOpenRecording({
-        contributorName: document.getElementById("record-name").value.trim(),
-        language: document.getElementById("record-language-select").value,
+        contributorName: recordName.value.trim(),
+        language: recordLanguage.value,
         topic: document.getElementById("record-topic").value.trim(),
         consentGiven: openRecordingConsent.checked,
         consentPolicyVersion: CONSENT_POLICY_VERSION,
         audioBlob: openRecorder.getBlob(),
         audioDurationSeconds: openRecorder.getDurationSeconds(),
       });
-
-      if (!accessController.finishSubmission(submission)) return;
-      submitted = true;
+      submitted = accessController.finishSubmission(submission);
     } catch (error) {
-      if (accessController.finishSubmission(submission)) {
-        showSubmissionError(recordError, error);
-      }
+      if (accessController.finishSubmission(submission)) showSubmissionError(recordError, error);
     } finally {
       setPending(submitOpenRecordingButton, false);
+      submitOpenRecordingButton.disabled = !authVerified || !openRecorder.hasRecording();
     }
-
     if (!submitted) return;
     openRecorder.reset();
     recordSuccess.classList.add("show");
-    submitOpenRecordingButton.textContent = "Submitted";
-    submitOpenRecordingButton.disabled = true;
-    submitOpenRecordingButton.removeAttribute("aria-busy");
-    announceContributionCreated();
+    dispatchContributionCreated();
   });
 
   recordSoundForm.addEventListener("reset", () => {
-    openRecordingConsent.checked = false;
-    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
-    if (submitOpenRecordingButton.dataset.originalContent) {
-      submitOpenRecordingButton.innerHTML =
-        submitOpenRecordingButton.dataset.originalContent;
-      submitOpenRecordingButton.removeAttribute("aria-busy");
-    }
-    openRecorder.reset();
-    recordSuccess.classList.remove("show");
-    recordError.hidden = true;
+    window.requestAnimationFrame(() => {
+      applyProfileDefaults();
+      openRecorder.reset();
+      recordSuccess.classList.remove("show");
+      recordError.hidden = true;
+    });
   });
 
+  applyProfileDefaults();
+  setMode(initialMode);
   accessController = new ContributionAuthController({
     recorders: [donateRecorder, openRecorder],
     statusElement: contributionAuthStatus,
@@ -657,7 +510,11 @@ export async function initContributions() {
     activeContributionCleanup = null;
   };
   accessController.init();
-
   await loadSentencePrompts();
+
+  window.requestAnimationFrame(() => {
+    const target = selectedMode() === "custom" ? customSentence : providedSentence;
+    target.focus({ preventScroll: true });
+  });
   return true;
 }

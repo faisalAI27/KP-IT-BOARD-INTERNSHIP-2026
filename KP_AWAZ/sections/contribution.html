@@ -1,483 +1,228 @@
-<section class="section-pad contribute-section" id="contribute">
-  <div class="wrap contribute-layout">
-    <div class="contribute-intro">
-      <span class="eyebrow-line">Make a contribution</span>
-      <h2>Two simple ways to give your voice.</h2>
-      <p>
-        Donate Voice guides you from a written sentence to a clean voice
-        sample. Record Sound remains available for open stories and
-        everyday speech.
-      </p>
-      <ul class="check-list">
-        <li><span>✓</span>No specialist equipment needed</li>
-        <li><span>✓</span>Every dialect and accent is useful</li>
-        <li><span>✓</span>A guided process from text to voice</li>
-      </ul>
-    </div>
+<section class="contribute-section" id="contribute" aria-labelledby="recordingStudioTitle">
+  <div class="contribution-auth-status" id="contributionAuthStatus" role="status" aria-live="polite">
+    <span id="contributionAuthMessage">Verifying your account before recording…</span>
+    <button class="btn btn-primary btn-sm" id="contributionSignInButton" type="button" hidden>Sign in</button>
+  </div>
 
-    <div class="contribute-workspace">
-      <div class="feature-tabs" role="tablist" aria-label="Contribution type">
-        <button
-          class="feature-tab active"
-          id="tabBtn-donate"
-          type="button"
-          role="tab"
-          aria-selected="true"
-          aria-controls="contribution-panel"
-          data-feature="donate"
-        >
-          <span class="tab-icon">
-            <svg viewBox="0 0 28 28" aria-hidden="true">
-              <rect x="10" y="3" width="8" height="14" rx="4" />
-              <path d="M6 13a8 8 0 0 0 16 0M14 21v4M10 25h8" />
-            </svg>
-          </span>
-          <span><strong>Donate voice</strong><small>Guided sentences</small></span>
-        </button>
-        <button
-          class="feature-tab"
-          id="tabBtn-record"
-          type="button"
-          role="tab"
-          aria-selected="false"
-          aria-controls="contribution-panel"
-          data-feature="record"
-        >
-          <span class="tab-icon">
-            <svg viewBox="0 0 28 28" aria-hidden="true">
-              <path d="M4 15h3l2-7 4 14 3-11 3 7 2-3h3" />
-            </svg>
-          </span>
-          <span><strong>Record sound</strong><small>Open stories &amp; speech</small></span>
-        </button>
+  <div class="contribution-studio" id="contribution-panel">
+    <header class="contribution-studio-heading">
+      <div>
+        <span class="panel-kicker">Pashto voice contribution</span>
+        <h2 id="recordingStudioTitle">One sentence. One clear recording.</h2>
+        <p>Your account details are filled from your profile. Start whenever the words feel familiar.</p>
+      </div>
+      <span class="studio-time-note">Usually under 1 minute</span>
+    </header>
+
+    <form id="donateForm" data-form="donate" novalidate>
+      <input id="donor-name" name="contributor-name" type="hidden" />
+      <input id="donor-language" name="language" type="hidden" value="Pashto" />
+
+      <div class="contribution-mode-summary">
+        <input type="radio" name="sentence-source" value="provided" checked hidden />
+        <input type="radio" name="sentence-source" value="custom" hidden />
+        <span>
+          <strong id="contributionModeLabel">Reviewed Pashto sentence</strong>
+          <small id="contributionModeDescription">Your sentence is ready below.</small>
+        </span>
+        <button class="btn btn-quiet btn-sm" id="switchSentenceMode" type="button">Use my own sentence instead</button>
       </div>
 
-      <div
-        class="form-panel"
-        id="contribution-panel"
-        role="tabpanel"
-        aria-labelledby="tabBtn-donate"
-      >
-        <div
-          class="contribution-auth-status"
-          id="contributionAuthStatus"
-          role="status"
-          aria-live="polite"
-        >
-          <span id="contributionAuthMessage">Verifying your account before recording…</span>
-          <button
-            class="btn btn-primary btn-sm"
-            id="contributionSignInButton"
-            type="button"
-            hidden
-          >
-            Sign in
-          </button>
+      <div class="submission-error sentence-prompt-status" id="sentencePromptStatus" role="alert" hidden>
+        <span id="sentencePromptMessage"></span>
+        <button class="btn btn-quiet btn-sm" id="retrySentencePrompts" type="button">Try again</button>
+      </div>
+
+      <div class="sentence-source" id="providedSentenceSource">
+        <div class="provided-sentence-card">
+          <div class="sentence-card-top">
+            <span class="language-pill">Pashto · پښتو</span>
+            <button class="shuffle-sentence" id="nextSentenceBtn" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M3 6h2c4 0 6 8 10 8h2M14 3l3 3-3 3M3 14h2c1.5 0 2.7-1.1 3.8-2.5M14 11l3 3-3 3" />
+              </svg>
+              Another sentence
+            </button>
+          </div>
+          <p class="pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="-1">
+            زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
+          </p>
+          <p class="sentence-meaning" id="providedMeaning">
+            My language is my identity, and my voice shapes its future.
+          </p>
+        </div>
+      </div>
+
+      <div class="sentence-source" id="customSentenceSource" hidden>
+        <div class="field custom-sentence-field">
+          <label for="custom-sentence">Your Pashto sentence <span class="required-note">Required</span></label>
+          <textarea
+            id="custom-sentence"
+            name="custom-sentence"
+            lang="ps"
+            dir="rtl"
+            minlength="3"
+            maxlength="300"
+            aria-describedby="customSentenceHelp customSentenceError sentenceCount"
+            placeholder="خپله جمله دلته ولیکئ..."
+            disabled
+          ></textarea>
+          <div class="field-note" id="customSentenceHelp">
+            <span>Try a proverb, daily phrase, memory, or natural expression.</span>
+            <span id="sentenceCount">0 / 300</span>
+          </div>
+          <p class="field-error" id="customSentenceError" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <section class="recording-stage" aria-labelledby="guidedRecordingTitle">
+        <div class="recording-stage-heading">
+          <div>
+            <span class="panel-kicker">Your recording</span>
+            <h3 id="guidedRecordingTitle">Read the sentence at your normal pace.</h3>
+          </div>
+          <span class="recording-privacy-note">Private until reviewed</span>
         </div>
 
-        <section
-          class="feature-panel active"
-          id="donate-panel"
-          data-feature-panel="donate"
-        >
-          <form id="donateForm" data-form="donate">
-            <div class="form-panel-head guided-head">
-              <div>
-                <span class="panel-kicker">Guided contribution</span>
-                <h3>Donate voice</h3>
-              </div>
-              <span class="time-estimate">
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <circle cx="10" cy="10" r="7" />
-                  <path d="M10 6v4l3 2" />
-                </svg>
-                About 2 minutes
-              </span>
+        <div class="recorder-surface">
+          <canvas class="recording-waveform" id="donateWaveform" width="720" height="120" aria-hidden="true"></canvas>
+          <div class="recorder-controls">
+            <button class="rec-btn" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
+              <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
+                <rect x="11" y="4" width="10" height="16" rx="5" />
+                <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
+              </svg>
+              <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
+                <rect x="9" y="9" width="14" height="14" rx="2" />
+              </svg>
+            </button>
+            <div class="recorder-copy">
+              <strong id="donateRecCallout">Start recording</strong>
+              <span id="donateRecStatus" role="status" aria-live="polite">Tap the microphone when you are ready</span>
             </div>
-
-            <ol class="flow-progress" aria-label="Donation progress">
-              <li class="active" data-step-indicator="1" aria-current="step">
-                <span>1</span><strong>Sentence</strong>
-              </li>
-              <li data-step-indicator="2"><span>2</span><strong>Record</strong></li>
-              <li data-step-indicator="3"><span>3</span><strong>Review</strong></li>
-            </ol>
-
-            <div class="form-body donate-flow-content" id="donateFlowContent">
-              <section class="flow-screen active" data-flow-step="1">
-                <div class="flow-screen-head">
-                  <span class="step-kicker">Step 1 of 3</span>
-                  <h4>Choose the sentence you will read</h4>
-                  <p>Use one from our Pashto collection or contribute your own.</p>
-                </div>
-
-                <div class="row2">
-                  <div class="field">
-                    <label for="donor-name">Full name</label>
-                    <input
-                      id="donor-name"
-                      type="text"
-                      placeholder="e.g. Bakht Zameen"
-                      required
-                    />
-                  </div>
-                  <div class="field">
-                    <label for="donor-language">
-                      Language
-                      <span class="hint" id="donorLanguageHint">Provided prompts are in Pashto</span>
-                    </label>
-                    <select id="donor-language" required>
-                      <option selected>Pashto</option>
-                      <option>Hindko</option><option>Khowar</option>
-                      <option>Torwali</option><option>Kalasha</option>
-                      <option>Gawri</option><option>Shina</option><option>Urdu</option>
-                    </select>
-                  </div>
-                </div>
-
-                <fieldset class="sentence-options">
-                  <legend>How would you like to choose the text?</legend>
-                  <div class="sentence-choice-grid">
-                    <label class="sentence-choice">
-                      <input
-                        type="radio"
-                        name="sentence-source"
-                        value="provided"
-                        checked
-                      />
-                      <span class="choice-mark" aria-hidden="true"></span>
-                      <span>
-                        <strong>Use a provided sentence</strong>
-                        <small>Read a reviewed sentence from our collection</small>
-                      </span>
-                    </label>
-                    <label class="sentence-choice">
-                      <input type="radio" name="sentence-source" value="custom" />
-                      <span class="choice-mark" aria-hidden="true"></span>
-                      <span>
-                        <strong>Write my own sentence</strong>
-                        <small>Add a phrase, proverb or useful daily sentence</small>
-                      </span>
-                    </label>
-                  </div>
-                </fieldset>
-
-                <div
-                  class="submission-error sentence-prompt-status"
-                  id="sentencePromptStatus"
-                  role="alert"
-                  hidden
-                >
-                  <span id="sentencePromptMessage"></span>
-                  <button class="btn btn-quiet btn-sm" id="retrySentencePrompts" type="button">
-                    Try again
-                  </button>
-                </div>
-
-                <div class="sentence-source" id="providedSentenceSource">
-                  <div class="provided-sentence-card">
-                    <div class="sentence-card-top">
-                      <span class="language-pill">Pashto · پښتو</span>
-                      <button class="shuffle-sentence" id="nextSentenceBtn" type="button">
-                        <svg viewBox="0 0 20 20" aria-hidden="true">
-                          <path d="M3 6h2c4 0 6 8 10 8h2M14 3l3 3-3 3M3 14h2c1.5 0 2.7-1.1 3.8-2.5M14 11l3 3-3 3" />
-                        </svg>
-                        Try another
-                      </button>
-                    </div>
-                    <p class="pashto-sentence" id="providedSentence" lang="ps" dir="rtl">
-                      زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
-                    </p>
-                    <p class="sentence-meaning" id="providedMeaning">
-                      My language is my identity, and my voice shapes its future.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="sentence-source" id="customSentenceSource" hidden>
-                  <div class="field custom-sentence-field">
-                    <label for="custom-sentence">
-                      Your sentence
-                      <span class="hint">Keep it natural and easy to read aloud</span>
-                    </label>
-                    <textarea
-                      id="custom-sentence"
-                      dir="auto"
-                      placeholder="خپله جمله دلته ولیکئ..."
-                      disabled
-                    ></textarea>
-                    <div class="field-note">
-                      <span>Write one clear sentence</span>
-                      <span id="sentenceCount">0 characters</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flow-actions flow-actions-end">
-                  <button class="btn btn-primary btn-sm" id="toRecordBtn" type="button">
-                    Continue to recording
-                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 5 5-5 5" /></svg>
-                  </button>
-                </div>
-              </section>
-
-              <section class="flow-screen" data-flow-step="2" hidden>
-                <div class="flow-screen-head">
-                  <span class="step-kicker">Step 2 of 3</span>
-                  <h4>Read the sentence clearly</h4>
-                  <p>Find a quiet place, then record while looking at the sentence below.</p>
-                </div>
-
-                <div class="recording-stage">
-                  <div class="reading-card">
-                    <div class="reading-label">
-                      <span>Your sentence</span>
-                      <span id="recordLanguage">Pashto</span>
-                    </div>
-                    <p id="recordSentence" lang="ps" dir="rtl">
-                      زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
-                    </p>
-                    <span class="reading-tip">
-                      <svg viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 3a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9ZM7 17h6" />
-                      </svg>
-                      Speak naturally at your normal pace
-                    </span>
-                  </div>
-
-                  <div class="rec-box guided-recorder">
-                    <button
-                      class="rec-btn"
-                      id="donateRecBtn"
-                      type="button"
-                      aria-label="Start recording"
-                    >
-                      <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
-                        <rect x="11" y="4" width="10" height="16" rx="5" />
-                        <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
-                      </svg>
-                      <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
-                        <rect x="9" y="9" width="14" height="14" rx="2" />
-                      </svg>
-                    </button>
-                    <strong class="rec-callout" id="donateRecCallout">Start recording</strong>
-                    <div class="rec-timer" id="donateRecTimer">00:00</div>
-                    <div class="rec-status" id="donateRecStatus">
-                      Tap the microphone when you are ready
-                    </div>
-                    <audio id="donateRecPlayback" controls hidden></audio>
-                  </div>
-                </div>
-
-                <div class="flow-actions">
-                  <button class="btn btn-quiet btn-sm" type="button" data-previous-step="1">
-                    <svg class="back-arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="m13 5-5 5 5 5" /></svg>
-                    Back
-                  </button>
-                  <button class="btn btn-primary btn-sm" id="toReviewBtn" type="button" disabled>
-                    Review recording
-                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 5 5-5 5" /></svg>
-                  </button>
-                </div>
-              </section>
-
-              <section class="flow-screen" data-flow-step="3" hidden>
-                <div class="flow-screen-head">
-                  <span class="step-kicker">Step 3 of 3</span>
-                  <h4>Review your contribution</h4>
-                  <p>Check the details and listen once more before submitting.</p>
-                </div>
-
-                <div class="review-card">
-                  <div class="review-person">
-                    <span class="review-avatar" id="reviewAvatar">BZ</span>
-                    <div>
-                      <strong id="reviewName">Bakht Zameen</strong>
-                      <span id="reviewLanguage">Pashto contribution</span>
-                    </div>
-                    <span class="ready-pill"><i></i>Ready to submit</span>
-                  </div>
-                  <div class="review-sentence">
-                    <span>Recorded sentence</span>
-                    <p id="reviewSentence" lang="ps" dir="rtl">
-                      زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
-                    </p>
-                  </div>
-                  <div class="review-audio">
-                    <span>Voice recording</span>
-                    <audio id="reviewPlayback" controls></audio>
-                  </div>
-                </div>
-
-                <label class="consent-check">
-                  <input id="donation-consent" type="checkbox" required />
-                  <span aria-hidden="true">✓</span>
-                  <small>
-                    I voluntarily contribute this recording and understand that
-                    approved recordings may be used to support language and speech
-                    technology.
-                  </small>
-                </label>
-                <div
-                  class="consent-validation"
-                  id="donationConsentError"
-                  role="alert"
-                  hidden
-                ></div>
-                <details class="consent-details">
-                  <summary>How this recording may be used</summary>
-                  <p>
-                    Every recording is reviewed. Approved recordings may be used for
-                    language and speech technology research and development. Submission
-                    does not guarantee public release, and Pending or Rejected recordings
-                    do not increase your score. You can request withdrawal through the
-                    supported process.
-                  </p>
-                  <a href="data-use.html" target="_blank" rel="noopener">
-                    Read the data-use explanation (policy 1.0)
-                  </a>
-                </details>
-
-                <div class="flow-actions">
-                  <button class="btn btn-quiet btn-sm" type="button" data-previous-step="2">
-                    <svg class="back-arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="m13 5-5 5 5 5" /></svg>
-                    Back
-                  </button>
-                <button class="btn btn-primary btn-sm" id="submitDonation" type="submit">
-                  Submit contribution
-                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 5 5-5 5" /></svg>
-                </button>
-              </div>
-              <div class="submission-error" id="donationError" role="alert" hidden></div>
-            </section>
-            </div>
-
-            <div class="flow-success" id="success-donate" role="status" aria-live="polite" hidden>
-              <span class="success-icon">✓</span>
-              <span class="panel-kicker">Contribution received</span>
-              <h4>Recording submitted successfully.</h4>
-              <p>
-                Your contribution is waiting for administrator review. Your score
-                will increase after it is approved.
-              </p>
-              <button class="btn btn-primary btn-sm" id="donateAgainBtn" type="button">
-                Donate another sentence
-              </button>
-              <div class="contribution-success-links">
-                <a class="btn btn-quiet btn-sm" href="my-contributions.html">View My Contributions</a>
-                <a class="btn btn-quiet btn-sm" href="dashboard.html">Return to Dashboard</a>
-              </div>
-            </div>
-          </form>
-        </section>
-
-        <section
-          class="feature-panel"
-          id="record-panel"
-          data-feature-panel="record"
-          hidden
-        >
-          <form id="recordSoundForm" data-form="record">
-            <div class="form-panel-head guided-head">
-              <div>
-                <span class="panel-kicker">Open contribution</span>
-                <h3>Record sound</h3>
-              </div>
-              <span class="time-estimate">Stories · proverbs · daily speech</span>
-            </div>
-            <div class="form-body">
-              <div class="flow-screen-head compact-head">
-                <h4>Share speech in your own words</h4>
-                <p>Tell a short story, explain a proverb, or describe part of your day.</p>
-              </div>
-              <div class="row2">
-                <div class="field">
-                  <label for="record-name">Full name</label>
-                  <input id="record-name" type="text" placeholder="e.g. Bakht Zameen" required />
-                </div>
-                <div class="field">
-                  <label for="record-language-select">Language</label>
-                  <select id="record-language-select" required>
-                    <option value="">Choose a language</option>
-                    <option>Pashto</option><option>Hindko</option><option>Khowar</option>
-                    <option>Torwali</option><option>Kalasha</option><option>Gawri</option>
-                    <option>Shina</option><option>Urdu</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field">
-                <label for="record-topic">
-                  Topic or title <span class="hint">Optional</span>
-                </label>
-                <input id="record-topic" type="text" placeholder="e.g. A childhood story from Swat" />
-              </div>
-              <div class="rec-box open-recorder">
-                <button class="rec-btn" id="openRecBtn" type="button" aria-label="Start recording">
-                  <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
-                    <rect x="11" y="4" width="10" height="16" rx="5" />
-                    <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
-                  </svg>
-                  <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
-                    <rect x="9" y="9" width="14" height="14" rx="2" />
-                  </svg>
-                </button>
-                <strong class="rec-callout" id="openRecCallout">Start recording</strong>
-                <div class="rec-timer" id="openRecTimer">00:00</div>
-                <div class="rec-status" id="openRecStatus">Tap when you are ready to speak</div>
-                <audio id="openRecPlayback" controls hidden></audio>
-              </div>
-              <label class="consent-check">
-                <input id="open-recording-consent" type="checkbox" required />
-                <span aria-hidden="true">✓</span>
-                <small>
-                  I voluntarily contribute this recording and understand that
-                  approved recordings may be used to support language and speech
-                  technology.
-                </small>
-              </label>
-              <div
-                class="consent-validation"
-                id="openRecordingConsentError"
-                role="alert"
-                hidden
-              ></div>
-              <details class="consent-details">
-                <summary>How this recording may be used</summary>
-                <p>
-                  Every recording is reviewed. Approved recordings may be used for
-                  language and speech technology research and development. Submission
-                  does not guarantee public release, and Pending or Rejected recordings
-                  do not increase your score. You can request withdrawal through the
-                  supported process.
-                </p>
-                <a href="data-use.html" target="_blank" rel="noopener">
-                  Read the data-use explanation (policy 1.0)
-                </a>
-              </details>
-              <div class="form-foot">
-                <button class="btn btn-quiet btn-sm" type="reset">Reset</button>
-                <button class="btn btn-primary btn-sm" id="submitOpenRecording" type="submit" disabled>
-                  Submit recording
-                </button>
-              </div>
-            <div class="success-msg" id="success-record" role="status" aria-live="polite">
-              <span aria-hidden="true">✓</span>
-              <p>
-                <strong>Recording submitted successfully.</strong>
-                Your contribution is waiting for administrator review. Your score
-                will increase after it is approved.
-              </p>
-              <div class="contribution-success-links">
-                <button class="btn btn-quiet btn-sm" type="reset">Record another</button>
-                <a class="btn btn-quiet btn-sm" href="my-contributions.html">View My Contributions</a>
-                <a class="btn btn-quiet btn-sm" href="dashboard.html">Return to Dashboard</a>
-              </div>
-            </div>
-            <div class="submission-error" id="recordError" role="alert" hidden></div>
+            <time class="rec-timer" id="donateRecTimer">00:00</time>
           </div>
-          </form>
-        </section>
-      </div>
-    </div>
+          <audio class="rec-playback" id="donateRecPlayback" controls hidden></audio>
+        </div>
+      </section>
+
+      <section class="recording-review" id="donateReview" aria-labelledby="donateReviewTitle" hidden>
+        <div>
+          <span class="panel-kicker">Ready to submit</span>
+          <h3 id="donateReviewTitle">Listen once, then confirm your consent.</h3>
+          <p id="reviewSentence" lang="ps" dir="rtl"></p>
+        </div>
+        <button class="btn btn-quiet btn-sm" id="donateRecordAgain" type="button">Record again</button>
+
+        <label class="consent-check" for="donation-consent">
+          <input id="donation-consent" type="checkbox" aria-describedby="donationConsentError" required />
+          <span>
+            <strong>I consent to share this recording with KP AWAZ.</strong>
+            <small>
+              It may be stored, reviewed, and used to improve language technology as described in our
+              <a href="data-use.html" target="_blank" rel="noopener">data-use policy</a>. Consent policy version 1.0.
+            </small>
+          </span>
+        </label>
+        <p class="field-error" id="donationConsentError" role="alert" hidden></p>
+        <p class="submission-error" id="donationError" role="alert" hidden></p>
+        <button class="btn btn-primary submit-recording" id="submitDonation" type="submit" disabled>
+          I agree and submit recording
+        </button>
+      </section>
+
+      <section class="submission-success" id="success-donate" aria-live="polite" hidden>
+        <span class="success-mark" aria-hidden="true">✓</span>
+        <div>
+          <h3>Your recording has been submitted.</h3>
+          <p>It is private and marked Under review. We will add reviewer feedback to your recording history.</p>
+        </div>
+        <div class="contribution-success-links">
+          <button class="btn btn-primary btn-sm" id="donateAgainBtn" type="button">Record another sentence</button>
+          <a class="btn btn-quiet btn-sm" href="my-contributions.html">View my recordings</a>
+        </div>
+      </section>
+    </form>
   </div>
+
+  <details class="open-recording-disclosure">
+    <summary>
+      <span>
+        <strong>Want to share a longer story instead?</strong>
+        <small>Open the original long-form recording option.</small>
+      </span>
+      <span aria-hidden="true">+</span>
+    </summary>
+    <section id="record-panel" aria-labelledby="openRecordingTitle">
+      <form id="recordSoundForm" data-form="record">
+        <input id="record-name" name="contributor-name" type="hidden" />
+        <header class="open-recording-heading">
+          <span class="panel-kicker">Optional long-form contribution</span>
+          <h2 id="openRecordingTitle">Record an everyday story or sound.</h2>
+          <p>Choose the language and briefly name the topic before recording.</p>
+        </header>
+
+        <div class="open-recording-fields">
+          <div class="field">
+            <label for="record-language-select">Language</label>
+            <select id="record-language-select" required>
+              <option>Pashto</option><option>Hindko</option><option>Khowar</option>
+              <option>Torwali</option><option>Kalasha</option><option>Gawri</option>
+              <option>Shina</option><option>Urdu</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="record-topic">Topic</label>
+            <input id="record-topic" type="text" maxlength="120" placeholder="e.g. A market-day memory" required />
+          </div>
+        </div>
+
+        <div class="recorder-surface">
+          <canvas class="recording-waveform" id="openWaveform" width="720" height="120" aria-hidden="true"></canvas>
+          <div class="recorder-controls">
+            <button class="rec-btn" id="openRecBtn" type="button" aria-label="Start recording" disabled>
+              <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
+                <rect x="11" y="4" width="10" height="16" rx="5" />
+                <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
+              </svg>
+              <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
+                <rect x="9" y="9" width="14" height="14" rx="2" />
+              </svg>
+            </button>
+            <div class="recorder-copy">
+              <strong id="openRecCallout">Start recording</strong>
+              <span id="openRecStatus" role="status" aria-live="polite">Tap when you are ready to speak</span>
+            </div>
+            <time class="rec-timer" id="openRecTimer">00:00</time>
+          </div>
+          <audio class="rec-playback" id="openRecPlayback" controls hidden></audio>
+        </div>
+
+        <section class="recording-review" id="openReview" hidden>
+          <h3>Listen back and confirm your consent.</h3>
+          <button class="btn btn-quiet btn-sm" id="openRecordAgain" type="button">Record again</button>
+          <label class="consent-check" for="open-recording-consent">
+            <input id="open-recording-consent" type="checkbox" aria-describedby="openRecordingConsentError" required />
+            <span>
+              <strong>I consent to share this recording with KP AWAZ.</strong>
+              <small>
+                It may be stored, reviewed, and used to improve language technology under our
+                <a href="data-use.html" target="_blank" rel="noopener">data-use policy</a>. Consent policy version 1.0.
+              </small>
+            </span>
+          </label>
+          <p class="field-error" id="openRecordingConsentError" role="alert" hidden></p>
+          <p class="submission-error" id="recordError" role="alert" hidden></p>
+          <button class="btn btn-primary submit-recording" id="submitOpenRecording" type="submit" disabled>
+            I agree and submit recording
+          </button>
+        </section>
+
+        <div class="submission-success" id="success-record" role="status" aria-live="polite">
+          <span class="success-mark" aria-hidden="true">✓</span>
+          <div><strong>Recording submitted.</strong><span>It is now Under review in your recording history.</span></div>
+        </div>
+      </form>
+    </section>
+  </details>
 </section>

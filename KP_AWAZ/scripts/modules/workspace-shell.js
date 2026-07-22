@@ -132,6 +132,7 @@ export class WorkspaceShell {
     const ids = {
       sidebar: "workspaceSidebar",
       menuButton: "workspaceMenuButton",
+      menuLabel: "workspaceMenuLabel",
       backdrop: "workspaceBackdrop",
       avatar: "workspaceUserAvatar",
       name: "workspaceUserName",
@@ -153,6 +154,10 @@ export class WorkspaceShell {
       open ? this._openMenu() : this._closeMenu();
     });
     this._listen(this._elements.backdrop, "click", () => this._closeMenu());
+    this._listen(this._root, "keydown", (event) => {
+      if (event.key !== "Escape" || !this._elements.sidebar.classList.contains("is-open")) return;
+      this._closeMenu({ restoreFocus: true });
+    });
     this._listen(this._elements.signOutButton, "click", () => {
       void this._signOut();
     });
@@ -254,14 +259,18 @@ export class WorkspaceShell {
   _openMenu() {
     this._elements.sidebar.classList.add("is-open");
     this._elements.menuButton.setAttribute("aria-expanded", "true");
+    this._elements.menuLabel.textContent = "Close workspace menu";
     this._elements.backdrop.hidden = false;
+    this._elements.sidebar.querySelector("a")?.focus({ preventScroll: true });
   }
 
-  _closeMenu() {
+  _closeMenu({ restoreFocus = false } = {}) {
     if (!this._elements) return;
     this._elements.sidebar.classList.remove("is-open");
     this._elements.menuButton.setAttribute("aria-expanded", "false");
+    this._elements.menuLabel.textContent = "Open workspace menu";
     this._elements.backdrop.hidden = true;
+    if (restoreFocus) this._elements.menuButton.focus({ preventScroll: true });
   }
 }
 

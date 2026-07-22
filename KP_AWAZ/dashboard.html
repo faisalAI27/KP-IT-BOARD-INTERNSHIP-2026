@@ -7,7 +7,7 @@
     <title>Contributor overview — KP AWAZ</title>
     <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles/workspace.css?v=20260717-auth-routing" />
-    <link rel="stylesheet" href="styles/dashboard.css?v=20260717-member-workspace" />
+    <link rel="stylesheet" href="styles/dashboard.css?v=20260722-focused-dashboard" />
     <link rel="stylesheet" href="styles/final-polish.css?v=20260720-final-polish" />
   </head>
   <body class="workspace-body" data-workspace-state="loading">
@@ -26,136 +26,83 @@
           <span id="workspaceGuardMessage"></span>
         </div>
 
-        <header class="workspace-page-header">
+        <header class="workspace-page-header dashboard-page-header">
           <div>
-            <span class="workspace-eyebrow">Private contributor overview</span>
+            <span class="workspace-eyebrow">Your contributor dashboard</span>
             <h1>Salaam, <span id="workspaceGreetingName">contributor</span>.</h1>
             <p>
-              Your voice trail, review progress, and approved impact—collected in
-              one quiet place.
+              Help Pashto speech technology understand voices like yours—one clear
+              sentence at a time.
             </p>
           </div>
-          <a class="workspace-header-link" href="profile.html">Shape your profile →</a>
+          <a class="workspace-header-link" href="profile.html">Profile &amp; privacy</a>
         </header>
 
-        <section class="voice-trail-card" aria-labelledby="voiceTrailTitle">
-          <div class="voice-trail-copy">
-            <span class="voice-trail-kicker"><i></i> Your next contribution</span>
-            <h2 id="voiceTrailTitle">Let one clear sentence travel further.</h2>
-            <p>
-              Read a provided Pashto prompt or donate an original recording. Every
-              submission remains private while it waits for review.
-            </p>
-            <div class="voice-trail-actions">
-              <a href="contribute.html">Start Contribution <span>→</span></a>
-              <a href="my-contributions.html">Follow previous recordings</a>
-            </div>
+        <section class="dashboard-contribute-hub" aria-labelledby="contributeHubTitle">
+          <div class="dashboard-hub-heading">
+            <span class="dashboard-hub-kicker"><i aria-hidden="true"></i> Ready when you are</span>
+            <h2 id="contributeHubTitle">Choose what you would like to record.</h2>
+            <p>A quiet room and about one minute is all you need.</p>
           </div>
-          <div class="voice-orbit" aria-label="Approved contribution score">
-            <div class="orbit-line orbit-one" aria-hidden="true"></div>
-            <div class="orbit-line orbit-two" aria-hidden="true"></div>
-            <span>Approved score</span>
-            <strong id="dashboardPointBalance">—</strong>
-            <small>approved owned contributions</small>
+          <div class="dashboard-recording-choices">
+            <a class="dashboard-recording-choice is-recommended" href="contribute.html?mode=guided">
+              <span class="dashboard-choice-number" aria-hidden="true">01</span>
+              <span class="dashboard-choice-copy">
+                <span class="dashboard-choice-label">Recommended</span>
+                <strong>Record a Pashto sentence</strong>
+                <small>A reviewed sentence will be ready to read aloud.</small>
+              </span>
+              <span class="dashboard-choice-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="dashboard-recording-choice" href="contribute.html?mode=custom">
+              <span class="dashboard-choice-number" aria-hidden="true">02</span>
+              <span class="dashboard-choice-copy">
+                <strong>Donate your own sentence</strong>
+                <small>Write a natural Pashto phrase, proverb, or everyday sentence.</small>
+              </span>
+              <span class="dashboard-choice-arrow" aria-hidden="true">→</span>
+            </a>
           </div>
         </section>
 
-        <div class="workspace-section-heading">
+        <div class="workspace-section-heading dashboard-section-heading">
           <div>
-            <span class="workspace-eyebrow">Review compass</span>
-            <h2>Where your recordings stand</h2>
+            <span class="workspace-eyebrow">Your contribution summary</span>
+            <h2>Voices shared so far</h2>
           </div>
-          <p>Counts come directly from your private FastAPI profile.</p>
         </div>
 
-        <section class="dashboard-panel dashboard-leaderboard-preview" aria-labelledby="dashboardLeaderboardTitle">
-          <div class="dashboard-panel-heading">
-            <div><span class="workspace-eyebrow">Community trail</span><h2 id="dashboardLeaderboardTitle">Leaderboard preview</h2></div>
-            <a href="leaderboard.html">View Leaderboard →</a>
-          </div>
-          <p class="dashboard-panel-status" id="dashboardLeaderboardStatus" role="status">Loading approved community scores…</p>
-          <ol class="dashboard-leaderboard-list" id="dashboardLeaderboardList" hidden></ol>
-        </section>
-
-        <section class="review-compass" aria-label="Contribution review statistics">
+        <section class="dashboard-stat-strip" aria-label="Contribution review statistics">
           <article>
-            <span class="stat-sigil">All</span>
-            <div><strong id="dashboardTotalCount">—</strong><small>Total recordings</small></div>
+            <span class="dashboard-stat-mark" aria-hidden="true">All</span>
+            <div><strong id="dashboardTotalCount">—</strong><small>Voices shared</small></div>
           </article>
           <article data-tone="pending">
-            <span class="stat-sigil">···</span>
-            <div><strong id="dashboardPendingCount">—</strong><small>Waiting for review</small></div>
+            <span class="dashboard-stat-mark" aria-hidden="true">···</span>
+            <div><strong id="dashboardPendingCount">—</strong><small>Under review</small></div>
           </article>
           <article data-tone="approved">
-            <span class="stat-sigil">✓</span>
-            <div><strong id="dashboardApprovedCount">—</strong><small>Approved voices</small></div>
-          </article>
-          <article data-tone="rejected">
-            <span class="stat-sigil">!</span>
-            <div><strong id="dashboardRejectedCount">—</strong><small>Needs another try</small></div>
+            <span class="dashboard-stat-mark" aria-hidden="true">✓</span>
+            <div><strong id="dashboardApprovedCount">—</strong><small>Approved</small></div>
           </article>
         </section>
 
-        <div class="dashboard-lower-grid">
-          <section class="dashboard-panel recent-voices" aria-labelledby="recentVoicesTitle">
-            <div class="dashboard-panel-heading">
-              <div>
-                <span class="workspace-eyebrow">Latest trail marks</span>
-                <h2 id="recentVoicesTitle">Recent recordings</h2>
-              </div>
-              <a href="my-contributions.html">View all →</a>
+        <section class="dashboard-panel recent-voices" aria-labelledby="recentVoicesTitle">
+          <div class="dashboard-panel-heading">
+            <div>
+              <span class="workspace-eyebrow">Latest activity</span>
+              <h2 id="recentVoicesTitle">Your three most recent recordings</h2>
             </div>
-            <p class="dashboard-panel-status" id="dashboardRecentStatus" role="status">
-              Loading your recent recordings…
-            </p>
-            <ol class="dashboard-recent-list" id="dashboardRecentList" hidden></ol>
-          </section>
-
-          <aside class="dashboard-panel profile-compass" aria-labelledby="profileCompassTitle">
-            <span class="workspace-eyebrow">Public presence</span>
-            <h2 id="profileCompassTitle">Your profile compass</h2>
-            <div class="profile-compass-mark" aria-hidden="true">
-              <span>N</span><i></i><b>✦</b>
-            </div>
-            <dl>
-              <div><dt>Preferred language</dt><dd id="dashboardLanguage">—</dd></div>
-              <div><dt>Leaderboard visibility</dt><dd id="dashboardVisibility">—</dd></div>
-              <div><dt>Public rank</dt><dd id="dashboardRank">—</dd></div>
-            </dl>
-            <a class="workspace-link-button" href="profile.html">Manage profile &amp; privacy</a>
-          </aside>
-        </div>
-
-        <div class="workspace-section-heading">
-          <div>
-            <span class="workspace-eyebrow">Choose your path</span>
-            <h2>Continue contributing</h2>
+            <a href="my-contributions.html">View all recordings →</a>
           </div>
-        </div>
-
-        <section class="dashboard-actions" aria-label="Contribution actions">
-          <a href="contribute.html">
-            <span class="dashboard-action-number">01</span>
-            <strong>Read a guided sentence</strong>
-            <small>Use a provided Pashto sentence and record it clearly.</small>
-            <b>Start guided recording →</b>
-          </a>
-          <a href="contribute.html">
-            <span class="dashboard-action-number">02</span>
-            <strong>Donate an open voice</strong>
-            <small>Bring your own topic and add the words you actually speak.</small>
-            <b>Start open recording →</b>
-          </a>
-          <a href="my-contributions.html">
-            <span class="dashboard-action-number">03</span>
-            <strong>Read reviewer feedback</strong>
-            <small>See approvals, pending submissions, and helpful rejection notes.</small>
-            <b>Open your history →</b>
-          </a>
+          <p class="dashboard-panel-status" id="dashboardRecentStatus" role="status">
+            Loading your recent recordings…
+          </p>
+          <ol class="dashboard-recent-list" id="dashboardRecentList" hidden></ol>
         </section>
       </div>
     </main>
 
-    <script type="module" src="scripts/dashboard-app.js?v=20260717-auth-routing"></script>
+    <script type="module" src="scripts/dashboard-app.js?v=20260722-focused-dashboard"></script>
   </body>
 </html>
