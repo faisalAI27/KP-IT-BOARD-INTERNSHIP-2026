@@ -103,3 +103,19 @@ test("dashboard keeps its production deep-green identity without a polish overri
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
   assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
 });
+
+
+test("workspace embroidery stays behind content and no sidebar-edge divider remains", async () => {
+  const [workspaceCss, polishCss] = await Promise.all([
+    read("styles/workspace.css"),
+    read("styles/final-polish.css"),
+  ]);
+
+  assert.match(workspaceCss, /\.workspace-main::before,\s*\.workspace-main::after[\s\S]*opacity:\s*0\.16/);
+  assert.match(workspaceCss, /background-size:\s*36px 36px, 36px 36px, 18px 18px/);
+  assert.doesNotMatch(workspaceCss, /\.workspace-sidebar::after/);
+  assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
+  assert.match(polishCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
+  assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*border-right/s);
+  assert.match(workspaceCss, /@media \(max-width: 650px\)[\s\S]*opacity:\s*0\.1/);
+});

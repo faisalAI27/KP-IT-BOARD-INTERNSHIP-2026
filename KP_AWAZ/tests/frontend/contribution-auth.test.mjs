@@ -152,28 +152,22 @@ test("contribution partial provides an accessible login-required status", async 
 });
 
 
-test("both recording flows require clear versioned consent before submission", async () => {
-  const [html, source] = await Promise.all([
+test("both recording flows remove per-recording consent without fabricating acceptance", async () => {
+  const [html, source, api] = await Promise.all([
     readFile(new URL("../../sections/contribution.html", import.meta.url), "utf8"),
     readFile(new URL("../../scripts/modules/contributions.js", import.meta.url), "utf8"),
+    readFile(new URL("../../scripts/services/contributions-api.js", import.meta.url), "utf8"),
   ]);
 
-  assert.equal((html.match(/type="checkbox"[^>]*required/g) ?? []).length, 2);
-  assert.equal(
-    (
-      html.match(
-        /I consent to share this recording with KP AWAZ\./g,
-      ) ?? []
-    ).length,
-    2,
-  );
-  assert.match(html, /id="donationConsentError"[\s\S]*role="alert"/);
-  assert.match(html, /id="openRecordingConsentError"[\s\S]*role="alert"/);
-  assert.equal((html.match(/href="data-use\.html"/g) ?? []).length, 2);
-  assert.equal((html.match(/Consent policy version 1\.0\./g) ?? []).length, 2);
-  assert.match(source, /if \(!validateConsent\(donationConsent, donationConsentError\)\) return;/);
-  assert.match(source, /if \(!validateConsent\(openRecordingConsent, openRecordingConsentError\)\) return;/);
-  assert.match(source, /consentPolicyVersion: CONSENT_POLICY_VERSION/);
+  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 2);
+  assert.doesNotMatch(html, /type="checkbox"|consent-check|Consent policy version|I agree/i);
+  assert.doesNotMatch(source, /consentGiven\s*:|consentPolicyVersion\s*:|submitVoiceDonation\(|submitOpenRecording\(/);
+  assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
+  assert.match(source, /Never[\s\S]*synthesize consent or infer it from an earlier recording/);
+  assert.equal((source.match(/showAccountPolicyBlock\(/g) ?? []).length, 3);
+  assert.match(api, /if \(consentGiven !== true\)/);
+  assert.match(api, /formData\.append\("consentGiven", "true"\)/);
+  assert.match(api, /formData\.append\("consentPolicyVersion", CONSENT_POLICY_VERSION\)/);
 });
 
 
@@ -205,7 +199,7 @@ test("authentication loading keeps contribution access disabled", () => {
 });
 
 
-test("only backend-verified signed-in users can record and submit", () => {
+test("only backend-verified signed-in users can enter the contribution flow", () => {
   const unverified = fixture({
     status: "signed_in",
     session: { userId: USER_A },
@@ -281,15 +275,15 @@ test("duplicate submission is prevented until the first completes", () => {
 });
 
 
-test("audio submissions clear button loading in finally without disabling the page", async () => {
+test("the account-policy blocker preserves the page and recording controls", async () => {
   const source = await readFile(
     new URL("../../scripts/modules/contributions.js", import.meta.url),
     "utf8",
   );
 
-  assert.equal((source.match(/finally \{/g) ?? []).length >= 2, true);
-  assert.match(source, /finally \{\s*setPending\(submitDonationButton, false\);/);
-  assert.match(source, /finally \{\s*setPending\(submitOpenRecordingButton, false\);/);
+  assert.match(source, /No recording was uploaded; your recording is still here/);
+  assert.doesNotMatch(source, /donateRecorder\.reset\(\);\s*donateForm\.classList\.add\("is-submitted"\)/);
+  assert.doesNotMatch(source, /openRecorder\.reset\(\);\s*recordSuccess\.classList\.add\("show"\)/);
   assert.doesNotMatch(source, /document\.body\.inert|body\.style\.filter|filter:\s*blur/);
 });
 

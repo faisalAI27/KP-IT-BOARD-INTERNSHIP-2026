@@ -542,11 +542,18 @@ test("manual stop is idempotent, clears timer, and finalizes playback", async ()
   assert.equal(instance.stopCalls, 1);
   assert.equal(environment.intervals.size, 0);
   assert.equal(fixture.recorder.isRecording(), false);
+  assert.equal(fixture.element("buttonId").classList.contains("processing"), true);
+  assert.equal(fixture.element("buttonId").attributes.get("aria-busy"), "true");
+  assert.equal(
+    fixture.element("buttonId").attributes.get("aria-label"),
+    "Processing recording",
+  );
   assert.equal(stream.tracks.every((track) => track.stopCalls === 0), true);
 
   emitCompletedRecording(instance);
 
   assert.equal(fixture.recorder.hasRecording(), true);
+  assert.equal(fixture.element("buttonId").classList.contains("processing"), false);
   assert.equal(fixture.element("playbackId").hidden, false);
   assert.equal(fixture.captures.length, 1);
   assert.equal(stream.tracks.every((track) => track.stopCalls === 1), true);

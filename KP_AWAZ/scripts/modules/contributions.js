@@ -1,19 +1,14 @@
-import {
-  CONSENT_POLICY_VERSION,
-  CONSENT_REQUIRED_MESSAGE,
-  getSentencePrompts,
-  submitOpenRecording,
-  submitVoiceDonation,
-} from "../services/contributions-api.js?v=20260717-member-workspace";
+import { getSentencePrompts } from "../services/contributions-api.js?v=20260717-member-workspace";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
-import { dispatchContributionCreated } from "./my-contributions.js?v=20260717-member-workspace";
-import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260722-web-audio";
+import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260722-motion-polish";
 
 const SENTENCE_LOAD_ERROR =
   "Sentence prompts could not be loaded. Try again, or use your own Pashto sentence below.";
 const NO_SENTENCE_PROMPTS =
   "No reviewed sentences are available right now. You can still use your own Pashto sentence.";
 const VALID_CONTRIBUTION_MODES = new Set(["guided", "custom"]);
+export const ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE =
+  "Submission is temporarily unavailable while KP AWAZ connects your verified account-level data-use acceptance. No recording was uploaded; your recording is still here to listen to or record again.";
 
 let activeContributionCleanup = null;
 
@@ -60,16 +55,12 @@ export async function initContributions({
   const donorLanguage = document.getElementById("donor-language");
   const donateReview = document.getElementById("donateReview");
   const reviewSentence = document.getElementById("reviewSentence");
-  const donationConsent = document.getElementById("donation-consent");
-  const donationConsentError = document.getElementById("donationConsentError");
   const submitDonationButton = document.getElementById("submitDonation");
   const recordSoundForm = document.getElementById("recordSoundForm");
   const openRecordingDisclosure = document.querySelector(".open-recording-disclosure");
   const recordName = document.getElementById("record-name");
   const recordLanguage = document.getElementById("record-language-select");
   const openReview = document.getElementById("openReview");
-  const openRecordingConsent = document.getElementById("open-recording-consent");
-  const openRecordingConsentError = document.getElementById("openRecordingConsentError");
   const submitOpenRecordingButton = document.getElementById("submitOpenRecording");
   const recordSuccess = document.getElementById("success-record");
   const recordError = document.getElementById("recordError");
@@ -133,6 +124,8 @@ export async function initContributions({
     customSentenceInput.checked = useCustomSentence;
     providedSentenceSource.hidden = useCustomSentence;
     customSentenceSource.hidden = !useCustomSentence;
+    providedSentenceSource.classList.toggle("is-entering", !useCustomSentence);
+    customSentenceSource.classList.toggle("is-entering", useCustomSentence);
     customSentence.disabled = !useCustomSentence;
     customSentence.required = useCustomSentence;
     nextSentenceButton.disabled = useCustomSentence || !sentencePromptsReady || pashtoSentences.length < 2;
@@ -192,56 +185,22 @@ export async function initContributions({
     return false;
   }
 
-  function clearConsentValidation(input, errorElement) {
-    input.setCustomValidity("");
-    errorElement.textContent = "";
-    errorElement.hidden = true;
-  }
-
-  function validateConsent(input, errorElement) {
-    const valid = input.checked === true;
-    input.setCustomValidity(valid ? "" : CONSENT_REQUIRED_MESSAGE);
-    errorElement.textContent = valid ? "" : CONSENT_REQUIRED_MESSAGE;
-    errorElement.hidden = valid;
-    if (!valid) input.focus();
-    return valid;
-  }
-
-  function showSubmissionError(element, error) {
-    element.textContent = error?.code === "AUDIO_FILE_TOO_LARGE"
-      ? "This recording is too large to upload. Record a shorter sample and try again."
-      : error?.code === "EMPTY_AUDIO_FILE"
-        ? "No usable recording was received. Record it again and retry."
-        : error?.code === "UNSUPPORTED_AUDIO_TYPE"
-          ? "This audio format could not be stored. Try again in a current browser."
-          : "We could not submit your recording. It has not been counted; please try again.";
+  function showAccountPolicyBlock(element) {
+    // TODO(account-policy): Re-enable uploads only after the authenticated profile API
+    // returns an explicit current-version acceptance with a server timestamp. Never
+    // synthesize consent or infer it from an earlier recording's consent fields.
+    element.textContent = ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE;
     element.hidden = false;
     element.focus?.();
   }
 
-  function setPending(button, isPending, pendingLabel = "Uploading recording…") {
-    if (isPending) {
-      button.dataset.originalLabel = button.textContent.trim();
-      button.textContent = pendingLabel;
-      button.disabled = true;
-      button.setAttribute("aria-busy", "true");
-      return;
-    }
-    button.textContent = button.dataset.originalLabel || "I agree and submit recording";
-    button.removeAttribute("aria-busy");
-  }
-
   function hideDonateReview() {
     donateReview.hidden = true;
-    donationConsent.checked = false;
-    clearConsentValidation(donationConsent, donationConsentError);
     submitDonationButton.disabled = true;
   }
 
   function hideOpenReview() {
     openReview.hidden = true;
-    openRecordingConsent.checked = false;
-    clearConsentValidation(openRecordingConsent, openRecordingConsentError);
     submitOpenRecordingButton.disabled = true;
   }
 
@@ -380,8 +339,6 @@ export async function initContributions({
   });
   customSentence.addEventListener("blur", () => validateCustomSentence());
 
-  donationConsent.addEventListener("change", () => clearConsentValidation(donationConsent, donationConsentError));
-  openRecordingConsent.addEventListener("change", () => clearConsentValidation(openRecordingConsent, openRecordingConsentError));
   document.getElementById("donateRecordAgain").addEventListener("click", () => {
     donateRecorder.reset();
     donateRecordButton.focus();
@@ -394,7 +351,7 @@ export async function initContributions({
     if (!openRecordingDisclosure.open) openRecorder.reset();
   });
 
-  donateForm.addEventListener("submit", async (event) => {
+  donateForm.addEventListener("submit", (event) => {
     event.preventDefault();
     donationError.hidden = true;
     if (!accessController.canContribute()) return;
@@ -403,41 +360,7 @@ export async function initContributions({
       donateRecordButton.focus();
       return;
     }
-    if (!validateConsent(donationConsent, donationConsentError)) return;
-
-    const sentenceSource = selectedSentenceSource();
-    const sentence = getSelectedSentence();
-    if (!sentence) return;
-    const submission = accessController.beginSubmission("guided");
-    if (!submission) return;
-    setPending(submitDonationButton, true);
-    let submitted = false;
-    try {
-      await submitVoiceDonation({
-        contributorName: donorName.value.trim(),
-        language: "Pashto",
-        sentence: sentence.text,
-        sentenceSource,
-        sentenceId: sentenceSource === "provided" ? sentence.id : undefined,
-        consentGiven: donationConsent.checked,
-        consentPolicyVersion: CONSENT_POLICY_VERSION,
-        audioBlob: donateRecorder.getBlob(),
-        audioDurationSeconds: donateRecorder.getDurationSeconds(),
-      });
-      submitted = accessController.finishSubmission(submission);
-    } catch (error) {
-      if (accessController.finishSubmission(submission)) showSubmissionError(donationError, error);
-    } finally {
-      setPending(submitDonationButton, false);
-      submitDonationButton.disabled = !authVerified || !donateRecorder.hasRecording();
-    }
-    if (!submitted) return;
-    donateRecorder.reset();
-    donateForm.classList.add("is-submitted");
-    donateSuccess.hidden = false;
-    donateSuccess.setAttribute("tabindex", "-1");
-    donateSuccess.focus({ preventScroll: true });
-    dispatchContributionCreated();
+    showAccountPolicyBlock(donationError);
   });
 
   document.getElementById("donateAgainBtn").addEventListener("click", () => {
@@ -445,7 +368,7 @@ export async function initContributions({
     (selectedMode() === "custom" ? customSentence : providedSentence).focus({ preventScroll: true });
   });
 
-  recordSoundForm.addEventListener("submit", async (event) => {
+  recordSoundForm.addEventListener("submit", (event) => {
     event.preventDefault();
     recordError.hidden = true;
     if (!accessController.canContribute()) return;
@@ -454,32 +377,7 @@ export async function initContributions({
       openRecordButton.focus();
       return;
     }
-    if (!validateConsent(openRecordingConsent, openRecordingConsentError)) return;
-    const submission = accessController.beginSubmission("open");
-    if (!submission) return;
-    setPending(submitOpenRecordingButton, true);
-    let submitted = false;
-    try {
-      await submitOpenRecording({
-        contributorName: recordName.value.trim(),
-        language: recordLanguage.value,
-        topic: document.getElementById("record-topic").value.trim(),
-        consentGiven: openRecordingConsent.checked,
-        consentPolicyVersion: CONSENT_POLICY_VERSION,
-        audioBlob: openRecorder.getBlob(),
-        audioDurationSeconds: openRecorder.getDurationSeconds(),
-      });
-      submitted = accessController.finishSubmission(submission);
-    } catch (error) {
-      if (accessController.finishSubmission(submission)) showSubmissionError(recordError, error);
-    } finally {
-      setPending(submitOpenRecordingButton, false);
-      submitOpenRecordingButton.disabled = !authVerified || !openRecorder.hasRecording();
-    }
-    if (!submitted) return;
-    openRecorder.reset();
-    recordSuccess.classList.add("show");
-    dispatchContributionCreated();
+    showAccountPolicyBlock(recordError);
   });
 
   recordSoundForm.addEventListener("reset", () => {

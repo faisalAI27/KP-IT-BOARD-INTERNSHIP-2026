@@ -19,9 +19,21 @@ function text(id, value) {
 
 
 function renderStatistics(statistics) {
-  text("dashboardTotalCount", statistics.totalContributions);
-  text("dashboardPendingCount", statistics.pendingContributions);
-  text("dashboardApprovedCount", statistics.approvedContributions);
+  for (const [id, value] of [
+    ["dashboardTotalCount", statistics.totalContributions],
+    ["dashboardPendingCount", statistics.pendingContributions],
+    ["dashboardApprovedCount", statistics.approvedContributions],
+  ]) {
+    const element = document.getElementById(id);
+    if (!element) continue;
+    element.textContent = String(value);
+    const reveal = () => element.classList.add("is-loaded");
+    if (typeof globalThis.requestAnimationFrame === "function") {
+      globalThis.requestAnimationFrame(reveal);
+    } else {
+      reveal();
+    }
+  }
 }
 
 

@@ -1,4 +1,4 @@
-import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260722-focused-recording";
+import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260722-account-policy";
 import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260717-auth-routing";
 
 

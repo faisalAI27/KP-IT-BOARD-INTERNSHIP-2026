@@ -6,8 +6,8 @@
     <meta name="description" content="Your private KP AWAZ contributor overview." />
     <title>Contributor overview — KP AWAZ</title>
     <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/workspace.css?v=20260717-auth-routing" />
-    <link rel="stylesheet" href="styles/dashboard.css?v=20260722-focused-dashboard" />
+    <link rel="stylesheet" href="styles/workspace.css?v=20260722-motion-polish" />
+    <link rel="stylesheet" href="styles/dashboard.css?v=20260722-motion-polish" />
     <link rel="stylesheet" href="styles/final-polish.css?v=20260720-final-polish" />
   </head>
   <body class="workspace-body" data-workspace-state="loading">
@@ -65,6 +65,20 @@
           </div>
         </section>
 
+        <section class="dashboard-panel recent-voices" aria-labelledby="recentVoicesTitle">
+          <div class="dashboard-panel-heading">
+            <div>
+              <span class="workspace-eyebrow">Latest activity</span>
+              <h2 id="recentVoicesTitle">Your three most recent recordings</h2>
+            </div>
+            <a href="my-contributions.html">View all recordings →</a>
+          </div>
+          <p class="dashboard-panel-status" id="dashboardRecentStatus" role="status">
+            Loading your recent recordings…
+          </p>
+          <ol class="dashboard-recent-list" id="dashboardRecentList" hidden></ol>
+        </section>
+
         <div class="workspace-section-heading dashboard-section-heading">
           <div>
             <span class="workspace-eyebrow">Your contribution summary</span>
@@ -86,23 +100,9 @@
             <div><strong id="dashboardApprovedCount">—</strong><small>Approved</small></div>
           </article>
         </section>
-
-        <section class="dashboard-panel recent-voices" aria-labelledby="recentVoicesTitle">
-          <div class="dashboard-panel-heading">
-            <div>
-              <span class="workspace-eyebrow">Latest activity</span>
-              <h2 id="recentVoicesTitle">Your three most recent recordings</h2>
-            </div>
-            <a href="my-contributions.html">View all recordings →</a>
-          </div>
-          <p class="dashboard-panel-status" id="dashboardRecentStatus" role="status">
-            Loading your recent recordings…
-          </p>
-          <ol class="dashboard-recent-list" id="dashboardRecentList" hidden></ol>
-        </section>
       </div>
     </main>
 
-    <script type="module" src="scripts/dashboard-app.js?v=20260722-focused-dashboard"></script>
+    <script type="module" src="scripts/dashboard-app.js?v=20260722-motion-polish"></script>
   </body>
 </html>

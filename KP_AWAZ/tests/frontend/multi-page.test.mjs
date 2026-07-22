@@ -94,10 +94,9 @@ test("production contribution services contain no mock data path", async () => {
     read("scripts/modules/contributions.js"),
   ]);
   assert.doesNotMatch(`${config}\n${contributionApi}`, /useMock|mockDelayMs|pashto-sentences/);
-  assert.match(
-    contributionModule,
-    /We could not submit your recording\. It has not been counted; please try again\./,
-  );
+  assert.match(contributionModule, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
+  assert.match(contributionModule, /No recording was uploaded; your recording is still here/);
+  assert.doesNotMatch(contributionModule, /submitVoiceDonation\(|submitOpenRecording\(/);
 });
 
 

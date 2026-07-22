@@ -144,6 +144,7 @@ export function createRecorder({
     recording = false;
     button.classList.remove("recording");
     button.classList.remove("requesting");
+    button.classList.remove("processing");
     button.removeAttribute("aria-busy");
     button.setAttribute("aria-label", "Start recording");
   }
@@ -248,6 +249,9 @@ export function createRecorder({
     clearTimer();
     visualizer.stop();
     setIdleButton();
+    button.classList.add("processing");
+    button.setAttribute("aria-busy", "true");
+    button.setAttribute("aria-label", "Processing recording");
 
     if (reason === "automatic") {
       callout.textContent = "Recording stopped automatically";

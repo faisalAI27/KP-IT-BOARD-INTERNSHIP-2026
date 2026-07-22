@@ -563,5 +563,6 @@ test("no-active-phrase contributor response remains safe and supports custom tex
   );
   assert.match(source, /if \(!prompts\.length\)/);
   assert.match(source, /No reviewed sentences are available right now/);
-  assert.match(source, /sentenceId: sentenceSource === "provided" \? sentence\.id : undefined/);
+  assert.match(source, /providedSentenceInput\.disabled = true/);
+  assert.match(source, /setMode\("custom", \{ updateAddress: true \}\)/);
 });

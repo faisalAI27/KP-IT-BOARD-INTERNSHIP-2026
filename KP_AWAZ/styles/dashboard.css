@@ -6,12 +6,20 @@
   font-size: clamp(2.65rem, 5vw, 4.55rem);
 }
 
-.workspace-body[data-workspace-state="ready"] .dashboard-contribute-hub {
-  animation: dashboard-enter 240ms var(--ease-standard) both;
+.workspace-body[data-workspace-state="ready"] .dashboard-page-header {
+  animation: dashboard-enter 300ms 20ms var(--ease-standard) both;
 }
 
-.workspace-body[data-workspace-state="ready"] :is(.dashboard-stat-strip, .dashboard-panel) {
-  animation: dashboard-enter 240ms 60ms var(--ease-standard) both;
+.workspace-body[data-workspace-state="ready"] .dashboard-contribute-hub {
+  animation: dashboard-enter 340ms 70ms var(--ease-standard) both;
+}
+
+.workspace-body[data-workspace-state="ready"] .dashboard-panel {
+  animation: dashboard-enter 370ms 145ms var(--ease-standard) both;
+}
+
+.workspace-body[data-workspace-state="ready"] :is(.dashboard-section-heading, .dashboard-stat-strip) {
+  animation: dashboard-enter 400ms 220ms var(--ease-standard) both;
 }
 
 .dashboard-contribute-hub {
@@ -262,6 +270,10 @@
   line-height: 1;
 }
 
+.dashboard-stat-strip strong.is-loaded {
+  animation: dashboard-stat-value-in 420ms var(--ease-standard) both;
+}
+
 .dashboard-stat-strip small {
   margin-top: 6px;
   color: var(--ink-soft);
@@ -363,6 +375,7 @@
   background: #fff1d8;
   color: #6e4918;
   font-size: 0.63rem;
+  animation: dashboard-status-in 300ms 120ms var(--ease-standard) both;
 }
 
 .dashboard-recent-list b[data-status="approved"] {
@@ -445,9 +458,21 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes dashboard-stat-value-in {
+  from { opacity: 0.35; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboard-status-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .workspace-body[data-workspace-state="ready"] :is(.dashboard-contribute-hub, .dashboard-stat-strip, .dashboard-panel),
-  .dashboard-recent-list li {
+  .workspace-body[data-workspace-state="ready"] :is(.dashboard-page-header, .dashboard-contribute-hub, .dashboard-section-heading, .dashboard-stat-strip, .dashboard-panel),
+  .dashboard-recent-list li,
+  .dashboard-recent-list b,
+  .dashboard-stat-strip strong.is-loaded {
     animation: none;
   }
 

@@ -25,7 +25,7 @@ test("recording route mode is predictable and safe", () => {
   assert.equal(normalizeContributionMode("?next=https://example.com"), "guided");
 });
 
-test("focused contribution flow keeps profile fields hidden and consent explicit", async () => {
+test("focused contribution flow keeps profile fields hidden and account consent honest", async () => {
   const [html, source, css] = await Promise.all([
     read("sections/contribution.html"),
     read("scripts/modules/contributions.js"),
@@ -34,11 +34,27 @@ test("focused contribution flow keeps profile fields hidden and consent explicit
   assert.match(html, /id="donor-name"[\s\S]*type="hidden"/);
   assert.match(html, /id="donor-language"[\s\S]*type="hidden"/);
   assert.doesNotMatch(html, /Step [123] of 3|Continue to recording|Continue to review/);
-  assert.match(html, /I agree and submit recording/);
+  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 2);
+  assert.doesNotMatch(html, /checkbox|consent-check|I agree/i);
+  assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
+  assert.doesNotMatch(source, /consentGiven\s*:\s*true/);
   assert.match(source, /profile\.displayName/);
   assert.match(source, /profile\.preferredLanguage/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /min-height:\s*44px/);
+});
+
+test("dashboard hierarchy and motion keep recording first", async () => {
+  const [html, css] = await Promise.all([
+    read("dashboard.html"),
+    read("styles/dashboard.css"),
+  ]);
+  assert.ok(html.indexOf("dashboard-contribute-hub") < html.indexOf("recent-voices"));
+  assert.ok(html.indexOf("recent-voices") < html.indexOf("dashboard-stat-strip"));
+  assert.match(css, /dashboard-page-header[\s\S]*300ms/);
+  assert.match(css, /dashboard-contribute-hub[\s\S]*340ms/);
+  assert.match(css, /dashboard-stat-value-in/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
 test("experimental dashboard directories are absent from production", async () => {

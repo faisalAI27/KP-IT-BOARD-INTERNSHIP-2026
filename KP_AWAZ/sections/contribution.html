@@ -109,25 +109,13 @@
       <section class="recording-review" id="donateReview" aria-labelledby="donateReviewTitle" hidden>
         <div>
           <span class="panel-kicker">Ready to submit</span>
-          <h3 id="donateReviewTitle">Listen once, then confirm your consent.</h3>
+          <h3 id="donateReviewTitle">Listen once, then submit when you are ready.</h3>
           <p id="reviewSentence" lang="ps" dir="rtl"></p>
         </div>
         <button class="btn btn-quiet btn-sm" id="donateRecordAgain" type="button">Record again</button>
-
-        <label class="consent-check" for="donation-consent">
-          <input id="donation-consent" type="checkbox" aria-describedby="donationConsentError" required />
-          <span>
-            <strong>I consent to share this recording with KP AWAZ.</strong>
-            <small>
-              It may be stored, reviewed, and used to improve language technology as described in our
-              <a href="data-use.html" target="_blank" rel="noopener">data-use policy</a>. Consent policy version 1.0.
-            </small>
-          </span>
-        </label>
-        <p class="field-error" id="donationConsentError" role="alert" hidden></p>
-        <p class="submission-error" id="donationError" role="alert" hidden></p>
+        <p class="submission-error" id="donationError" role="alert" tabindex="-1" hidden></p>
         <button class="btn btn-primary submit-recording" id="submitDonation" type="submit" disabled>
-          I agree and submit recording
+          Submit recording
         </button>
       </section>
 
@@ -199,22 +187,11 @@
         </div>
 
         <section class="recording-review" id="openReview" hidden>
-          <h3>Listen back and confirm your consent.</h3>
+          <h3>Listen back, then submit when you are ready.</h3>
           <button class="btn btn-quiet btn-sm" id="openRecordAgain" type="button">Record again</button>
-          <label class="consent-check" for="open-recording-consent">
-            <input id="open-recording-consent" type="checkbox" aria-describedby="openRecordingConsentError" required />
-            <span>
-              <strong>I consent to share this recording with KP AWAZ.</strong>
-              <small>
-                It may be stored, reviewed, and used to improve language technology under our
-                <a href="data-use.html" target="_blank" rel="noopener">data-use policy</a>. Consent policy version 1.0.
-              </small>
-            </span>
-          </label>
-          <p class="field-error" id="openRecordingConsentError" role="alert" hidden></p>
-          <p class="submission-error" id="recordError" role="alert" hidden></p>
+          <p class="submission-error" id="recordError" role="alert" tabindex="-1" hidden></p>
           <button class="btn btn-primary submit-recording" id="submitOpenRecording" type="submit" disabled>
-            I agree and submit recording
+            Submit recording
           </button>
         </section>
 

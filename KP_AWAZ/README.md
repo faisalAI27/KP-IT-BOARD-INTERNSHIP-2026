@@ -164,8 +164,9 @@ GET /api/sentences?language=Pashto
   → contributor selects provided or custom text
   → MediaRecorder captures supported browser audio while Web Audio renders a live waveform
   → contributor listens or re-records
-  → required consent is checked
-  → multipart POST /api/contributions/voice
+  → Submit recording checks for verified account-level policy acceptance
+  → current UI stops here because that account record/endpoint is not connected
+  → future server-verified acceptance authorizes multipart POST /api/contributions/voice
   → backend verifies bearer-token owner
   → upload streams to bounded private staging
   → MIME, size, extension, and basic signature validated
@@ -183,9 +184,11 @@ longer offered to contributors.
 
 ### 4. Open recording
 
-Open recording follows the same authentication, consent, validation, storage,
-and pending-review rules through `POST /api/contributions/open-recording`. It
-stores the contributor's topic when supplied instead of requiring a phrase.
+Open recording follows the same authentication, account-policy gate, validation,
+storage, and pending-review rules through `POST /api/contributions/open-recording`.
+It stores the contributor's topic when supplied instead of requiring a phrase.
+The current UI also stops before this POST until verified account-level acceptance
+is available.
 
 ### 5. Original audio storage
 
@@ -226,6 +229,13 @@ Every new submission requires consent policy version `1.0`. FastAPI stores:
 
 Existing rows without the complete structured fields remain `legacy consent
 status unknown`; their review state and score are not rewritten.
+
+The backend still requires `consentGiven` and `consentPolicyVersion` on each
+multipart upload. The contribution UI no longer presents a per-recording checkbox
+and deliberately does not manufacture those values, so production upload is
+temporarily blocked after recording. The required account-level migration and all
+affected contracts are documented in
+[`docs/account-level-consent-migration.md`](docs/account-level-consent-migration.md).
 
 A verified contributor may request withdrawal for one owned contribution or
 all contributions they own. The request is non-destructive and uses

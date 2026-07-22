@@ -89,9 +89,9 @@ test("About page states the Stage A and Stage B boundary", async () => {
   const about = await read("about.html");
 
   assert.match(about, /Technology should understand the language people actually speak\./);
-  assert.match(about, /Stage A presents phrases, preserves the original browser-recorded audio/);
+  assert.match(about, /Stage A presents phrases, preserves original browser-recorded audio/);
   assert.match(about, /Stage B will later process eligible approved data/);
-  assert.match(about, /Consent is required before submission/);
+  assert.match(about, /Verified acceptance of the current data-use policy is required before submission/);
   assert.match(about, /supported withdrawal process/);
 });
 
@@ -107,8 +107,8 @@ test("How It Works page documents all ten real contribution stages", async () =>
     "Receive a Pashto phrase",
     "Record in your browser",
     "Listen and re-record",
-    "Review the consent choice",
-    "Submit the recording",
+    "Accept the current data-use policy",
+    "Submit after acceptance is verified",
     "Pending review",
     "approval or rejection",
     "score after approval",

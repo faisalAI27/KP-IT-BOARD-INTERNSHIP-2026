@@ -121,6 +121,10 @@
   background: rgba(255, 255, 255, 0.72);
 }
 
+.sentence-source.is-entering {
+  animation: contribution-mode-in 240ms var(--ease-standard) both;
+}
+
 .provided-sentence-card,
 .custom-sentence-field {
   padding: clamp(20px, 3.5vw, 32px);
@@ -322,6 +326,7 @@
 }
 
 .rec-btn {
+  position: relative;
   display: grid;
   width: 60px;
   height: 60px;
@@ -339,6 +344,10 @@
     background-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
   touch-action: manipulation;
+}
+
+.rec-btn:not(.recording):not(.requesting):not(.processing):not(:disabled) {
+  animation: recorder-breathe 3.4s ease-in-out infinite;
 }
 
 .rec-btn:hover:not(:disabled) {
@@ -383,6 +392,26 @@
   color: var(--forest-deep);
 }
 
+.rec-btn.requesting::after,
+.rec-btn.processing::after {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid transparent;
+  border-top-color: #f4ca84;
+  border-radius: 50%;
+  content: "";
+  animation: recorder-spin 760ms linear infinite;
+}
+
+.rec-btn.requesting .mic-icon,
+.rec-btn.processing .mic-icon {
+  opacity: 0.28;
+}
+
+.rec-btn.processing {
+  background: var(--forest);
+}
+
 .recorder-copy {
   min-width: 0;
 }
@@ -416,6 +445,10 @@
   margin-top: 8px;
 }
 
+.rec-playback:not([hidden]) {
+  animation: contribution-ready-in 260ms var(--ease-standard) both;
+}
+
 .recording-review {
   display: grid;
   margin-top: 18px;
@@ -446,49 +479,6 @@
 
 .recording-review > .btn-quiet {
   width: max-content;
-}
-
-.consent-check {
-  display: grid;
-  align-items: start;
-  padding: 16px;
-  border: 1px solid rgba(231, 169, 76, 0.26);
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.76);
-  cursor: pointer;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 12px;
-}
-
-.consent-check input {
-  width: 20px;
-  height: 20px;
-  margin: 1px 0 0;
-  accent-color: var(--forest-deep);
-}
-
-.consent-check strong,
-.consent-check small {
-  display: block;
-}
-
-.consent-check strong {
-  color: var(--ink);
-  font-size: 0.82rem;
-}
-
-.consent-check small {
-  margin-top: 5px;
-  color: var(--ink-soft);
-  font-size: 0.7rem;
-  line-height: 1.55;
-}
-
-.consent-check a {
-  color: var(--terracotta-dark);
-  font-weight: 750;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .field-error,
@@ -550,6 +540,7 @@
   background: var(--forest-deep);
   color: #fff;
   font-weight: 900;
+  animation: contribution-success-mark-in 380ms 80ms var(--ease-standard) both;
 }
 
 .submission-success h3 {
@@ -661,6 +652,29 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes contribution-mode-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes contribution-ready-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes contribution-success-mark-in {
+  from { opacity: 0; transform: scale(0.72) rotate(-12deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes recorder-breathe {
+  50% { box-shadow: 0 10px 24px rgba(193, 97, 61, 0.28), 0 0 0 5px rgba(231, 169, 76, 0.08); }
+}
+
+@keyframes recorder-spin {
+  to { transform: rotate(360deg); }
+}
+
 @keyframes recorder-pulse {
   50% { box-shadow: 0 10px 24px rgba(193, 97, 61, 0.3), 0 0 0 7px rgba(231, 169, 76, 0.1); }
 }
@@ -740,7 +754,11 @@
 @media (prefers-reduced-motion: reduce) {
   .recording-review,
   .submission-success,
-  .rec-btn.recording {
+  .sentence-source.is-entering,
+  .rec-playback:not([hidden]),
+  .success-mark,
+  .rec-btn,
+  .rec-btn::after {
     animation: none;
   }
 
