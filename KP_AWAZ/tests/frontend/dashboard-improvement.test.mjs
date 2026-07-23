@@ -16,14 +16,14 @@ test("dashboard presents exactly two direct recording choices", async () => {
   const choices = html.match(/class="[^"]*\bdashboard-recording-choice\b[^"]*"/g) ?? [];
   assert.equal(choices.length, 2);
   assert.match(html, /contribute\.html\?mode=guided/);
-  assert.match(html, /contribute\.html\?mode=custom/);
+  assert.match(html, /contribute\.html#donate-text/);
   assert.doesNotMatch(html, /leaderboard preview|voice-orbit|profile-compass|rejected count/i);
 });
 
 test("recording route mode is predictable and safe", () => {
   assert.equal(normalizeContributionMode("?mode=guided"), "guided");
-  assert.equal(normalizeContributionMode("?mode=custom"), "custom");
-  assert.equal(normalizeContributionMode("mode=custom"), "custom");
+  assert.equal(normalizeContributionMode("?mode=custom"), "guided");
+  assert.equal(normalizeContributionMode("mode=custom"), "guided");
   assert.equal(normalizeContributionMode("?mode=open"), "guided");
   assert.equal(normalizeContributionMode("?next=https://example.com"), "guided");
 });
@@ -96,7 +96,7 @@ test("record voice implements the supplied enhanced microphone template and moti
     read("scripts/modules/recorder.js"),
   ]);
   assert.match(page, /styles\/mic-enhanced-template\.css\?v=20260723-record-weave/);
-  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-record-weave/);
+  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-donate-text/);
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
   assert.match(html, /class="voice-card glass-card mic-enhanced-card reveal tilt"/);
   assert.match(html, /Today’s voice mission/);
@@ -147,7 +147,7 @@ test("dashboard implements the supplied refined contribution surface", async () 
   ]);
   assert.match(html, /class="workspace-body dashboard-body"/);
   assert.match(html, /Choose how you want to [\s\S]*share your voice/);
-  assert.match(html, /Read a provided Pashto sentence or contribute the words you naturally use\./);
+  assert.match(html, /Record a reviewed Pashto prompt, or contribute written Pashto/);
   assert.match(html, /dashboard-colorflow-shell dashboard-contribute-hub/);
   assert.match(css, /\.dashboard-colorflow-shell\s*{[\s\S]*?background:\s*rgba\(255, 255, 255, 0\.76\)/);
   assert.match(css, /\.dashboard-colorflow-shell::before\s*{[\s\S]*?height:\s*6px[\s\S]*?repeating-linear-gradient/);

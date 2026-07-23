@@ -154,7 +154,7 @@ test("recovery pages use Supabase-only password controls and generic account mes
 test("focused dashboard routes both recording modes and uses only private contributor services", async () => {
   const [html, source] = await Promise.all([read("dashboard.html"), read("scripts/dashboard-app.js")]);
   assert.match(html, /href="contribute\.html\?mode=guided"/);
-  assert.match(html, /href="contribute\.html\?mode=custom"/);
+  assert.match(html, /href="contribute\.html#donate-text"/);
   assert.doesNotMatch(html, /dashboardLeaderboardList|voice-orbit|profile-compass|dashboardRejectedCount/);
   assert.match(html, /id="dashboardRecentList"/);
   assert.match(source, /statistics\.approvedContributions/);

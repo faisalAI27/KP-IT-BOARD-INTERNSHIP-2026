@@ -1,0 +1,149 @@
+<section class="donate-text-section" id="donate-text" aria-labelledby="donateTextTitle">
+  <article class="donate-text-shell">
+    <header class="donate-text-heading">
+      <div>
+        <span class="donate-text-eyebrow"><i aria-hidden="true"></i> Text contribution</span>
+        <h2 id="donateTextTitle">Donate Text</h2>
+        <p>Share natural written Pashto as one clear sentence, or upload a prepared text file for review.</p>
+      </div>
+      <span class="donate-text-pill">Text data only</span>
+    </header>
+
+    <div class="donate-text-choice-grid" aria-label="Text contribution options">
+      <button class="donate-text-choice" type="button" data-donate-text-target="manual">
+        <span class="donate-text-choice-number">01</span>
+        <span class="donate-text-choice-copy">
+          <small>Quick entry</small>
+          <strong>Add a sentence</strong>
+          <span>Share a phrase, proverb, or everyday Pashto line.</span>
+        </span>
+        <span class="donate-text-choice-arrow" aria-hidden="true">→</span>
+      </button>
+      <button class="donate-text-choice" type="button" data-donate-text-target="files">
+        <span class="donate-text-choice-number">02</span>
+        <span class="donate-text-choice-copy">
+          <small>Batch upload</small>
+          <strong>Upload files</strong>
+          <span>Contribute prepared CSV, TXT, TSV, or JSON files.</span>
+        </span>
+        <span class="donate-text-choice-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>
+
+    <form class="donate-text-form" id="donateTextForm" novalidate>
+      <input id="donateTextContributorName" name="contributorName" type="hidden" />
+      <div class="donate-text-content-grid">
+        <section class="donate-text-panel" id="donateTextManualPanel" aria-labelledby="donateTextManualTitle">
+          <div class="donate-text-panel-head">
+            <div>
+              <h3 id="donateTextManualTitle">Add a sentence</h3>
+              <p>Contribute one natural Pashto sentence directly.</p>
+            </div>
+            <span>Manual</span>
+          </div>
+
+          <div class="donate-text-fields">
+            <div class="donate-text-field">
+              <label for="donateTextLanguage">Language</label>
+              <input id="donateTextLanguage" name="language" value="Pashto · پښتو" readonly />
+            </div>
+            <div class="donate-text-field">
+              <label for="donateTextType">Text type</label>
+              <select id="donateTextType" name="textType">
+                <option value="sentence" selected>Sentence</option>
+                <option value="proverb">Proverb</option>
+                <option value="phrase">Phrase</option>
+                <option value="story_line">Story line</option>
+              </select>
+            </div>
+            <div class="donate-text-field donate-text-field-wide">
+              <div class="donate-text-label-row">
+                <label for="donateTextSentence">Text contribution</label>
+                <span id="donateTextCount">0 / 500</span>
+              </div>
+              <textarea
+                id="donateTextSentence"
+                name="text"
+                lang="ps"
+                dir="rtl"
+                minlength="3"
+                maxlength="500"
+                placeholder="خپله پښتو جمله دلته ولیکئ..."
+                aria-describedby="donateTextSentenceHelp donateTextSentenceError"
+              ></textarea>
+              <p class="donate-text-help" id="donateTextSentenceHelp">Keep the wording clear and natural. For several entries, use file upload.</p>
+              <p class="donate-text-field-error" id="donateTextSentenceError" role="alert" hidden></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="donate-text-panel" id="donateTextFilesPanel" aria-labelledby="donateTextFilesTitle">
+          <div class="donate-text-panel-head">
+            <div>
+              <h3 id="donateTextFilesTitle">Upload text files</h3>
+              <p>Add prepared files containing Pashto sentences.</p>
+            </div>
+            <span>Files</span>
+          </div>
+
+          <input
+            id="donateTextFileInput"
+            type="file"
+            accept=".csv,.txt,.tsv,.json,text/plain,text/csv,application/json"
+            multiple
+            hidden
+          />
+          <button
+            class="donate-text-dropzone"
+            id="donateTextDropzone"
+            type="button"
+            aria-describedby="donateTextFileHelp donateTextFileError"
+          >
+            <span class="donate-text-upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 16V4" />
+                <path d="m7 9 5-5 5 5" />
+                <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+              </svg>
+            </span>
+            <strong>Drop files here or browse</strong>
+            <span id="donateTextFileHelp">Up to five UTF-8 text files, 2 MB each.</span>
+            <span class="donate-text-formats" aria-hidden="true">
+              <i>.csv</i><i>.txt</i><i>.tsv</i><i>.json</i>
+            </span>
+          </button>
+          <p class="donate-text-field-error" id="donateTextFileError" role="alert" hidden></p>
+          <div class="donate-text-file-list" id="donateTextFileList" aria-live="polite">
+            <p class="donate-text-empty-files">No files selected yet.</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="donate-text-note-grid">
+        <article>
+          <h3>Accepted formats</h3>
+          <p>Use UTF-8 CSV, TXT, TSV, or JSON files containing written Pashto.</p>
+        </article>
+        <article>
+          <h3>Recommended layout</h3>
+          <p>Keep one sentence per row or line so every entry can be reviewed clearly.</p>
+        </article>
+        <article>
+          <h3>Review flow</h3>
+          <p>Your text stays pending until the KP AWAZ team validates it.</p>
+        </article>
+      </div>
+
+      <footer class="donate-text-footer">
+        <p>Submit a sentence, selected files, or both. Nothing is published automatically.</p>
+        <div>
+          <button class="donate-text-button donate-text-button-secondary" id="donateTextClear" type="button">Clear</button>
+          <button class="donate-text-button donate-text-button-primary" id="donateTextSubmit" type="submit">Submit text</button>
+        </div>
+      </footer>
+      <p class="donate-text-submit-error" id="donateTextSubmitError" role="alert" tabindex="-1" hidden></p>
+    </form>
+    <span class="donate-text-thread" aria-hidden="true"></span>
+  </article>
+  <div class="donate-text-toast" id="donateTextToast" role="status" aria-live="polite"></div>
+</section>

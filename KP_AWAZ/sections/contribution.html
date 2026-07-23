@@ -18,7 +18,6 @@
       <input id="donor-name" name="contributor-name" type="hidden" />
       <input id="donor-language" name="language" type="hidden" value="Pashto" />
       <input type="radio" name="sentence-source" value="provided" checked hidden />
-      <input type="radio" name="sentence-source" value="custom" hidden />
       <span class="sr-only" id="contributionModeLabel">Reviewed Pashto sentence</span>
       <span class="sr-only" id="contributionModeDescription">Your sentence is ready below.</span>
 
@@ -124,36 +123,6 @@
             My language is my identity, and my voice shapes its future.
           </p>
         </div>
-      </div>
-
-      <div class="sentence-source" id="customSentenceSource" hidden>
-        <div class="field custom-sentence-field sentence-card">
-          <div class="sentence-top">
-            <span class="language-pill">Pashto · پښتو</span>
-            <span class="sentence-number">Your sentence</span>
-          </div>
-          <label for="custom-sentence">Your Pashto sentence <span class="required-note">Required</span></label>
-          <textarea
-            id="custom-sentence"
-            name="custom-sentence"
-            lang="ps"
-            dir="rtl"
-            minlength="3"
-            maxlength="300"
-            aria-describedby="customSentenceHelp customSentenceError sentenceCount"
-            placeholder="خپله جمله دلته ولیکئ..."
-            disabled
-          ></textarea>
-          <div class="field-note" id="customSentenceHelp">
-            <span>Try a proverb, daily phrase, memory, or natural expression.</span>
-            <span id="sentenceCount">0 / 300</span>
-          </div>
-          <p class="field-error" id="customSentenceError" role="alert" hidden></p>
-        </div>
-      </div>
-
-      <div class="sentence-mode-row">
-        <button class="sentence-mode-action" id="switchSentenceMode" type="button">Use my own sentence instead</button>
       </div>
 
       <section class="review-actions" id="donateReview" aria-labelledby="donateReviewTitle" hidden>

@@ -33,6 +33,22 @@ class ContributionCreatedResponse(BaseModel):
         return _as_utc(value)
 
 
+class TextContributionBatchResponse(BaseModel):
+    """Safe receipt for one manual/file text contribution batch."""
+
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    ids: list[str] = Field(min_length=1)
+    item_count: int = Field(alias="itemCount", ge=1)
+    status: Literal["queued"]
+    created_at: datetime = Field(alias="createdAt")
+
+    @field_validator("created_at")
+    @classmethod
+    def normalize_created_at_to_utc(cls, value: datetime) -> datetime:
+        return _as_utc(value)
+
+
 class MyContributionResponse(BaseModel):
     """Safe contribution history item belonging to the verified caller."""
 

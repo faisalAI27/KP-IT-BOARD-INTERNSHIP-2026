@@ -548,7 +548,7 @@ test("empty phrase list has an accessible empty and retry state", async () => {
 });
 
 
-test("no-active-phrase contributor response remains safe and supports custom text fallback", async () => {
+test("no-active-phrase contributor response safely keeps guided recording unavailable", async () => {
   const api = new ContributionsApi({
     apiBaseUrl: "http://127.0.0.1:8000/api",
     fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
@@ -562,7 +562,8 @@ test("no-active-phrase contributor response remains safe and supports custom tex
     "utf8",
   );
   assert.match(source, /if \(!prompts\.length\)/);
-  assert.match(source, /No reviewed sentences are available right now/);
+  assert.match(source, /No reviewed Pashto sentences are available right now/);
   assert.match(source, /providedSentenceInput\.disabled = true/);
-  assert.match(source, /setMode\("custom", \{ updateAddress: true \}\)/);
+  assert.match(source, /makeGuidedRecordingUnavailable/);
+  assert.doesNotMatch(source, /setMode\("custom"/);
 });

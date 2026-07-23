@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     max_open_audio_size_mb: int = Field(default=50, gt=0)
     audio_storage_subdirectory: str = "audio"
     max_import_file_size_mb: int = Field(default=5, gt=0)
+    max_text_upload_bytes: int = Field(default=2_097_152, gt=0)
+    max_text_upload_files: int = Field(default=5, gt=0, le=20)
     min_imported_sentence_length: int = Field(default=3, gt=0)
     max_imported_sentence_length: int = Field(default=500, gt=0)
     admin_api_key: str = ""

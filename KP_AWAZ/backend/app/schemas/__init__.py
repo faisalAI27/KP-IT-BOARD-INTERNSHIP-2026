@@ -13,6 +13,7 @@ from app.schemas.contribution import (
     ContributionReviewRequest,
     MyContributionListResponse,
     MyContributionResponse,
+    TextContributionBatchResponse,
 )
 from app.schemas.profile import (
     ProfileConsentSummaryResponse,
@@ -66,6 +67,7 @@ __all__ = [
     "ImportFileResultResponse",
     "MyContributionListResponse",
     "MyContributionResponse",
+    "TextContributionBatchResponse",
     "OwnerWithdrawalRequestListResponse",
     "OwnerWithdrawalRequestResponse",
     "PersonalPointsResponse",
