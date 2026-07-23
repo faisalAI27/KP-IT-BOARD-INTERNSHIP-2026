@@ -3,13 +3,13 @@ import {
   getMyConsentSummary,
   getMyContributionStatistics,
 } from "./services/profile-api.js?v=20260718-consent";
-import { getCurrentAuthState } from "./services/auth-service.js?v=20260717-auth-routing";
+import { getCurrentAuthState } from "./services/auth-service.js?v=20260723-auth-config-v2";
 import {
   destroyWorkspace,
   initialsForIdentity,
   initializeWorkspace,
   updateWorkspaceIdentity,
-} from "./modules/workspace-shell.js?v=20260717-auth-routing";
+} from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 
 
 let profileUI = null;

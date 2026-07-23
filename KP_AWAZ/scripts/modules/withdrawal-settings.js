@@ -3,7 +3,7 @@ import {
   createMyWithdrawalRequest,
   listMyWithdrawalRequests,
 } from "../services/withdrawals-api.js?v=20260719-withdrawals";
-import { getCurrentAuthState } from "../services/auth-service.js?v=20260717-auth-routing";
+import { getCurrentAuthState } from "../services/auth-service.js?v=20260723-auth-config-v2";
 
 
 const defaultApi = Object.freeze({

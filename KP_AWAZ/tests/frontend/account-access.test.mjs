@@ -50,6 +50,29 @@ test("account page contains password setup, signup OTP, and returning sign-in", 
   assert.match(html, /Continue with Google/);
 });
 
+test("account and workspace boot paths bypass stale authentication configuration", async () => {
+  const [html, page, access, auth, client, workspace] = await Promise.all(
+    [
+      "auth.html",
+      "scripts/auth-page.js",
+      "scripts/modules/account-access.js",
+      "scripts/services/auth-service.js",
+      "scripts/services/supabase-client.js",
+      "scripts/modules/workspace-shell.js",
+    ].map((name) => readFile(new URL(name, projectRoot), "utf8")),
+  );
+  const version = "20260723-auth-config-v2";
+  assert.match(html, new RegExp(`auth-page\\.js\\?v=${version}`));
+  assert.match(page, new RegExp(`account-access\\.js\\?v=${version}`));
+  assert.match(access, new RegExp(`auth-service\\.js\\?v=${version}`));
+  assert.match(auth, new RegExp(`config\\.js\\?v=${version}`));
+  assert.match(auth, new RegExp(`supabase-client\\.js\\?v=${version}`));
+  assert.match(client, new RegExp(`config\\.js\\?v=${version}`));
+  assert.match(client, new RegExp(`supabase\\.js\\?v=${version}`));
+  assert.match(workspace, new RegExp(`auth-service\\.js\\?v=${version}`));
+  assert.match(workspace, new RegExp(`config\\.js\\?v=${version}`));
+});
+
 
 test("password and OTP values are not persisted or logged by account access", async () => {
   const source = await readFile(

@@ -2,7 +2,7 @@ import {
   destroyAuthService,
   initializeAuthService,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { isVerifiedAuthState } from "../services/route-guard.js?v=20260717-auth-routing";
 
 

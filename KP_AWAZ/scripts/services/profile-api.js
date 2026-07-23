@@ -1,5 +1,5 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260723-auth-config-v2";
 import {
   API_REQUEST_TIMEOUT_MS,
   fetchWithRequestTimeout,

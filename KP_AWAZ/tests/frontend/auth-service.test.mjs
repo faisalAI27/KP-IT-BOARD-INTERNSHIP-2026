@@ -360,7 +360,11 @@ test("Google sign-in failure becomes a safe frontend error", async () => {
 test("missing configuration prevents Google sign-in", async () => {
   const service = new AuthService({ configured: false });
 
-  await assert.rejects(service.signInWithGoogle(), AuthConfigurationError);
+  await assert.rejects(service.signInWithGoogle(), (error) => {
+    assert.equal(error.name, AuthConfigurationError.name);
+    assert.equal(error.code, "AUTH_NOT_CONFIGURED");
+    return true;
+  });
 });
 
 

@@ -1,7 +1,7 @@
 import {
   destroyWorkspace,
   initializeWorkspace,
-} from "./modules/workspace-shell.js?v=20260717-auth-routing";
+} from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 import {
   animateDashboardCounter,
   initDashboardColorflow,
@@ -13,7 +13,7 @@ import {
 } from "./modules/my-contributions.js?v=20260717-member-workspace";
 import { getMyContributions } from "./services/contributions-api.js?v=20260717-member-workspace";
 import { getMyContributionStatistics } from "./services/profile-api.js?v=20260717-member-workspace";
-import { getCurrentAuthState } from "./services/auth-service.js?v=20260717-auth-routing";
+import { getCurrentAuthState } from "./services/auth-service.js?v=20260723-auth-config-v2";
 
 
 function text(id, value) {

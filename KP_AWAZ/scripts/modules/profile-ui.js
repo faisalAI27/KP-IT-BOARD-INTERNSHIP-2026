@@ -2,7 +2,7 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import {
   getMyProfile,
   updateMyProfile,

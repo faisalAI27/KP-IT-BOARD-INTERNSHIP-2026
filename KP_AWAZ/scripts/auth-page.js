@@ -2,12 +2,12 @@ import {
   destroyAccountAccess,
   initializeAccountAccess,
   prefillAccountSignInEmail,
-} from "./modules/account-access.js?v=20260720-recovery-otp";
+} from "./modules/account-access.js?v=20260723-auth-config-v2";
 import {
   destroyAuthCulturalPanel,
   initializeAuthCulturalPanel,
 } from "./modules/auth-cultural-panel.js?v=20260717-cultural-hero";
-import { destroyAuthService } from "./services/auth-service.js?v=20260720-recovery-otp";
+import { destroyAuthService } from "./services/auth-service.js?v=20260723-auth-config-v2";
 import { consumeRecoveryEmailForSignIn } from "./services/recovery-handoff.js";
 
 

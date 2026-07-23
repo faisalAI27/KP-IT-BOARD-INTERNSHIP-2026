@@ -7,7 +7,7 @@ import {
   subscribeToAuthChanges,
   verifyEmailOtp,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 
 
 const EMAIL_OTP_COOLDOWN_MS = 60_000;

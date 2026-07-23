@@ -7,7 +7,7 @@ import {
   PasswordRecovery,
   validateNewPasswords,
 } from "./modules/password-recovery.js?v=20260720-recovery-otp";
-import { destroyAuthService } from "./services/auth-service.js?v=20260720-recovery-otp";
+import { destroyAuthService } from "./services/auth-service.js?v=20260723-auth-config-v2";
 
 
 export { validateNewPasswords };

@@ -1,10 +1,10 @@
-import { appConfig } from "../config.js";
+import { appConfig } from "../config.js?v=20260723-auth-config-v2";
 import {
   AuthConfigurationError,
   getSupabaseClient,
   isSupabaseConfigured,
   resolveAuthRedirectUrl,
-} from "./supabase-client.js";
+} from "./supabase-client.js?v=20260723-auth-config-v2";
 import {
   AUTH_REQUEST_TIMEOUT_MESSAGE,
   AUTH_REQUEST_TIMEOUT_MS,

@@ -6,7 +6,7 @@ import { initContributionsMotion } from "./modules/contributions-motion.js?v=202
 import {
   destroyWorkspace,
   initializeWorkspace,
-} from "./modules/workspace-shell.js?v=20260717-auth-routing";
+} from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 
 
 let contributionsMotion = null;

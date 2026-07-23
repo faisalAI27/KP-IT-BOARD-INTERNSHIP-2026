@@ -1,5 +1,5 @@
-import { appConfig } from "../config.js";
-import { createClient } from "../vendor/supabase.js";
+import { appConfig } from "../config.js?v=20260723-auth-config-v2";
+import { createClient } from "../vendor/supabase.js?v=20260723-auth-config-v2";
 
 
 const AUTH_NOT_CONFIGURED_MESSAGE = "Authentication is not configured yet.";

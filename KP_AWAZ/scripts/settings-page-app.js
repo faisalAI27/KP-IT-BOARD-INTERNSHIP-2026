@@ -1,7 +1,7 @@
 import {
   getCurrentAuthState,
   updatePassword,
-} from "./services/auth-service.js?v=20260717-auth-routing";
+} from "./services/auth-service.js?v=20260723-auth-config-v2";
 import {
   getMyConsentSummary,
   getMyContributionStatistics,
@@ -11,7 +11,7 @@ import {
   destroyWorkspace,
   initializeWorkspace,
   updateWorkspaceIdentity,
-} from "./modules/workspace-shell.js?v=20260717-auth-routing";
+} from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 import { WithdrawalSettings } from "./modules/withdrawal-settings.js?v=20260719-withdrawals";
 
 

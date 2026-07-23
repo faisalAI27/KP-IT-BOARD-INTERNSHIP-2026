@@ -6,7 +6,7 @@ import {
   signOut,
   updatePassword,
   verifyRecoveryOtp,
-} from "../services/auth-service.js?v=20260720-recovery-otp";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { preserveRecoveryEmailForSignIn } from "../services/recovery-handoff.js";
 
 

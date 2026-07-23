@@ -1,5 +1,5 @@
 import { appConfig } from "../config.js";
-import { getCurrentAccessToken } from "./auth-service.js?v=20260717-auth-routing";
+import { getCurrentAccessToken } from "./auth-service.js?v=20260723-auth-config-v2";
 import {
   AUDIO_UPLOAD_REQUEST_TIMEOUT_MS,
   API_REQUEST_TIMEOUT_MS,

@@ -1,5 +1,5 @@
 import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260723-rabab-motion";
-import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260717-auth-routing";
+import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 
 
 window.addEventListener("beforeunload", () => {

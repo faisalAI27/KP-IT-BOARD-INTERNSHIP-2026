@@ -109,7 +109,7 @@ test("record voice implements the supplied Rabab recorder template and motion", 
     read("scripts/modules/recorder.js"),
   ]);
   assert.match(page, /styles\/rabab-recorder\.css\?v=20260723-rabab-motion/);
-  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-rabab-motion/);
+  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-auth-config-v2/);
   assert.doesNotMatch(page, /styles\/mic-enhanced-template\.css|styles\/contribution\.css/);
   assert.doesNotMatch(page, /donate-text/);
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);

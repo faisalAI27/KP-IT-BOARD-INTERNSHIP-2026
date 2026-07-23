@@ -2,7 +2,7 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { getMyPoints } from "../services/points-api.js?v=20260717-member-workspace";
 import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
 

@@ -84,7 +84,7 @@ test("profile and privacy are merged into one refined Settings workspace", async
 
   for (const page of [profilePage, settingsPage]) {
     assert.match(page, /sections\/workspace-settings\.html/);
-    assert.match(page, /scripts\/settings-page-app\.js\?v=20260723-unified-settings/);
+    assert.match(page, /scripts\/settings-page-app\.js\?v=20260723-auth-config-v2/);
     assert.doesNotMatch(page, /workspace-profile\.html|profile-page-app\.js/);
   }
   assert.match(settings, /class="settings-template-shell"/);

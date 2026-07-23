@@ -1,7 +1,7 @@
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { openAuthDialog } from "./auth-ui.js?v=20260717-member-workspace";
 
 

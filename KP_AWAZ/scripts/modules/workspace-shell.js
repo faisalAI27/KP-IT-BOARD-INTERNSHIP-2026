@@ -5,7 +5,7 @@ import {
   initializeAuthService,
   signOut,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { getMyProfile } from "../services/profile-api.js?v=20260717-member-workspace";
 import {
   navigateOnce,
@@ -13,7 +13,7 @@ import {
   routeDecision,
 } from "../services/route-guard.js?v=20260717-auth-routing";
 import { withRequestTimeout } from "../services/request-timeout.js?v=20260717-auth-routing";
-import { appConfig } from "../config.js";
+import { appConfig } from "../config.js?v=20260723-auth-config-v2";
 
 
 const WORKSPACE_PAGES = new Set([

@@ -13,7 +13,7 @@ import {
   subscribeToAuthChanges,
   verifySignupOtp,
   verifyCurrentUserWithBackend,
-} from "../services/auth-service.js?v=20260720-recovery-otp";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { updateMyProfile } from "../services/profile-api.js?v=20260717-member-workspace";
 import {
   navigateOnce,

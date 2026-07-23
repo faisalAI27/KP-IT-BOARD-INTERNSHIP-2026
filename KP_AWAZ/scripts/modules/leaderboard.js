@@ -5,7 +5,7 @@ import {
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
-} from "../services/auth-service.js?v=20260717-auth-routing";
+} from "../services/auth-service.js?v=20260723-auth-config-v2";
 import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
 import { animateLeaderboardCounter } from "./leaderboard-template-motion.js?v=20260723-refined-surfaces";
 
