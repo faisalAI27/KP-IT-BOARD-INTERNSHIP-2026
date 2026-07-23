@@ -146,3 +146,59 @@
 }
 .links a[aria-current="page"] { color: var(--terracotta-dark); }
 .links a[aria-current="page"]::after { transform: scaleX(1); }
+/* Public account access button */
+.auth-header-button {
+  min-width: 108px;
+  max-width: 172px;
+  border-color: rgba(62, 98, 89, 0.2);
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--pine-dark);
+  white-space: nowrap;
+}
+
+.auth-header-button > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-header-button:disabled {
+  opacity: 0.72;
+}
+
+.auth-header-button[aria-disabled="true"] {
+  opacity: 0.78;
+}
+
+.auth-header-button[data-auth-kind="account"] {
+  border-color: rgba(62, 98, 89, 0.28);
+  background: rgba(62, 98, 89, 0.09);
+}
+
+.auth-header-button[data-auth-kind="issue"] {
+  border-color: rgba(193, 97, 61, 0.26);
+  color: var(--terracotta-dark);
+}
+
+.auth-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--terracotta);
+}
+
+.auth-header-button[data-auth-kind="loading"] .auth-status-dot {
+  background: var(--honey);
+  animation: auth-pulse 1.3s ease-in-out infinite;
+}
+
+.auth-header-button[data-auth-kind="account"] .auth-status-dot {
+  background: var(--pine);
+}
+
+@keyframes auth-pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}

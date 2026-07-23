@@ -120,7 +120,7 @@ Rejected:
 
 - `dashboard.html`, `contribute.html`
 - `sections/contribution.html`, `sections/workspace-sidebar.html`
-- `styles/dashboard.css`, `styles/contribution.css`, `styles/contribute-page.css`, `styles/workspace.css`, `styles/final-polish.css`
+- `styles/dashboard.css`, `styles/rabab-recorder.css`, `styles/contribute-page.css`, `styles/workspace.css`, `styles/final-polish.css`
 - `scripts/dashboard-app.js`, `scripts/contribute-page-app.js`
 - `scripts/modules/contributions.js`, `scripts/modules/recorder.js`, `scripts/modules/audio-visualizer.js`
 - Relevant frontend tests and this README/document

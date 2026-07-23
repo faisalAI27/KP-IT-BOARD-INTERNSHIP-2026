@@ -2,13 +2,17 @@ import {
   getCurrentAuthState,
   subscribeToAuthChanges,
 } from "../services/auth-service.js?v=20260723-auth-config-v2";
-import { openAuthDialog } from "./auth-ui.js?v=20260717-member-workspace";
 
 
 const defaultAuthApi = Object.freeze({
   getCurrentAuthState,
   subscribeToAuthChanges,
 });
+
+
+function openAccountAccess() {
+  globalThis.location?.assign?.("auth.html");
+}
 
 
 function verifiedUserId(state) {
@@ -27,7 +31,7 @@ export class ContributionAuthController {
     statusElement = null,
     messageElement = null,
     signInButton = null,
-    openSignIn = openAuthDialog,
+    openSignIn = openAccountAccess,
     onAccessChange = () => {},
     onSessionInvalidated = () => {},
   } = {}) {

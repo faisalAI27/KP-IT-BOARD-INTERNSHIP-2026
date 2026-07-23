@@ -13,10 +13,6 @@ import {
   formatContributionWithdrawalStatus,
   formatContributionType,
 } from "../../scripts/modules/my-contributions.js";
-import {
-  MY_CONTRIBUTIONS_SECTION,
-  PRIVATE_SECTION_CHANGED_EVENT,
-} from "../../scripts/modules/private-navigation.js";
 
 
 const USER_A = "0d5dd8f5-93df-462b-b234-a16973089092";
@@ -363,13 +359,6 @@ function createFixture({
 }
 
 
-function openContributions(fixture) {
-  fixture.eventTarget.dispatch(PRIVATE_SECTION_CHANGED_EVENT, {
-    section: MY_CONTRIBUTIONS_SECTION,
-  });
-}
-
-
 function element(fixture, id) {
   return fixture.root.elements.get(id);
 }
@@ -431,11 +420,6 @@ test("separate My Contributions partial includes its accessible controls once", 
   assert.match(html, /id="loadMoreContributionsButton"[\s\S]*type="button"/);
   assert.match(html, /You have not submitted any voice contributions yet\./);
   assert.match(html, />Pending review</);
-  const account = await readFile(
-    new URL("../../sections/account.html", import.meta.url),
-    "utf8",
-  );
-  assert.doesNotMatch(account, /id="myContributionsList"/);
 });
 
 
@@ -481,21 +465,6 @@ test("authentication loading hides history and does not call the API", async () 
   await settle();
   assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
   assert.equal(fixture.contributionsApi.calls.length, 0);
-});
-
-
-test("verified login waits until My Contributions is opened", () => {
-  const request = deferred();
-  const fixture = createFixture({
-    state: authState("signed_in", USER_A),
-    get: () => request.promise,
-    open: false,
-  });
-  assert.equal(fixture.contributionsApi.calls.length, 0);
-  assert.equal(element(fixture, "myContributionsPageSection").hidden, true);
-  openContributions(fixture);
-  assert.deepEqual(fixture.contributionsApi.calls, [{ limit: 10, offset: 0 }]);
-  assert.equal(element(fixture, "myContributionsPageSection").hidden, false);
 });
 
 
@@ -1145,21 +1114,6 @@ test("contribution-created event refreshes the first page", async () => {
 });
 
 
-test("contribution-created event waits while history is closed", async () => {
-  const fixture = createFixture({
-    state: authState("signed_in", USER_A),
-    get: () => historyPage([ITEM_A]),
-    open: false,
-  });
-  fixture.eventTarget.dispatch(CONTRIBUTION_CREATED_EVENT);
-  await settle();
-  assert.equal(fixture.contributionsApi.calls.length, 0);
-  openContributions(fixture);
-  await settle();
-  assert.equal(fixture.contributionsApi.calls.length, 1);
-});
-
-
 test("contribution-created event after sign-out does nothing", async () => {
   const fixture = createFixture({
     state: authState("signed_in", USER_A),
@@ -1232,7 +1186,7 @@ test("event listener is removed during destruction", () => {
     fixture.eventTarget.listeners.get(CONTRIBUTION_CREATED_EVENT)?.size,
     0,
   );
-  assert.equal(fixture.eventTarget.removals, 2);
+  assert.equal(fixture.eventTarget.removals, 1);
 });
 
 
@@ -1250,7 +1204,7 @@ test("repeated initialization and destruction are safe", () => {
   fixture.history.destroyMyContributions();
   fixture.history.destroyMyContributions();
   assert.equal(fixture.authApi.calls.unsubscriptions, 1);
-  assert.equal(fixture.eventTarget.removals, 2);
+  assert.equal(fixture.eventTarget.removals, 1);
 });
 
 

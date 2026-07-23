@@ -215,7 +215,7 @@ test("only backend-verified signed-in users can enter the contribution flow", ()
 });
 
 
-test("sign-in action reuses the account dialog action", () => {
+test("sign-in action opens the dedicated account access flow", () => {
   const view = fixture(authState("signed_out"));
 
   view.signInButton.dispatch("click");

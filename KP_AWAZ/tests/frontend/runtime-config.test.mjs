@@ -51,8 +51,8 @@ test("every FastAPI service defaults to the centralized API base URL", async () 
     "auth-service.js",
     "contributions-api.js",
     "leaderboard-api.js",
-    "points-api.js",
     "profile-api.js",
+    "text-contributions-api.js",
     "withdrawals-api.js",
   ];
 

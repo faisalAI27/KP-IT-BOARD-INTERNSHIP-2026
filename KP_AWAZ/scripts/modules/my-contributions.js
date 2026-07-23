@@ -8,10 +8,6 @@ import {
   getMyContributions,
 } from "../services/contributions-api.js?v=20260723-contributions-motion";
 import { getMyContributionStatistics } from "../services/profile-api.js?v=20260717-member-workspace";
-import {
-  MY_CONTRIBUTIONS_SECTION,
-  PRIVATE_SECTION_CHANGED_EVENT,
-} from "./private-navigation.js?v=20260717-member-workspace";
 
 
 export const CONTRIBUTION_CREATED_EVENT = "kp-awaz:contribution-created";
@@ -332,18 +328,6 @@ export class MyContributions {
       }
       void this.refresh();
     };
-    this._handlePrivateSectionChanged = (event) => {
-      const open = event?.detail?.section === MY_CONTRIBUTIONS_SECTION;
-      this._sectionOpen = Boolean(this._activeUserId) && open;
-      this._render();
-      if (
-        this._sectionOpen &&
-        verifiedUserId(this._auth.getCurrentAuthState()) === this._activeUserId &&
-        (this._needsRefresh || this._state.status === "idle")
-      ) {
-        void this.refresh();
-      }
-    };
   }
 
   initializeMyContributions() {
@@ -598,11 +582,6 @@ export class MyContributions {
         this._eventTarget,
         CONTRIBUTION_CREATED_EVENT,
         this._handleContributionCreated,
-      );
-      this._listen(
-        this._eventTarget,
-        PRIVATE_SECTION_CHANGED_EVENT,
-        this._handlePrivateSectionChanged,
       );
     }
   }

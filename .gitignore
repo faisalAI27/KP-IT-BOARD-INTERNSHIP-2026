@@ -1,3 +1,16 @@
 /KP_AWAZ_BACKUPS/
 /backups/
 /exports/
+
+# Local operating-system and development artifacts
+.DS_Store
+**/.DS_Store
+.venv/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ipynb_checkpoints/
+
+# Finder-style duplicate copies are never source files in this repository
+**/* 2
+**/* 2.*

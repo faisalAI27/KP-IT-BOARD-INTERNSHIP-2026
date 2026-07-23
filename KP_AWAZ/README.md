@@ -321,8 +321,8 @@ Each real page has a small coordinator:
 - `scripts/dashboard-app.js` — overview data
 - `scripts/contribute-page-app.js` — workspace plus recording modules
 - `scripts/contributions-page-app.js` — private history
-- `scripts/profile-page-app.js` — profile, score, consent, and rank
-- `scripts/settings-page-app.js` — preferences, password controls, and withdrawal
+- `scripts/donate-text-page-app.js` — authenticated written contributions
+- `scripts/settings-page-app.js` — profile, privacy, impact, consent, security, and withdrawal
 - `scripts/admin-app.js` — review, withdrawal, and phrase administration
 
 Page applications initialize modules after the required partials and verified
@@ -340,7 +340,8 @@ Important modules include:
 - `contributions.js` — three-step guided and open submission flows
 - `my-contributions.js` — private paginated review history
 - `leaderboard.js` — public table, top-three showcase, and current-user context
-- `profile-ui.js` — editable local profile preferences
+- `rabab-recorder-template.js` — recording motion and visual feedback
+- `donate-text.js` — written Pashto contribution workflow
 - `withdrawal-settings.js` — owner withdrawal workflow
 - `admin-review.js`, `admin-withdrawals.js`, `admin-phrases.js` — admin features
 
