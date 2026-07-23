@@ -1,6 +1,6 @@
 import { getSentencePrompts } from "../services/contributions-api.js?v=20260717-member-workspace";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
-import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260722-motion-polish";
+import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260723-rabab-reading";
 
 const SENTENCE_LOAD_ERROR =
   "Sentence prompts could not be loaded. Try again, or use your own Pashto sentence below.";
@@ -11,6 +11,16 @@ export const ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE =
   "Submission is temporarily unavailable while KP AWAZ connects your verified account-level data-use acceptance. No recording was uploaded; your recording is still here to listen to or record again.";
 
 let activeContributionCleanup = null;
+
+export function tokenizeSentenceWords(text = "") {
+  return String(text)
+    .split(/(\s+)/u)
+    .filter(Boolean)
+    .map((token) => ({
+      text: token,
+      isWord: !/^\s+$/u.test(token),
+    }));
+}
 
 export function normalizeContributionMode(search = "") {
   const raw = String(search || "");
@@ -79,6 +89,7 @@ export async function initContributions({
   let donateRecorder;
   let openRecorder;
   let accessController;
+  const sentenceTransitionTimeouts = new Set();
 
   function selectedSentenceSource() {
     return document.querySelector('input[name="sentence-source"]:checked')?.value ?? "provided";
@@ -112,10 +123,59 @@ export async function initContributions({
     return pashtoSentences[sentenceIndex] ?? null;
   }
 
-  function renderProvidedSentence() {
+  function clearSentenceTransitions() {
+    sentenceTransitionTimeouts.forEach((handle) => window.clearTimeout(handle));
+    sentenceTransitionTimeouts.clear();
+    providedSentence.classList.remove("is-leaving", "is-entering");
+  }
+
+  function scheduleSentenceTransition(callback, delay) {
+    const handle = window.setTimeout(() => {
+      sentenceTransitionTimeouts.delete(handle);
+      callback();
+    }, delay);
+    sentenceTransitionTimeouts.add(handle);
+  }
+
+  function replaceProvidedSentenceText(text) {
+    const fragment = document.createDocumentFragment();
+    tokenizeSentenceWords(text).forEach((token) => {
+      if (!token.isWord) {
+        fragment.append(document.createTextNode(token.text));
+        return;
+      }
+      const word = document.createElement("span");
+      word.className = "pashto-word";
+      word.textContent = token.text;
+      fragment.append(word);
+    });
+    providedSentence.replaceChildren(fragment);
+  }
+
+  function renderProvidedSentence({ animate = false } = {}) {
     const sentence = pashtoSentences[sentenceIndex];
-    providedSentence.textContent = sentence?.text ?? "";
-    providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
+    const update = () => {
+      replaceProvidedSentenceText(sentence?.text ?? "");
+      providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
+    };
+    const reducedMotion =
+      globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+
+    clearSentenceTransitions();
+    if (!animate || reducedMotion) {
+      update();
+      return;
+    }
+
+    providedSentence.classList.add("is-leaving");
+    scheduleSentenceTransition(() => {
+      update();
+      providedSentence.classList.remove("is-leaving");
+      providedSentence.classList.add("is-entering");
+      scheduleSentenceTransition(() => {
+        providedSentence.classList.remove("is-entering");
+      }, 190);
+    }, 110);
   }
 
   function setMode(mode, { updateAddress = false, focus = false } = {}) {
@@ -211,7 +271,8 @@ export async function initContributions({
     playbackId: "donateRecPlayback",
     calloutId: "donateRecCallout",
     visualizerCanvasId: "donateWaveform",
-    idleStatus: "Tap the microphone when you are ready",
+    idleStatus: "Your sentence stays visible while you speak.",
+    idleCallout: "Press the Rabab to record",
     canStart: () => (accessController?.canContribute() ?? false) && validateCurrentSentence({ focus: true }),
     onStart: () => stopRecorderIfActive(openRecorder),
     onCapture: () => {
@@ -230,7 +291,8 @@ export async function initContributions({
     playbackId: "openRecPlayback",
     calloutId: "openRecCallout",
     visualizerCanvasId: "openWaveform",
-    idleStatus: "Tap when you are ready to speak",
+    idleStatus: "Speak naturally when recording begins.",
+    idleCallout: "Press the Rabab to record",
     canStart: () => accessController?.canContribute() ?? false,
     onStart: () => stopRecorderIfActive(donateRecorder),
     onCapture: () => {
@@ -279,7 +341,8 @@ export async function initContributions({
     sentencePromptsReady = false;
     providedSentenceInput.disabled = true;
     nextSentenceButton.disabled = true;
-    providedSentence.textContent = "";
+    clearSentenceTransitions();
+    replaceProvidedSentenceText("");
     providedMeaning.textContent = "";
     showSentencePromptStatus(message);
     switchSentenceMode.hidden = true;
@@ -326,7 +389,7 @@ export async function initContributions({
     if (!sentencePromptsReady || !pashtoSentences.length) return;
     donateRecorder.reset();
     sentenceIndex = (sentenceIndex + 1) % pashtoSentences.length;
-    renderProvidedSentence();
+    renderProvidedSentence({ animate: true });
     providedSentence.focus({ preventScroll: true });
   });
   retrySentencePrompts.addEventListener("click", loadSentencePrompts);
@@ -402,6 +465,7 @@ export async function initContributions({
   activeContributionCleanup = () => {
     if (destroyed) return;
     destroyed = true;
+    clearSentenceTransitions();
     accessController.destroy();
     donateRecorder.destroy();
     openRecorder.destroy();

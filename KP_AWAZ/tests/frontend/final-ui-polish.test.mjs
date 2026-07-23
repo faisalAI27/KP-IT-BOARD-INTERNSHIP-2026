@@ -55,7 +55,10 @@ test("public, contributor, and admin pages load the final polish with cache-safe
   ]) {
     const html = await read(page);
     const stylesheets = [...html.matchAll(/href="(styles\/[^"]+\.css[^\"]*)"/g)].map((match) => match[1]);
-    assert.equal(stylesheets.at(-1), "styles/final-polish.css?v=20260720-final-polish");
+    const expectedPolish = page === "contribute.html"
+      ? "styles/final-polish.css?v=20260723-rabab-reading"
+      : "styles/final-polish.css?v=20260720-final-polish";
+    assert.equal(stylesheets.at(-1), expectedPolish);
   }
 });
 
@@ -88,7 +91,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
 });
 
 
-test("dashboard keeps its production deep-green identity without a polish override", async () => {
+test("dashboard keeps its production identity with a soft contribution surface and no polish override", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
@@ -96,26 +99,27 @@ test("dashboard keeps its production deep-green identity without a polish overri
   ]);
 
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?#173e34;[\s\S]*?}/);
-  assert.match(
-    dashboardCss,
-    /\.dashboard-contribute-hub\s*{[\s\S]*?background:\s*#173e34;[\s\S]*?}/,
-  );
+  assert.match(dashboardCss, /\.dashboard-contribute-hub\s*{[\s\S]*?rgba\(246, 248, 241, 0\.98\)[\s\S]*?}/);
+  assert.doesNotMatch(dashboardCss, /\.dashboard-contribute-hub\s*{[^}]*background:\s*#173e34/s);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
   assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
+  assert.doesNotMatch(polishCss, /\.rec-btn(?:\s*\{|:focus-visible)/);
 });
 
 
-test("workspace embroidery stays behind content and no sidebar-edge divider remains", async () => {
-  const [workspaceCss, polishCss] = await Promise.all([
+test("dashboard embroidery stays behind content and no sidebar-edge divider remains", async () => {
+  const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
+    read("styles/dashboard.css"),
     read("styles/final-polish.css"),
   ]);
 
-  assert.match(workspaceCss, /\.workspace-main::before,\s*\.workspace-main::after[\s\S]*opacity:\s*0\.16/);
-  assert.match(workspaceCss, /background-size:\s*36px 36px, 36px 36px, 18px 18px/);
+  assert.match(dashboardCss, /\.dashboard-body \.workspace-main::before,\s*\.dashboard-body \.workspace-main::after[\s\S]*opacity:\s*0\.075/);
+  assert.match(dashboardCss, /--dashboard-embroidery-pattern:\s*url\("data:image\/svg\+xml/);
+  assert.match(dashboardCss, /body\.workspace-body\.dashboard-body\s*{[\s\S]*background-color:\s*#fbf7f0/);
   assert.doesNotMatch(workspaceCss, /\.workspace-sidebar::after/);
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.match(polishCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*border-right/s);
-  assert.match(workspaceCss, /@media \(max-width: 650px\)[\s\S]*opacity:\s*0\.1/);
+  assert.match(dashboardCss, /@media \(max-width: 650px\)[\s\S]*opacity:\s*0\.05/);
 });

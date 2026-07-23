@@ -514,7 +514,7 @@ test("pending microphone permission has a clear cancellable state", async () => 
   const fixture = createTestRecorder(environment, "permission-state");
 
   const pendingStart = fixture.recorder.start();
-  assert.equal(fixture.element("calloutId").textContent, "Requesting microphone");
+  assert.equal(fixture.element("calloutId").textContent, "Requesting microphone access");
   assert.equal(fixture.element("buttonId").attributes.get("aria-busy"), "true");
   assert.equal(
     fixture.element("buttonId").attributes.get("aria-label"),
@@ -546,7 +546,7 @@ test("manual stop is idempotent, clears timer, and finalizes playback", async ()
   assert.equal(fixture.element("buttonId").attributes.get("aria-busy"), "true");
   assert.equal(
     fixture.element("buttonId").attributes.get("aria-label"),
-    "Processing recording",
+    "Preparing your recording",
   );
   assert.equal(stream.tracks.every((track) => track.stopCalls === 0), true);
 

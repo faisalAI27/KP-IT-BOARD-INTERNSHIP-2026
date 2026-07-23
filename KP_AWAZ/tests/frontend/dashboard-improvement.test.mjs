@@ -3,7 +3,10 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { test } from "node:test";
 
-import { normalizeContributionMode } from "../../scripts/modules/contributions.js";
+import {
+  normalizeContributionMode,
+  tokenizeSentenceWords,
+} from "../../scripts/modules/contributions.js";
 
 const root = new URL("../../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
@@ -25,6 +28,16 @@ test("recording route mode is predictable and safe", () => {
   assert.equal(normalizeContributionMode("?next=https://example.com"), "guided");
 });
 
+test("Pashto sentence tokens preserve exact RTL text and punctuation", () => {
+  const sentence = "زما ژبه، زما غږ دی.  هو!";
+  const tokens = tokenizeSentenceWords(sentence);
+  assert.equal(tokens.map(({ text }) => text).join(""), sentence);
+  assert.deepEqual(
+    tokens.filter(({ isWord }) => isWord).map(({ text }) => text),
+    ["زما", "ژبه،", "زما", "غږ", "دی.", "هو!"],
+  );
+});
+
 test("focused contribution flow keeps profile fields hidden and account consent honest", async () => {
   const [html, source, css] = await Promise.all([
     read("sections/contribution.html"),
@@ -44,6 +57,44 @@ test("focused contribution flow keeps profile fields hidden and account consent 
   assert.match(css, /min-height:\s*44px/);
 });
 
+test("guided reading and Rabab controls are accessible and responsive to live audio", async () => {
+  const [html, css, contributionSource, recorderSource, visualizerSource] = await Promise.all([
+    read("sections/contribution.html"),
+    read("styles/contribution.css"),
+    read("scripts/modules/contributions.js"),
+    read("scripts/modules/recorder.js"),
+    read("scripts/modules/audio-visualizer.js"),
+  ]);
+  assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
+  assert.equal((html.match(/class="rabab-icon"/g) ?? []).length, 2);
+  assert.doesNotMatch(html, /class="(?:mic|stop)-icon"/);
+  assert.match(html, /Press the Rabab to record/);
+  assert.match(contributionSource, /className = "pashto-word"/);
+  assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
+  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?scale\(1\.08\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pashto-word:hover[\s\S]*?transform:\s*none/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.rabab-instrument,[\s\S]*?\.rabab-string\s*{[\s\S]*?transform:\s*none/);
+  assert.match(recorderSource, /--rabab-string-one/);
+  assert.match(visualizerSource, /createMediaStreamSource\(stream\)/);
+  assert.match(visualizerSource, /onLevel/);
+});
+
+test("dashboard contribution panel is compact and softly surfaced", async () => {
+  const [html, css] = await Promise.all([
+    read("dashboard.html"),
+    read("styles/dashboard.css"),
+  ]);
+  assert.match(html, /class="workspace-body dashboard-body"/);
+  assert.match(html, /Choose how you want to share your voice/);
+  assert.match(html, /Read a provided Pashto sentence or contribute words you naturally use\./);
+  assert.doesNotMatch(css, /\.dashboard-contribute-hub\s*{[^}]*background:\s*#173e34/s);
+  assert.match(css, /\.dashboard-contribute-hub\s*{[^}]*padding:\s*clamp\(18px, 2\.1vw, 24px\)/s);
+  assert.match(css, /\.dashboard-contribute-hub\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
+  assert.match(css, /\.dashboard-recording-choice\s*{[^}]*min-height:\s*92px/s);
+  assert.match(css, /\.dashboard-recording-choices\s*{[^}]*grid-auto-rows:\s*1fr/s);
+  assert.match(css, /\.dashboard-recording-choice\.is-recommended\s*{[^}]*rgba\(255, 255, 255, 0\.78\)/s);
+});
+
 test("dashboard hierarchy and motion keep recording first", async () => {
   const [html, css] = await Promise.all([
     read("dashboard.html"),
@@ -52,9 +103,25 @@ test("dashboard hierarchy and motion keep recording first", async () => {
   assert.ok(html.indexOf("dashboard-contribute-hub") < html.indexOf("recent-voices"));
   assert.ok(html.indexOf("recent-voices") < html.indexOf("dashboard-stat-strip"));
   assert.match(css, /dashboard-page-header[\s\S]*300ms/);
-  assert.match(css, /dashboard-contribute-hub[\s\S]*340ms/);
+  assert.match(css, /dashboard-contribute-hub[\s\S]*380ms[\s\S]*cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
+  assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?transform 220ms cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
+  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?translateY\(-3px\)/);
+  assert.match(css, /\.dashboard-recording-choice:focus-visible[\s\S]*?translateY\(-3px\)/);
+  assert.match(css, /\.dashboard-recording-choice:focus-visible \.dashboard-choice-arrow[\s\S]*?translateX\(4px\)/);
   assert.match(css, /dashboard-stat-value-in/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dashboard-recording-choice:hover[\s\S]*?transform:\s*none/);
+});
+
+test("dashboard replaces graph paper with scoped original embroidery", async () => {
+  const css = await read("styles/dashboard.css");
+  const bodyBlock = css.match(/body\.workspace-body\.dashboard-body\s*{([\s\S]*?)\n}/)?.[1] ?? "";
+  assert.match(bodyBlock, /data:image\/svg\+xml/);
+  assert.match(bodyBlock, /background-image:\s*[\s\S]*?radial-gradient/);
+  assert.doesNotMatch(bodyBlock, /linear-gradient/);
+  assert.match(css, /\.dashboard-body \.workspace-main::before,\s*\.dashboard-body \.workspace-main::after\s*{[\s\S]*?opacity:\s*0\.075/);
+  assert.match(css, /\.dashboard-contribute-hub::after\s*{[\s\S]*?var\(--dashboard-border-pattern\)/);
+  assert.match(css, /pointer-events:\s*none/);
+  assert.match(css, /@media \(max-width: 650px\)[\s\S]*?\.dashboard-body \.workspace-main::after\s*{[\s\S]*?display:\s*none/);
 });
 
 test("experimental dashboard directories are absent from production", async () => {

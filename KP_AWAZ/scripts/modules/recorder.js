@@ -1,4 +1,4 @@
-import { createAudioVisualizer } from "./audio-visualizer.js?v=20260722-web-audio";
+import { createAudioVisualizer } from "./audio-visualizer.js?v=20260723-rabab-level";
 
 export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
   "audio/webm;codecs=opus",
@@ -93,6 +93,7 @@ export function createRecorder({
   calloutId,
   visualizerCanvasId,
   idleStatus,
+  idleCallout = "Start recording",
   maxDurationSeconds,
   maxDurationMessage,
   canStart = () => true,
@@ -115,7 +116,10 @@ export function createRecorder({
   const status = document.getElementById(statusId);
   const playback = document.getElementById(playbackId);
   const callout = document.getElementById(calloutId);
-  const visualizer = createAudioVisualizer({ canvas: visualizerCanvasId });
+  const visualizer = createAudioVisualizer({
+    canvas: visualizerCanvasId,
+    onLevel: updateRababLevel,
+  });
 
   let activeSession = null;
   let timerHandle = null;
@@ -127,6 +131,15 @@ export function createRecorder({
   let capturedDurationSeconds = 0;
   let sessionId = 0;
   let destroyed = false;
+
+  function updateRababLevel(level) {
+    const normalized = Math.max(0, Math.min(1, Number(level) || 0));
+    button.style?.setProperty?.("--rabab-scale", (1 + normalized * 0.018).toFixed(4));
+    button.style?.setProperty?.("--rabab-echo-opacity", (0.12 + normalized * 0.72).toFixed(3));
+    button.style?.setProperty?.("--rabab-string-one", `${(-normalized * 2.8).toFixed(2)}px`);
+    button.style?.setProperty?.("--rabab-string-two", `${(normalized * 1.7).toFixed(2)}px`);
+    button.style?.setProperty?.("--rabab-string-three", `${(normalized * 3.1).toFixed(2)}px`);
+  }
 
   function renderTimer() {
     const minutes = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
@@ -142,9 +155,10 @@ export function createRecorder({
 
   function setIdleButton() {
     recording = false;
-    button.classList.remove("recording");
-    button.classList.remove("requesting");
-    button.classList.remove("processing");
+    ["recording", "requesting", "processing", "ready", "error"].forEach((state) => {
+      button.classList.remove(state);
+    });
+    updateRababLevel(0);
     button.removeAttribute("aria-busy");
     button.setAttribute("aria-label", "Start recording");
   }
@@ -181,6 +195,7 @@ export function createRecorder({
     clearTimer();
     visualizer.stop();
     setIdleButton();
+    button.classList.add("error");
     session.chunks.length = 0;
     releaseStream(session.stream);
     activeSession = null;
@@ -201,6 +216,7 @@ export function createRecorder({
     if (session.chunks.length === 0) {
       callout.textContent = "Recording failed";
       status.textContent = RECORDING_FAILURE_MESSAGE;
+      button.classList.add("error");
       onReset?.();
       return;
     }
@@ -216,6 +232,7 @@ export function createRecorder({
       audioBlob = null;
       callout.textContent = "Recording failed";
       status.textContent = "No usable recording was received. Please record again.";
+      button.classList.add("error");
       onReset?.();
       return;
     }
@@ -224,6 +241,7 @@ export function createRecorder({
     playbackUrl = URL.createObjectURL(audioBlob);
     playback.src = playbackUrl;
     playback.hidden = false;
+    button.classList.add("ready");
 
     if (session.stopReason === "automatic") {
       callout.textContent = "Recording stopped automatically";
@@ -251,13 +269,13 @@ export function createRecorder({
     setIdleButton();
     button.classList.add("processing");
     button.setAttribute("aria-busy", "true");
-    button.setAttribute("aria-label", "Processing recording");
+    button.setAttribute("aria-label", "Preparing your recording");
 
     if (reason === "automatic") {
       callout.textContent = "Recording stopped automatically";
       status.textContent = durationMessage;
     } else {
-      callout.textContent = "Processing recording";
+      callout.textContent = "Preparing your recording";
       status.textContent = "One moment while we prepare your audio…";
     }
 
@@ -296,7 +314,7 @@ export function createRecorder({
     clearPlayback();
     secondsElapsed = 0;
     renderTimer();
-    callout.textContent = "Start recording";
+    callout.textContent = idleCallout;
     status.textContent = idleStatus;
     onReset?.();
   }
@@ -308,16 +326,18 @@ export function createRecorder({
     if (!capability.supported) {
       callout.textContent = capability.callout;
       status.textContent = capability.message;
+      button.classList.add("error");
       return;
     }
 
     starting = true;
+    button.classList.remove("ready", "error");
     onStart?.();
     clearTimer();
     button.classList.add("requesting");
     button.setAttribute("aria-busy", "true");
     button.setAttribute("aria-label", "Cancel microphone request");
-    callout.textContent = "Requesting microphone";
+    callout.textContent = "Requesting microphone access";
     status.textContent = "Allow microphone access in your browser to begin.";
     const currentSessionId = ++sessionId;
     let stream;
@@ -327,6 +347,7 @@ export function createRecorder({
       if (currentSessionId !== sessionId || destroyed) return;
       starting = false;
       setIdleButton();
+      button.classList.add("error");
       callout.textContent = "Microphone unavailable";
       status.textContent = microphoneFailureMessage(error);
       return;
@@ -350,6 +371,7 @@ export function createRecorder({
     } catch {
       releaseStream(stream);
       setIdleButton();
+      button.classList.add("error");
       callout.textContent = "Recording failed";
       status.textContent = RECORDING_FAILURE_MESSAGE;
       return;
@@ -389,7 +411,7 @@ export function createRecorder({
     button.classList.add("recording");
     button.setAttribute("aria-label", "Stop recording");
     callout.textContent = "Recording now";
-    status.textContent = "Speak naturally, then tap to stop";
+    status.textContent = "Speak naturally, then press the Rabab again to stop.";
 
     timerHandle = window.setInterval(() => {
       if (session.id !== sessionId || activeSession !== session) {
@@ -417,7 +439,7 @@ export function createRecorder({
         callout.textContent = "Recording ready";
         status.textContent = "Listen back, or record again if needed.";
       } else {
-        callout.textContent = "Start recording";
+        callout.textContent = idleCallout;
         status.textContent = idleStatus;
       }
       return;

@@ -11,6 +11,7 @@ export function createAudioVisualizer({
   cancelFrame = globalThis.cancelAnimationFrame?.bind(globalThis),
   reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false,
   pixelRatio = globalThis.devicePixelRatio ?? 1,
+  onLevel,
 } = {}) {
   const canvas = resolveCanvas(canvasOrId, root);
   const drawing = canvas?.getContext?.("2d") ?? null;
@@ -21,6 +22,16 @@ export function createAudioVisualizer({
   let samples = null;
   let active = false;
   let lastDrawAt = 0;
+  let smoothedLevel = 0;
+
+  function publishLevel(level) {
+    if (typeof onLevel !== "function") return;
+    try {
+      onLevel(Math.max(0, Math.min(1, level)));
+    } catch {
+      // A decorative level consumer must never interrupt recording.
+    }
+  }
 
   function resizeCanvas() {
     if (!canvas || !drawing) return;
@@ -55,6 +66,15 @@ export function createAudioVisualizer({
   function drawWaveform() {
     if (!active || !analyser || !drawing || !canvas || !samples) return;
     analyser.getByteTimeDomainData(samples);
+    let energy = 0;
+    for (let index = 0; index < samples.length; index += 1) {
+      const centered = (samples[index] - 128) / 128;
+      energy += centered * centered;
+    }
+    const rms = Math.sqrt(energy / Math.max(1, samples.length));
+    const normalizedLevel = Math.min(1, rms * 3.6);
+    smoothedLevel = smoothedLevel * 0.58 + normalizedLevel * 0.42;
+    publishLevel(smoothedLevel);
     resizeCanvas();
     clear();
     const height = canvas.height;
@@ -96,6 +116,7 @@ export function createAudioVisualizer({
       source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
       samples = new Uint8Array(analyser.fftSize);
+      smoothedLevel = 0;
       active = true;
       lastDrawAt = -Infinity;
       canvas.classList?.add("is-active");
@@ -123,6 +144,8 @@ export function createAudioVisualizer({
     analyser = null;
     samples = null;
     audioContext = null;
+    smoothedLevel = 0;
+    publishLevel(0);
     canvas?.classList?.remove("is-active");
     drawIdle();
   }

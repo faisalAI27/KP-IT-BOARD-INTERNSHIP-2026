@@ -9,6 +9,7 @@ function fixture({ reducedMotion = false, withAudioContext = true } = {}) {
   const frames = new Map();
   const cancelled = [];
   let nextFrame = 1;
+  const levels = [];
   const drawing = {
     beginPath: () => calls.push("begin"),
     clearRect: () => calls.push("clear"),
@@ -63,8 +64,9 @@ function fixture({ reducedMotion = false, withAudioContext = true } = {}) {
     },
     reducedMotion,
     pixelRatio: 1,
+    onLevel: (level) => levels.push(level),
   });
-  return { analyser, calls, cancelled, classes, contexts, frames, source, visualizer };
+  return { analyser, calls, cancelled, classes, contexts, frames, levels, source, visualizer };
 }
 
 test("live waveform uses Web Audio samples and releases its graph", () => {
@@ -79,6 +81,7 @@ test("live waveform uses Web Audio samples and releases its graph", () => {
   firstFrame(16);
   assert.equal(view.calls.includes("stroke"), true);
   assert.equal(view.calls.includes("line"), true);
+  assert.equal(view.levels.some((level) => level > 0), true);
 
   view.visualizer.stop();
   assert.equal(view.visualizer.isActive(), false);
@@ -86,6 +89,7 @@ test("live waveform uses Web Audio samples and releases its graph", () => {
   assert.equal(view.source.disconnectCalls, 1);
   assert.equal(view.contexts[0].closeCalls, 1);
   assert.equal(view.cancelled.length, 1);
+  assert.equal(view.levels.at(-1), 0);
 });
 
 test("waveform degrades safely when Web Audio is unavailable", () => {

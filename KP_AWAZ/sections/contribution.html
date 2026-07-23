@@ -44,7 +44,7 @@
               Another sentence
             </button>
           </div>
-          <p class="pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="-1">
+          <p class="pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
             زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
           </p>
           <p class="sentence-meaning" id="providedMeaning">
@@ -88,17 +88,34 @@
           <canvas class="recording-waveform" id="donateWaveform" width="720" height="120" aria-hidden="true"></canvas>
           <div class="recorder-controls">
             <button class="rec-btn" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
-              <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
-                <rect x="11" y="4" width="10" height="16" rx="5" />
-                <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
-              </svg>
-              <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
-                <rect x="9" y="9" width="14" height="14" rx="2" />
+              <svg class="rabab-icon" viewBox="0 0 120 132" aria-hidden="true">
+                <g class="rabab-echo">
+                  <path d="M16 62c-8 9-8 22 0 31M104 62c8 9 8 22 0 31" />
+                  <path d="M10 56c-13 14-13 31 0 45M110 56c13 14 13 31 0 45" />
+                </g>
+                <g class="rabab-instrument">
+                  <path class="rabab-neck" d="M53 14h14l-2 57H55z" />
+                  <path class="rabab-head" d="M50 10c5-7 15-7 20 0l-4 15H54z" />
+                  <path class="rabab-peg" d="M51 24H39m30 7h12" />
+                  <circle class="rabab-peg-dot" cx="38" cy="24" r="3" />
+                  <circle class="rabab-peg-dot" cx="82" cy="31" r="3" />
+                  <path class="rabab-body" d="M33 64c7-11 18-15 27-15s20 4 27 15c8 13 10 35 1 49-7 11-20 15-28 15s-21-4-28-15c-9-14-7-36 1-49Z" />
+                  <path class="rabab-waist" d="M35 73c9 7 41 7 50 0M34 108c11-7 41-7 52 0" />
+                  <circle class="rabab-sound-hole" cx="60" cy="91" r="12" />
+                  <path class="rabab-ornament" d="m60 78 7 13-7 13-7-13Z" />
+                  <path class="rabab-bridge" d="M47 108h26" />
+                  <path class="rabab-string rabab-string-one" d="M57 15v99" />
+                  <path class="rabab-string rabab-string-two" d="M60 15v99" />
+                  <path class="rabab-string rabab-string-three" d="M63 15v99" />
+                </g>
+                <g class="rabab-stop-mark">
+                  <rect x="48" y="80" width="24" height="24" rx="4" />
+                </g>
               </svg>
             </button>
             <div class="recorder-copy">
-              <strong id="donateRecCallout">Start recording</strong>
-              <span id="donateRecStatus" role="status" aria-live="polite">Tap the microphone when you are ready</span>
+              <strong id="donateRecCallout">Press the Rabab to record</strong>
+              <span id="donateRecStatus" role="status" aria-live="polite">Your sentence stays visible while you speak.</span>
             </div>
             <time class="rec-timer" id="donateRecTimer">00:00</time>
           </div>
@@ -169,17 +186,34 @@
           <canvas class="recording-waveform" id="openWaveform" width="720" height="120" aria-hidden="true"></canvas>
           <div class="recorder-controls">
             <button class="rec-btn" id="openRecBtn" type="button" aria-label="Start recording" disabled>
-              <svg class="mic-icon" viewBox="0 0 32 32" aria-hidden="true">
-                <rect x="11" y="4" width="10" height="16" rx="5" />
-                <path d="M7 16a9 9 0 0 0 18 0M16 25v4M11 29h10" />
-              </svg>
-              <svg class="stop-icon" viewBox="0 0 32 32" aria-hidden="true">
-                <rect x="9" y="9" width="14" height="14" rx="2" />
+              <svg class="rabab-icon" viewBox="0 0 120 132" aria-hidden="true">
+                <g class="rabab-echo">
+                  <path d="M16 62c-8 9-8 22 0 31M104 62c8 9 8 22 0 31" />
+                  <path d="M10 56c-13 14-13 31 0 45M110 56c13 14 13 31 0 45" />
+                </g>
+                <g class="rabab-instrument">
+                  <path class="rabab-neck" d="M53 14h14l-2 57H55z" />
+                  <path class="rabab-head" d="M50 10c5-7 15-7 20 0l-4 15H54z" />
+                  <path class="rabab-peg" d="M51 24H39m30 7h12" />
+                  <circle class="rabab-peg-dot" cx="38" cy="24" r="3" />
+                  <circle class="rabab-peg-dot" cx="82" cy="31" r="3" />
+                  <path class="rabab-body" d="M33 64c7-11 18-15 27-15s20 4 27 15c8 13 10 35 1 49-7 11-20 15-28 15s-21-4-28-15c-9-14-7-36 1-49Z" />
+                  <path class="rabab-waist" d="M35 73c9 7 41 7 50 0M34 108c11-7 41-7 52 0" />
+                  <circle class="rabab-sound-hole" cx="60" cy="91" r="12" />
+                  <path class="rabab-ornament" d="m60 78 7 13-7 13-7-13Z" />
+                  <path class="rabab-bridge" d="M47 108h26" />
+                  <path class="rabab-string rabab-string-one" d="M57 15v99" />
+                  <path class="rabab-string rabab-string-two" d="M60 15v99" />
+                  <path class="rabab-string rabab-string-three" d="M63 15v99" />
+                </g>
+                <g class="rabab-stop-mark">
+                  <rect x="48" y="80" width="24" height="24" rx="4" />
+                </g>
               </svg>
             </button>
             <div class="recorder-copy">
-              <strong id="openRecCallout">Start recording</strong>
-              <span id="openRecStatus" role="status" aria-live="polite">Tap when you are ready to speak</span>
+              <strong id="openRecCallout">Press the Rabab to record</strong>
+              <span id="openRecStatus" role="status" aria-live="polite">Speak naturally when recording begins.</span>
             </div>
             <time class="rec-timer" id="openRecTimer">00:00</time>
           </div>
