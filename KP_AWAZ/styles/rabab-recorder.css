@@ -357,11 +357,15 @@
   font-weight: 700;
   line-height: 1.8;
   text-align: right;
+  transform: translateZ(0);
+  transform-origin: center;
   transition:
     border-color 200ms ease,
     box-shadow 200ms ease,
-    opacity 110ms ease;
+    opacity 110ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   user-select: text;
+  will-change: transform;
 }
 
 .rabab-pashto-sentence:focus-visible {
@@ -502,12 +506,55 @@
 .rabab-record-button::after {
   width: calc(198px + var(--level) * 28px);
   height: calc(198px + var(--level) * 28px);
-  border: 1px dashed rgba(233, 189, 101, 0.28);
-  animation: rabab-orbit 28s linear infinite;
+  border: 1px solid rgba(233, 189, 101, 0.13);
 }
 
 .rabab-record-button:hover:not(:disabled)::before {
   transform: scale(1.035);
+}
+
+.rabab-orbit-line {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0.66;
+  background:
+    conic-gradient(
+      from 12deg,
+      transparent 0deg 13deg,
+      rgba(233, 189, 101, 0.96) 13deg 16deg,
+      transparent 16deg 43deg,
+      rgba(233, 189, 101, 0.58) 43deg 49deg,
+      transparent 49deg 91deg,
+      rgba(233, 189, 101, 0.92) 91deg 94deg,
+      transparent 94deg 142deg,
+      rgba(233, 189, 101, 0.66) 142deg 149deg,
+      transparent 149deg 205deg,
+      rgba(233, 189, 101, 0.9) 205deg 208deg,
+      transparent 208deg 267deg,
+      rgba(233, 189, 101, 0.62) 267deg 273deg,
+      transparent 273deg 326deg,
+      rgba(233, 189, 101, 0.94) 326deg 330deg,
+      transparent 330deg 360deg
+    );
+  pointer-events: none;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.25px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.25px));
+  will-change: transform;
+}
+
+.rabab-orbit-line-inner {
+  width: calc(184px + var(--level) * 21px);
+  height: calc(184px + var(--level) * 21px);
+  animation: rabab-orbit 11s linear infinite;
+}
+
+.rabab-orbit-line-outer {
+  width: calc(210px + var(--level) * 26px);
+  height: calc(210px + var(--level) * 26px);
+  opacity: 0.42;
+  transform: rotate(360deg);
+  animation: rabab-orbit-reverse 17s linear infinite;
 }
 
 .rabab-record-button:active:not(:disabled) .rabab-instrument-art {
@@ -536,10 +583,6 @@
   transition:
     filter 400ms ease,
     transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.rabab-record-button:hover:not(:disabled) .rabab-instrument-art {
-  transform: translateY(-3px) rotate(-1.2deg) scale(var(--rabab-scale));
 }
 
 .rabab-record-button.recording .rabab-instrument-art {
@@ -993,9 +1036,25 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .rabab-pashto-sentence:hover {
+    border-color: rgba(189, 89, 51, 0.42);
+    box-shadow:
+      0 12px 28px rgba(19, 68, 57, 0.11),
+      0 0 0 4px rgba(233, 189, 101, 0.08);
+    transform: scale(1.025);
+  }
+
   .rabab-pashto-sentence .pashto-word:hover {
     color: var(--rabab-terracotta);
-    transform: translateY(-1px) scale(1.06);
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .rabab-record-button:hover:not(:disabled) .rabab-instrument-art {
+    animation: rabab-hover-sway 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .rabab-record-button:hover:not(:disabled) .rabab-orbit-line {
+    opacity: 0.9;
   }
 }
 
@@ -1027,6 +1086,27 @@
 @keyframes rabab-orbit {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes rabab-orbit-reverse {
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes rabab-hover-sway {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(var(--rabab-scale));
+  }
+  42% {
+    transform: translateY(-8px) rotate(-2.8deg) scale(calc(var(--rabab-scale) + 0.025));
+  }
+  72% {
+    transform: translateY(-4px) rotate(1.3deg) scale(calc(var(--rabab-scale) + 0.012));
+  }
+  100% {
+    transform: translateY(-5px) rotate(-0.8deg) scale(calc(var(--rabab-scale) + 0.018));
   }
 }
 
@@ -1290,6 +1370,7 @@
   .rabab-record-button:hover:not(:disabled) .rabab-instrument-art,
   .rabab-review-actions button:hover:not(:disabled),
   .rabab-side-actions .rabab-secondary-action:hover:not(:disabled),
+  .rabab-pashto-sentence:hover,
   .rabab-pashto-sentence .pashto-word:hover {
     transform: none;
   }

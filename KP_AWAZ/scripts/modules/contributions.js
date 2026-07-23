@@ -7,6 +7,8 @@ const SENTENCE_LOAD_ERROR =
   "The reviewed Pashto sentence could not be loaded. Try again before recording.";
 const NO_SENTENCE_PROMPTS =
   "No reviewed Pashto sentences are available right now. Please try again later.";
+export const DEMO_PASHTO_SENTENCE =
+  "زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.";
 export const ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE =
   "Submission is temporarily unavailable while KP AWAZ connects your verified account-level data-use acceptance. No recording was uploaded; your recording is still here to listen to or record again.";
 
@@ -240,10 +242,10 @@ export async function initContributions({ profile = {} } = {}) {
     providedSentenceInput.disabled = true;
     nextSentenceButton.disabled = true;
     clearSentenceTransitions();
-    replaceProvidedSentenceText("");
+    replaceProvidedSentenceText(DEMO_PASHTO_SENTENCE);
     providedMeaning.textContent =
-      "Recording starts when a reviewed Pashto sentence is available.";
-    sentenceNumber.textContent = "Sentence unavailable";
+      "Preview only — a reviewed sentence will replace this example when recording is available.";
+    sentenceNumber.textContent = "Preview sentence";
     showSentencePromptStatus(message);
     syncRecordAccess();
   }

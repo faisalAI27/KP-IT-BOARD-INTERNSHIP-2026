@@ -4,6 +4,7 @@ import { constants } from "node:fs";
 import { test } from "node:test";
 
 import {
+  DEMO_PASHTO_SENTENCE,
   normalizeContributionMode,
   tokenizeSentenceWords,
 } from "../../scripts/modules/contributions.js";
@@ -36,6 +37,17 @@ test("Pashto sentence tokens preserve exact RTL text and punctuation", () => {
     tokens.filter(({ isWord }) => isWord).map(({ text }) => text),
     ["زما", "ژبه،", "زما", "غږ", "دی.", "هو!"],
   );
+});
+
+test("guided recording keeps a Pashto preview visible when live prompts are unavailable", async () => {
+  const source = await read("scripts/modules/contributions.js");
+  assert.equal(
+    DEMO_PASHTO_SENTENCE,
+    "زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.",
+  );
+  assert.match(source, /replaceProvidedSentenceText\(DEMO_PASHTO_SENTENCE\)/);
+  assert.match(source, /sentenceNumber\.textContent = "Preview sentence"/);
+  assert.match(source, /sentencePromptsReady = false/);
 });
 
 test("focused contribution flow keeps profile fields hidden and account consent honest", async () => {
@@ -96,8 +108,8 @@ test("record voice implements the supplied Rabab recorder template and motion", 
     read("scripts/modules/rabab-recorder-template.js"),
     read("scripts/modules/recorder.js"),
   ]);
-  assert.match(page, /styles\/rabab-recorder\.css\?v=20260723-supplied-template/);
-  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-rabab-recorder/);
+  assert.match(page, /styles\/rabab-recorder\.css\?v=20260723-rabab-motion/);
+  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-rabab-motion/);
   assert.doesNotMatch(page, /styles\/mic-enhanced-template\.css|styles\/contribution\.css/);
   assert.doesNotMatch(page, /donate-text/);
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
@@ -107,6 +119,7 @@ test("record voice implements the supplied Rabab recorder template and motion", 
   assert.match(html, /class="rabab-recorder-stage" id="donateRecordStage"/);
   assert.match(html, /class="rabab-instrument-zone"/);
   assert.match(html, /class="rabab-record-button" id="donateRecBtn"/);
+  assert.equal((html.match(/class="rabab-orbit-line rabab-orbit-line-(?:inner|outer)"/g) ?? []).length, 2);
   assert.match(html, /viewBox="0 0 180 380"/);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"/);
   assert.ok(html.indexOf("providedSentenceSource") < html.indexOf("donateRecordStage"));
@@ -132,6 +145,10 @@ test("record voice implements the supplied Rabab recorder template and motion", 
   assert.match(recorderSource, /playback\.play\?\.\(\)/);
   assert.match(recorderSource, /classList\.add\("playing"\)/);
   assert.match(css, /@keyframes rabab-orbit/);
+  assert.match(css, /@keyframes rabab-orbit-reverse/);
+  assert.match(css, /@keyframes rabab-hover-sway/);
+  assert.match(css, /\.rabab-record-button:hover:not\(:disabled\) \.rabab-instrument-art\s*{[\s\S]*?animation:\s*rabab-hover-sway/);
+  assert.match(css, /\.rabab-pashto-sentence:hover\s*{[\s\S]*?transform:\s*scale\(1\.025\)/);
   assert.match(css, /@keyframes rabab-ambient-drift/);
   assert.match(css, /@keyframes rabab-soft-pulse/);
   assert.match(css, /@keyframes rabab-sheen/);
