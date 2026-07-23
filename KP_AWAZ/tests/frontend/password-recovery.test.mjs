@@ -403,7 +403,7 @@ test("recovery pages reuse the approved cultural background and accessible contr
   assert.match(auth, new RegExp(background));
   assert.match(forgot, new RegExp(background));
   assert.match(reset, new RegExp(background));
-  assert.match(card, /assets\/images\/logo-primary\.svg/);
+  assert.match(card, /assets\/images\/khyber-voice-logo\.svg/);
   assert.match(card, /Back to KP AWAZ/);
   assert.match(card, /inputmode="numeric"/);
   assert.match(card, /autocomplete="one-time-code"/);

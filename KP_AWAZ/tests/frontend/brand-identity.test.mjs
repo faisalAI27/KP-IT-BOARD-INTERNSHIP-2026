@@ -45,8 +45,27 @@ test("full-color identity uses the approved earthy palette and integrated symbol
   assert.doesNotMatch(primary, /<text/);
 });
 
-test("the correct lockup is used on light, dark, and authentication surfaces", async () => {
-  const [header, footer, auth, workspace, forgot, reset, recoveryCard] = await Promise.all([
+test("the supplied Khyber Voice artwork is preserved as scalable production assets", async () => {
+  const [primary, light, mark] = await Promise.all([
+    read("assets/images/khyber-voice-logo.svg"),
+    read("assets/images/khyber-voice-logo-light.svg"),
+    read("assets/images/khyber-voice-mark.svg"),
+  ]);
+
+  for (const asset of [primary, light, mark]) {
+    assert.match(asset, /^<svg[^>]+viewBox=/);
+    assert.match(asset, /<title[^>]*>Khyber Voice/i);
+    assert.doesNotMatch(asset, /<text|<rect|filter=|href=/);
+  }
+  for (const color of ["#123F3A", "#B85C3D", "#D59C52", "#FFF7E8"]) {
+    assert.match(primary, new RegExp(color, "i"));
+  }
+  assert.match(light, /#FFF7E8/i);
+  assert.match(mark, /microphone with radiating voice waves/i);
+});
+
+test("the Khyber Voice logo is clickable on every branded surface", async () => {
+  const [header, footer, auth, workspace, forgot, reset, recoveryCard, admin, navigationCss] = await Promise.all([
     read("sections/header.html"),
     read("sections/footer.html"),
     read("auth.html"),
@@ -54,15 +73,46 @@ test("the correct lockup is used on light, dark, and authentication surfaces", a
     read("forgot-password.html"),
     read("reset-password.html"),
     read("sections/password-recovery-card.html"),
+    read("admin.html"),
+    read("styles/navigation.css"),
   ]);
 
-  assert.match(header, /assets\/images\/logo-primary\.svg/);
-  assert.match(footer, /assets\/images\/logo-monochrome-light\.svg/);
-  assert.match(auth, /assets\/images\/logo-primary\.svg/);
-  assert.match(workspace, /assets\/images\/logo-monochrome-light\.svg/);
+  assert.match(header, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
+  assert.match(footer, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo-light\.svg/);
+  assert.match(auth, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
+  assert.match(workspace, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice public home"[\s\S]*?khyber-voice-logo-light\.svg/);
   assert.match(forgot, /sections\/password-recovery-card\.html/);
   assert.match(reset, /sections\/password-recovery-card\.html/);
-  assert.match(recoveryCard, /assets\/images\/logo-primary\.svg/);
+  assert.match(recoveryCard, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
+  assert.match(admin, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-mark\.svg/);
+  assert.match(navigationCss, /\.logo\s*\{[^}]*min-height:\s*44px/s);
+});
+
+test("every production page uses the Khyber Voice emblem as its favicon", async () => {
+  const pages = [
+    "index.html",
+    "about.html",
+    "how-it-works.html",
+    "leaderboard.html",
+    "data-use.html",
+    "auth.html",
+    "forgot-password.html",
+    "reset-password.html",
+    "dashboard.html",
+    "contribute.html",
+    "my-contributions.html",
+    "profile.html",
+    "settings.html",
+    "admin.html",
+  ];
+
+  for (const page of pages) {
+    const html = await read(page);
+    assert.match(
+      html,
+      /<link rel="icon" href="assets\/images\/khyber-voice-mark\.svg" type="image\/svg\+xml" \/>/,
+    );
+  }
 });
 
 test("brand guidance records meaning, usage, minimum size, and accessibility", async () => {

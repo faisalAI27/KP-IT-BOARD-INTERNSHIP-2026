@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="282 296 412 256" fill="none" role="img" aria-labelledby="khyber-voice-mark-title khyber-voice-mark-desc">
+  <title id="khyber-voice-mark-title">Khyber Voice</title>
+  <desc id="khyber-voice-mark-desc">A Khyber gateway surrounding a microphone with radiating voice waves.</desc>
+  <g aria-hidden="true">
+    <path d="M316 376C306 394 302 413 302 435C302 457 306 476 316 494" stroke="#D59C52" stroke-width="12" stroke-linecap="round"/>
+    <path d="M660 376C670 394 674 413 674 435C674 457 670 476 660 494" stroke="#D59C52" stroke-width="12" stroke-linecap="round"/>
+    <path d="M338 391C331 404 328 418 328 435C328 452 331 466 338 479" stroke="#B85C3D" stroke-width="8" stroke-linecap="round"/>
+    <path d="M638 391C645 404 648 418 648 435C648 452 645 466 638 479" stroke="#B85C3D" stroke-width="8" stroke-linecap="round"/>
+    <path d="M404 341H352C346.477 341 342 345.477 342 351V482C342 487.523 346.477 492 352 492H404C409.523 492 414 487.523 414 482V351C414 345.477 409.523 341 404 341Z" fill="#123F3A"/>
+    <path d="M624 341H572C566.477 341 562 345.477 562 351V482C562 487.523 566.477 492 572 492H624C629.523 492 634 487.523 634 482V351C634 345.477 629.523 341 624 341Z" fill="#123F3A"/>
+    <path d="M334 346V320H350V304H366V320H382V304H398V320H414V346H334Z" fill="#123F3A"/>
+    <path d="M562 346V320H578V304H594V320H610V304H626V320H642V346H562Z" fill="#123F3A"/>
+    <path d="M399 492V332H577V492H532V436C532 402 513 376 488 376C463 376 444 402 444 436V492H399Z" fill="#123F3A"/>
+    <path d="M389 334H587L574 360H402L389 334Z" fill="#D59C52"/>
+    <path opacity="0.85" d="M436 350H540" stroke="#FFF7E8" stroke-width="4" stroke-linecap="round"/>
+    <path opacity="0.75" d="M366 371H390M366 393H390M366 415H390M586 371H610M586 393H610M586 415H610" stroke="#D59C52" stroke-width="4" stroke-linecap="round"/>
+    <path d="M360 458C362.761 458 365 455.761 365 453C365 450.239 362.761 448 360 448C357.239 448 355 450.239 355 453C355 455.761 357.239 458 360 458Z" fill="#FFF7E8"/>
+    <path d="M396 458C398.761 458 401 455.761 401 453C401 450.239 398.761 448 396 448C393.239 448 391 450.239 391 453C391 455.761 393.239 458 396 458Z" fill="#FFF7E8"/>
+    <path d="M580 458C582.761 458 585 455.761 585 453C585 450.239 582.761 448 580 448C577.239 448 575 450.239 575 453C575 455.761 577.239 458 580 458Z" fill="#FFF7E8"/>
+    <path d="M616 458C618.761 458 621 455.761 621 453C621 450.239 618.761 448 616 448C613.239 448 611 450.239 611 453C611 455.761 613.239 458 616 458Z" fill="#FFF7E8"/>
+    <path d="M507 415C507 404.507 498.493 396 488 396C477.507 396 469 404.507 469 415V437C469 447.493 477.507 456 488 456C498.493 456 507 447.493 507 437V415Z" fill="#B85C3D"/>
+    <path d="M457 435V439C457 456 471 470 488 470C505 470 519 456 519 439V435" stroke="#D59C52" stroke-width="8" stroke-linecap="round"/>
+    <path d="M488 470V492M472 492H504" stroke="#D59C52" stroke-width="8" stroke-linecap="round"/>
+    <path d="M346 510H630" stroke="#123F3A" stroke-width="10" stroke-linecap="round"/>
+    <path d="M379 528L395 544L411 528L427 544L443 528L459 544L475 528L491 544L507 528L523 544L539 528L555 544L571 528L587 544" stroke="#B85C3D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
