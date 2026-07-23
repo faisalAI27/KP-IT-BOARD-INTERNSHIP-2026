@@ -91,7 +91,7 @@ token and creates or synchronizes exactly one local application profile.
 ### Contributor workspace
 
 - `dashboard.html` — focused recording choices, compact review counts, and three recent submissions
-- `contribute.html` — query-selected guided/custom sentence recording with an optional long-form workflow
+- `contribute.html` — focused query-selected guided/custom sentence recording
 - `my-contributions.html` — private paginated history, review state, feedback, and withdrawal state
 - `profile.html` — display name, preferred language, leaderboard privacy, score, rank, and consent summary
 - `settings.html` — preferences, password controls, sign out, and withdrawal requests

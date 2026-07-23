@@ -12,7 +12,7 @@ The production dashboard repeated its contribution call to action, gave a large 
 - The shared sidebar prioritizes Dashboard, Record Voice, and My Recordings while retaining leaderboard, profile/privacy, settings, the public site, and sign out.
 - Authenticated profile data now fills the contributor name. Guided recordings no longer ask for a name or language.
 - The visible three-step wizard and redundant Continue/Review buttons were removed. A single Submit recording action appears after capture; the previous per-recording consent block is gone.
-- The original long-form `/open-recording` path remains available through a secondary disclosure, so the existing API contract is preserved without competing with the main sentence flow.
+- The contributor page now stays focused on guided and contributor-written sentences. The optional long-form disclosure was removed from this page; its backend contract remains unchanged.
 
 ### July 23 reading and Rabab refinement
 
@@ -21,7 +21,7 @@ The production dashboard repeated its contribution call to action, gave a large 
 - The reviewed Pashto sentence now sits in a warm parchment reading panel with `lang="ps"`, `dir="rtl"`, one keyboard focus stop, an optional English meaning, and an understated sentence-replacement action.
 - Visible Pashto words are rendered as non-focusable inline spans separated by their original whitespace text nodes. This keeps screen-reader output, copying, selection, punctuation, RTL order, review text, and the stored/API sentence exact while allowing a stable `scale(1.08)` pointer treatment.
 - Sentence replacement crossfades in place. Touch uses sentence-level feedback, and reduced motion removes word and Rabab transforms while retaining color/state feedback.
-- Both recording surfaces now use an original inline SVG Rabab inside the existing semantic button. Adjacent copy explicitly says that the Rabab starts/stops voice recording; the button retains native mouse, Enter, Space, focus, disabled, and ARIA behavior.
+- The earlier recording surfaces used an original inline SVG Rabab inside semantic buttons while retaining native mouse, Enter, Space, focus, disabled, and ARIA behavior. The primary surface was later replaced by the enhanced microphone control.
 - The existing Web Audio analyser now publishes a normalized RMS level from the same `MediaRecorder` stream. That value moves the Rabab strings, body, and echo marks while the existing Canvas waveform continues to show real microphone samples. No second recorder, stream, audio destination, or animation library was added.
 - Idle, permission request, recording, processing, ready, playback, and error states have distinct text and visuals without changing the control's 108×112 desktop or 90×98 mobile bounds.
 
@@ -45,7 +45,7 @@ The production dashboard repeated its contribution call to action, gave a large 
 
 - The supplied motion prototype now informs the production Record Voice page: its focused mission heading, privacy cue, Read → Record → Submit journey, dark recording stage, recording-only pulse rings, and restrained textile thread are adapted to the existing KP AWAZ palette.
 - The visual journey listens to the real recorder button states. It advances to Record while permission, capture, or processing is active and to Submit only when a playable recording is ready.
-- Existing authentication, reviewed-sentence loading, custom-sentence mode, Pashto semantics, Web Audio waveform, Rabab control, playback, account-policy gate, API payloads, and long-form recorder remain production-owned and unchanged.
+- Existing authentication, reviewed-sentence loading, custom-sentence mode, Pashto semantics, Web Audio waveform, playback, account-policy gate, and guided API payloads remain production-owned. The optional long-form disclosure has since been removed from the contributor page.
 - Prototype-only XP, streak, fake community activity, simulated recording, duplicate sidebar, theme toggle, confetti, tilt, and continuous decorative motion were intentionally excluded.
 - The layout reduces to one clear journey column and a two-column recorder control on small screens. Reduced-motion disables the entrance, shimmer, pulse, and journey transitions.
 
@@ -55,21 +55,27 @@ The production dashboard repeated its contribution call to action, gave a large 
 - Template states are connected to the production `MediaRecorder`. The orb requests real microphone permission, stops the real stream, previews the captured Blob from the same control, and continues to use the existing Web Audio analyser and cleanup lifecycle.
 - The supplied 44-bar signal display animates only during real capture or playback. The analyser’s normalized RMS level adjusts its brightness while the existing hidden Canvas remains the recorder’s real sample source.
 - XP rise and confetti are wired only to a genuine submission-success state; the current account-policy gate still blocks upload honestly and never fabricates successful submission or awarded points.
-- The replacement is scoped to the primary Record Voice card. Shared navigation, authenticated page guard, profile data, reviewed/custom sentence routes, backend contracts, and the optional long-form Rabab recorder remain unchanged.
+- The replacement is scoped to the primary Record Voice card. Shared navigation, authenticated page guard, profile data, reviewed/custom sentence routes, and backend contracts remain unchanged.
 - Small screens use the supplied two-column recorder layout and then the single-column microphone console below 450 px. Reduced-motion collapses all template animations and transitions to a single near-instant frame.
+
+### July 23 focused recorder and moving weave
+
+- The “Want to share a longer story instead?” disclosure, its plus trigger, and its long-form recorder were removed from the Record Voice page so the experience ends cleanly after the primary sentence workflow.
+- The contributor-facing module now initializes and releases only the primary recorder. The existing `/open-recording` backend contract remains available but is no longer exposed on this page.
+- The green, yellow, cream, and clay thread at the bottom of the primary Record Voice card now travels horizontally with the same seven-second continuous weave used by My Contributions. Reduced-motion keeps the thread static.
 
 ## New recording journey
 
 Guided:
 
 ```text
-Dashboard choice → reviewed sentence → Rabab → stop → listen/re-record → submit
+Dashboard choice → reviewed sentence → microphone → stop → listen/re-record → submit
 ```
 
 Custom:
 
 ```text
-Dashboard choice → RTL Pashto sentence → Rabab → stop → listen/re-record → submit
+Dashboard choice → RTL Pashto sentence → microphone → stop → listen/re-record → submit
 ```
 
 The provided-sentence path is now one dashboard click plus one Rabab press before recording starts. Unsupported or missing `mode` values safely default to guided mode. Switching mode updates the current URL without adding a new history entry.
@@ -78,7 +84,7 @@ The provided-sentence path is now one dashboard click plus one Rabab press befor
 
 `scripts/modules/audio-visualizer.js` extends the existing recorder rather than replacing it. During an active recording it creates an `AudioContext`, connects a `MediaStreamAudioSourceNode` to an `AnalyserNode`, draws real time-domain samples to Canvas with `requestAnimationFrame`, and publishes smoothed RMS levels to the Rabab presentation. It never connects to the audio destination, so it does not echo or interfere with `MediaRecorder`.
 
-Stopping, resetting, changing flows, closing the long-form disclosure, destroying the module, or leaving the page cancels the animation frame, disconnects nodes, closes the audio context, stops microphone tracks, clears timers, and revokes object URLs. Reduced-motion mode throttles visual sampling while retaining real input feedback. Text states cover permission request, recording, processing, playback, failure, and submission for screen-reader users. Browsers without Web Audio keep the existing text/timer recorder experience.
+Stopping, resetting, changing sentence modes, destroying the module, or leaving the page cancels the animation frame, disconnects nodes, closes the audio context, stops microphone tracks, clears timers, and revokes object URLs. Reduced-motion mode throttles visual sampling while retaining real input feedback. Text states cover permission request, recording, processing, playback, failure, and submission for screen-reader users. Browsers without Web Audio keep the existing text/timer recorder experience.
 
 ## Visual and motion system
 
@@ -88,7 +94,7 @@ Motion uses transform and opacity: four dashboard groups enter over 300–400 ms
 
 ## Consent and accessibility
 
-The contribution UI contains no per-recording checkbox, details block, consent error, or “I agree” action. Both flows now use “Submit recording.” The backend still requires explicit current-version consent fields for every upload, and no verified account-level policy record exists yet. The UI therefore blocks upload with an honest integration message while keeping the captured audio available. It does not send `true`, infer acceptance from the profile consent summary, or invent a timestamp. See `docs/account-level-consent-migration.md` before enabling uploads.
+The contribution UI contains no per-recording checkbox, details block, consent error, or “I agree” action. Both visible sentence modes use the same “Submit recording” action. The backend still requires explicit current-version consent fields for every upload, and no verified account-level policy record exists yet. The UI therefore blocks upload with an honest integration message while keeping the captured audio available. It does not send `true`, infer acceptance from the profile consent summary, or invent a timestamp. See `docs/account-level-consent-migration.md` before enabling uploads.
 
 Controls use semantic buttons, labels, live regions, visible focus, textual state changes, and 44–48 px touch targets. Pashto content and input use `lang="ps"` and `dir="rtl"`. The mobile drawer now closes with Escape, restores focus, updates its accessible label, and retains a strong backdrop.
 

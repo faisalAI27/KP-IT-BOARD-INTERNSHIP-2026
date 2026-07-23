@@ -145,26 +145,26 @@ test("contribution partial provides an accessible login-required status", async 
   assert.match(html, /id="contributionSignInButton"[\s\S]*Sign in/);
   assert.doesNotMatch(html, /id="toReviewBtn"|class="flow-progress"/);
   assert.match(html, /id="donateWaveform"[\s\S]*aria-hidden="true"/);
-  assert.match(html, /id="openWaveform"[\s\S]*aria-hidden="true"/);
   assert.match(html, /Your recording has been submitted\./);
-  assert.match(html, /Recording submitted\./);
-  assert.equal((html.match(/Under review/g) ?? []).length, 2);
+  assert.doesNotMatch(html, /open-recording-disclosure|openWaveform|openRecBtn/);
+  assert.doesNotMatch(html, /Want to share a longer story instead\?/);
+  assert.equal((html.match(/Under review/g) ?? []).length, 1);
 });
 
 
-test("both recording flows remove per-recording consent without fabricating acceptance", async () => {
+test("the focused recording flow removes per-recording consent without fabricating acceptance", async () => {
   const [html, source, api] = await Promise.all([
     readFile(new URL("../../sections/contribution.html", import.meta.url), "utf8"),
     readFile(new URL("../../scripts/modules/contributions.js", import.meta.url), "utf8"),
     readFile(new URL("../../scripts/services/contributions-api.js", import.meta.url), "utf8"),
   ]);
 
-  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 2);
+  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 1);
   assert.doesNotMatch(html, /type="checkbox"|consent-check|Consent policy version|I agree/i);
   assert.doesNotMatch(source, /consentGiven\s*:|consentPolicyVersion\s*:|submitVoiceDonation\(|submitOpenRecording\(/);
   assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
   assert.match(source, /Never[\s\S]*synthesize consent or infer it from an earlier recording/);
-  assert.equal((source.match(/showAccountPolicyBlock\(/g) ?? []).length, 3);
+  assert.equal((source.match(/showAccountPolicyBlock\(/g) ?? []).length, 2);
   assert.match(api, /if \(consentGiven !== true\)/);
   assert.match(api, /formData\.append\("consentGiven", "true"\)/);
   assert.match(api, /formData\.append\("consentPolicyVersion", CONSENT_POLICY_VERSION\)/);

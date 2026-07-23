@@ -1,7 +1,7 @@
 import { getSentencePrompts } from "../services/contributions-api.js?v=20260717-member-workspace";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
 import { initMicEnhancedTemplate } from "./mic-enhanced-template.js?v=20260723-mic-enhanced-template";
-import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260723-mic-enhanced-template";
+import { createRecorder } from "./recorder.js?v=20260723-mic-enhanced-template";
 
 const SENTENCE_LOAD_ERROR =
   "Sentence prompts could not be loaded. Try again, or use your own Pashto sentence below.";
@@ -68,19 +68,10 @@ export async function initContributions({
   const donateReview = document.getElementById("donateReview");
   const reviewSentence = document.getElementById("reviewSentence");
   const submitDonationButton = document.getElementById("submitDonation");
-  const recordSoundForm = document.getElementById("recordSoundForm");
-  const openRecordingDisclosure = document.querySelector(".open-recording-disclosure");
-  const recordName = document.getElementById("record-name");
-  const recordLanguage = document.getElementById("record-language-select");
-  const openReview = document.getElementById("openReview");
-  const submitOpenRecordingButton = document.getElementById("submitOpenRecording");
-  const recordSuccess = document.getElementById("success-record");
-  const recordError = document.getElementById("recordError");
   const contributionAuthStatus = document.getElementById("contributionAuthStatus");
   const contributionAuthMessage = document.getElementById("contributionAuthMessage");
   const contributionSignInButton = document.getElementById("contributionSignInButton");
   const donateRecordButton = document.getElementById("donateRecBtn");
-  const openRecordButton = document.getElementById("openRecBtn");
 
   let pashtoSentences = [];
   let sentenceIndex = 0;
@@ -89,7 +80,6 @@ export async function initContributions({
   let authVerified = false;
   let destroyed = false;
   let donateRecorder;
-  let openRecorder;
   let accessController;
   let micEnhancedPresenter;
   const sentenceTransitionTimeouts = new Set();
@@ -105,13 +95,6 @@ export async function initContributions({
   function applyProfileDefaults() {
     donorName.value = typeof profile.displayName === "string" ? profile.displayName.trim() : "Contributor";
     donorLanguage.value = "Pashto";
-    recordName.value = donorName.value;
-    const preferred = typeof profile.preferredLanguage === "string" ? profile.preferredLanguage.trim() : "";
-    if ([...recordLanguage.options].some((option) => option.value === preferred)) {
-      recordLanguage.value = preferred;
-    } else {
-      recordLanguage.value = "Pashto";
-    }
   }
 
   function getSelectedSentence() {
@@ -265,11 +248,6 @@ export async function initContributions({
     submitDonationButton.disabled = true;
   }
 
-  function hideOpenReview() {
-    openReview.hidden = true;
-    submitOpenRecordingButton.disabled = true;
-  }
-
   micEnhancedPresenter = initMicEnhancedTemplate();
 
   donateRecorder = createRecorder({
@@ -284,7 +262,6 @@ export async function initContributions({
     recordingStatus: "The sentence stays visible. Tap again when finished.",
     previewOnReady: true,
     canStart: () => (accessController?.canContribute() ?? false) && validateCurrentSentence({ focus: true }),
-    onStart: () => stopRecorderIfActive(openRecorder),
     onLevel: micEnhancedPresenter.setSignalLevel,
     onCapture: () => {
       const sentence = getSelectedSentence();
@@ -293,24 +270,6 @@ export async function initContributions({
       submitDonationButton.disabled = !authVerified;
     },
     onReset: hideDonateReview,
-  });
-
-  openRecorder = createRecorder({
-    buttonId: "openRecBtn",
-    timerId: "openRecTimer",
-    statusId: "openRecStatus",
-    playbackId: "openRecPlayback",
-    calloutId: "openRecCallout",
-    visualizerCanvasId: "openWaveform",
-    idleStatus: "Speak naturally when recording begins.",
-    idleCallout: "Press the Rabab to record",
-    canStart: () => accessController?.canContribute() ?? false,
-    onStart: () => stopRecorderIfActive(donateRecorder),
-    onCapture: () => {
-      openReview.hidden = false;
-      submitOpenRecordingButton.disabled = !authVerified;
-    },
-    onReset: hideOpenReview,
   });
 
   function resetDonationFlow({ mode = initialMode } = {}) {
@@ -329,21 +288,13 @@ export async function initContributions({
 
   function clearContributionSession() {
     resetDonationFlow();
-    recordSoundForm.reset();
-    applyProfileDefaults();
-    openRecorder.reset();
-    recordSuccess.classList.remove("show");
-    recordError.hidden = true;
     submitDonationButton.disabled = true;
-    submitOpenRecordingButton.disabled = true;
   }
 
   function updateContributionAccess({ verified }) {
     authVerified = verified;
     donateRecordButton.disabled = !verified;
-    openRecordButton.disabled = !verified;
     submitDonationButton.disabled = !verified || !donateRecorder.hasRecording();
-    submitOpenRecordingButton.disabled = !verified || !openRecorder.hasRecording();
   }
 
   function makeCustomSentenceAvailable(message) {
@@ -417,14 +368,6 @@ export async function initContributions({
     donateRecorder.reset();
     donateRecordButton.focus();
   });
-  document.getElementById("openRecordAgain").addEventListener("click", () => {
-    openRecorder.reset();
-    openRecordButton.focus();
-  });
-  openRecordingDisclosure.addEventListener("toggle", () => {
-    if (!openRecordingDisclosure.open) openRecorder.reset();
-  });
-
   donateForm.addEventListener("submit", (event) => {
     event.preventDefault();
     donationError.hidden = true;
@@ -442,31 +385,10 @@ export async function initContributions({
     (selectedMode() === "custom" ? customSentence : providedSentence).focus({ preventScroll: true });
   });
 
-  recordSoundForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    recordError.hidden = true;
-    if (!accessController.canContribute()) return;
-    if (!recordSoundForm.reportValidity()) return;
-    if (!openRecorder.hasRecording()) {
-      openRecordButton.focus();
-      return;
-    }
-    showAccountPolicyBlock(recordError);
-  });
-
-  recordSoundForm.addEventListener("reset", () => {
-    window.requestAnimationFrame(() => {
-      applyProfileDefaults();
-      openRecorder.reset();
-      recordSuccess.classList.remove("show");
-      recordError.hidden = true;
-    });
-  });
-
   applyProfileDefaults();
   setMode(initialMode);
   accessController = new ContributionAuthController({
-    recorders: [donateRecorder, openRecorder],
+    recorders: [donateRecorder],
     statusElement: contributionAuthStatus,
     messageElement: contributionAuthMessage,
     signInButton: contributionSignInButton,
@@ -480,7 +402,6 @@ export async function initContributions({
     micEnhancedPresenter.destroy();
     accessController.destroy();
     donateRecorder.destroy();
-    openRecorder.destroy();
     activeContributionCleanup = null;
   };
   accessController.init();

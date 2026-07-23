@@ -47,17 +47,17 @@ test("focused contribution flow keeps profile fields hidden and account consent 
   assert.match(html, /id="donor-name"[\s\S]*type="hidden"/);
   assert.match(html, /id="donor-language"[\s\S]*type="hidden"/);
   assert.doesNotMatch(html, /Step [123] of 3|Continue to recording|Continue to review/);
-  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 2);
+  assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 1);
   assert.doesNotMatch(html, /checkbox|consent-check|I agree/i);
   assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
   assert.doesNotMatch(source, /consentGiven\s*:\s*true/);
   assert.match(source, /profile\.displayName/);
-  assert.match(source, /profile\.preferredLanguage/);
+  assert.doesNotMatch(source, /openRecorder|openRecordingDisclosure|recordSoundForm/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /min-height:\s*44px/);
 });
 
-test("guided reading uses the enhanced microphone while long-form keeps the Rabab", async () => {
+test("guided reading uses one enhanced microphone without the long-form disclosure", async () => {
   const [html, css, micCss, contributionSource, recorderSource, visualizerSource] = await Promise.all([
     read("sections/contribution.html"),
     read("styles/contribution.css"),
@@ -67,19 +67,20 @@ test("guided reading uses the enhanced microphone while long-form keeps the Raba
     read("scripts/modules/audio-visualizer.js"),
   ]);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
-  assert.equal((html.match(/class="rabab-icon"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="rabab-icon"/g) ?? []).length, 0);
   assert.equal((html.match(/class="icon-mic"/g) ?? []).length, 1);
   assert.equal((html.match(/class="icon-stop"/g) ?? []).length, 1);
   assert.equal((html.match(/class="icon-play"/g) ?? []).length, 1);
   assert.match(html, /id="donateRecCallout">Tap once to record/);
-  assert.match(html, /id="openRecCallout">Press the Rabab to record/);
+  assert.doesNotMatch(html, /openRecCallout|open-recording-disclosure|longer story/);
+  assert.doesNotMatch(contributionSource, /openRecorder|openRecordingDisclosure|recordSoundForm/);
   assert.match(contributionSource, /className = "pashto-word"/);
   assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?scale\(1\.08\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pashto-word:hover[\s\S]*?transform:\s*none/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.rabab-instrument,[\s\S]*?\.rabab-string\s*{[\s\S]*?transform:\s*none/);
-  assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(recorderSource, /--rabab-string-one/);
+  assert.match(micCss, /@keyframes mic-cultural-thread-flow/);
+  assert.match(micCss, /\.mic-enhanced-card \.cultural-threads\s*{[\s\S]*?animation:\s*mic-cultural-thread-flow 7s linear infinite/);
+  assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.mic-enhanced-card \.cultural-threads\s*{[\s\S]*?animation:\s*none !important/);
   assert.match(recorderSource, /previewOnReady/);
   assert.match(visualizerSource, /createMediaStreamSource\(stream\)/);
   assert.match(visualizerSource, /onLevel/);
@@ -94,7 +95,8 @@ test("record voice implements the supplied enhanced microphone template and moti
     read("scripts/modules/mic-enhanced-template.js"),
     read("scripts/modules/recorder.js"),
   ]);
-  assert.match(page, /styles\/mic-enhanced-template\.css\?v=20260723-mic-enhanced-template/);
+  assert.match(page, /styles\/mic-enhanced-template\.css\?v=20260723-record-weave/);
+  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-record-weave/);
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
   assert.match(html, /class="voice-card glass-card mic-enhanced-card reveal tilt"/);
   assert.match(html, /Today’s voice mission/);
@@ -112,10 +114,12 @@ test("record voice implements the supplied enhanced microphone template and moti
   assert.match(html, /id="donateWaveform"/);
   assert.match(html, /id="donateRecBtn"/);
   assert.match(html, /id="submitDonation"/);
+  assert.doesNotMatch(html, /Want to share a longer story instead\?|open-recording-disclosure|openRecBtn/);
   assert.doesNotMatch(html, /community voices|themeToggle|sidebarRecord/i);
   assert.match(source, /initMicEnhancedTemplate/);
   assert.match(source, /previewOnReady:\s*true/);
   assert.match(source, /onLevel:\s*micEnhancedPresenter\.setSignalLevel/);
+  assert.doesNotMatch(source, /openRecorder|openRecordingDisclosure|recordSoundForm/);
   assert.match(presenterSource, /SIGNAL_BAR_COUNT = 44/);
   assert.match(presenterSource, /contains\("ready"\)/);
   assert.match(presenterSource, /contains\("recording"\)/);

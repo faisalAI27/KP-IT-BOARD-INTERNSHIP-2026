@@ -83,6 +83,10 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes mic-cultural-thread-flow {
+  to { background-position: 228px 0; }
+}
+
 @keyframes mic-xp-rise {
   0% { opacity: 0; transform: translate(-50%, 6px) scale(0.82); }
   25% { opacity: 1; }
@@ -336,6 +340,8 @@
     var(--mic-clay-600) 32px 48px,
     var(--mic-cream-200) 48px 57px
   );
+  background-size: 57px 9px;
+  animation: mic-cultural-thread-flow 7s linear infinite;
 }
 
 .mic-enhanced-card .card-heading {
@@ -1136,7 +1142,7 @@
 
 .mic-enhanced-card .ghost-action {
   display: flex;
-  min-height: 38px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0 10px;
@@ -1630,5 +1636,9 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .mic-enhanced-card .cultural-threads {
+    animation: none !important;
   }
 }
