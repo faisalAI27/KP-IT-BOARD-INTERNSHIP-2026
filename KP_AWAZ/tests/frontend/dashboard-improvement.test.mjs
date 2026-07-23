@@ -95,6 +95,7 @@ test("record voice implements the supplied enhanced microphone template and moti
     read("scripts/modules/recorder.js"),
   ]);
   assert.match(page, /styles\/mic-enhanced-template\.css\?v=20260723-mic-enhanced-template/);
+  assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
   assert.match(html, /class="voice-card glass-card mic-enhanced-card reveal tilt"/);
   assert.match(html, /Today’s voice mission/);
   assert.match(html, /Keep one piece of<br \/><em>Pashto alive\.<\/em>/);
