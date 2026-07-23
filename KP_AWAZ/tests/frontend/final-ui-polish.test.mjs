@@ -91,7 +91,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
 });
 
 
-test("dashboard keeps its production identity with a soft contribution surface and no polish override", async () => {
+test("dashboard keeps its production identity with the supplied color-flow surface", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
@@ -99,27 +99,28 @@ test("dashboard keeps its production identity with a soft contribution surface a
   ]);
 
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?#173e34;[\s\S]*?}/);
-  assert.match(dashboardCss, /\.dashboard-contribute-hub\s*{[\s\S]*?rgba\(246, 248, 241, 0\.98\)[\s\S]*?}/);
-  assert.doesNotMatch(dashboardCss, /\.dashboard-contribute-hub\s*{[^}]*background:\s*#173e34/s);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.72\)[\s\S]*?}/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before,[\s\S]*?dashboard-border-flow/);
+  assert.doesNotMatch(dashboardCss, /\.dashboard-colorflow-shell\s*{[^}]*background:\s*#173e34/s);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
   assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
   assert.doesNotMatch(polishCss, /\.rec-btn(?:\s*\{|:focus-visible)/);
 });
 
 
-test("dashboard embroidery stays behind content and no sidebar-edge divider remains", async () => {
+test("dashboard color-flow decoration stays noninteractive and no sidebar-edge divider remains", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
     read("styles/final-polish.css"),
   ]);
 
-  assert.match(dashboardCss, /\.dashboard-body \.workspace-main::before,\s*\.dashboard-body \.workspace-main::after[\s\S]*opacity:\s*0\.075/);
-  assert.match(dashboardCss, /--dashboard-embroidery-pattern:\s*url\("data:image\/svg\+xml/);
-  assert.match(dashboardCss, /body\.workspace-body\.dashboard-body\s*{[\s\S]*background-color:\s*#fbf7f0/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-corner\s*{[\s\S]*pointer-events:\s*none/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before,[\s\S]*animation:\s*dashboard-border-flow 8s linear infinite/);
+  assert.match(dashboardCss, /body\.workspace-body\.dashboard-body\s*{[\s\S]*background-color:\s*var\(--dashboard-cream\)/);
   assert.doesNotMatch(workspaceCss, /\.workspace-sidebar::after/);
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.match(polishCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*border-right/s);
-  assert.match(dashboardCss, /@media \(max-width: 650px\)[\s\S]*opacity:\s*0\.05/);
+  assert.match(dashboardCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.dashboard-colorflow-shell::before[\s\S]*animation:\s*none/);
 });

@@ -3,6 +3,10 @@ import {
   initializeWorkspace,
 } from "./modules/workspace-shell.js?v=20260717-auth-routing";
 import {
+  animateDashboardCounter,
+  initDashboardColorflow,
+} from "./modules/dashboard-colorflow.js?v=20260723-dashboard-colorflow";
+import {
   formatContributionDate,
   formatContributionReviewStatus,
   formatContributionType,
@@ -26,14 +30,10 @@ function renderStatistics(statistics) {
   ]) {
     const element = document.getElementById(id);
     if (!element) continue;
-    element.textContent = String(value);
-    const reveal = () => element.classList.add("is-loaded");
-    if (typeof globalThis.requestAnimationFrame === "function") {
-      globalThis.requestAnimationFrame(reveal);
-    } else {
-      reveal();
-    }
+    animateDashboardCounter(element, value);
   }
+  const approved = Math.max(0, Math.round(Number(statistics.approvedContributions) || 0));
+  text("dashboardApprovedBadge", `${approved} approved ${approved === 1 ? "voice" : "voices"}`);
 }
 
 
@@ -50,29 +50,35 @@ function renderRecent(response) {
   if (!list || !status) return;
   if (!response.items.length) {
     status.textContent = "Your voice trail is empty. Your first recording can begin today.";
+    status.hidden = false;
     list.hidden = true;
     return;
   }
 
   const items = response.items.map((item) => {
     const row = document.createElement("li");
+    const safeStatus = ["approved", "rejected"].includes(item.reviewStatus)
+      ? item.reviewStatus
+      : "pending";
+    row.className = "dashboard-mini-record";
+    row.dataset.status = safeStatus;
     const mark = document.createElement("span");
-    mark.className = "recent-voice-mark";
-    mark.dataset.status = item.reviewStatus;
-    mark.textContent = item.reviewStatus === "approved" ? "✓" : item.reviewStatus === "rejected" ? "!" : "···";
+    mark.className = "dashboard-mini-icon";
+    mark.textContent = safeStatus === "approved" ? "✓" : safeStatus === "rejected" ? "!" : "···";
     const copy = document.createElement("div");
+    copy.className = "dashboard-mini-copy";
     const heading = document.createElement("strong");
     heading.textContent = formatContributionType(item.contributionType);
     const detail = document.createElement("small");
     detail.textContent = `${formatContributionDate(item.createdAt)} · ${item.language} · ${formatDuration(item.durationSeconds)}`;
     copy.append(heading, detail);
     const badge = document.createElement("b");
-    badge.dataset.status = item.reviewStatus;
-    badge.textContent = item.reviewStatus === "pending"
+    badge.className = "dashboard-status-pill";
+    badge.textContent = safeStatus === "pending"
       ? "Under review"
-      : item.reviewStatus === "rejected"
+      : safeStatus === "rejected"
         ? "Please try again"
-        : formatContributionReviewStatus(item.reviewStatus);
+        : formatContributionReviewStatus(safeStatus);
     row.append(mark, copy, badge);
     return row;
   });
@@ -85,7 +91,10 @@ function renderRecent(response) {
 
 function safePanelFailure(message) {
   const status = document.getElementById("dashboardRecentStatus");
-  if (status) status.textContent = message;
+  if (status) {
+    status.textContent = message;
+    status.hidden = false;
+  }
 }
 
 
@@ -114,7 +123,13 @@ async function loadOverview({ state }) {
 }
 
 
-window.addEventListener("beforeunload", destroyWorkspace, { once: true });
+const dashboardColorflow = initDashboardColorflow();
+
+
+window.addEventListener("beforeunload", () => {
+  dashboardColorflow.destroy();
+  destroyWorkspace();
+}, { once: true });
 
 
 void initializeWorkspace({ page: "overview", onReady: loadOverview }).catch(() => {

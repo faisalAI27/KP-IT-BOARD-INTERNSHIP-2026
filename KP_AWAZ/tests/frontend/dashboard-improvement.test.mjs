@@ -13,7 +13,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("dashboard presents exactly two direct recording choices", async () => {
   const html = await read("dashboard.html");
-  const choices = html.match(/class="dashboard-recording-choice(?: is-recommended)?"/g) ?? [];
+  const choices = html.match(/class="[^"]*\bdashboard-recording-choice\b[^"]*"/g) ?? [];
   assert.equal(choices.length, 2);
   assert.match(html, /contribute\.html\?mode=guided/);
   assert.match(html, /contribute\.html\?mode=custom/);
@@ -140,56 +140,61 @@ test("record voice implements the supplied enhanced microphone template and moti
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*0\.01ms\s*!important/);
 });
 
-test("dashboard contribution panel is compact and softly surfaced", async () => {
+test("dashboard implements the supplied color-flow contribution surface", async () => {
   const [html, css] = await Promise.all([
     read("dashboard.html"),
     read("styles/dashboard.css"),
   ]);
   assert.match(html, /class="workspace-body dashboard-body"/);
-  assert.match(html, /Choose how you want to share your voice/);
-  assert.match(html, /Read a provided Pashto sentence or contribute words you naturally use\./);
-  assert.doesNotMatch(css, /\.dashboard-contribute-hub\s*{[^}]*background:\s*#173e34/s);
-  assert.match(css, /\.dashboard-contribute-hub\s*{[^}]*padding:\s*clamp\(18px, 2\.1vw, 24px\)/s);
-  assert.match(css, /\.dashboard-contribute-hub\s*{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
-  assert.match(css, /\.dashboard-recording-choice\s*{[^}]*min-height:\s*92px/s);
+  assert.match(html, /Choose how you want to [\s\S]*share your voice/);
+  assert.match(html, /Read a provided Pashto sentence or contribute the words you naturally use\./);
+  assert.match(html, /dashboard-colorflow-shell dashboard-contribute-hub/);
+  assert.match(css, /\.dashboard-colorflow-shell\s*{[\s\S]*?background:\s*rgba\(255, 255, 255, 0\.72\)/);
+  assert.match(css, /\.dashboard-colorflow-shell::before,[\s\S]*?dashboard-border-flow 8s linear infinite/);
+  assert.match(css, /\.dashboard-colorflow-shell::after\s*{[\s\S]*?animation-direction:\s*reverse/);
+  assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?min-height:\s*116px/);
   assert.match(css, /\.dashboard-recording-choices\s*{[^}]*grid-auto-rows:\s*1fr/s);
-  assert.match(css, /\.dashboard-recording-choice\.is-recommended\s*{[^}]*rgba\(255, 255, 255, 0\.78\)/s);
+  assert.match(css, /\.dashboard-flow-text\s*{[\s\S]*?animation:\s*dashboard-text-flow 8s linear infinite/);
 });
 
 test("dashboard hierarchy and motion keep recording first", async () => {
-  const [html, css] = await Promise.all([
+  const [html, css, source, presenter] = await Promise.all([
     read("dashboard.html"),
     read("styles/dashboard.css"),
+    read("scripts/dashboard-app.js"),
+    read("scripts/modules/dashboard-colorflow.js"),
   ]);
   assert.ok(html.indexOf("dashboard-contribute-hub") < html.indexOf("recent-voices"));
-  assert.ok(html.indexOf("recent-voices") < html.indexOf("dashboard-stat-strip"));
+  assert.ok(html.indexOf("recent-voices") < html.indexOf("dashboard-summary-section"));
   assert.doesNotMatch(html, /Your contributor dashboard/);
   assert.doesNotMatch(html, /Help Pashto speech technology understand voices like yours/);
   assert.match(html, /class="dashboard-greeting-salutation">Salaam,/);
   assert.match(html, /class="dashboard-greeting-person"><span id="workspaceGreetingName">contributor<\/span>\.<\/span>/);
   assert.match(css, /dashboard-greeting-salutation[\s\S]*280ms/);
   assert.match(css, /dashboard-greeting-person[\s\S]*300ms 90ms/);
-  assert.match(css, /dashboard-greeting-line[\s\S]*scaleX\(0\)/);
-  assert.match(css, /dashboard-contribute-hub[\s\S]*380ms[\s\S]*cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
-  assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?transform 220ms cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
-  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?translateY\(-3px\)/);
-  assert.match(css, /\.dashboard-recording-choice:focus-visible[\s\S]*?translateY\(-3px\)/);
-  assert.match(css, /\.dashboard-recording-choice:focus-visible \.dashboard-choice-arrow[\s\S]*?translateX\(4px\)/);
-  assert.match(css, /dashboard-stat-value-in/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?dashboard-greeting-person::after[\s\S]*?animation:\s*none/);
+  assert.match(css, /@keyframes dashboard-greeting-line[\s\S]*scaleX\(0\)/);
+  assert.match(css, /dashboard-colorflow-stack > \*[\s\S]*500ms cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
+  assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?perspective\(900px\)/);
+  assert.match(css, /\.dashboard-recording-choice:hover,[\s\S]*?translateY\(-6px\)/);
+  assert.match(css, /@keyframes dashboard-border-flow/);
+  assert.match(css, /@keyframes dashboard-text-flow/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dashboard-colorflow-shell::before[\s\S]*?animation:\s*none/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dashboard-recording-choice:hover[\s\S]*?transform:\s*none/);
+  assert.match(source, /animateDashboardCounter/);
+  assert.match(source, /initDashboardColorflow/);
+  assert.match(presenter, /--dashboard-tilt-x/);
+  assert.match(presenter, /--dashboard-glow-x/);
+  assert.match(presenter, /prefers-reduced-motion: reduce/);
 });
 
-test("dashboard replaces graph paper with scoped original embroidery", async () => {
+test("dashboard carries the supplied grid and drifting color-flow corner", async () => {
   const css = await read("styles/dashboard.css");
   const bodyBlock = css.match(/body\.workspace-body\.dashboard-body\s*{([\s\S]*?)\n}/)?.[1] ?? "";
-  assert.match(bodyBlock, /data:image\/svg\+xml/);
-  assert.match(bodyBlock, /background-image:\s*[\s\S]*?radial-gradient/);
-  assert.doesNotMatch(bodyBlock, /linear-gradient/);
-  assert.match(css, /\.dashboard-body \.workspace-main::before,\s*\.dashboard-body \.workspace-main::after\s*{[\s\S]*?opacity:\s*0\.075/);
-  assert.doesNotMatch(css, /--dashboard-border-pattern|\.dashboard-contribute-hub::after/);
-  assert.match(css, /pointer-events:\s*none/);
-  assert.match(css, /@media \(max-width: 650px\)[\s\S]*?\.dashboard-body \.workspace-main::after\s*{[\s\S]*?display:\s*none/);
+  assert.match(bodyBlock, /background-image:\s*[\s\S]*?linear-gradient[\s\S]*?radial-gradient/);
+  assert.match(bodyBlock, /background-size:\s*48px 48px, 48px 48px, auto/);
+  assert.match(css, /\.dashboard-colorflow-corner\s*{[\s\S]*?animation:\s*dashboard-corner-drift 16s linear infinite/);
+  assert.match(css, /\.dashboard-colorflow-corner\s*{[\s\S]*?pointer-events:\s*none/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.dashboard-colorflow-corner\s*{[\s\S]*?opacity:\s*0\.09/);
 });
 
 test("experimental dashboard directories are absent from production", async () => {
