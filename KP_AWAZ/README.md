@@ -93,8 +93,8 @@ token and creates or synchronizes exactly one local application profile.
 - `dashboard.html` — focused recording choices, compact review counts, and three recent submissions
 - `contribute.html` — focused query-selected guided/custom sentence recording
 - `my-contributions.html` — private paginated history, review state, feedback, and withdrawal state
-- `profile.html` — display name, preferred language, leaderboard privacy, score, rank, and consent summary
-- `settings.html` — preferences, password controls, sign out, and withdrawal requests
+- `settings.html` — unified profile, leaderboard privacy, score, rank, consent, password, and withdrawal controls
+- `profile.html` — compatibility route rendering the same unified Settings workspace
 
 Every workspace page uses the shared `WorkspaceShell`. It restores the Supabase
 session, verifies it with FastAPI, loads the local profile, and only then marks

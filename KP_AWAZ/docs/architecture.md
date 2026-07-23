@@ -6,9 +6,10 @@
 - `auth.html` owns the dedicated password/signup-code account entrance.
 - `about.html`, `how-it-works.html`, and `leaderboard.html` are standalone public pages.
 - `forgot-password.html` and `reset-password.html` isolate recovery flows.
-- `dashboard.html`, `contribute.html`, `my-contributions.html`, `profile.html`, and
-  `settings.html` are real private
-  page shells sharing `sections/workspace-sidebar.html`.
+- `dashboard.html`, `contribute.html`, `my-contributions.html`, and `settings.html`
+  are private page shells sharing `sections/workspace-sidebar.html`.
+- `profile.html` remains a protected compatibility route and renders the unified
+  Settings workspace.
 - `sections/` owns semantic markup and visible copy.
 - `styles/` owns presentation, separated by page responsibility.
 - `scripts/modules/` owns browser behavior and DOM state.

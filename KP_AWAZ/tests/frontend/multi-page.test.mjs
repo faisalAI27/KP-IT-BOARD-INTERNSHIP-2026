@@ -45,11 +45,11 @@ test("public homepage has no account modal or private contribution workflow", as
 });
 
 
-test("public data-use page and private profile expose the consent explanation safely", async () => {
-  const [dataUse, profilePartial, profileApp] = await Promise.all([
+test("public data-use page and unified settings expose the consent explanation safely", async () => {
+  const [dataUse, settingsPartial, settingsApp] = await Promise.all([
     read("data-use.html"),
-    read("sections/workspace-profile.html"),
-    read("scripts/profile-page-app.js"),
+    read("sections/workspace-settings.html"),
+    read("scripts/settings-page-app.js"),
   ]);
 
   for (const heading of [
@@ -64,30 +64,45 @@ test("public data-use page and private profile expose the consent explanation sa
   }
   assert.match(dataUse, /Policy 1\.0/);
   assert.match(dataUse, /legacy consent status unknown/);
-  assert.match(profilePartial, /id="profileConsentVersion"/);
-  assert.match(profilePartial, /id="profileConsentDate"/);
-  assert.match(profilePartial, /href="data-use\.html"/);
-  assert.match(profileApp, /getMyConsentSummary\(\)/);
-  assert.match(profileApp, /legacy consent status unknown/);
-  assert.doesNotMatch(`${dataUse}\n${profilePartial}`, /accessToken|refreshToken|userId/);
+  assert.match(settingsPartial, /id="settingsConsentVersion"/);
+  assert.match(settingsPartial, /id="settingsConsentDate"/);
+  assert.match(settingsPartial, /href="data-use\.html"/);
+  assert.match(settingsApp, /getMyConsentSummary\(\)/);
+  assert.match(settingsApp, /legacy consent status unknown/);
+  assert.doesNotMatch(`${dataUse}\n${settingsPartial}`, /accessToken|refreshToken|userId/);
 });
 
-test("private profile uses one minimal workspace instead of stacked cards", async () => {
-  const [profile, css] = await Promise.all([
-    read("sections/workspace-profile.html"),
-    read("styles/workspace-pages.css"),
+test("profile and privacy are merged into one refined Settings workspace", async () => {
+  const [profilePage, settingsPage, settings, css, app, sidebar] = await Promise.all([
+    read("profile.html"),
+    read("settings.html"),
+    read("sections/workspace-settings.html"),
+    read("styles/settings.css"),
+    read("scripts/settings-page-app.js"),
+    read("sections/workspace-sidebar.html"),
   ]);
 
-  assert.equal((profile.match(/class="profile-workspace"/g) ?? []).length, 1);
-  assert.match(profile, /class="profile-workspace-grid"/);
-  assert.match(profile, /class="profile-insights"/);
-  assert.doesNotMatch(profile, /account-detail-card|profile-portrait-rings|profile-data-number|✦/);
-  assert.match(css, /\.profile-workspace\s*{[\s\S]*?border:\s*1px solid var\(--line\)[\s\S]*?background:/);
-  assert.match(css, /\.profile-score-card,\s*\.profile-consent-card\s*{[\s\S]*?border:\s*0[\s\S]*?box-shadow:\s*none !important/);
-  assert.match(css, /\.profile-insights\s*{[\s\S]*?border-left:\s*1px solid var\(--line\)/);
-  assert.match(css, /\.profile-workspace-grid\s*{[\s\S]*?minmax\(390px, 0\.75fr\)/);
-  assert.match(css, /\.profile-consent-card::after\s*{[\s\S]*?display:\s*none/);
-  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.profile-insights,[\s\S]*?grid-template-columns:\s*1fr/);
+  for (const page of [profilePage, settingsPage]) {
+    assert.match(page, /sections\/workspace-settings\.html/);
+    assert.match(page, /scripts\/settings-page-app\.js\?v=20260723-unified-settings/);
+    assert.doesNotMatch(page, /workspace-profile\.html|profile-page-app\.js/);
+  }
+  assert.match(settings, /class="settings-template-shell"/);
+  assert.match(settings, /id="settingsDisplayName"/);
+  assert.match(settings, /id="settingsVerifiedEmail"[\s\S]*?readonly/);
+  assert.match(settings, /id="settingsLeaderboardOptIn"/);
+  assert.match(settings, /id="settingsApprovedCount"/);
+  assert.match(settings, /id="settingsConsentVersion"/);
+  assert.match(settings, /id="withdrawalSettingsSection"/);
+  assert.doesNotMatch(settings, /id="oldPassword"|Show guided recording first|Show contribution reminders/);
+  assert.match(app, /updateMyProfile\(updates\)/);
+  assert.match(app, /getMyContributionStatistics\(\)/);
+  assert.match(app, /getMyConsentSummary\(\)/);
+  assert.match(css, /\.settings-template-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.76\)/);
+  assert.match(css, /\.settings-template-shell::before\s*{[\s\S]*?repeating-linear-gradient/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.settings-field-grid,[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.doesNotMatch(sidebar, /href="profile\.html"/);
+  assert.match(sidebar, /href="settings\.html"[\s\S]*?Profile, privacy &amp; security/);
 });
 
 

@@ -79,7 +79,7 @@ test("member workspace is split into real pages with shared navigation", async (
   );
   assert.match(sidebar, /href="dashboard\.html"/);
   assert.match(sidebar, /href="my-contributions\.html"/);
-  assert.match(sidebar, /href="profile\.html"/);
+  assert.doesNotMatch(sidebar, /href="profile\.html"/);
   assert.match(sidebar, /href="contribute\.html\?mode=guided"/);
-  assert.match(sidebar, /href="settings\.html"/);
+  assert.match(sidebar, /href="settings\.html"[\s\S]*?Profile, privacy &amp; security/);
 });
