@@ -1,0 +1,66 @@
+<header class="nav" id="top">
+  <div class="nav-inner">
+    <a class="logo" href="index.html" aria-label="KP Awaz home">
+      <img class="brand-lockup" src="assets/images/logo-primary.svg" width="141" height="42" alt="" />
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="primary-navigation"
+      aria-label="Open navigation"
+    >
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="links" id="primary-navigation" aria-label="Primary">
+      <a href="index.html" data-public-nav>Home</a>
+      <a href="about.html" data-public-nav>About</a>
+      <a href="how-it-works.html" data-public-nav>How It Works</a>
+      <a href="leaderboard.html" data-public-nav>Leaderboard</a>
+      <a
+        class="mobile-contribute-link"
+        href="auth.html?next=contribute.html"
+        data-start-contributing
+      >Donate Your Voice</a>
+      <button
+        class="nav-private-link"
+        id="myContributionsNavButton"
+        type="button"
+        data-nav-target="my-contributions"
+        aria-controls="myContributionsPageSection"
+        hidden
+      >
+        My Contributions
+      </button>
+    </nav>
+
+    <div class="nav-cta">
+      <div class="account-control">
+        <a
+          class="btn btn-quiet btn-sm auth-header-button"
+          id="authHeaderButton"
+          href="auth.html"
+          data-auth-kind="loading"
+          aria-disabled="true"
+        >
+          <span class="auth-status-dot" aria-hidden="true"></span>
+          <span id="authHeaderButtonLabel">Sign In</span>
+        </a>
+        <a
+          class="btn btn-quiet btn-sm public-account-link"
+          id="publicAccountLink"
+          href="profile.html"
+          hidden
+        >Account</a>
+      </div>
+      <a class="btn btn-primary btn-sm" href="auth.html?next=contribute.html" data-start-contributing>
+        Donate Your Voice
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="m7 5 5 5-5 5" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</header>

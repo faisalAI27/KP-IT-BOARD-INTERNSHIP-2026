@@ -1,0 +1,184 @@
+<section class="contribute-section" id="contribute" aria-labelledby="recordingStudioTitle">
+  <div class="contribution-auth-status" id="contributionAuthStatus" role="status" aria-live="polite">
+    <span id="contributionAuthMessage">Verifying your account before recording…</span>
+    <button class="btn btn-primary btn-sm" id="contributionSignInButton" type="button" hidden>Sign in</button>
+  </div>
+
+  <article class="voice-card glass-card mic-enhanced-card reveal tilt" id="contribution-panel" style="--delay: 130ms">
+    <header class="card-heading">
+      <div>
+        <span class="micro-label"><i aria-hidden="true"></i> Today’s voice mission</span>
+        <h2 id="recordingStudioTitle">Keep one piece of<br /><em>Pashto alive.</em></h2>
+        <p>Read the sentence, record naturally, and submit. Everything happens here—no extra page or unnecessary clicks.</p>
+      </div>
+      <span class="privacy-pill">Private until reviewed</span>
+    </header>
+
+    <form id="donateForm" data-form="donate" novalidate>
+      <input id="donor-name" name="contributor-name" type="hidden" />
+      <input id="donor-language" name="language" type="hidden" value="Pashto" />
+      <input type="radio" name="sentence-source" value="provided" checked hidden />
+      <input type="radio" name="sentence-source" value="custom" hidden />
+      <span class="sr-only" id="contributionModeLabel">Reviewed Pashto sentence</span>
+      <span class="sr-only" id="contributionModeDescription">Your sentence is ready below.</span>
+
+      <ol class="journey" id="recordingJourney" aria-label="Recording progress">
+        <li class="journey-step active is-active" data-recording-step="1" aria-current="step">
+          <b class="journey-step-number" aria-hidden="true">1</b>
+          <span>Read sentence</span>
+        </li>
+        <li class="journey-step" data-recording-step="2">
+          <b class="journey-step-number" aria-hidden="true">2</b>
+          <span>Record voice</span>
+        </li>
+        <li class="journey-step" data-recording-step="3">
+          <b class="journey-step-number" aria-hidden="true">3</b>
+          <span>Submit &amp; earn XP</span>
+        </li>
+      </ol>
+
+      <div class="submission-error sentence-prompt-status" id="sentencePromptStatus" role="alert" hidden>
+        <span id="sentencePromptMessage"></span>
+        <button class="btn btn-quiet btn-sm" id="retrySentencePrompts" type="button">Try again</button>
+      </div>
+
+      <section aria-labelledby="guidedRecordingTitle">
+        <h3 class="sr-only" id="guidedRecordingTitle">Record your sentence</h3>
+
+        <div class="record-stage" id="donateRecordStage">
+          <div class="xp-float" id="donateXpFloat" aria-hidden="true">+20 XP</div>
+
+          <div class="mic-console">
+            <span class="mic-halo" aria-hidden="true"></span>
+            <span class="mic-orbit" aria-hidden="true"></span>
+            <span class="mic-orbit-inner" aria-hidden="true"></span>
+            <span class="pulse-ring one" aria-hidden="true"></span>
+            <span class="pulse-ring two" aria-hidden="true"></span>
+            <span class="pulse-ring three" aria-hidden="true"></span>
+            <button class="record-orb" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
+              <svg class="icon-mic" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" />
+              </svg>
+              <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="6.5" y="6.5" width="11" height="11" rx="2.2" fill="currentColor" stroke="none" />
+              </svg>
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+            <span class="record-cue" id="donateRecordCue"><span class="tap-dot" aria-hidden="true"></span>Tap to start</span>
+          </div>
+
+          <div class="record-copy">
+            <div class="record-status-row">
+              <span class="record-status">
+                <span class="status-dot" aria-hidden="true"></span>
+                <span id="donateRecordStateLabel">Ready when you are</span>
+              </span>
+              <span class="quality-chip">Clear voice · 10–20 sec</span>
+            </div>
+            <h3 id="donateRecCallout">Tap once to record</h3>
+            <p id="donateRecStatus" role="status" aria-live="polite">Speak at your normal pace. Tap again when finished.</p>
+            <div class="signal-panel">
+              <div class="signal-head">
+                <span>Voice signal</span>
+                <span class="signal-live" id="donateSignalState">Waiting</span>
+              </div>
+              <div class="visualizer" id="donateSignalVisualizer" aria-hidden="true"></div>
+              <canvas class="live-waveform-canvas" id="donateWaveform" width="720" height="120" aria-hidden="true"></canvas>
+            </div>
+          </div>
+
+          <div class="record-meta">
+            <div class="timer-card">
+              <span class="timer-label">Duration</span>
+              <time class="timer" id="donateRecTimer">00:00</time>
+              <span class="timer-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
+            <button class="ghost-action" id="nextSentenceBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 7h-7a4 4 0 0 0-4 4v1" />
+                <path d="m17 4 3 3-3 3" />
+                <path d="M4 17h7a4 4 0 0 0 4-4v-1" />
+                <path d="m7 20-3-3 3-3" />
+              </svg>
+              Another sentence
+            </button>
+          </div>
+
+          <audio class="mic-template-playback" id="donateRecPlayback" hidden></audio>
+        </div>
+      </section>
+
+      <div class="sentence-source sentence-card" id="providedSentenceSource">
+        <div class="sentence-top">
+          <span class="language-pill">Pashto · پښتو</span>
+          <span class="sentence-number" id="sentenceNumber">Sentence 1</span>
+        </div>
+        <div class="sentence-content">
+          <p class="pashto pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
+            زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
+          </p>
+          <p class="translation sentence-meaning" id="providedMeaning">
+            My language is my identity, and my voice shapes its future.
+          </p>
+        </div>
+      </div>
+
+      <div class="sentence-source" id="customSentenceSource" hidden>
+        <div class="field custom-sentence-field sentence-card">
+          <div class="sentence-top">
+            <span class="language-pill">Pashto · پښتو</span>
+            <span class="sentence-number">Your sentence</span>
+          </div>
+          <label for="custom-sentence">Your Pashto sentence <span class="required-note">Required</span></label>
+          <textarea
+            id="custom-sentence"
+            name="custom-sentence"
+            lang="ps"
+            dir="rtl"
+            minlength="3"
+            maxlength="300"
+            aria-describedby="customSentenceHelp customSentenceError sentenceCount"
+            placeholder="خپله جمله دلته ولیکئ..."
+            disabled
+          ></textarea>
+          <div class="field-note" id="customSentenceHelp">
+            <span>Try a proverb, daily phrase, memory, or natural expression.</span>
+            <span id="sentenceCount">0 / 300</span>
+          </div>
+          <p class="field-error" id="customSentenceError" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="sentence-mode-row">
+        <button class="sentence-mode-action" id="switchSentenceMode" type="button">Use my own sentence instead</button>
+      </div>
+
+      <section class="review-actions" id="donateReview" aria-labelledby="donateReviewTitle" hidden>
+        <div class="sr-only">
+          <h3 id="donateReviewTitle">Listen once, then submit when you are ready.</h3>
+          <p id="reviewSentence" lang="ps" dir="rtl"></p>
+        </div>
+        <button class="secondary-button" id="donateRecordAgain" type="button">Record again</button>
+        <button class="primary-button submit-recording" id="submitDonation" type="submit" disabled>Submit recording</button>
+        <p class="submission-error review-error" id="donationError" role="alert" tabindex="-1" hidden></p>
+      </section>
+
+      <section class="submission-success" id="success-donate" aria-live="polite" hidden>
+        <span class="success-mark" aria-hidden="true">✓</span>
+        <div>
+          <h3>Your recording has been submitted.</h3>
+          <p>It is private and marked Under review. We will add reviewer feedback to your recording history.</p>
+        </div>
+        <div class="contribution-success-links">
+          <button class="btn btn-primary btn-sm" id="donateAgainBtn" type="button">Record another sentence</button>
+          <a class="btn btn-quiet btn-sm" href="my-contributions.html">View my recordings</a>
+        </div>
+      </section>
+    </form>
+    <div class="cultural-threads" aria-hidden="true"></div>
+  </article>
+  <div class="mic-template-toast" id="micTemplateToast" role="status" aria-live="polite"></div>
+</section>

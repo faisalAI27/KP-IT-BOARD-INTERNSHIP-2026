@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Create or access your secure KP AWAZ contributor account."
+    />
+    <title>Contributor access — KP AWAZ</title>
+    <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/auth-page.css?v=20260720-recovery-otp" />
+  </head>
+  <body class="access-page" data-page-state="loading" data-auth-view="sign_in">
+    <a class="skip-link" href="#accountAccess">Skip to account access</a>
+
+    <main class="access-layout" id="accountAccess">
+      <figure
+        class="cultural-hero"
+        id="authCulturalHero"
+        data-hero-state="loading"
+        aria-hidden="true"
+      >
+        <div class="cultural-hero-fallback" aria-hidden="true"></div>
+        <picture>
+          <source
+            media="(max-width: 620px)"
+            srcset="assets/auth/kp-awaz-auth-background-mobile.webp"
+            type="image/webp"
+          />
+          <source
+            srcset="assets/auth/kp-awaz-auth-background.webp"
+            type="image/webp"
+          />
+          <img
+            id="authCulturalHeroImage"
+            src="assets/auth/kp-awaz-auth-background-fallback.jpg"
+            width="1672"
+            height="941"
+            decoding="async"
+            fetchpriority="high"
+            alt=""
+          />
+        </picture>
+      </figure>
+      <div class="access-background-overlay" aria-hidden="true"></div>
+
+      <div class="access-stage" id="authCulturalPanel">
+        <section class="access-form-side" aria-labelledby="accessTitle">
+          <div class="access-card">
+          <div class="access-card-topbar">
+            <a class="access-back" href="index.html">
+              <span aria-hidden="true">←</span> Back to KP AWAZ
+            </a>
+            <span class="access-language" aria-label="Pashto word for voice" lang="ps" dir="rtl">غږ</span>
+          </div>
+
+          <div class="access-branding">
+            <a class="access-brand" href="index.html" aria-label="KP AWAZ home">
+              <img src="assets/images/logo-primary.svg" width="154" height="46" alt="" />
+            </a>
+            <p>Our voices, our language, our Khyber Pakhtunkhwa.</p>
+          </div>
+
+          <div class="auth-view-context" aria-hidden="true">
+            <span id="accessStoryContext">Welcome back to the community</span>
+            <span id="accessStoryTitle">Our voices belong in the digital future.</span>
+            <span id="accessStoryMessage">
+              Continue preserving the voices and languages of Khyber Pakhtunkhwa.
+            </span>
+          </div>
+
+          <div id="accountInteractiveContent">
+            <header class="access-card-heading">
+              <span class="access-kicker" id="accessCardKicker">Contributor sign in</span>
+              <h1 id="accessTitle">Welcome back.</h1>
+              <p id="accessSubtitle">Sign in to continue your contribution journey.</p>
+            </header>
+
+            <div class="access-tabs" role="tablist" aria-label="Account access options">
+              <button
+                class="is-active"
+                id="passwordSignInTab"
+                type="button"
+                role="tab"
+                aria-controls="passwordSignInPanel"
+                aria-selected="true"
+                tabindex="0"
+              >
+                Sign in
+              </button>
+              <button
+                id="createAccountTab"
+                type="button"
+                role="tab"
+                aria-controls="createAccountPanel"
+                aria-selected="false"
+                tabindex="-1"
+              >
+                Create account
+              </button>
+            </div>
+
+            <button class="access-google" id="accountGoogleButton" type="button">
+              <span class="google-mark-slot" aria-hidden="true">
+                <img
+                  class="google-mark"
+                  src="assets/brands/google-g-logo.png"
+                  width="20"
+                  height="20"
+                  alt=""
+                />
+              </span>
+              <span id="accountGoogleButtonLabel">Continue with Google</span>
+            </button>
+
+            <div class="access-divider"><span>or continue with email</span></div>
+
+            <div
+              class="access-message"
+              id="accountAccessMessage"
+              role="alert"
+              aria-live="polite"
+              hidden
+            ></div>
+
+            <section
+              id="passwordSignInPanel"
+              role="tabpanel"
+              aria-labelledby="passwordSignInTab"
+            >
+              <form class="access-form" id="passwordSignInForm">
+                <label for="passwordSignInEmail">
+                  Email address
+                  <input
+                    id="passwordSignInEmail"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    maxlength="254"
+                    placeholder="you@example.com"
+                    aria-describedby="passwordSignInMessage"
+                    required
+                  />
+                </label>
+                <label for="passwordSignInPassword">
+                  Password
+                  <span class="password-control">
+                    <input
+                      id="passwordSignInPassword"
+                      name="password"
+                      type="password"
+                      autocomplete="current-password"
+                      minlength="8"
+                      maxlength="72"
+                      placeholder="Your account password"
+                      aria-describedby="passwordSignInMessage"
+                      required
+                    />
+                    <button
+                      id="toggleSignInPassword"
+                      type="button"
+                      aria-label="Show password"
+                      aria-pressed="false"
+                    >Show</button>
+                  </span>
+                </label>
+                <a class="forgot-password-link" href="forgot-password.html">Forgot password?</a>
+                <button class="access-primary" id="passwordSignInSubmit" type="submit">
+                  <span id="passwordSignInSubmitLabel">Sign in to workspace</span>
+                  <span class="button-arrow" aria-hidden="true">→</span>
+                </button>
+                <div
+                  class="access-message"
+                  id="passwordSignInMessage"
+                  role="alert"
+                  aria-live="polite"
+                  hidden
+                ></div>
+              </form>
+              <p class="access-mode-link">
+                New to KP AWAZ?
+                <button id="switchToCreateButton" type="button">Create an account</button>
+              </p>
+            </section>
+
+            <section
+              id="createAccountPanel"
+              role="tabpanel"
+              aria-labelledby="createAccountTab"
+              hidden
+            >
+              <ol class="account-steps" aria-label="Account creation progress">
+                <li id="accountStepDetails" data-state="active">
+                  <span>1</span><small>Your details</small>
+                </li>
+                <li id="accountStepVerify" data-state="upcoming">
+                  <span>2</span><small>Email check</small>
+                </li>
+                <li id="accountStepReady" data-state="upcoming">
+                  <span>3</span><small>Workspace</small>
+                </li>
+              </ol>
+
+              <div id="accountDetailsStep">
+                <form class="access-form" id="createAccountForm">
+                  <label for="createDisplayName">
+                    Display name
+                    <input
+                      id="createDisplayName"
+                      name="displayName"
+                      type="text"
+                      autocomplete="name"
+                      minlength="2"
+                      maxlength="80"
+                      placeholder="How the community will know you"
+                      aria-describedby="createAccountMessage"
+                      required
+                    />
+                  </label>
+
+                  <label for="createEmail">
+                    Email address
+                    <input
+                      id="createEmail"
+                      name="email"
+                      type="email"
+                      autocomplete="email"
+                      maxlength="254"
+                      placeholder="you@example.com"
+                      aria-describedby="createAccountMessage"
+                      required
+                    />
+                  </label>
+
+                  <div class="access-field-pair">
+                    <label for="createPassword">
+                      Create password
+                      <span class="password-control">
+                        <input
+                          id="createPassword"
+                          name="password"
+                          type="password"
+                          autocomplete="new-password"
+                          minlength="8"
+                          maxlength="72"
+                          placeholder="At least 8 characters"
+                          aria-describedby="createPasswordHelp passwordLengthFeedback createAccountMessage"
+                          required
+                        />
+                        <button
+                          id="toggleCreatePassword"
+                          type="button"
+                          aria-label="Show password"
+                          aria-pressed="false"
+                        >Show</button>
+                      </span>
+                    </label>
+                    <label for="confirmPassword">
+                      Confirm password
+                      <span class="password-control">
+                        <input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type="password"
+                          autocomplete="new-password"
+                          minlength="8"
+                          maxlength="72"
+                          placeholder="Repeat password"
+                          aria-describedby="passwordMatchFeedback createAccountMessage"
+                          required
+                        />
+                        <button
+                          id="toggleConfirmPassword"
+                          type="button"
+                          aria-label="Show confirmed password"
+                          aria-pressed="false"
+                        >Show</button>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div class="password-feedback" aria-live="polite">
+                    <p id="passwordLengthFeedback" data-state="neutral">
+                      <span aria-hidden="true">○</span> 8–72 characters
+                    </p>
+                    <p id="passwordMatchFeedback" data-state="neutral">
+                      <span aria-hidden="true">○</span> Both passwords match
+                    </p>
+                  </div>
+
+                  <p class="field-helper" id="createPasswordHelp">
+                    Your password is handled only by Supabase Auth.
+                  </p>
+
+                  <p class="field-helper email-verification-note">
+                    <span aria-hidden="true">✦</span>
+                    We will send a six-digit code to verify your email address.
+                  </p>
+
+                  <button class="access-primary" id="createAccountSubmit" type="submit">
+                    <span id="createAccountSubmitLabel">Create account</span>
+                    <span class="button-arrow" aria-hidden="true">→</span>
+                  </button>
+
+                  <div
+                    class="access-message"
+                    id="createAccountMessage"
+                    role="alert"
+                    aria-live="polite"
+                    hidden
+                  ></div>
+                </form>
+
+                <div
+                  class="account-status-failure"
+                  id="accountStatusFailure"
+                  role="group"
+                  aria-label="Account check failed"
+                  hidden
+                >
+                  <button id="retryAccountStatusButton" type="button">Retry</button>
+                </div>
+
+                <section
+                  class="existing-account-panel"
+                  id="existingAccountPanel"
+                  aria-labelledby="existingAccountTitle"
+                  hidden
+                >
+                  <span class="existing-account-emblem" aria-hidden="true">✦</span>
+                  <h3 id="existingAccountTitle">Account already exists</h3>
+                  <p><strong>An account already exists with this email.</strong></p>
+                  <p>Sign in to continue to your contributor dashboard.</p>
+                  <div class="existing-account-actions">
+                    <button
+                      class="access-primary"
+                      id="existingAccountSignInButton"
+                      type="button"
+                    >Sign In</button>
+                    <button
+                      class="access-secondary"
+                      id="existingAccountGoogleButton"
+                      type="button"
+                    >Continue with Google</button>
+                    <a id="existingAccountForgotPassword" href="forgot-password.html">
+                      Forgot Password
+                    </a>
+                    <button id="existingAccountDifferentEmailButton" type="button">
+                      Use a different email
+                    </button>
+                  </div>
+                </section>
+                <p class="access-mode-link">
+                  Already have an account?
+                  <button id="switchToSignInButton" type="button">Sign in</button>
+                </p>
+              </div>
+
+              <div class="otp-stage" id="accountOtpStep" hidden>
+                <span class="otp-seal" aria-hidden="true">✦</span>
+                <span class="access-kicker">Secure email check</span>
+                <h3>One final step.</h3>
+                <p id="signupOtpHelp">
+                  We sent a six-digit verification code to
+                  <strong id="signupOtpEmail"></strong>
+                </p>
+
+                <form class="access-form" id="signupOtpForm">
+                  <label for="signupOtpInput">
+                    Verification code
+                    <input
+                      class="otp-input"
+                      id="signupOtpInput"
+                      name="otp"
+                      type="text"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      maxlength="6"
+                      pattern="[0-9]{6}"
+                      placeholder="000000"
+                      aria-describedby="signupOtpHelp signupOtpMessage"
+                      required
+                    />
+                  </label>
+                  <button class="access-primary" id="signupOtpSubmit" type="submit">
+                    <span id="signupOtpSubmitLabel">Verify and continue</span>
+                    <span class="button-arrow" aria-hidden="true">→</span>
+                  </button>
+                </form>
+
+                <div class="otp-actions" aria-label="Verification code options">
+                  <button id="resendSignupOtpButton" type="button">
+                    <span id="resendSignupOtpLabel">Resend verification code</span>
+                  </button>
+                  <button id="changeSignupEmailButton" type="button">Change email</button>
+                  <button id="cancelSignupOtpButton" type="button">Cancel</button>
+                </div>
+
+                <div
+                  class="access-message"
+                  id="signupOtpMessage"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                ></div>
+              </div>
+            </section>
+
+            <p class="access-terms">
+              By continuing, you accept the project contribution terms. Recordings
+              may be reviewed and used for KP language technology.
+              <a href="data-use.html">Read our privacy and data-use explanation</a>.
+            </p>
+          </div>
+
+          <section
+            class="account-success"
+            id="accountSuccessState"
+            role="status"
+            aria-live="polite"
+            hidden
+          >
+            <span class="success-emblem" aria-hidden="true">✦</span>
+            <span class="access-kicker">Identity verified</span>
+            <h2>Welcome to KP AWAZ.</h2>
+            <p>Your contributor workspace is ready.</p>
+            <small>Taking you to your dashboard…</small>
+          </section>
+
+          <noscript>
+            <p class="access-message" data-tone="error">
+              JavaScript is required to use secure account access.
+            </p>
+          </noscript>
+          </div>
+        </section>
+      </div>
+
+      <aside class="access-cultural-note" aria-label="KP AWAZ community message">
+        <span aria-hidden="true">✦</span>
+        <p id="authCulturalMessage">Every voice carries a story. Every language carries a community.</p>
+      </aside>
+    </main>
+
+    <script type="module" src="scripts/auth-page.js?v=20260720-recovery-otp"></script>
+  </body>
+</html>

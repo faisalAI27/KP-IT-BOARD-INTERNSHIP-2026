@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="See how voice contributions are recorded, reviewed, and counted on KP AWAZ." />
+    <title>How contribution works — KP AWAZ</title>
+    <link rel="icon" href="assets/images/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/main.css?v=20260720-final-polish" />
+    <link rel="stylesheet" href="styles/public-pages.css?v=20260720-public-polish" />
+  </head>
+  <body data-app-state="loading">
+    <a class="skip-link" href="#main-content">Skip to contribution process</a>
+    <div data-partial="sections/header.html"></div>
+    <main id="main-content">
+      <section class="process-hero section-pad"><div class="wrap"><span class="story-kicker">From one voice to a trusted collection</span><h1>One clear contribution journey, from phrase to review.</h1><p>See what the platform collects, why it matters, and what happens after you submit.</p></div></section>
+      <section class="section-pad process-steps-section" aria-label="Ten-step contribution process">
+        <ol class="wrap process-list">
+          <li><span>01</span><div><h2>Sign in securely</h2><p>Create an email-and-password account and verify it with the six-digit signup code, return with your password, or continue separately with Google.</p></div></li>
+          <li><span>02</span><div><h2>Receive a Pashto phrase</h2><p>The guided recording flow presents an active phrase selected from the project&rsquo;s reviewed phrase collection.</p></div></li>
+          <li><span>03</span><div><h2>Record in your browser</h2><p>Allow microphone access and read the phrase naturally. The browser chooses a supported audio format for your device.</p></div></li>
+          <li><span>04</span><div><h2>Listen and re-record</h2><p>Play your recording back. If you want another take, re-record before you continue.</p></div></li>
+          <li><span>05</span><div><h2>Accept the current data-use policy</h2><p>The planned account-level step will ask you to review and explicitly accept the current policy once, then store that version securely with your account. This verified acceptance is not connected yet.</p></div></li>
+          <li><span>06</span><div><h2>Submit after acceptance is verified</h2><p>The studio currently supports recording, listening and re-recording, but upload is temporarily unavailable until account-level acceptance is connected. Once connected, original recorded bytes, the phrase reference and language will use the protected contribution route.</p></div></li>
+          <li><span>07</span><div><h2>See Pending review</h2><p>Every new contribution begins as <strong>Pending</strong>. Submission alone does not increase your score.</p></div></li>
+          <li><span>08</span><div><h2>Receive approval or rejection</h2><p>An administrator checks the contribution. Approved and Rejected results appear privately in My Contributions, with safe feedback when provided.</p></div></li>
+          <li><span>09</span><div><h2>Update score after approval</h2><p>An approved owned recording adds one to your contribution score. Pending and Rejected recordings add zero.</p></div></li>
+          <li><span>10</span><div><h2>Organize data for future research</h2><p>Eligible approved recordings remain connected to useful reference information and may later be prepared for research under the project&rsquo;s consent and withdrawal policies.</p></div></li>
+        </ol>
+      </section>
+      <section class="collection-context" aria-labelledby="collectionContextTitle">
+        <div class="wrap collection-context-grid">
+          <div><span class="story-kicker">Why context travels with the audio</span><h2 id="collectionContextTitle">A recording is more useful when its meaning and origin stay clear.</h2></div>
+          <dl>
+            <div><dt>Phrase reference</dt><dd>Shows what the contributor was asked to read; it is not presented as a separately verified transcript.</dd></div>
+            <div><dt>Language</dt><dd>Keeps recordings organized with the language selected for that contribution.</dd></div>
+            <div><dt>Original audio format</dt><dd>Preserves exactly what the supported browser recorded. Stage A does not convert it for model training.</dd></div>
+          </dl>
+        </div>
+      </section>
+      <section class="score-rule"><div class="wrap score-rule-grid"><div><span class="story-kicker">The scoring rule</span><h2>Contribution score = approved owned contributions.</h2></div><dl><div><dt>Pending</dt><dd>0 score effect</dd></div><div><dt>Approved</dt><dd>+1 score</dd></div><div><dt>Rejected</dt><dd>0 score effect</dd></div></dl></div></section>
+      <section class="section-pad story-closing"><div class="wrap"><h2>Ready to lend your voice?</h2><p>Record a short Pashto phrase, review your contribution, and submit it for responsible human review.</p><a class="btn btn-primary" href="auth.html?next=contribute.html" data-start-contributing>Donate your voice →</a></div></section>
+    </main>
+    <div data-partial="sections/footer.html"></div>
+    <script type="module" src="scripts/public-page-app.js?v=20260720-public-polish"></script>
+  </body>
+</html>

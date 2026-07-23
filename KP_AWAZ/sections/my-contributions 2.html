@@ -1,0 +1,198 @@
+<section
+  class="my-contributions-page contributions-motion-page private-page-section"
+  id="myContributionsPageSection"
+  aria-labelledby="myContributionsPageTitle"
+  hidden
+>
+  <span class="contributions-corner-pattern" aria-hidden="true"></span>
+
+  <header class="contributions-motion-header">
+    <div>
+      <span class="contributions-eyebrow">
+        <i aria-hidden="true"></i>
+        Private review trail
+      </span>
+      <h1 id="myContributionsPageTitle" tabindex="-1">My Contributions</h1>
+      <p>Review your recordings, listen again, and follow their approval journey.</p>
+    </div>
+    <button
+      class="contributions-refresh"
+      id="refreshContributionsButton"
+      type="button"
+      aria-label="Refresh contribution history"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 11a8 8 0 1 0 2 5" />
+        <path d="M20 4v7h-7" />
+      </svg>
+      <span>Refresh</span>
+    </button>
+  </header>
+
+  <div class="my-contributions-panel contributions-motion-shell">
+    <div class="my-contributions-heading">
+      <div>
+        <span class="contributions-kicker">Your submitted recordings</span>
+        <h2>Contribution history</h2>
+      </div>
+      <span class="contributions-updated" id="myContributionsUpdated">Ready to refresh</span>
+    </div>
+
+    <section
+      class="my-contributions-summary"
+      id="myContributionsSummary"
+      aria-labelledby="myContributionsSummaryTitle"
+    >
+      <div class="my-contributions-summary-heading">
+        <div>
+          <span class="contributions-eyebrow contributions-eyebrow-small">
+            <i aria-hidden="true"></i>
+            Review overview
+          </span>
+          <h3 id="myContributionsSummaryTitle">Your contribution summary</h3>
+        </div>
+        <div class="contributions-score" aria-label="Approved contribution score">
+          <strong class="contributions-score-orb" id="myContributionsScoreValue">—</strong>
+          <span>
+            <small>Contribution score</small>
+            <b>Approved voices</b>
+          </span>
+        </div>
+      </div>
+
+      <dl class="my-contributions-summary-grid">
+        <div class="contributions-stat" data-summary-status="total">
+          <dt>Total</dt>
+          <dd id="myContributionsSummaryTotal">—</dd>
+          <span>all recordings</span>
+        </div>
+        <div class="contributions-stat" data-summary-status="pending">
+          <dt>Pending review</dt>
+          <dd id="myContributionsSummaryPending">—</dd>
+          <span>being checked</span>
+        </div>
+        <div class="contributions-stat" data-summary-status="approved">
+          <dt>Approved</dt>
+          <dd id="myContributionsSummaryApproved">—</dd>
+          <span>count toward score</span>
+        </div>
+        <div class="contributions-stat" data-summary-status="rejected">
+          <dt>Rejected</dt>
+          <dd id="myContributionsSummaryRejected">—</dd>
+          <span>needs attention</span>
+        </div>
+      </dl>
+
+      <p
+        class="my-contributions-summary-status"
+        id="myContributionsSummaryStatus"
+        role="status"
+        aria-live="polite"
+      ></p>
+      <p class="my-contributions-score-note">
+        <i aria-hidden="true"></i>
+        Only approved contributions increase your contribution score.
+      </p>
+    </section>
+
+    <div class="my-contributions-toolbar">
+      <div class="my-contributions-filters" role="group" aria-label="Filter contribution history">
+        <button
+          class="my-contributions-filter active"
+          id="filterAllContributionsButton"
+          type="button"
+          data-filter="all"
+          aria-pressed="true"
+        >
+          All recordings
+        </button>
+        <button
+          class="my-contributions-filter"
+          id="filterPendingContributionsButton"
+          type="button"
+          data-filter="pending"
+          aria-pressed="false"
+        >
+          Pending
+        </button>
+        <button
+          class="my-contributions-filter"
+          id="filterApprovedContributionsButton"
+          type="button"
+          data-filter="approved"
+          aria-pressed="false"
+        >
+          Approved
+        </button>
+        <button
+          class="my-contributions-filter"
+          id="filterRejectedContributionsButton"
+          type="button"
+          data-filter="rejected"
+          aria-pressed="false"
+        >
+          Rejected
+        </button>
+      </div>
+      <span class="my-contributions-count" id="myContributionsVisibleCount">
+        No recordings loaded
+      </span>
+    </div>
+
+    <div
+      class="my-contributions-status"
+      id="myContributionsStatus"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    ></div>
+
+    <div class="my-contributions-error" id="myContributionsError" role="alert" hidden>
+      <span id="myContributionsErrorMessage">We could not load your contributions.</span>
+      <button class="btn btn-quiet btn-sm" id="retryContributionsButton" type="button">
+        Retry
+      </button>
+    </div>
+
+    <div class="my-contributions-empty" id="myContributionsEmpty" hidden>
+      <strong id="myContributionsEmptyTitle">You have not submitted any voice contributions yet.</strong>
+      <span id="myContributionsEmptyDescription">Record your first contribution to help improve KP AWAZ.</span>
+    </div>
+
+    <ol
+      class="my-contributions-list"
+      id="myContributionsList"
+      aria-label="Your submitted voice contributions"
+      hidden
+    ></ol>
+
+    <div class="my-contributions-pagination">
+      <p
+        class="my-contributions-load-more-error"
+        id="myContributionsLoadMoreError"
+        role="alert"
+        hidden
+      ></p>
+      <button
+        class="btn btn-quiet my-contributions-load-more"
+        id="loadMoreContributionsButton"
+        type="button"
+        hidden
+      >
+        Load more
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="contributions-toast"
+    id="myContributionsToast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <b aria-hidden="true">✓</b>
+    <span>Contribution history refreshed</span>
+  </div>
+</section>

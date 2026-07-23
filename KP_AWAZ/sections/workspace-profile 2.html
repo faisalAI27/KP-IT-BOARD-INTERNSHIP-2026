@@ -1,0 +1,207 @@
+<header class="workspace-page-header profile-page-header">
+  <div>
+    <span class="workspace-eyebrow">Identity &amp; privacy</span>
+    <h1>Profile &amp; privacy</h1>
+    <p>
+      Manage your contributor details and review how your identity and recordings
+      are handled.
+    </p>
+  </div>
+  <a class="workspace-header-link" href="dashboard.html">Return to overview →</a>
+</header>
+
+<section class="profile-workspace" aria-label="Contributor profile workspace">
+  <section class="profile-identity" aria-labelledby="profilePortraitTitle">
+    <div class="profile-identity-primary">
+      <span class="profile-portrait-avatar" id="profileHeroAvatar">K</span>
+      <div class="profile-identity-copy">
+        <span class="auth-kicker">Contributor identity</span>
+        <h2 id="profilePortraitTitle"><span id="profileHeroName">Loading profile…</span></h2>
+        <p id="profileHeroEmail">Verifying account</p>
+        <p class="profile-privacy-seal">
+          <strong>Private by design.</strong>
+          <span>Your email is never shown on the public leaderboard.</span>
+        </p>
+      </div>
+    </div>
+
+    <dl class="profile-private-facts">
+      <div><dt>Sign-in method</dt><dd id="profileAuthMethod">—</dd></div>
+      <div><dt>Preferred language</dt><dd id="profileSummaryLanguage">—</dd></div>
+      <div><dt>Contributor since</dt><dd id="profileContributorSince">—</dd></div>
+      <div><dt>Public rank</dt><dd id="profileSummaryRank">—</dd></div>
+    </dl>
+  </section>
+
+  <div class="profile-workspace-grid">
+    <section
+      class="profile-settings workspace-profile-settings"
+      id="profileSettings"
+      aria-labelledby="profileSettingsTitle"
+      hidden
+    >
+      <div class="profile-settings-heading">
+        <span class="auth-kicker">Account preferences</span>
+        <h2 id="profileSettingsTitle">Profile settings</h2>
+        <p>Update the details used across your private contributor workspace.</p>
+      </div>
+
+      <div class="profile-loading" id="profileLoading" role="status" aria-live="polite">
+        Loading profile…
+      </div>
+
+      <div class="profile-load-error" id="profileLoadError" role="alert" hidden>
+        <span id="profileLoadErrorMessage">Profile settings could not be loaded.</span>
+        <button class="btn btn-quiet btn-sm" id="retryProfileButton" type="button">
+          Retry profile
+        </button>
+      </div>
+
+      <form class="profile-form" id="profileForm" hidden>
+        <div class="profile-field">
+          <label for="profileDisplayName">Display name</label>
+          <input
+            id="profileDisplayName"
+            name="displayName"
+            type="text"
+            autocomplete="name"
+            minlength="2"
+            maxlength="80"
+            required
+          />
+          <small>This is the only identity shown publicly when you opt in.</small>
+        </div>
+
+        <div class="profile-field">
+          <label for="profilePreferredLanguage">Preferred language</label>
+          <select id="profilePreferredLanguage" name="preferredLanguage" required>
+            <option value="Pashto">Pashto</option>
+            <option value="Urdu">Urdu</option>
+            <option value="English">English</option>
+          </select>
+          <small>Used to prepare future contribution experiences for you.</small>
+        </div>
+
+        <div class="profile-field profile-field-wide">
+          <label for="profileVerifiedEmail">Verified email</label>
+          <input
+            id="profileVerifiedEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="Not available"
+            readonly
+          />
+          <small>Managed by your verified Supabase account.</small>
+        </div>
+
+        <label class="profile-privacy-choice" for="profileLeaderboardOptIn">
+          <input id="profileLeaderboardOptIn" name="leaderboardOptIn" type="checkbox" />
+          <span>
+            <strong>Show my display name on the public leaderboard</strong>
+            <small>
+              Your email and account identifier stay private. You appear only after
+              at least one recording is approved.
+            </small>
+          </span>
+        </label>
+
+        <div class="profile-form-actions">
+          <button class="btn btn-primary profile-save-button" id="profileSaveButton" type="submit">
+            <span id="profileSaveButtonLabel">Save profile</span>
+          </button>
+
+          <div
+            class="auth-message profile-status"
+            id="profileStatus"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            hidden
+          ></div>
+        </div>
+      </form>
+    </section>
+
+    <aside class="profile-insights" aria-label="Privacy and contribution details">
+      <section
+        class="profile-score-card"
+        id="accountScoreSection"
+        aria-labelledby="accountScoreTitle"
+        hidden
+      >
+        <div class="account-score-heading">
+          <div>
+            <span class="auth-kicker">Contribution impact</span>
+            <h2 id="accountScoreTitle">Current score</h2>
+          </div>
+          <button class="btn btn-quiet btn-sm" id="refreshAccountScoreButton" type="button">
+            Refresh
+          </button>
+        </div>
+        <strong class="account-score-value" id="accountScoreValue">Loading…</strong>
+        <p>Only administrator-approved recordings add to this score.</p>
+        <p
+          class="account-score-status"
+          id="accountScoreStatus"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
+        <div class="account-score-error" id="accountScoreError" role="alert" hidden>
+          <span id="accountScoreErrorMessage">We could not load your score.</span>
+          <button class="btn btn-quiet btn-sm" id="retryAccountScoreButton" type="button">
+            Retry score
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="profile-consent-card"
+        id="profileConsentSection"
+        aria-labelledby="profileConsentTitle"
+        hidden
+      >
+        <span class="auth-kicker">Recording privacy</span>
+        <h2 id="profileConsentTitle">Data-use record</h2>
+        <dl class="profile-consent-facts">
+          <div>
+            <dt>Current policy</dt>
+            <dd id="profileConsentVersion">Loading…</dd>
+          </div>
+          <div>
+            <dt>Most recent consent</dt>
+            <dd id="profileConsentDate">Loading…</dd>
+          </div>
+        </dl>
+        <p class="profile-consent-note" id="profileConsentNote">
+          Consent is recorded when you submit a new recording.
+        </p>
+        <p
+          class="account-score-status"
+          id="profileConsentStatus"
+          role="status"
+          aria-live="polite"
+        >Loading consent record…</p>
+        <div class="account-score-error" id="profileConsentError" role="alert" hidden>
+          <span>We could not load your consent record.</span>
+          <button class="btn btn-quiet btn-sm" id="retryProfileConsentButton" type="button">
+            Retry
+          </button>
+        </div>
+        <a class="profile-consent-link" href="data-use.html">View data-use details →</a>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<section class="profile-data-boundary" aria-labelledby="dataBoundaryTitle">
+  <div>
+    <span class="auth-kicker">Clear data boundary</span>
+    <h2 id="dataBoundaryTitle">Where your data lives</h2>
+  </div>
+  <p>
+    Supabase holds your login session. FastAPI holds your contributor preferences,
+    review history, and contribution score. Audio is stored separately from both your password
+    and profile settings.
+  </p>
+</section>

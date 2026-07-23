@@ -1,0 +1,32 @@
+APP_NAME=KP AWAZ API
+API_PREFIX=/api
+ENVIRONMENT=development
+# DATABASE_URL is optional. When omitted, SQLite uses backend/kp_awaz.db.
+FRONTEND_BASE_URL=http://127.0.0.1:4173
+FRONTEND_ORIGINS=http://localhost:4173,http://127.0.0.1:4173
+STORAGE_ROOT=storage
+# New recordings are stored here in their original browser-produced format.
+# Use a persistent mounted volume in production.
+RAW_AUDIO_STORAGE_ROOT=data/audio/raw
+MAX_AUDIO_UPLOAD_BYTES=52428800
+AUDIO_STORAGE_SUBDIRECTORY=audio
+MAX_IMPORT_FILE_SIZE_MB=5
+MIN_IMPORTED_SENTENCE_LENGTH=3
+MAX_IMPORTED_SENTENCE_LENGTH=500
+# Required to enable admin and sentence-import endpoints. Generate a long,
+# random value locally and never commit the real value.
+ADMIN_API_KEY=replace-with-a-long-random-secret
+
+# Used by FastAPI when it verifies a user's Supabase Auth access token.
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+SUPABASE_AUTH_TIMEOUT_SECONDS=5
+SUPABASE_ADMIN_TIMEOUT_SECONDS=3
+SUPABASE_ADMIN_USERS_PER_PAGE=1000
+SUPABASE_ADMIN_MAX_PAGES=10
+ACCOUNT_STATUS_RATE_LIMIT=5
+ACCOUNT_STATUS_RATE_WINDOW_SECONDS=60
+
+# Server-only. Configure the current Supabase secret key in backend/.env.
+# Never use this value in browser or frontend code.
+SUPABASE_SECRET_KEY=
