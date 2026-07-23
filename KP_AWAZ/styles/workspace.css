@@ -174,9 +174,6 @@ body.workspace-body {
 
 .workspace-navigation .workspace-record-link {
   min-height: 64px;
-  border-color: rgba(231, 169, 76, 0.22);
-  background: rgba(231, 169, 76, 0.1);
-  color: #ffdda5;
 }
 
 .workspace-record-link b {

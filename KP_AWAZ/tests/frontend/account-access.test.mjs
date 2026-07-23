@@ -83,3 +83,29 @@ test("member workspace is split into real pages with shared navigation", async (
   assert.match(sidebar, /href="contribute\.html\?mode=guided"/);
   assert.match(sidebar, /href="settings\.html"[\s\S]*?Profile, privacy &amp; security/);
 });
+
+
+test("workspace navigation reserves the gold treatment for the active page", async () => {
+  const [workspaceCss, finalPolishCss] = await Promise.all([
+    readFile(new URL("styles/workspace.css", projectRoot), "utf8"),
+    readFile(new URL("styles/final-polish.css", projectRoot), "utf8"),
+  ]);
+  const recordLinkRule = workspaceCss.match(
+    /\.workspace-navigation \.workspace-record-link\s*\{([^}]*)\}/,
+  );
+
+  assert.ok(recordLinkRule, "record link should keep its taller layout rule");
+  assert.doesNotMatch(recordLinkRule[1], /\b(?:background|border-color|color|box-shadow)\s*:/);
+  assert.doesNotMatch(
+    finalPolishCss,
+    /\.workspace-navigation \.workspace-record-link\s*\{/,
+  );
+  assert.match(
+    workspaceCss,
+    /\.workspace-navigation a\.is-active\s*\{[^}]*border-color:[^}]*background:[^}]*color:/s,
+  );
+  assert.match(
+    workspaceCss,
+    /\.workspace-navigation a\.is-active::before\s*\{[^}]*opacity:\s*1[^}]*transform:\s*scaleY\(1\)/s,
+  );
+});

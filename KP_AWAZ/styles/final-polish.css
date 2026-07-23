@@ -219,10 +219,6 @@ body.workspace-body {
   box-shadow: none;
 }
 
-.workspace-navigation .workspace-record-link {
-  box-shadow: inset 0 0 0 1px rgba(231, 169, 76, 0.035);
-}
-
 .workspace-sign-out {
   transition:
     border-color var(--duration-fast) ease,
