@@ -153,6 +153,46 @@ async function copyRuntimeAssets() {
   }
 }
 
+async function writeSitesArtifacts() {
+  const serverRoot = resolve(outputRoot, "server");
+  const hostingRoot = resolve(outputRoot, ".openai");
+  await mkdir(serverRoot, { recursive: true });
+  await mkdir(hostingRoot, { recursive: true });
+  await cp(
+    resolve(projectRoot, ".openai", "hosting.json"),
+    resolve(hostingRoot, "hosting.json"),
+    { force: true },
+  );
+  await writeFile(
+    resolve(serverRoot, "index.js"),
+    `export default {
+  async fetch(request, environment) {
+    if (!environment?.ASSETS || typeof environment.ASSETS.fetch !== "function") {
+      return new Response("Static assets are unavailable.", { status: 503 });
+    }
+    const response = await environment.ASSETS.fetch(request);
+    const pathname = new URL(request.url).pathname;
+    if (
+      pathname !== "/" &&
+      !pathname.endsWith(".html") &&
+      pathname !== "/scripts/config.js"
+    ) {
+      return response;
+    }
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "no-cache");
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  },
+};
+`,
+    "utf8",
+  );
+}
+
 const runtimeConfig = productionAppConfig();
 
 await rm(outputRoot, { recursive: true, force: true });
@@ -179,4 +219,5 @@ await copyRuntimeAssets();
 if (buildEnvironment === "production") {
   await writeRuntimeConfiguration(runtimeConfig);
 }
+await writeSitesArtifacts();
 console.log(`Frontend files created in ${outputRoot}`);

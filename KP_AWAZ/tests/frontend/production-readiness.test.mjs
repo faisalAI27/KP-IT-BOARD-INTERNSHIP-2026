@@ -56,6 +56,23 @@ test("all required production pages are assembled", async () => {
   }
 });
 
+test("Sites build includes its static worker and persisted project metadata", async () => {
+  const [build, hosting] = await Promise.all([
+    read("tools/build.mjs"),
+    read(".openai/hosting.json"),
+  ]);
+
+  assert.match(build, /resolve\(outputRoot, "server"\)/);
+  assert.match(build, /environment\?\.ASSETS/);
+  assert.match(build, /headers\.set\("Cache-Control", "no-cache"\)/);
+  assert.match(build, /resolve\(outputRoot, "\.openai"\)/);
+  assert.match(build, /await writeSitesArtifacts\(\)/);
+  assert.deepEqual(
+    JSON.parse(hosting),
+    { project_id: "appgprj_6a61ac09fe288191ada1f1745e60d782" },
+  );
+});
+
 
 test("audio uploads have a longer bounded timeout than JSON requests", () => {
   assert.equal(API_REQUEST_TIMEOUT_MS, appConfig.api.requestTimeoutMs);
