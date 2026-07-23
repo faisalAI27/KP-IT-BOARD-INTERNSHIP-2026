@@ -57,52 +57,82 @@ test("focused contribution flow keeps profile fields hidden and account consent 
   assert.match(css, /min-height:\s*44px/);
 });
 
-test("guided reading and Rabab controls are accessible and responsive to live audio", async () => {
-  const [html, css, contributionSource, recorderSource, visualizerSource] = await Promise.all([
+test("guided reading uses the enhanced microphone while long-form keeps the Rabab", async () => {
+  const [html, css, micCss, contributionSource, recorderSource, visualizerSource] = await Promise.all([
     read("sections/contribution.html"),
     read("styles/contribution.css"),
+    read("styles/mic-enhanced-template.css"),
     read("scripts/modules/contributions.js"),
     read("scripts/modules/recorder.js"),
     read("scripts/modules/audio-visualizer.js"),
   ]);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
-  assert.equal((html.match(/class="rabab-icon"/g) ?? []).length, 2);
-  assert.doesNotMatch(html, /class="(?:mic|stop)-icon"/);
-  assert.match(html, /Press the Rabab to record/);
+  assert.equal((html.match(/class="rabab-icon"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="icon-mic"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="icon-stop"/g) ?? []).length, 1);
+  assert.equal((html.match(/class="icon-play"/g) ?? []).length, 1);
+  assert.match(html, /id="donateRecCallout">Tap once to record/);
+  assert.match(html, /id="openRecCallout">Press the Rabab to record/);
   assert.match(contributionSource, /className = "pashto-word"/);
   assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?scale\(1\.08\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pashto-word:hover[\s\S]*?transform:\s*none/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.rabab-instrument,[\s\S]*?\.rabab-string\s*{[\s\S]*?transform:\s*none/);
+  assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(recorderSource, /--rabab-string-one/);
+  assert.match(recorderSource, /previewOnReady/);
   assert.match(visualizerSource, /createMediaStreamSource\(stream\)/);
   assert.match(visualizerSource, /onLevel/);
 });
 
-test("record voice adapts the supplied voice mission template around the production recorder", async () => {
-  const [html, css, source] = await Promise.all([
+test("record voice implements the supplied enhanced microphone template and motion", async () => {
+  const [page, html, css, source, presenterSource, recorderSource] = await Promise.all([
+    read("contribute.html"),
     read("sections/contribution.html"),
-    read("styles/contribution.css"),
+    read("styles/mic-enhanced-template.css"),
     read("scripts/modules/contributions.js"),
+    read("scripts/modules/mic-enhanced-template.js"),
+    read("scripts/modules/recorder.js"),
   ]);
-  assert.match(html, /class="contribution-studio voice-mission-card"/);
+  assert.match(page, /styles\/mic-enhanced-template\.css\?v=20260723-mic-enhanced-template/);
+  assert.match(html, /class="voice-card glass-card mic-enhanced-card reveal tilt"/);
   assert.match(html, /Today’s voice mission/);
-  assert.match(html, /Keep one piece of <em>Pashto alive\.<\/em>/);
-  assert.match(html, /class="recorder-surface voice-record-stage"/);
-  assert.match(html, /<ol class="recording-journey"[^>]*aria-label="Recording progress"/);
+  assert.match(html, /Keep one piece of<br \/><em>Pashto alive\.<\/em>/);
+  assert.match(html, /class="record-stage" id="donateRecordStage"/);
+  assert.match(html, /class="mic-console"/);
+  assert.match(html, /class="mic-orbit"/);
+  assert.match(html, /class="mic-orbit-inner"/);
+  assert.equal((html.match(/class="pulse-ring (?:one|two|three)"/g) ?? []).length, 3);
+  assert.match(html, /<ol class="journey"[^>]*aria-label="Recording progress"/);
   assert.equal((html.match(/data-recording-step="[123]"/g) ?? []).length, 3);
+  assert.match(html, /Submit &amp; earn XP/);
+  assert.match(html, /id="donateXpFloat"[^>]*>\+20 XP</);
+  assert.match(html, /id="donateSignalVisualizer"/);
   assert.match(html, /id="donateWaveform"/);
   assert.match(html, /id="donateRecBtn"/);
   assert.match(html, /id="submitDonation"/);
-  assert.doesNotMatch(html, /\bXP\b|streak|community voices|dark mode|confetti/i);
-  assert.match(source, /MutationObserver/);
-  assert.match(source, /contains\("ready"\)[\s\S]*setRecordingJourney\(3\)/);
-  assert.match(source, /contains\("recording"\)[\s\S]*setRecordingJourney\(2\)/);
-  assert.match(source, /donateRecordStateLabel\.textContent = "Ready to submit"/);
-  assert.match(css, /#donateForm \.voice-record-stage\s*{[\s\S]*linear-gradient/);
-  assert.match(css, /\.rec-btn\.recording ~ \.voice-pulse-ring/);
-  assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.recording-journey\s*{[\s\S]*?grid-template-columns:\s*1fr/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?#donateForm \.rec-btn\.recording ~ \.voice-pulse-ring[\s\S]*?animation:\s*none/);
+  assert.doesNotMatch(html, /community voices|themeToggle|sidebarRecord/i);
+  assert.match(source, /initMicEnhancedTemplate/);
+  assert.match(source, /previewOnReady:\s*true/);
+  assert.match(source, /onLevel:\s*micEnhancedPresenter\.setSignalLevel/);
+  assert.match(presenterSource, /SIGNAL_BAR_COUNT = 44/);
+  assert.match(presenterSource, /contains\("ready"\)/);
+  assert.match(presenterSource, /contains\("recording"\)/);
+  assert.match(presenterSource, /--spot-x/);
+  assert.match(presenterSource, /perspective\(900px\)/);
+  assert.match(presenterSource, /for \(let index = 0; index < 26; index \+= 1\)/);
+  assert.match(recorderSource, /previewOnReady && audioBlob/);
+  assert.match(recorderSource, /playback\.play\?\.\(\)/);
+  assert.match(recorderSource, /classList\.add\("playing"\)/);
+  assert.match(css, /@keyframes mic-breathe/);
+  assert.match(css, /@keyframes mic-orbit-rotate/);
+  assert.match(css, /@keyframes mic-ripple-out/);
+  assert.match(css, /@keyframes mic-record-glow/);
+  assert.match(css, /@keyframes mic-play-glow/);
+  assert.match(css, /@keyframes mic-level-wave/);
+  assert.match(css, /\.mic-enhanced-card\.recording \.pulse-ring/);
+  assert.match(css, /@media \(max-width: 680px\)[\s\S]*?grid-template-columns:\s*118px minmax\(0, 1fr\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*0\.01ms\s*!important/);
 });
 
 test("dashboard contribution panel is compact and softly surfaced", async () => {

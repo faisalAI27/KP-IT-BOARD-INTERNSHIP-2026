@@ -48,6 +48,9 @@ class FakeElement {
     this.hidden = true;
     this.listeners = new Map();
     this.loadCalls = 0;
+    this.pauseCalls = 0;
+    this.paused = true;
+    this.playCalls = 0;
     this.src = "";
     this.textContent = "";
   }
@@ -76,6 +79,20 @@ class FakeElement {
 
   load() {
     this.loadCalls += 1;
+  }
+
+  pause() {
+    this.pauseCalls += 1;
+    if (this.paused) return;
+    this.paused = true;
+    this.dispatch("pause");
+  }
+
+  play() {
+    this.playCalls += 1;
+    this.paused = false;
+    this.dispatch("play");
+    return Promise.resolve();
   }
 }
 
@@ -630,6 +647,37 @@ test("playback events announce playing and ready states", async () => {
   fixture.element("playbackId").dispatch("ended");
   assert.equal(fixture.element("calloutId").textContent, "Recording ready");
   assert.match(fixture.element("statusId").textContent, /record again/);
+});
+
+test("preview-ready recorder uses the same orb to play and pause captured audio", async () => {
+  const environment = installEnvironment();
+  const fixture = createTestRecorder(environment, "orb-preview", {
+    previewOnReady: true,
+  });
+  await fixture.recorder.start();
+  const instance = FakeMediaRecorder.instances[0];
+  fixture.recorder.stop();
+  emitCompletedRecording(instance, "playable-audio");
+
+  assert.equal(
+    fixture.element("buttonId").attributes.get("aria-label"),
+    "Preview recording",
+  );
+  fixture.element("buttonId").dispatch("click");
+  assert.equal(fixture.element("playbackId").playCalls, 1);
+  assert.equal(fixture.element("buttonId").classList.contains("playing"), true);
+  assert.equal(
+    fixture.element("buttonId").attributes.get("aria-label"),
+    "Pause playback",
+  );
+
+  fixture.element("buttonId").dispatch("click");
+  assert.equal(fixture.element("playbackId").pauseCalls, 2);
+  assert.equal(fixture.element("buttonId").classList.contains("playing"), false);
+  assert.equal(
+    fixture.element("buttonId").attributes.get("aria-label"),
+    "Preview recording",
+  );
 });
 
 

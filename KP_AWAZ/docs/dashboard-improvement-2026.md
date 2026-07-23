@@ -49,6 +49,15 @@ The production dashboard repeated its contribution call to action, gave a large 
 - Prototype-only XP, streak, fake community activity, simulated recording, duplicate sidebar, theme toggle, confetti, tilt, and continuous decorative motion were intentionally excluded.
 - The layout reduces to one clear journey column and a two-column recorder control on small screens. Reduced-motion disables the entrance, shimmer, pulse, and journey transitions.
 
+### July 23 enhanced microphone template replacement
+
+- The primary Record Voice card now implements the supplied enhanced microphone template: circular microphone orb, breathing halo, two rotating cultural orbits, three recording ripples, stop/play icon swaps, recording and playback glow, pointer-follow stage light, fine-pointer card tilt, live signal bars, timer panel, sentence transition, toast, XP rise, confetti, and cultural thread.
+- Template states are connected to the production `MediaRecorder`. The orb requests real microphone permission, stops the real stream, previews the captured Blob from the same control, and continues to use the existing Web Audio analyser and cleanup lifecycle.
+- The supplied 44-bar signal display animates only during real capture or playback. The analyser’s normalized RMS level adjusts its brightness while the existing hidden Canvas remains the recorder’s real sample source.
+- XP rise and confetti are wired only to a genuine submission-success state; the current account-policy gate still blocks upload honestly and never fabricates successful submission or awarded points.
+- The replacement is scoped to the primary Record Voice card. Shared navigation, authenticated page guard, profile data, reviewed/custom sentence routes, backend contracts, and the optional long-form Rabab recorder remain unchanged.
+- Small screens use the supplied two-column recorder layout and then the single-column microphone console below 450 px. Reduced-motion collapses all template animations and transitions to a single near-instant frame.
+
 ## New recording journey
 
 Guided:

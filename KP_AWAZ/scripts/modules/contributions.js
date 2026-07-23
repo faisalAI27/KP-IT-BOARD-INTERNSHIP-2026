@@ -1,6 +1,7 @@
 import { getSentencePrompts } from "../services/contributions-api.js?v=20260717-member-workspace";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
-import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260723-rabab-reading";
+import { initMicEnhancedTemplate } from "./mic-enhanced-template.js?v=20260723-mic-enhanced-template";
+import { createRecorder, stopRecorderIfActive } from "./recorder.js?v=20260723-mic-enhanced-template";
 
 const SENTENCE_LOAD_ERROR =
   "Sentence prompts could not be loaded. Try again, or use your own Pashto sentence below.";
@@ -51,6 +52,7 @@ export async function initContributions({
   const customSentenceSource = document.getElementById("customSentenceSource");
   const providedSentence = document.getElementById("providedSentence");
   const providedMeaning = document.getElementById("providedMeaning");
+  const sentenceNumber = document.getElementById("sentenceNumber");
   const nextSentenceButton = document.getElementById("nextSentenceBtn");
   const sentencePromptStatus = document.getElementById("sentencePromptStatus");
   const sentencePromptMessage = document.getElementById("sentencePromptMessage");
@@ -78,11 +80,7 @@ export async function initContributions({
   const contributionAuthMessage = document.getElementById("contributionAuthMessage");
   const contributionSignInButton = document.getElementById("contributionSignInButton");
   const donateRecordButton = document.getElementById("donateRecBtn");
-  const donateRecordStateLabel = document.getElementById("donateRecordStateLabel");
   const openRecordButton = document.getElementById("openRecBtn");
-  const recordingJourneySteps = [
-    ...document.querySelectorAll("#recordingJourney [data-recording-step]"),
-  ];
 
   let pashtoSentences = [];
   let sentenceIndex = 0;
@@ -93,44 +91,8 @@ export async function initContributions({
   let donateRecorder;
   let openRecorder;
   let accessController;
-  let recordingJourneyObserver;
+  let micEnhancedPresenter;
   const sentenceTransitionTimeouts = new Set();
-
-  function setRecordingJourney(step) {
-    recordingJourneySteps.forEach((item) => {
-      const itemStep = Number(item.dataset.recordingStep);
-      const indicator = item.querySelector(".journey-step-number");
-      const isActive = itemStep === step;
-      const isDone = itemStep < step;
-
-      item.classList.toggle("is-active", isActive);
-      item.classList.toggle("is-done", isDone);
-      if (isActive) item.setAttribute("aria-current", "step");
-      else item.removeAttribute("aria-current");
-      if (indicator) indicator.textContent = isDone ? "✓" : String(itemStep);
-    });
-  }
-
-  function syncRecordingJourney() {
-    if (donateRecordButton.classList.contains("ready")) {
-      setRecordingJourney(3);
-      donateRecordStateLabel.textContent = "Ready to submit";
-      return;
-    }
-    if (
-      donateRecordButton.classList.contains("recording") ||
-      donateRecordButton.classList.contains("requesting") ||
-      donateRecordButton.classList.contains("processing")
-    ) {
-      setRecordingJourney(2);
-      donateRecordStateLabel.textContent = donateRecordButton.classList.contains("recording")
-        ? "Recording in progress"
-        : "Preparing your recording";
-      return;
-    }
-    setRecordingJourney(1);
-    donateRecordStateLabel.textContent = "Ready when you are";
-  }
 
   function selectedSentenceSource() {
     return document.querySelector('input[name="sentence-source"]:checked')?.value ?? "provided";
@@ -198,6 +160,9 @@ export async function initContributions({
     const update = () => {
       replaceProvidedSentenceText(sentence?.text ?? "");
       providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
+      sentenceNumber.textContent = sentence
+        ? `Sentence ${sentenceIndex + 1} of ${pashtoSentences.length}`
+        : "Sentence unavailable";
     };
     const reducedMotion =
       globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
@@ -305,6 +270,8 @@ export async function initContributions({
     submitOpenRecordingButton.disabled = true;
   }
 
+  micEnhancedPresenter = initMicEnhancedTemplate();
+
   donateRecorder = createRecorder({
     buttonId: "donateRecBtn",
     timerId: "donateRecTimer",
@@ -312,10 +279,13 @@ export async function initContributions({
     playbackId: "donateRecPlayback",
     calloutId: "donateRecCallout",
     visualizerCanvasId: "donateWaveform",
-    idleStatus: "Your sentence stays visible while you speak.",
-    idleCallout: "Press the Rabab to record",
+    idleStatus: "Speak at your normal pace. Tap again when finished.",
+    idleCallout: "Tap once to record",
+    recordingStatus: "The sentence stays visible. Tap again when finished.",
+    previewOnReady: true,
     canStart: () => (accessController?.canContribute() ?? false) && validateCurrentSentence({ focus: true }),
     onStart: () => stopRecorderIfActive(openRecorder),
+    onLevel: micEnhancedPresenter.setSignalLevel,
     onCapture: () => {
       const sentence = getSelectedSentence();
       reviewSentence.textContent = sentence?.text ?? "";
@@ -507,21 +477,13 @@ export async function initContributions({
     if (destroyed) return;
     destroyed = true;
     clearSentenceTransitions();
-    recordingJourneyObserver?.disconnect();
+    micEnhancedPresenter.destroy();
     accessController.destroy();
     donateRecorder.destroy();
     openRecorder.destroy();
     activeContributionCleanup = null;
   };
   accessController.init();
-  setRecordingJourney(1);
-  if (typeof globalThis.MutationObserver === "function") {
-    recordingJourneyObserver = new globalThis.MutationObserver(syncRecordingJourney);
-    recordingJourneyObserver.observe(donateRecordButton, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-  }
   await loadSentencePrompts();
 
   window.requestAnimationFrame(() => {

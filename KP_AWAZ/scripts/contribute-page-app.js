@@ -1,4 +1,4 @@
-import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260723-voice-mission-template";
+import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260723-mic-enhanced-template";
 import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260717-auth-routing";
 
 

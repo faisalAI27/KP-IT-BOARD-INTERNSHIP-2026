@@ -94,11 +94,14 @@ export function createRecorder({
   visualizerCanvasId,
   idleStatus,
   idleCallout = "Start recording",
+  recordingStatus = "Speak naturally, then press the Rabab again to stop.",
+  previewOnReady = false,
   maxDurationSeconds,
   maxDurationMessage,
   canStart = () => true,
   onStart,
   onCapture,
+  onLevel,
   onReset,
 }) {
   const durationLimit =
@@ -118,7 +121,10 @@ export function createRecorder({
   const callout = document.getElementById(calloutId);
   const visualizer = createAudioVisualizer({
     canvas: visualizerCanvasId,
-    onLevel: updateRababLevel,
+    onLevel: (level) => {
+      updateRababLevel(level);
+      onLevel?.(level);
+    },
   });
 
   let activeSession = null;
@@ -155,7 +161,7 @@ export function createRecorder({
 
   function setIdleButton() {
     recording = false;
-    ["recording", "requesting", "processing", "ready", "error"].forEach((state) => {
+    ["recording", "requesting", "processing", "ready", "playing", "error"].forEach((state) => {
       button.classList.remove(state);
     });
     updateRababLevel(0);
@@ -242,6 +248,7 @@ export function createRecorder({
     playback.src = playbackUrl;
     playback.hidden = false;
     button.classList.add("ready");
+    if (previewOnReady) button.setAttribute("aria-label", "Preview recording");
 
     if (session.stopReason === "automatic") {
       callout.textContent = "Recording stopped automatically";
@@ -411,7 +418,7 @@ export function createRecorder({
     button.classList.add("recording");
     button.setAttribute("aria-label", "Stop recording");
     callout.textContent = "Recording now";
-    status.textContent = "Speak naturally, then press the Rabab again to stop.";
+    status.textContent = recordingStatus;
 
     timerHandle = window.setInterval(() => {
       if (session.id !== sessionId || activeSession !== session) {
@@ -461,8 +468,23 @@ export function createRecorder({
   }
 
   function handleButtonClick() {
-    if (recording || starting) stop();
-    else start();
+    if (recording || starting) {
+      stop();
+      return;
+    }
+    if (previewOnReady && audioBlob) {
+      if (playback.paused === false) {
+        playback.pause?.();
+        return;
+      }
+      const playResult = playback.play?.();
+      playResult?.catch?.(() => {
+        status.textContent =
+          "This browser cannot play the original recording format directly.";
+      });
+      return;
+    }
+    start();
   }
 
   function handlePlaybackError() {
@@ -473,12 +495,16 @@ export function createRecorder({
 
   function handlePlaybackStart() {
     if (!audioBlob) return;
+    button.classList.add("playing");
+    if (previewOnReady) button.setAttribute("aria-label", "Pause playback");
     callout.textContent = "Playing recording";
     status.textContent = "Listening back to your recording.";
   }
 
   function handlePlaybackStop() {
     if (!audioBlob || recording || starting) return;
+    button.classList.remove("playing");
+    if (previewOnReady) button.setAttribute("aria-label", "Preview recording");
     callout.textContent = "Recording ready";
     status.textContent = "Listen back, or record again if needed.";
   }
