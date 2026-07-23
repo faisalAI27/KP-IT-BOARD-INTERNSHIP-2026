@@ -3,7 +3,7 @@ import {
   destroyLeaderboard,
   initializeLeaderboard,
 } from "./modules/leaderboard.js?v=20260717-member-workspace";
-import { initLeaderboardTemplateMotion } from "./modules/leaderboard-template-motion.js?v=20260723-leaderboard-flow";
+import { initLeaderboardTemplateMotion } from "./modules/leaderboard-template-motion.js?v=20260723-refined-surfaces";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js?v=20260717-member-workspace";
 import { PublicRouting } from "./modules/public-routing.js?v=20260720-public-polish";

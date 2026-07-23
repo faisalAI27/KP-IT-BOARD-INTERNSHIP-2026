@@ -43,7 +43,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
     const expectedMainVersion = ["index.html", "leaderboard.html"].includes(page)
-      ? "styles/main.css?v=20260723-leaderboard-flow"
+      ? "styles/main.css?v=20260723-refined-surfaces"
       : "styles/main.css?v=20260720-final-polish";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
@@ -94,7 +94,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
 });
 
 
-test("dashboard keeps its production identity with the supplied color-flow surface", async () => {
+test("dashboard keeps its production identity with the supplied refined surface", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
@@ -102,8 +102,9 @@ test("dashboard keeps its production identity with the supplied color-flow surfa
   ]);
 
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?#173e34;[\s\S]*?}/);
-  assert.match(dashboardCss, /\.dashboard-colorflow-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.72\)[\s\S]*?}/);
-  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before,[\s\S]*?dashboard-border-flow/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.76\)[\s\S]*?}/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before\s*{[\s\S]*?repeating-linear-gradient/);
+  assert.doesNotMatch(dashboardCss, /dashboard-(?:border-flow|text-flow|corner-drift)/);
   assert.doesNotMatch(dashboardCss, /\.dashboard-colorflow-shell\s*{[^}]*background:\s*#173e34/s);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
   assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
@@ -111,7 +112,7 @@ test("dashboard keeps its production identity with the supplied color-flow surfa
 });
 
 
-test("dashboard color-flow decoration stays noninteractive and no sidebar-edge divider remains", async () => {
+test("dashboard decoration stays static and noninteractive with no sidebar-edge divider", async () => {
   const [workspaceCss, dashboardCss, polishCss] = await Promise.all([
     read("styles/workspace.css"),
     read("styles/dashboard.css"),
@@ -119,11 +120,12 @@ test("dashboard color-flow decoration stays noninteractive and no sidebar-edge d
   ]);
 
   assert.match(dashboardCss, /\.dashboard-colorflow-corner\s*{[\s\S]*pointer-events:\s*none/);
-  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before,[\s\S]*animation:\s*dashboard-border-flow 8s linear infinite/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell::before\s*{[\s\S]*height:\s*6px[\s\S]*repeating-linear-gradient/);
+  assert.match(dashboardCss, /\.dashboard-colorflow-shell::after\s*{[\s\S]*display:\s*none/);
   assert.match(dashboardCss, /body\.workspace-body\.dashboard-body\s*{[\s\S]*background-color:\s*var\(--dashboard-cream\)/);
   assert.doesNotMatch(workspaceCss, /\.workspace-sidebar::after/);
   assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.match(polishCss, /\.workspace-sidebar\s*{[\s\S]*box-shadow:\s*none/);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*border-right/s);
-  assert.match(dashboardCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.dashboard-colorflow-shell::before[\s\S]*animation:\s*none/);
+  assert.doesNotMatch(dashboardCss, /@keyframes/);
 });

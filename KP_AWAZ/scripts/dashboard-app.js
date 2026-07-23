@@ -5,7 +5,7 @@ import {
 import {
   animateDashboardCounter,
   initDashboardColorflow,
-} from "./modules/dashboard-colorflow.js?v=20260723-dashboard-colorflow";
+} from "./modules/dashboard-colorflow.js?v=20260723-refined-surfaces";
 import {
   formatContributionDate,
   formatContributionReviewStatus,
