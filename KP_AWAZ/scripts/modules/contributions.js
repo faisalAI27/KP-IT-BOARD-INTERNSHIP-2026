@@ -78,7 +78,11 @@ export async function initContributions({
   const contributionAuthMessage = document.getElementById("contributionAuthMessage");
   const contributionSignInButton = document.getElementById("contributionSignInButton");
   const donateRecordButton = document.getElementById("donateRecBtn");
+  const donateRecordStateLabel = document.getElementById("donateRecordStateLabel");
   const openRecordButton = document.getElementById("openRecBtn");
+  const recordingJourneySteps = [
+    ...document.querySelectorAll("#recordingJourney [data-recording-step]"),
+  ];
 
   let pashtoSentences = [];
   let sentenceIndex = 0;
@@ -89,7 +93,44 @@ export async function initContributions({
   let donateRecorder;
   let openRecorder;
   let accessController;
+  let recordingJourneyObserver;
   const sentenceTransitionTimeouts = new Set();
+
+  function setRecordingJourney(step) {
+    recordingJourneySteps.forEach((item) => {
+      const itemStep = Number(item.dataset.recordingStep);
+      const indicator = item.querySelector(".journey-step-number");
+      const isActive = itemStep === step;
+      const isDone = itemStep < step;
+
+      item.classList.toggle("is-active", isActive);
+      item.classList.toggle("is-done", isDone);
+      if (isActive) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+      if (indicator) indicator.textContent = isDone ? "✓" : String(itemStep);
+    });
+  }
+
+  function syncRecordingJourney() {
+    if (donateRecordButton.classList.contains("ready")) {
+      setRecordingJourney(3);
+      donateRecordStateLabel.textContent = "Ready to submit";
+      return;
+    }
+    if (
+      donateRecordButton.classList.contains("recording") ||
+      donateRecordButton.classList.contains("requesting") ||
+      donateRecordButton.classList.contains("processing")
+    ) {
+      setRecordingJourney(2);
+      donateRecordStateLabel.textContent = donateRecordButton.classList.contains("recording")
+        ? "Recording in progress"
+        : "Preparing your recording";
+      return;
+    }
+    setRecordingJourney(1);
+    donateRecordStateLabel.textContent = "Ready when you are";
+  }
 
   function selectedSentenceSource() {
     return document.querySelector('input[name="sentence-source"]:checked')?.value ?? "provided";
@@ -466,12 +507,21 @@ export async function initContributions({
     if (destroyed) return;
     destroyed = true;
     clearSentenceTransitions();
+    recordingJourneyObserver?.disconnect();
     accessController.destroy();
     donateRecorder.destroy();
     openRecorder.destroy();
     activeContributionCleanup = null;
   };
   accessController.init();
+  setRecordingJourney(1);
+  if (typeof globalThis.MutationObserver === "function") {
+    recordingJourneyObserver = new globalThis.MutationObserver(syncRecordingJourney);
+    recordingJourneyObserver.observe(donateRecordButton, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
   await loadSentencePrompts();
 
   window.requestAnimationFrame(() => {

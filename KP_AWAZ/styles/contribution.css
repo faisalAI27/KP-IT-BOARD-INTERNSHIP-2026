@@ -998,3 +998,543 @@
     opacity: 0.18;
   }
 }
+
+/* Voice mission template adaptation */
+.voice-mission-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 30px 8px 30px 30px;
+  background: rgba(255, 253, 247, 0.9);
+  box-shadow: 0 24px 70px rgba(67, 50, 30, 0.1);
+}
+
+.voice-mission-card::before {
+  position: absolute;
+  z-index: -1;
+  inset: 10px;
+  border: 1px solid rgba(183, 90, 52, 0.12);
+  border-radius: 22px 4px 22px 22px;
+  content: "";
+  pointer-events: none;
+}
+
+.voice-mission-card::after {
+  position: absolute;
+  z-index: -1;
+  top: -74px;
+  right: -58px;
+  width: 250px;
+  height: 250px;
+  opacity: 0.055;
+  background:
+    linear-gradient(45deg, transparent 46%, var(--terracotta-dark) 47% 53%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, var(--terracotta-dark) 47% 53%, transparent 54%);
+  background-size: 42px 42px;
+  content: "";
+  pointer-events: none;
+  transform: rotate(10deg);
+}
+
+.voice-mission-heading {
+  align-items: flex-start;
+  padding: clamp(28px, 4.5vw, 44px);
+  border-bottom: 0;
+}
+
+.voice-mission-heading > div {
+  max-width: 700px;
+}
+
+.voice-mission-heading h2 {
+  max-width: 680px;
+  margin-top: 10px;
+  font-size: clamp(2.25rem, 4.8vw, 3.65rem);
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+}
+
+.voice-mission-heading h2 em {
+  color: var(--terracotta-dark);
+  font-style: normal;
+}
+
+.voice-mission-heading p {
+  max-width: 620px;
+  margin-top: 16px;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.voice-mission-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.voice-mission-kicker::before {
+  width: 30px;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.mission-privacy-pill {
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1px solid var(--line-forest);
+  border-radius: var(--radius-pill);
+  background: rgba(235, 244, 238, 0.78);
+  color: var(--forest-deep);
+  font-size: 0.65rem;
+  font-weight: 800;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.mission-privacy-pill::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--forest);
+  box-shadow: 0 0 0 4px rgba(62, 98, 89, 0.1);
+  content: "";
+}
+
+.voice-mission-card #donateForm {
+  padding-top: 0;
+  padding-bottom: 46px;
+}
+
+.voice-mission-card .contribution-mode-summary {
+  min-height: 64px;
+  margin-bottom: 18px;
+  padding: 12px 0;
+  border-width: 1px 0;
+  border-color: var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.voice-mission-card .contribution-mode-summary .btn {
+  border-color: rgba(62, 98, 89, 0.16);
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.recording-journey {
+  display: grid;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.recording-journey li {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  gap: 9px;
+  transition:
+    border-color 220ms var(--ease-standard),
+    background-color 220ms var(--ease-standard),
+    color 220ms var(--ease-standard);
+}
+
+.recording-journey li strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-step-number {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--ink-soft);
+  font-size: 0.64rem;
+  font-weight: 850;
+  transition:
+    background-color 220ms var(--ease-standard),
+    color 220ms var(--ease-standard),
+    transform 220ms var(--ease-standard);
+}
+
+.recording-journey li.is-active {
+  border-color: rgba(183, 90, 52, 0.3);
+  background: rgba(193, 97, 61, 0.07);
+  color: var(--terracotta-dark);
+}
+
+.recording-journey li.is-active .journey-step-number {
+  background: var(--terracotta-dark);
+  color: #fff;
+  transform: scale(1.06);
+}
+
+.recording-journey li.is-done {
+  border-color: rgba(62, 98, 89, 0.2);
+  background: rgba(235, 244, 238, 0.72);
+  color: var(--forest-deep);
+}
+
+.recording-journey li.is-done .journey-step-number {
+  background: var(--forest-deep);
+  color: #fff;
+}
+
+.voice-mission-card .provided-sentence-card,
+.voice-mission-card .custom-sentence-field {
+  border-color: rgba(62, 98, 89, 0.18);
+  border-radius: 20px;
+  background: rgba(246, 249, 243, 0.7);
+  box-shadow: none;
+}
+
+.voice-mission-card .provided-sentence-card::before {
+  inset: 9px;
+  border-color: rgba(62, 98, 89, 0.08);
+  border-radius: 13px;
+}
+
+.voice-mission-card .provided-sentence-card::after {
+  display: none;
+}
+
+.voice-mission-card .recording-stage {
+  margin-top: 18px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+#donateForm .voice-record-stage {
+  position: relative;
+  min-height: 194px;
+  padding: 24px;
+  border: 1px solid rgba(244, 202, 132, 0.18);
+  border-radius: 25px 8px 25px 25px;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(244, 202, 132, 0.09), transparent 16rem),
+    linear-gradient(135deg, #153c33, #102f29);
+  box-shadow: 0 20px 46px rgba(23, 62, 52, 0.19);
+}
+
+#donateForm .voice-record-stage::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.06) 50%, transparent 65%);
+  content: "";
+  pointer-events: none;
+  transform: translateX(-140%);
+  animation: voice-stage-shimmer 720ms 280ms ease-out both;
+}
+
+#donateForm .voice-record-stage::after {
+  position: absolute;
+  z-index: 0;
+  right: -68px;
+  bottom: -86px;
+  width: 230px;
+  height: 230px;
+  border: 1px solid rgba(244, 202, 132, 0.08);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 28px rgba(244, 202, 132, 0.035),
+    0 0 0 58px rgba(244, 202, 132, 0.025);
+  content: "";
+  pointer-events: none;
+}
+
+#donateForm .voice-record-stage .recording-waveform {
+  position: absolute;
+  z-index: 1;
+  right: 128px;
+  bottom: 20px;
+  left: 148px;
+  width: auto;
+  height: 38px;
+  border-radius: 0;
+  background: transparent;
+}
+
+#donateForm .voice-record-stage .recorder-controls {
+  position: relative;
+  z-index: 2;
+  min-height: 144px;
+  padding: 0;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 22px;
+}
+
+.record-orb-wrap {
+  position: relative;
+  display: grid;
+  width: 112px;
+  height: 112px;
+  place-items: center;
+}
+
+#donateForm .record-orb-wrap .rec-btn {
+  z-index: 2;
+  width: 92px;
+  height: 92px;
+  border-color: rgba(244, 202, 132, 0.46);
+  border-radius: 31px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent 48%),
+    rgba(184, 93, 62, 0.34);
+  box-shadow:
+    0 15px 30px rgba(4, 22, 18, 0.28),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+}
+
+#donateForm .record-orb-wrap .rec-btn:hover:not(:disabled):not(.recording):not(.requesting):not(.processing):not(.ready):not(.error) {
+  border-color: rgba(244, 202, 132, 0.8);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.13), transparent 48%),
+    rgba(184, 93, 62, 0.46);
+}
+
+#donateForm .record-orb-wrap .rec-btn .rabab-icon {
+  width: 76px;
+  height: 84px;
+}
+
+.voice-pulse-ring {
+  position: absolute;
+  z-index: 1;
+  inset: 10px;
+  border: 1px solid rgba(244, 202, 132, 0.55);
+  border-radius: 38px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#donateForm .rec-btn.recording ~ .voice-pulse-ring {
+  animation: voice-ring-pulse 1.5s ease-out infinite;
+}
+
+#donateForm .rec-btn.recording ~ .voice-pulse-ring.two {
+  animation-delay: 700ms;
+}
+
+#donateForm .voice-record-stage .recorder-copy {
+  position: relative;
+  z-index: 2;
+  padding-bottom: 36px;
+}
+
+#donateForm .voice-record-stage .record-state-label {
+  margin: 0 0 7px;
+  color: #e7b769;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+#donateForm .voice-record-stage .recorder-copy strong {
+  font-size: clamp(1.18rem, 2.2vw, 1.45rem);
+  line-height: 1.15;
+}
+
+#donateForm .voice-record-stage .recorder-copy span:not(.record-state-label) {
+  max-width: 430px;
+  margin-top: 7px;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+#donateForm .voice-record-stage .rec-timer {
+  position: relative;
+  z-index: 2;
+  align-self: start;
+  padding: 7px 9px;
+  border: 1px solid rgba(244, 202, 132, 0.14);
+  border-radius: 9px;
+  background: rgba(6, 30, 25, 0.28);
+  font-size: 0.95rem;
+}
+
+#donateForm .voice-record-stage .rec-playback {
+  position: relative;
+  z-index: 3;
+}
+
+.voice-mission-card .recording-review {
+  border-color: rgba(231, 169, 76, 0.24);
+  border-radius: 18px;
+  background: rgba(255, 250, 240, 0.76);
+  box-shadow: none;
+}
+
+.voice-mission-threads {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 7px;
+  opacity: 0.72;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--terracotta-dark) 0 42px,
+    #e7a94c 42px 80px,
+    var(--forest) 80px 122px
+  );
+  pointer-events: none;
+}
+
+.workspace-body[data-workspace-state="ready"] .voice-mission-card {
+  animation: voice-mission-enter 420ms var(--ease-standard) both;
+}
+
+@keyframes voice-mission-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes voice-stage-shimmer {
+  to { transform: translateX(140%); }
+}
+
+@keyframes voice-ring-pulse {
+  from { opacity: 0.55; transform: scale(0.86); }
+  to { opacity: 0; transform: scale(1.35); }
+}
+
+@media (max-width: 720px) {
+  .voice-mission-heading {
+    gap: 18px;
+  }
+
+  .voice-mission-heading h2 {
+    max-width: 560px;
+  }
+
+  #donateForm .voice-record-stage .recorder-controls {
+    grid-template-columns: 104px minmax(0, 1fr) auto;
+    gap: 16px;
+  }
+
+  #donateForm .voice-record-stage .recording-waveform {
+    right: 104px;
+    left: 136px;
+  }
+}
+
+@media (max-width: 560px) {
+  .voice-mission-card {
+    border-radius: 24px 7px 24px 24px;
+  }
+
+  .voice-mission-heading {
+    padding: 26px 20px 22px;
+  }
+
+  .voice-mission-heading h2 {
+    font-size: clamp(2.05rem, 11vw, 2.75rem);
+  }
+
+  .mission-privacy-pill {
+    white-space: normal;
+  }
+
+  .voice-mission-card #donateForm {
+    padding: 0 16px 36px;
+  }
+
+  .recording-journey {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .recording-journey li {
+    min-height: 42px;
+    padding-block: 6px;
+  }
+
+  .voice-mission-card .provided-sentence-card,
+  .voice-mission-card .custom-sentence-field {
+    padding: 18px 16px;
+  }
+
+  #donateForm .voice-record-stage {
+    min-height: 204px;
+    padding: 18px 15px;
+  }
+
+  #donateForm .voice-record-stage .recorder-controls {
+    min-height: 168px;
+    align-items: start;
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .record-orb-wrap {
+    width: 82px;
+    height: 88px;
+  }
+
+  #donateForm .record-orb-wrap .rec-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 25px;
+  }
+
+  #donateForm .record-orb-wrap .rec-btn .rabab-icon {
+    width: 61px;
+    height: 69px;
+  }
+
+  .voice-pulse-ring {
+    inset: 8px;
+    border-radius: 29px;
+  }
+
+  #donateForm .voice-record-stage .recorder-copy {
+    padding: 8px 0 42px;
+  }
+
+  #donateForm .voice-record-stage .recorder-copy strong {
+    font-size: 1.08rem;
+  }
+
+  #donateForm .voice-record-stage .rec-timer {
+    margin-top: -35px;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  #donateForm .voice-record-stage .recording-waveform {
+    right: 16px;
+    bottom: 21px;
+    left: 16px;
+    height: 27px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-body[data-workspace-state="ready"] .voice-mission-card,
+  #donateForm .voice-record-stage::before,
+  #donateForm .rec-btn.recording ~ .voice-pulse-ring {
+    animation: none;
+  }
+
+  .recording-journey li,
+  .journey-step-number {
+    transition: none;
+  }
+}

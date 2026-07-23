@@ -41,6 +41,14 @@ The production dashboard repeated its contribution call to action, gave a large 
 - The decorative portrait rings, dark identity card, numbered data card, gradients, and nested shadows were removed. Form fields, live regions, retry actions, privacy wording, API calls, and all production IDs remain intact.
 - On narrower screens, the workspace becomes one column, facts remain scannable, privacy sections separate with horizontal rules, and the save action expands to a full-width touch target.
 
+### July 23 voice mission template adaptation
+
+- The supplied motion prototype now informs the production Record Voice page: its focused mission heading, privacy cue, Read → Record → Submit journey, dark recording stage, recording-only pulse rings, and restrained textile thread are adapted to the existing KP AWAZ palette.
+- The visual journey listens to the real recorder button states. It advances to Record while permission, capture, or processing is active and to Submit only when a playable recording is ready.
+- Existing authentication, reviewed-sentence loading, custom-sentence mode, Pashto semantics, Web Audio waveform, Rabab control, playback, account-policy gate, API payloads, and long-form recorder remain production-owned and unchanged.
+- Prototype-only XP, streak, fake community activity, simulated recording, duplicate sidebar, theme toggle, confetti, tilt, and continuous decorative motion were intentionally excluded.
+- The layout reduces to one clear journey column and a two-column recorder control on small screens. Reduced-motion disables the entrance, shimmer, pulse, and journey transitions.
+
 ## New recording journey
 
 Guided:

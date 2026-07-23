@@ -79,6 +79,32 @@ test("guided reading and Rabab controls are accessible and responsive to live au
   assert.match(visualizerSource, /onLevel/);
 });
 
+test("record voice adapts the supplied voice mission template around the production recorder", async () => {
+  const [html, css, source] = await Promise.all([
+    read("sections/contribution.html"),
+    read("styles/contribution.css"),
+    read("scripts/modules/contributions.js"),
+  ]);
+  assert.match(html, /class="contribution-studio voice-mission-card"/);
+  assert.match(html, /Today’s voice mission/);
+  assert.match(html, /Keep one piece of <em>Pashto alive\.<\/em>/);
+  assert.match(html, /class="recorder-surface voice-record-stage"/);
+  assert.match(html, /<ol class="recording-journey"[^>]*aria-label="Recording progress"/);
+  assert.equal((html.match(/data-recording-step="[123]"/g) ?? []).length, 3);
+  assert.match(html, /id="donateWaveform"/);
+  assert.match(html, /id="donateRecBtn"/);
+  assert.match(html, /id="submitDonation"/);
+  assert.doesNotMatch(html, /\bXP\b|streak|community voices|dark mode|confetti/i);
+  assert.match(source, /MutationObserver/);
+  assert.match(source, /contains\("ready"\)[\s\S]*setRecordingJourney\(3\)/);
+  assert.match(source, /contains\("recording"\)[\s\S]*setRecordingJourney\(2\)/);
+  assert.match(source, /donateRecordStateLabel\.textContent = "Ready to submit"/);
+  assert.match(css, /#donateForm \.voice-record-stage\s*{[\s\S]*linear-gradient/);
+  assert.match(css, /\.rec-btn\.recording ~ \.voice-pulse-ring/);
+  assert.match(css, /@media \(max-width: 560px\)[\s\S]*?\.recording-journey\s*{[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?#donateForm \.rec-btn\.recording ~ \.voice-pulse-ring[\s\S]*?animation:\s*none/);
+});
+
 test("dashboard contribution panel is compact and softly surfaced", async () => {
   const [html, css] = await Promise.all([
     read("dashboard.html"),
