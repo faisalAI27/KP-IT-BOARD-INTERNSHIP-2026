@@ -76,6 +76,32 @@ class FakeElement {
     this.listeners = new Map();
     this.tabIndex = -1;
     this._text = "";
+    this.style = {
+      values: new Map(),
+      setProperty: (name, value) => this.style.values.set(name, String(value)),
+      removeProperty: (name) => this.style.values.delete(name),
+    };
+    this.classList = {
+      add: (...names) => {
+        const classes = new Set(this.className.split(/\s+/).filter(Boolean));
+        names.forEach((name) => classes.add(name));
+        this.className = [...classes].join(" ");
+      },
+      remove: (...names) => {
+        const remove = new Set(names);
+        this.className = this.className
+          .split(/\s+/)
+          .filter((name) => name && !remove.has(name))
+          .join(" ");
+      },
+      contains: (name) => this.className.split(/\s+/).includes(name),
+      toggle: (name, force) => {
+        const enabled =
+          force === undefined ? !this.classList.contains(name) : Boolean(force);
+        enabled ? this.classList.add(name) : this.classList.remove(name);
+        return enabled;
+      },
+    };
   }
 
   get textContent() {
@@ -117,6 +143,25 @@ class FakeElement {
   getAttribute(name) {
     return this.attributes.get(name) ?? null;
   }
+
+  removeAttribute(name) {
+    this.attributes.delete(name);
+  }
+
+  contains(candidate) {
+    return candidate === this || this.children.some((child) => child.contains?.(candidate));
+  }
+
+  querySelector(selector) {
+    if (!selector.startsWith(".")) return null;
+    const className = selector.slice(1);
+    for (const child of this.children) {
+      if (child.classList?.contains(className)) return child;
+      const nested = child.querySelector?.(selector);
+      if (nested) return nested;
+    }
+    return null;
+  }
 }
 
 
@@ -133,6 +178,30 @@ class FakeEventTarget extends FakeElement {
 }
 
 
+class FakeAudio extends FakeElement {
+  constructor() {
+    super("audio");
+    this.currentTime = 0;
+    this.duration = 7.4;
+    this.paused = true;
+    this.playCalls = 0;
+    this.pauseCalls = 0;
+  }
+
+  async play() {
+    this.playCalls += 1;
+    this.paused = false;
+    this.dispatch("play");
+  }
+
+  pause() {
+    this.pauseCalls += 1;
+    this.paused = true;
+    this.dispatch("pause");
+  }
+}
+
+
 const ELEMENT_IDS = [
   "myContributionsPageSection",
   "myContributionsStatus",
@@ -142,14 +211,23 @@ const ELEMENT_IDS = [
   "myContributionsSummaryPending",
   "myContributionsSummaryApproved",
   "myContributionsSummaryRejected",
+  "myContributionsScoreValue",
+  "myContributionsUpdated",
+  "myContributionsVisibleCount",
   "myContributionsList",
   "myContributionsEmpty",
+  "myContributionsEmptyTitle",
+  "myContributionsEmptyDescription",
   "myContributionsError",
   "myContributionsErrorMessage",
   "refreshContributionsButton",
   "loadMoreContributionsButton",
   "retryContributionsButton",
   "myContributionsLoadMoreError",
+  "filterAllContributionsButton",
+  "filterPendingContributionsButton",
+  "filterApprovedContributionsButton",
+  "filterRejectedContributionsButton",
 ];
 
 
@@ -200,13 +278,21 @@ function historyPage(items = [], { total = items.length, offset = 0 } = {}) {
 }
 
 
-function createHistoryApi(get) {
+function createHistoryApi(get, getAudio) {
   const calls = [];
+  const audioCalls = [];
   return {
     calls,
+    audioCalls,
     async getMyContributions(pagination) {
       calls.push({ ...pagination });
       return get ? get(calls.length, pagination) : historyPage([]);
+    },
+    async getMyContributionAudio(input) {
+      audioCalls.push({ ...input });
+      return getAudio
+        ? getAudio(audioCalls.length, input)
+        : new Blob(["private-audio"], { type: "audio/webm" });
     },
   };
 }
@@ -244,12 +330,15 @@ function createFixture({
   locale = "en-US",
   open,
   getStatistics,
+  getAudio,
+  audioFactory,
+  urlApi,
 } = {}) {
   const root = createRoot();
   root.elements.get("myContributionsPageSection").hidden =
     !(open ?? state.status === "signed_in");
   const authApi = createAuthApi(state);
-  const contributionsApi = createHistoryApi(get);
+  const contributionsApi = createHistoryApi(get, getAudio);
   const statisticsApi = createStatisticsApi(getStatistics);
   const eventTarget = new FakeEventTarget();
   const history = new MyContributions({
@@ -259,6 +348,8 @@ function createFixture({
     statisticsApi,
     eventTarget,
     locale,
+    ...(audioFactory ? { audioFactory } : {}),
+    ...(urlApi ? { urlApi } : {}),
   });
   assert.equal(history.initializeMyContributions(), true);
   return {
@@ -321,8 +412,15 @@ test("separate My Contributions partial includes its accessible controls once", 
     "myContributionsSummaryPending",
     "myContributionsSummaryApproved",
     "myContributionsSummaryRejected",
+    "myContributionsScoreValue",
+    "myContributionsUpdated",
+    "myContributionsVisibleCount",
     "myContributionsList",
     "refreshContributionsButton",
+    "filterAllContributionsButton",
+    "filterPendingContributionsButton",
+    "filterApprovedContributionsButton",
+    "filterRejectedContributionsButton",
     "loadMoreContributionsButton",
     "retryContributionsButton",
   ]) {
@@ -338,6 +436,35 @@ test("separate My Contributions partial includes its accessible controls once", 
     "utf8",
   );
   assert.doesNotMatch(account, /id="myContributionsList"/);
+});
+
+
+test("My Contributions uses the supplied motion template and scoped responsive styles", async () => {
+  const [page, html, css, motion] = await Promise.all([
+    readFile(new URL("../../my-contributions.html", import.meta.url), "utf8"),
+    readFile(new URL("../../sections/my-contributions.html", import.meta.url), "utf8"),
+    readFile(new URL("../../styles/my-contributions.css", import.meta.url), "utf8"),
+    readFile(
+      new URL("../../scripts/modules/contributions-motion.js", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(page, /my-contributions-motion-body/);
+  assert.match(page, /my-contributions\.css\?v=20260723-contributions-motion/);
+  assert.match(html, /Private review trail/);
+  assert.match(html, /Review your recordings, listen again, and follow their approval journey/);
+  assert.match(html, /class="my-contributions-summary-grid"/);
+  assert.match(html, /class="my-contributions-filters"/);
+  assert.equal((html.match(/data-filter="(?:all|pending|approved|rejected)"/g) ?? []).length, 4);
+  assert.match(html, /id="myContributionsToast"[\s\S]*aria-live="polite"/);
+  assert.match(css, /@keyframes contributions-card-in/);
+  assert.match(css, /@keyframes contributions-review-scan/);
+  assert.match(css, /@keyframes contributions-wave/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(motion, /--mx/);
+  assert.match(motion, /rotateX/);
+  assert.match(motion, /contributions-refresh-burst/);
 });
 
 
@@ -482,7 +609,7 @@ test("initial failure shows a safe error and retry control", async () => {
 });
 
 
-test("contribution response renders one keyboard-focusable card", async () => {
+test("contribution response renders one semantic card with accessible controls", async () => {
   const fixture = createFixture({
     state: authState("signed_in", USER_A),
     get: () => historyPage([ITEM_A]),
@@ -490,8 +617,9 @@ test("contribution response renders one keyboard-focusable card", async () => {
   await settle();
   const card = element(fixture, "myContributionsList").children[0];
   assert.equal(card.tagName, "LI");
-  assert.equal(card.tabIndex, 0);
+  assert.equal(card.tabIndex, -1);
   assert.match(card.textContent, /Guided recording/);
+  assert.match(card.textContent, /Details/);
 });
 
 
@@ -597,7 +725,41 @@ test("authenticated statistics render total, pending, approved, and rejected sum
   assert.equal(element(fixture, "myContributionsSummaryPending").textContent, "3");
   assert.equal(element(fixture, "myContributionsSummaryApproved").textContent, "2");
   assert.equal(element(fixture, "myContributionsSummaryRejected").textContent, "2");
+  assert.equal(element(fixture, "myContributionsScoreValue").textContent, "2");
   assert.equal(fixture.statisticsApi.calls.length, 1);
+});
+
+
+test("review filters request an ownership-safe backend page and update selected state", async () => {
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: (call) =>
+      call === 1
+        ? historyPage([ITEM_A, ITEM_B], { total: 2 })
+        : historyPage([ITEM_B], { total: 1 }),
+  });
+  await settle();
+
+  element(fixture, "filterApprovedContributionsButton").dispatch("click");
+  await settle();
+
+  assert.deepEqual(fixture.contributionsApi.calls.at(-1), {
+    limit: 10,
+    offset: 0,
+    status: "approved",
+  });
+  assert.equal(
+    element(fixture, "filterApprovedContributionsButton").getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(
+    element(fixture, "filterAllContributionsButton").getAttribute("aria-pressed"),
+    "false",
+  );
+  assert.match(
+    element(fixture, "myContributionsVisibleCount").textContent,
+    /Showing 1 of 1 recording/,
+  );
 });
 
 
@@ -743,6 +905,52 @@ test("open recording renders its topic, filename, and MIME type", async () => {
   assert.match(renderedText(fixture), /TopicA village story/);
   assert.match(renderedText(fixture), /Filestory\.ogg/);
   assert.match(renderedText(fixture), /Formataudio\/ogg/);
+});
+
+
+test("card playback fetches private owner audio and releases its Blob URL", async () => {
+  const audio = new FakeAudio();
+  const createdUrls = [];
+  const revokedUrls = [];
+  const fixture = createFixture({
+    state: authState("signed_in", USER_A),
+    get: () => historyPage([ITEM_A]),
+    getAudio: () => new Blob(["owner-audio"], { type: "audio/webm" }),
+    audioFactory: () => audio,
+    urlApi: {
+      createObjectURL(blob) {
+        assert.equal(blob.type, "audio/webm");
+        createdUrls.push("blob:owner-audio");
+        return "blob:owner-audio";
+      },
+      revokeObjectURL(url) {
+        revokedUrls.push(url);
+      },
+    },
+  });
+  await settle();
+  const card = element(fixture, "myContributionsList").children[0];
+  const playButton = card.querySelector(".my-contribution-play");
+
+  playButton.dispatch("click");
+  await settle();
+
+  assert.deepEqual(fixture.contributionsApi.audioCalls, [
+    { contributionId: ITEM_A.id },
+  ]);
+  assert.equal(audio.playCalls, 1);
+  assert.equal(card.classList.contains("playing"), true);
+  assert.equal(playButton.getAttribute("aria-label"), "Pause recording playback");
+
+  playButton.dispatch("click");
+  await settle();
+  assert.equal(audio.pauseCalls, 1);
+  assert.equal(fixture.contributionsApi.audioCalls.length, 1);
+  assert.equal(card.classList.contains("playing"), false);
+
+  fixture.history.destroyMyContributions();
+  assert.deepEqual(createdUrls, ["blob:owner-audio"]);
+  assert.deepEqual(revokedUrls, ["blob:owner-audio"]);
 });
 
 

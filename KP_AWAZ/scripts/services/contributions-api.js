@@ -8,6 +8,7 @@ import {
 
 const SAFE_REQUEST_ERROR = "The request could not be completed. Please try again.";
 const REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
+const REVIEW_FILTERS = new Set(["all", ...REVIEW_STATUSES]);
 const WITHDRAWAL_STATUSES = new Set([
   "none",
   "requested",
@@ -228,6 +229,30 @@ function paginationValue(value, { name, defaultValue, minimum, maximum }) {
   return candidate;
 }
 
+
+function reviewFilter(value) {
+  const normalized =
+    typeof value === "string" ? value.trim().toLowerCase() : "all";
+  if (!REVIEW_FILTERS.has(normalized)) {
+    throw new ApiError("The contribution review filter is invalid.", {
+      code: "INVALID_REVIEW_STATUS",
+    });
+  }
+  return normalized;
+}
+
+
+function requiredContributionId(value) {
+  const contributionId = typeof value === "string" ? value.trim() : "";
+  if (!contributionId || contributionId.length > 200) {
+    throw new ApiError("A valid contribution is required.", {
+      code: "INVALID_CONTRIBUTION_ID",
+    });
+  }
+  return contributionId;
+}
+
+
 function appendAudio(formData, audioBlob) {
   if (!(audioBlob instanceof Blob) || audioBlob.size <= 0) {
     throw new ApiError("No usable recording was received. Please record again.", {
@@ -408,7 +433,7 @@ export class ContributionsApi {
     return this._postForm("/contributions/open-recording", formData);
   }
 
-  async getMyContributions({ limit = 20, offset = 0 } = {}) {
+  async getMyContributions({ limit = 20, offset = 0, status = "all" } = {}) {
     const safeLimit = paginationValue(limit, {
       name: "Limit",
       defaultValue: 20,
@@ -420,10 +445,12 @@ export class ContributionsApi {
       defaultValue: 0,
       minimum: 0,
     });
+    const safeStatus = reviewFilter(status);
     const accessToken = requiredAccessToken(this._getAccessToken);
     const query = new URLSearchParams({
       limit: String(safeLimit),
       offset: String(safeOffset),
+      status: safeStatus,
     });
     const response = await this._fetchApi(
       `${this._apiBaseUrl}/contributions/me?${query}`,
@@ -441,6 +468,54 @@ export class ContributionsApi {
     }
     return validateMyContributionsResponse(body, response.status);
   }
+
+  async getMyContributionAudio({ contributionId } = {}) {
+    const safeContributionId = requiredContributionId(contributionId);
+    const accessToken = requiredAccessToken(this._getAccessToken);
+    const response = await this._fetchApi(
+      `${this._apiBaseUrl}/contributions/me/${encodeURIComponent(safeContributionId)}/audio`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "audio/*",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    if (!response.ok) {
+      const body = await readJson(response);
+      throw apiErrorFromResponse(
+        response,
+        body,
+        "The recording could not be loaded.",
+        accessToken,
+      );
+    }
+    const mimeType = normalizeAudioMimeType(
+      response.headers?.get?.("Content-Type"),
+    );
+    if (!SUPPORTED_RECORDING_MIME_TYPE_SET.has(mimeType)) {
+      throw new ApiError("The recording format could not be played safely.", {
+        code: "INVALID_AUDIO_RESPONSE",
+        status: response.status,
+      });
+    }
+    let audioBlob;
+    try {
+      audioBlob = await response.blob();
+    } catch {
+      audioBlob = null;
+    }
+    if (!(audioBlob instanceof Blob) || audioBlob.size <= 0) {
+      throw new ApiError("The recording could not be read.", {
+        code: "INVALID_AUDIO_RESPONSE",
+        status: response.status,
+      });
+    }
+    return audioBlob.type === mimeType
+      ? audioBlob
+      : new Blob([audioBlob], { type: mimeType });
+  }
 }
 
 
@@ -455,3 +530,5 @@ export const submitOpenRecording = (input) =>
   contributionsApi.submitOpenRecording(input);
 export const getMyContributions = (pagination) =>
   contributionsApi.getMyContributions(pagination);
+export const getMyContributionAudio = (input) =>
+  contributionsApi.getMyContributionAudio(input);

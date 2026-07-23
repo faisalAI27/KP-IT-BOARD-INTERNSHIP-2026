@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -16,6 +16,7 @@ from app.services.contribution_service import (
     OpenRecordingInput,
     create_guided_contribution,
     create_open_recording,
+    get_user_contribution_audio_file,
     get_user_contributions,
 )
 from app.services.profile_service import ProfileServiceError, get_or_create_profile
@@ -212,6 +213,7 @@ def get_my_contributions(
     database: Annotated[Session, Depends(get_db)],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
+    review_status: Annotated[str, Query(alias="status")] = "all",
 ) -> MyContributionListResponse | JSONResponse:
     """Return only the verified caller's contribution history."""
 
@@ -221,6 +223,7 @@ def get_my_contributions(
             owner_user_id=user.id,
             limit=limit,
             offset=offset,
+            review_status=review_status,
         )
     except ContributionServiceError as error:
         return _safe_error_response(error)
@@ -232,4 +235,28 @@ def get_my_contributions(
             "limit": limit,
             "offset": offset,
         }
+    )
+
+
+@router.get("/me/{contribution_id}/audio", response_model=None)
+def get_my_contribution_audio(
+    contribution_id: str,
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    database: Annotated[Session, Depends(get_db)],
+) -> FileResponse | JSONResponse:
+    """Stream one private contribution recording only to its verified owner."""
+
+    try:
+        audio_file = get_user_contribution_audio_file(
+            database=database,
+            owner_user_id=user.id,
+            contribution_id=contribution_id,
+        )
+    except ContributionServiceError as error:
+        return _safe_error_response(error)
+    return FileResponse(
+        path=audio_file.path,
+        media_type=audio_file.mime_type,
+        filename=audio_file.filename,
+        content_disposition_type="inline",
     )

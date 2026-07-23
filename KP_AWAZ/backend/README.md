@@ -379,18 +379,19 @@ status, and UTC creation time.
 Return the verified caller's contributions with:
 
 ```http
-GET /api/contributions/me?limit=20&offset=0
+GET /api/contributions/me?limit=20&offset=0&status=all
+GET /api/contributions/me/{contribution_id}/audio
 ```
 
 ```bash
 curl \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  "http://127.0.0.1:8000/api/contributions/me?limit=20&offset=0"
+  "http://127.0.0.1:8000/api/contributions/me?limit=20&offset=0&status=all"
 ```
 
-The endpoint filters ownership in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. Each item includes `reviewStatus` (`pending`, `approved`, or `rejected`) and a nullable `rejectionReason`. The reason is returned only for a rejected contribution belonging to the verified caller; it is always null for pending and approved items. The endpoint never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no reviewer identity, review revision, storage keys, absolute paths, tokens, or owner IDs.
+The endpoint filters ownership and the optional `all`, `pending`, `approved`, or `rejected` review status in the database query, orders newest records first, and returns `items`, `total`, `limit`, and `offset`. Each item includes `reviewStatus` and a nullable `rejectionReason`. The reason is returned only for a rejected contribution belonging to the verified caller; it is always null for pending and approved items. The endpoint never accepts a user ID and excludes both other users' contributions and legacy rows whose `user_id` is null. The response contains safe contribution metadata but no reviewer identity, review revision, storage keys, absolute paths, tokens, or owner IDs.
 
-SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. The frontend account dialog uses this private endpoint for its My Contributions interface and does not provide audio playback because the response has no playable URL.
+SQLite stores contribution metadata and nullable authenticated ownership in the `contributions` table. Actual audio remains under backend storage. Existing contributions created before ownership support remain intact and unowned. The dedicated owner-audio route requires the same bearer authentication, filters by both contribution ID and verified owner ID, validates the canonical private storage path and MIME/extension pair, and streams the file inline without exposing a storage key or public URL.
 
 ## Admin contribution review
 

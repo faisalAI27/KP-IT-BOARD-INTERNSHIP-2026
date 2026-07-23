@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import math
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
@@ -18,9 +19,16 @@ from app.services.audio_storage import (
     cleanup_staged_audio,
     commit_staged_audio_file,
     delete_audio_file,
+    resolve_audio_storage_path,
     store_audio_file,
 )
-from app.utils.audio_validation import ValidatedAudio, validate_audio_upload
+from app.utils.audio_validation import (
+    AUDIO_MIME_FILENAME_EXTENSIONS,
+    AudioValidationError,
+    ValidatedAudio,
+    normalize_audio_mime_type,
+    validate_audio_upload,
+)
 from app.utils.text_normalization import (
     clean_sentence_text,
     normalize_language_name,
@@ -33,6 +41,7 @@ from app.services.withdrawal_service import (
 
 
 TRUE_CONSENT_VALUES = frozenset({"true", "1", "yes", "on"})
+REVIEW_FILTERS = frozenset({"all", "pending", "approved", "rejected"})
 
 
 class ContributionServiceError(Exception):
@@ -131,6 +140,38 @@ class ContributionQueryError(ContributionServiceError):
     code = "CONTRIBUTION_QUERY_FAILED"
     default_message = "Contribution history could not be loaded."
     http_status = 500
+
+
+class InvalidContributionReviewFilterError(ContributionServiceError):
+    code = "INVALID_REVIEW_STATUS"
+    default_message = "The contribution review status is invalid."
+
+
+class ContributionNotFoundError(ContributionServiceError):
+    code = "CONTRIBUTION_NOT_FOUND"
+    default_message = "The requested contribution was not found."
+    http_status = 404
+
+
+class ContributionAudioNotFoundError(ContributionServiceError):
+    code = "CONTRIBUTION_AUDIO_NOT_FOUND"
+    default_message = "The contribution audio file was not found."
+    http_status = 404
+
+
+class UnsafeContributionAudioPathError(ContributionServiceError):
+    code = "UNSAFE_AUDIO_PATH"
+    default_message = "The contribution audio could not be accessed safely."
+    http_status = 500
+
+
+@dataclass(frozen=True, slots=True)
+class ContributionAudioFile:
+    """Validated private audio metadata for an authenticated owner."""
+
+    path: Path
+    mime_type: str
+    filename: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -498,18 +539,27 @@ def get_user_contributions(
     owner_user_id: str,
     limit: int,
     offset: int,
+    review_status: str = "all",
 ) -> tuple[list[Contribution], int]:
     """Return one owner's page using ownership filtering in the database."""
 
+    normalized_status = (
+        review_status.strip().lower() if isinstance(review_status, str) else ""
+    )
+    if normalized_status not in REVIEW_FILTERS:
+        raise InvalidContributionReviewFilterError()
     ownership_filter = Contribution.user_id == owner_user_id
+    filters = [ownership_filter]
+    if normalized_status != "all":
+        filters.append(Contribution.review_status == normalized_status)
     try:
         total = database.scalar(
-            select(func.count()).select_from(Contribution).where(ownership_filter)
+            select(func.count()).select_from(Contribution).where(*filters)
         )
         items = list(
             database.scalars(
                 select(Contribution)
-                .where(ownership_filter)
+                .where(*filters)
                 .order_by(Contribution.created_at.desc(), Contribution.id.desc())
                 .limit(limit)
                 .offset(offset)
@@ -524,3 +574,44 @@ def get_user_contributions(
         database.rollback()
         raise ContributionQueryError() from error
     return items, int(total or 0)
+
+
+def get_user_contribution_audio_file(
+    *,
+    database: Session,
+    owner_user_id: str,
+    contribution_id: str,
+) -> ContributionAudioFile:
+    """Resolve one private recording only when it belongs to the caller."""
+
+    try:
+        contribution = database.scalar(
+            select(Contribution).where(
+                Contribution.id == contribution_id,
+                Contribution.user_id == owner_user_id,
+            )
+        )
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise ContributionQueryError() from error
+    if contribution is None:
+        raise ContributionNotFoundError()
+
+    try:
+        audio_path = resolve_audio_storage_path(contribution.audio_storage_key)
+        normalized_mime_type = normalize_audio_mime_type(contribution.mime_type)
+        allowed_extensions = AUDIO_MIME_FILENAME_EXTENSIONS[normalized_mime_type]
+    except (AudioStorageError, AudioValidationError, KeyError) as error:
+        raise UnsafeContributionAudioPathError() from error
+
+    extension = audio_path.suffix.removeprefix(".").lower()
+    if extension not in allowed_extensions:
+        raise UnsafeContributionAudioPathError()
+    if not audio_path.exists() or audio_path.is_symlink() or not audio_path.is_file():
+        raise ContributionAudioNotFoundError()
+
+    return ContributionAudioFile(
+        path=audio_path,
+        mime_type=normalized_mime_type,
+        filename=f"my-contribution-audio.{extension}",
+    )

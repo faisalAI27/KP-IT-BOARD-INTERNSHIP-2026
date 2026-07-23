@@ -473,7 +473,7 @@ test("getMyContributions sends bearer token and validated pagination", async () 
   assert.deepEqual(result, historyBody);
   assert.equal(
     request().url,
-    `${appConfig.api.baseUrl}/contributions/me?limit=20&offset=0`,
+    `${appConfig.api.baseUrl}/contributions/me?limit=20&offset=0&status=all`,
   );
   assert.equal(request().url.includes(ACCESS_TOKEN), false);
   assert.equal(request().options.method, "GET");
@@ -481,6 +481,98 @@ test("getMyContributions sends bearer token and validated pagination", async () 
     new Headers(request().options.headers).get("Authorization"),
     `Bearer ${ACCESS_TOKEN}`,
   );
+});
+
+
+test("getMyContributions sends a validated review status filter", async () => {
+  const request = installJsonFetch(historyBody);
+
+  await contributionApi.getMyContributions({
+    limit: 20,
+    offset: 0,
+    status: "approved",
+  });
+
+  assert.equal(
+    request().url,
+    `${appConfig.api.baseUrl}/contributions/me?limit=20&offset=0&status=approved`,
+  );
+});
+
+
+test("getMyContributions rejects an invalid review filter before fetch", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      throw new Error("must not fetch");
+    },
+  });
+
+  await assert.rejects(
+    api.getMyContributions({ status: "reviewing" }),
+    (error) => error.code === "INVALID_REVIEW_STATUS",
+  );
+  assert.equal(fetchCalls, 0);
+});
+
+
+test("getMyContributionAudio uses the owner route and returns a protected Blob", async () => {
+  const contributionId = "id/that must stay in one path segment";
+  const audio = new Blob(["owner-audio"], { type: "audio/webm" });
+  let request;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async (url, options) => {
+      request = { url: String(url), options };
+      return new Response(audio, {
+        status: 200,
+        headers: { "Content-Type": "audio/webm; codecs=opus" },
+      });
+    },
+  });
+
+  const result = await api.getMyContributionAudio({ contributionId });
+
+  assert.equal(result instanceof Blob, true);
+  assert.equal(result.type, "audio/webm");
+  assert.equal(await result.text(), "owner-audio");
+  assert.equal(
+    request.url,
+    `${appConfig.api.baseUrl}/contributions/me/${encodeURIComponent(contributionId)}/audio`,
+  );
+  assert.equal(request.url.includes(ACCESS_TOKEN), false);
+  assert.equal(request.options.method, "GET");
+  assert.equal(
+    new Headers(request.options.headers).get("Authorization"),
+    `Bearer ${ACCESS_TOKEN}`,
+  );
+});
+
+
+test("getMyContributionAudio rejects invalid IDs and unsupported responses safely", async () => {
+  let fetchCalls = 0;
+  const api = new ContributionsApi({
+    getAccessToken: () => ACCESS_TOKEN,
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return new Response("not audio", {
+        status: 200,
+        headers: { "Content-Type": "text/plain" },
+      });
+    },
+  });
+
+  await assert.rejects(
+    api.getMyContributionAudio({ contributionId: " " }),
+    (error) => error.code === "INVALID_CONTRIBUTION_ID",
+  );
+  await assert.rejects(
+    api.getMyContributionAudio({ contributionId: historyItem.id }),
+    (error) => error.code === "INVALID_AUDIO_RESPONSE",
+  );
+  assert.equal(fetchCalls, 1);
 });
 
 

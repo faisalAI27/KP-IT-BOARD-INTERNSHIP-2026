@@ -1,17 +1,22 @@
 import {
   destroyMyContributions,
   initializeMyContributions,
-} from "./modules/my-contributions.js?v=20260719-withdrawals";
+} from "./modules/my-contributions.js?v=20260723-contributions-motion";
+import { initContributionsMotion } from "./modules/contributions-motion.js?v=20260723-contributions-motion";
 import {
   destroyWorkspace,
   initializeWorkspace,
 } from "./modules/workspace-shell.js?v=20260717-auth-routing";
 
 
+let contributionsMotion = null;
+
+
 function openContributionHistory() {
   const section = document.getElementById("myContributionsPageSection");
   if (!section) throw new Error("Contribution history could not be loaded.");
   section.hidden = false;
+  contributionsMotion = initContributionsMotion();
   initializeMyContributions();
 }
 
@@ -19,6 +24,8 @@ function openContributionHistory() {
 window.addEventListener(
   "beforeunload",
   () => {
+    contributionsMotion?.destroy();
+    contributionsMotion = null;
     destroyMyContributions();
     destroyWorkspace();
   },

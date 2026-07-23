@@ -127,6 +127,12 @@ Tests cover route-mode selection and fallback, simplified markup, profile-derive
 
 True microphone input, authenticated API data, and successful multipart submission still depend on browser permission plus a configured Supabase and FastAPI environment. A future improvement could add a dedicated authenticated end-to-end fixture for those external services without weakening production authentication.
 
+## July 23 My Contributions motion template
+
+The standalone My Contributions page now uses the supplied motion template while retaining the production workspace shell and authenticated data model. The implementation includes the woven shell border, review summary, four server-backed status filters, staggered status cards, pointer glow and tilt, refresh sparkle/toast feedback, responsive single-column cards, and reduced-motion handling.
+
+Playback is connected to a new protected owner-audio route. The route requires the current bearer session, filters by both contribution ID and owner ID, validates the canonical private file path and audio MIME/extension, and returns a Blob-backed player without exposing storage keys or persistent public audio URLs. Filtering is also performed in the ownership-scoped database query so pagination remains accurate for each review state.
+
 Validation completed on 2026-07-22:
 
 - `npm test`: 743 passed.

@@ -8,6 +8,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from app.models import Contribution, Profile
+from app.services.audio_storage import resolve_audio_storage_path
 from tests.conftest import (
     TEST_AUTHORIZATION,
     TEST_USER_ID,
@@ -41,6 +42,7 @@ def add_contribution(
     contribution_type: str = "guided",
     review_status: str = "pending",
     rejection_reason: str | None = None,
+    audio_storage_key: str | None = None,
 ) -> Contribution:
     contribution = Contribution(
         id=contribution_id,
@@ -53,7 +55,7 @@ def add_contribution(
         sentence_source="provided" if contribution_type == "guided" else None,
         topic=None if contribution_type == "guided" else "A story",
         consent_given=True,
-        audio_storage_key=f"audio/private/{contribution_id}.webm",
+        audio_storage_key=audio_storage_key or f"audio/private/{contribution_id}.webm",
         original_filename="recording.webm",
         mime_type="audio/webm",
         file_size=128,
@@ -71,6 +73,23 @@ def add_contribution(
 
 def get_mine(client: TestClient, query: str = ""):
     return client.get(f"{ENDPOINT}{query}", headers=TEST_AUTHORIZATION)
+
+
+def get_my_audio(client: TestClient, contribution_id: str):
+    return client.get(
+        f"{ENDPOINT}/{contribution_id}/audio",
+        headers=TEST_AUTHORIZATION,
+    )
+
+
+def write_contribution_audio(
+    contribution: Contribution,
+    content: bytes = b"private-owner-audio",
+) -> bytes:
+    audio_path = resolve_audio_storage_path(contribution.audio_storage_key)
+    audio_path.parent.mkdir(parents=True, exist_ok=True)
+    audio_path.write_bytes(content)
+    return content
 
 
 def test_missing_token_returns_401(client: TestClient) -> None:
@@ -336,6 +355,137 @@ def test_supplied_user_id_cannot_change_scope(
     assert response.status_code == 200
     assert response.json()["items"] == []
     assert response.json()["total"] == 0
+
+
+def test_review_status_filter_is_applied_with_ownership_in_sql(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, TEST_USER_ID)
+    add_profile(db_session, OTHER_USER_ID)
+    now = datetime.now(timezone.utc)
+    approved = add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=now,
+        review_status="approved",
+    )
+    add_contribution(
+        db_session,
+        contribution_id="22222222-2222-4222-8222-222222222222",
+        user_id=TEST_USER_ID,
+        created_at=now + timedelta(seconds=1),
+        review_status="pending",
+    )
+    add_contribution(
+        db_session,
+        contribution_id="33333333-3333-4333-8333-333333333333",
+        user_id=OTHER_USER_ID,
+        created_at=now + timedelta(seconds=2),
+        review_status="approved",
+    )
+
+    response = get_mine(client, "?status=approved")
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert [item["id"] for item in response.json()["items"]] == [approved.id]
+
+
+def test_invalid_review_status_filter_is_rejected(client: TestClient) -> None:
+    authenticate_test_user()
+
+    response = get_mine(client, "?status=reviewing")
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "INVALID_REVIEW_STATUS"
+
+
+def test_owner_audio_requires_authentication(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    contribution = add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=datetime.now(timezone.utc),
+        audio_storage_key="audio/2026/07/23/11111111-1111-4111-8111-111111111111.webm",
+    )
+
+    response = client.get(f"{ENDPOINT}/{contribution.id}/audio")
+
+    assert response.status_code == 401
+
+
+def test_owner_can_stream_their_private_audio(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, TEST_USER_ID)
+    contribution = add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=datetime.now(timezone.utc),
+        audio_storage_key="audio/2026/07/23/11111111-1111-4111-8111-111111111111.webm",
+    )
+    content = write_contribution_audio(contribution)
+
+    response = get_my_audio(client, contribution.id)
+
+    assert response.status_code == 200
+    assert response.content == content
+    assert response.headers["content-type"] == "audio/webm"
+    assert "inline" in response.headers["content-disposition"]
+    assert "my-contribution-audio" in response.headers["content-disposition"]
+
+
+def test_owner_audio_route_hides_another_users_contribution(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, OTHER_USER_ID)
+    contribution = add_contribution(
+        db_session,
+        contribution_id="22222222-2222-4222-8222-222222222222",
+        user_id=OTHER_USER_ID,
+        created_at=datetime.now(timezone.utc),
+        audio_storage_key="audio/2026/07/23/22222222-2222-4222-8222-222222222222.webm",
+    )
+    content = write_contribution_audio(contribution, b"other-owner-private-audio")
+
+    response = get_my_audio(client, contribution.id)
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "CONTRIBUTION_NOT_FOUND"
+    assert content not in response.content
+    assert contribution.audio_storage_key not in response.text
+
+
+def test_missing_owner_audio_file_returns_safe_404(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_test_user()
+    add_profile(db_session, TEST_USER_ID)
+    contribution = add_contribution(
+        db_session,
+        contribution_id="11111111-1111-4111-8111-111111111111",
+        user_id=TEST_USER_ID,
+        created_at=datetime.now(timezone.utc),
+        audio_storage_key="audio/2026/07/23/11111111-1111-4111-8111-111111111111.webm",
+    )
+
+    response = get_my_audio(client, contribution.id)
+
+    assert response.status_code == 404
+    assert response.json()["code"] == "CONTRIBUTION_AUDIO_NOT_FOUND"
+    assert contribution.audio_storage_key not in response.text
 
 
 def test_query_filters_ownership_in_sql(
