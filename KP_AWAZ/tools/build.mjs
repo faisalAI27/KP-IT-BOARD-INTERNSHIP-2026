@@ -173,10 +173,14 @@ async function writeSitesArtifacts() {
   const clientRoot = resolve(outputRoot, "client");
   const serverRoot = resolve(outputRoot, "server");
   const hostingRoot = resolve(outputRoot, ".openai");
+  const sitesPages = {};
   await mkdir(clientRoot, { recursive: true });
   await mkdir(serverRoot, { recursive: true });
   await mkdir(hostingRoot, { recursive: true });
   for (const pageName of productionPages) {
+    const html = await readFile(resolve(outputRoot, pageName), "utf8");
+    sitesPages[`/${pageName}`] = html;
+    sitesPages[`/${pageName.replace(/\.html$/, "")}`] = html;
     await cp(
       resolve(outputRoot, pageName),
       resolve(clientRoot, pageName),
@@ -196,18 +200,28 @@ async function writeSitesArtifacts() {
   );
   await writeFile(
     resolve(serverRoot, "index.js"),
-    `export default {
+    `const HTML_PAGES = Object.freeze(${JSON.stringify({
+      ...sitesPages,
+      "/": sitesPages["/index.html"],
+    })});
+
+export default {
   async fetch(request, environment) {
+    const pathname = new URL(request.url).pathname.replace(/\\/$/, "") || "/";
+    const html = HTML_PAGES[pathname];
+    if (typeof html === "string") {
+      return new Response(html, {
+        headers: {
+          "Cache-Control": "no-cache",
+          "Content-Type": "text/html; charset=utf-8",
+        },
+      });
+    }
     if (!environment?.ASSETS || typeof environment.ASSETS.fetch !== "function") {
       return new Response("Static assets are unavailable.", { status: 503 });
     }
     const response = await environment.ASSETS.fetch(request);
-    const pathname = new URL(request.url).pathname;
-    if (
-      pathname !== "/" &&
-      !pathname.endsWith(".html") &&
-      pathname !== "/scripts/config.js"
-    ) {
+    if (pathname !== "/scripts/config.js") {
       return response;
     }
     const headers = new Headers(response.headers);

@@ -65,6 +65,8 @@ test("Sites build includes its static worker and persisted project metadata", as
   assert.match(build, /resolve\(outputRoot, "client"\)/);
   assert.match(build, /resolve\(clientRoot, pageName\)/);
   assert.match(build, /resolve\(outputRoot, "server"\)/);
+  assert.match(build, /const sitesPages = \{\}/);
+  assert.match(build, /"Content-Type": "text\/html; charset=utf-8"/);
   assert.match(build, /environment\?\.ASSETS/);
   assert.match(build, /headers\.set\("Cache-Control", "no-cache"\)/);
   assert.match(build, /resolve\(outputRoot, "\.openai"\)/);
