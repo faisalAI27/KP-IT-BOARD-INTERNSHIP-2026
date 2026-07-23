@@ -62,6 +62,8 @@ test("Sites build includes its static worker and persisted project metadata", as
     read(".openai/hosting.json"),
   ]);
 
+  assert.match(build, /resolve\(outputRoot, "client"\)/);
+  assert.match(build, /resolve\(clientRoot, pageName\)/);
   assert.match(build, /resolve\(outputRoot, "server"\)/);
   assert.match(build, /environment\?\.ASSETS/);
   assert.match(build, /headers\.set\("Cache-Control", "no-cache"\)/);

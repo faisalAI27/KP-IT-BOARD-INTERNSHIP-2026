@@ -7,6 +7,22 @@ import { appConfig as developmentConfig } from "../scripts/config.js";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "dist");
+const productionPages = [
+  "index.html",
+  "about.html",
+  "data-use.html",
+  "how-it-works.html",
+  "leaderboard.html",
+  "auth.html",
+  "forgot-password.html",
+  "reset-password.html",
+  "dashboard.html",
+  "contribute.html",
+  "my-contributions.html",
+  "profile.html",
+  "settings.html",
+  "admin.html",
+];
 const buildEnvironment = (process.env.KP_AWAZ_BUILD_ENV ?? "development")
   .trim()
   .toLowerCase();
@@ -154,10 +170,25 @@ async function copyRuntimeAssets() {
 }
 
 async function writeSitesArtifacts() {
+  const clientRoot = resolve(outputRoot, "client");
   const serverRoot = resolve(outputRoot, "server");
   const hostingRoot = resolve(outputRoot, ".openai");
+  await mkdir(clientRoot, { recursive: true });
   await mkdir(serverRoot, { recursive: true });
   await mkdir(hostingRoot, { recursive: true });
+  for (const pageName of productionPages) {
+    await cp(
+      resolve(outputRoot, pageName),
+      resolve(clientRoot, pageName),
+      { force: true },
+    );
+  }
+  for (const directory of ["assets", "scripts", "styles"]) {
+    await cp(resolve(outputRoot, directory), resolve(clientRoot, directory), {
+      recursive: true,
+      force: true,
+    });
+  }
   await cp(
     resolve(projectRoot, ".openai", "hosting.json"),
     resolve(hostingRoot, "hosting.json"),
@@ -197,22 +228,7 @@ const runtimeConfig = productionAppConfig();
 
 await rm(outputRoot, { recursive: true, force: true });
 await buildSupabaseVendorBundle();
-for (const pageName of [
-  "index.html",
-  "about.html",
-  "data-use.html",
-  "how-it-works.html",
-  "leaderboard.html",
-  "auth.html",
-  "forgot-password.html",
-  "reset-password.html",
-  "dashboard.html",
-  "contribute.html",
-  "my-contributions.html",
-  "profile.html",
-  "settings.html",
-  "admin.html",
-]) {
+for (const pageName of productionPages) {
   await assemblePage(pageName);
 }
 await copyRuntimeAssets();
