@@ -83,8 +83,10 @@ test("private profile uses one minimal workspace instead of stacked cards", asyn
   assert.match(profile, /class="profile-insights"/);
   assert.doesNotMatch(profile, /account-detail-card|profile-portrait-rings|profile-data-number|✦/);
   assert.match(css, /\.profile-workspace\s*{[\s\S]*?border:\s*1px solid var\(--line\)[\s\S]*?background:/);
-  assert.match(css, /\.profile-score-card,\s*\.profile-consent-card\s*{[\s\S]*?border:\s*0[\s\S]*?box-shadow:\s*none/);
+  assert.match(css, /\.profile-score-card,\s*\.profile-consent-card\s*{[\s\S]*?border:\s*0[\s\S]*?box-shadow:\s*none !important/);
   assert.match(css, /\.profile-insights\s*{[\s\S]*?border-left:\s*1px solid var\(--line\)/);
+  assert.match(css, /\.profile-workspace-grid\s*{[\s\S]*?minmax\(390px, 0\.75fr\)/);
+  assert.match(css, /\.profile-consent-card::after\s*{[\s\S]*?display:\s*none/);
   assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.profile-insights,[\s\S]*?grid-template-columns:\s*1fr/);
 });
 

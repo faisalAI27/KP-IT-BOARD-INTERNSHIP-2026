@@ -139,7 +139,7 @@
 .profile-workspace-grid {
   display: grid;
   align-items: stretch;
-  grid-template-columns: minmax(0, 1.4fr) minmax(290px, 0.6fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(390px, 0.75fr);
 }
 
 .workspace-profile-settings {
@@ -149,12 +149,12 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: none;
+  box-shadow: none !important;
 }
 
 .profile-insights {
   min-width: 0;
-  padding: clamp(26px, 3.2vw, 38px);
+  padding: clamp(26px, 3vw, 36px);
   border-left: 1px solid var(--line);
   background: rgba(246, 243, 235, 0.46);
 }
@@ -167,14 +167,42 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: none;
+  box-shadow: none !important;
+}
+
+.profile-consent-card::after {
+  display: none;
 }
 
 .profile-score-card h2,
 .profile-consent-card h2 {
   margin-top: 4px;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   line-height: 1.25;
+}
+
+.profile-score-card .account-score-heading {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+}
+
+.profile-score-card .account-score-heading h2 {
+  white-space: nowrap;
+}
+
+.profile-score-card .account-score-heading .btn {
+  width: auto;
+  min-width: 88px;
+}
+
+.profile-score-card .auth-kicker,
+.profile-consent-card .auth-kicker {
+  display: block;
+  font-size: 0.61rem;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .profile-consent-card {
@@ -185,7 +213,14 @@
 
 .profile-score-card .account-score-value {
   margin-top: 18px;
-  font-size: clamp(1.7rem, 3vw, 2rem);
+  font-size: clamp(1.65rem, 2.5vw, 1.9rem);
+  white-space: nowrap;
+}
+
+.profile-score-card > p {
+  max-width: 34ch;
+  font-size: 0.72rem;
+  line-height: 1.6;
 }
 
 .profile-consent-facts {
@@ -195,10 +230,11 @@
 }
 
 .profile-consent-facts > div {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  align-items: baseline;
   padding: 11px 0;
   border-bottom: 1px solid var(--line);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
 }
 
@@ -218,7 +254,7 @@
 
 .profile-consent-note {
   margin-top: 14px;
-  line-height: 1.55;
+  line-height: 1.65;
 }
 
 .profile-consent-link {
@@ -227,6 +263,7 @@
   color: var(--terracotta-dark);
   font-size: 0.7rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .workspace-profile-settings .profile-settings-heading h2 {
@@ -340,7 +377,7 @@
   font-weight: 800;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1380px) {
   .profile-identity {
     grid-template-columns: 1fr;
   }
@@ -364,6 +401,20 @@
     padding-left: 34px;
     border-top: 0;
     border-left: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 1100px) {
+  .profile-insights {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-consent-card {
+    margin-top: 28px;
+    padding-top: 28px;
+    padding-left: 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 }
 
@@ -399,14 +450,6 @@
     border-bottom: 0;
   }
 
-  .profile-consent-card {
-    margin-top: 28px;
-    padding-top: 28px;
-    padding-left: 0;
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
   .profile-form-actions {
     align-items: stretch;
     flex-direction: column;
@@ -434,5 +477,15 @@
     width: 56px;
     height: 56px;
     font-size: 1.2rem;
+  }
+
+  .profile-score-card .account-score-heading {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .profile-score-card .account-score-heading .btn {
+    min-width: 0;
+    justify-self: start;
   }
 }
