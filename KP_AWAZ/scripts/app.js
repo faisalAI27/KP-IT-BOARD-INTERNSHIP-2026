@@ -3,12 +3,14 @@ import {
   destroyLeaderboard,
   initializeLeaderboard,
 } from "./modules/leaderboard.js?v=20260717-member-workspace";
+import { initLeaderboardTemplateMotion } from "./modules/leaderboard-template-motion.js?v=20260723-leaderboard-flow";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js?v=20260717-member-workspace";
 import { PublicRouting } from "./modules/public-routing.js?v=20260720-public-polish";
 
 
 let routing = null;
+let leaderboardMotion = null;
 
 
 function showBootError() {
@@ -25,6 +27,7 @@ async function bootstrap() {
     await loadPartials();
     initNavigation();
     initFaq();
+    leaderboardMotion = initLeaderboardTemplateMotion();
     initializeLeaderboard();
     restoreHashPosition();
     document.body.dataset.appState = "ready";
@@ -39,6 +42,7 @@ async function bootstrap() {
 
 window.addEventListener("beforeunload", () => {
   destroyLeaderboard();
+  leaderboardMotion?.destroy();
   routing?.destroy();
 }, { once: true });
 

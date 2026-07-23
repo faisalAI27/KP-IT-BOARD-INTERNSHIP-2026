@@ -7,6 +7,7 @@ import {
   subscribeToAuthChanges,
 } from "../services/auth-service.js?v=20260717-auth-routing";
 import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
+import { animateLeaderboardCounter } from "./leaderboard-template-motion.js?v=20260723-leaderboard-flow";
 
 
 const PAGE_LIMIT = 20;
@@ -549,6 +550,13 @@ export class Leaderboard {
         manageVisibility: "leaderboardManageVisibility",
         accountButton: "authHeaderButton",
       },
+      template: {
+        personalRank: "leaderboardPersonalRank",
+        personalApproved: "leaderboardPersonalApproved",
+        personalPage: "leaderboardPersonalPage",
+        personalPageMeta: "leaderboardPersonalPageMeta",
+        pageChip: "leaderboardPageChip",
+      },
     };
     for (const [groupName, ids] of Object.entries(optionalGroups)) {
       const group = Object.fromEntries(
@@ -793,18 +801,21 @@ export class Leaderboard {
     if (!visible) {
       this._elements.personalMessage.textContent = "";
       this._elements.personalDetails.textContent = "";
+      this._renderPersonalMetrics(state);
       return;
     }
     if (state.status === "loading") {
       this._elements.personalMessage.textContent =
         "Finding your leaderboard position…";
       this._elements.personalDetails.textContent = "";
+      this._renderPersonalMetrics(state);
       return;
     }
     if (state.status === "error") {
       this._elements.personalMessage.textContent =
         "Your leaderboard position is temporarily unavailable.";
       this._elements.personalDetails.textContent = state.error?.message ?? "";
+      this._renderPersonalMetrics(state);
       return;
     }
     if (state.status === "eligible") {
@@ -814,6 +825,7 @@ export class Leaderboard {
       this._elements.personalDetails.textContent = `${formatApprovedContributionCount(
         state.currentUser.approvedContributions,
       )}. Your row is highlighted below.`;
+      this._renderPersonalMetrics(state);
       return;
     }
     if (state.status === "ineligible") {
@@ -824,7 +836,48 @@ export class Leaderboard {
       this._elements.personalDetails.textContent = state.leaderboardOptIn
         ? `Your private score is ${approved}. You will become eligible after a recording is approved.`
         : `Your private score is ${approved}. Turn on leaderboard visibility in Account to participate.`;
+      this._renderPersonalMetrics(state);
     }
+  }
+
+  _renderPersonalMetrics(state) {
+    if (!this._elements?.templateEnabled) return;
+    if (state.status === "eligible") {
+      animateLeaderboardCounter(
+        this._elements.personalRank,
+        state.currentUser.rank,
+      );
+      animateLeaderboardCounter(
+        this._elements.personalApproved,
+        state.currentUser.approvedContributions,
+      );
+      animateLeaderboardCounter(
+        this._elements.personalPage,
+        state.items.length,
+      );
+      this._elements.personalPageMeta.textContent =
+        `${state.offset + 1}–${state.offset + state.items.length} of ${state.total}`;
+      return;
+    }
+    if (state.status === "ineligible") {
+      this._elements.personalRank.textContent = "—";
+      animateLeaderboardCounter(
+        this._elements.personalApproved,
+        state.currentUser.approvedContributions,
+      );
+      animateLeaderboardCounter(this._elements.personalPage, 0);
+      this._elements.personalPageMeta.textContent = "Not currently ranked";
+      return;
+    }
+    for (const element of [
+      this._elements.personalRank,
+      this._elements.personalApproved,
+      this._elements.personalPage,
+    ]) {
+      element.textContent = "—";
+    }
+    this._elements.personalPageMeta.textContent =
+      state.status === "loading" ? "Finding your ranking slice" : "Your ranking slice";
   }
 
   _render() {
@@ -865,6 +918,17 @@ export class Leaderboard {
             display.total === 1 ? "contributor" : "contributors"
           }.`
       : "";
+    if (this._elements.templateEnabled) {
+      this._elements.pageChip.textContent = busy
+        ? "Loading page"
+        : hasItems
+          ? `${display.offset + 1}–${display.offset + display.items.length} of ${display.total}`
+          : empty
+            ? "No rankings yet"
+            : primaryError
+              ? "Unavailable"
+              : "All-time";
+    }
     this._elements.empty.hidden = !empty;
     this._elements.error.hidden = !primaryError;
     this._elements.errorMessage.textContent = primaryError

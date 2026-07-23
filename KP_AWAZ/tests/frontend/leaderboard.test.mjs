@@ -162,6 +162,11 @@ const ENHANCED_IDS = [
   "retryLeaderboardContextButton",
   "leaderboardManageVisibility",
   "authHeaderButton",
+  "leaderboardPersonalRank",
+  "leaderboardPersonalApproved",
+  "leaderboardPersonalPage",
+  "leaderboardPersonalPageMeta",
+  "leaderboardPageChip",
 ];
 
 
@@ -298,6 +303,14 @@ test("leaderboard partial is public, semantic, and accessible", async () => {
   assert.match(html, /<th scope="col">Approved contributions<\/th>/);
   assert.match(html, /<tbody id="leaderboardList"/);
   assert.match(html, /id="leaderboardStatus"[\s\S]*aria-live="polite"/);
+  assert.match(html, /class="leaderboard-template-shell leaderboard-personal-status"/);
+  assert.match(html, /class="leaderboard-gradient-text">Leaderboard/);
+  assert.match(html, /id="leaderboardPersonalRank"[^>]*data-leaderboard-count/);
+  assert.match(html, /id="leaderboardPersonalApproved"[^>]*data-leaderboard-count/);
+  assert.match(html, /id="leaderboardPersonalPage"[^>]*data-leaderboard-count/);
+  assert.match(html, /id="leaderboardPageChip"/);
+  assert.match(html, /id="leaderboardToast"[^>]*aria-live="polite"/);
+  assert.doesNotMatch(html, /Faisalimran|Dawar|data-count="[1234]"/);
   assert.match(index, /sections\/leaderboard\.html/);
   assert.match(header, /href="leaderboard\.html"[^>]*>Leaderboard/);
   assert.equal(html.includes("authDialog"), false);
@@ -709,16 +722,17 @@ test("repeated leaderboard destruction is safe", () => {
 
 
 test("leaderboard mobile styles prevent horizontal overflow", async () => {
-  const [css, responsive] = await Promise.all([
-    readFile(new URL("../../styles/leaderboard.css", import.meta.url), "utf8"),
-    readFile(new URL("../../styles/responsive.css", import.meta.url), "utf8"),
-  ]);
-  assert.match(css, /\.leaderboard-table-wrapper[\s\S]*overflow-x:\s*auto/);
-  assert.match(css, /\.leaderboard-contributor-name[\s\S]*font-weight:\s*700/);
+  const css = await readFile(
+    new URL("../../styles/leaderboard.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.leaderboard-table-wrapper[\s\S]*overflow:\s*visible/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.leaderboard-entry\s*{[\s\S]*display:\s*grid/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*grid-template-columns:\s*72px minmax\(0, 1fr\)/);
+  assert.match(css, /\.leaderboard-contributor-name[\s\S]*font-weight:\s*800/);
   assert.match(css, /\.leaderboard-contributor-name[\s\S]*overflow-wrap:\s*anywhere/);
-  assert.match(css, /\.leaderboard-rank-badge[\s\S]*width:\s*36px/);
-  assert.match(css, /\.leaderboard-rank-badge[\s\S]*max-width:\s*36px/);
-  assert.match(responsive, /\.leaderboard-rank-badge[\s\S]*width:\s*28px/);
+  assert.match(css, /\.leaderboard-section \.leaderboard-rank-badge[\s\S]*width:\s*60px/);
+  assert.match(css, /@media \(max-width: 420px\)[\s\S]*\.leaderboard-rank-badge[\s\S]*width:\s*52px/);
 });
 
 
@@ -820,6 +834,11 @@ test("signed-in leaderboard click loads the containing page and highlights You",
   assert.match(rows[1].textContent, /You/);
   assert.equal(rows[0].textContent.includes("You"), false);
   assert.match(element(fixture, "leaderboardSummary").textContent, /21–22 of 42/);
+  assert.equal(element(fixture, "leaderboardPersonalRank").textContent, "1");
+  assert.equal(element(fixture, "leaderboardPersonalApproved").textContent, "3");
+  assert.equal(element(fixture, "leaderboardPersonalPage").textContent, "2");
+  assert.equal(element(fixture, "leaderboardPersonalPageMeta").textContent, "21–22 of 42");
+  assert.equal(element(fixture, "leaderboardPageChip").textContent, "21–22 of 42");
 });
 
 
@@ -884,7 +903,12 @@ test("sign-out clears personal context but preserves the public showcase", async
   fixture.setAuthState({ status: "signed_out", backendUser: null });
 
   assert.equal(fixture.leaderboard.getPersonalState().status, "idle");
-  assert.equal(renderedText(fixture).includes("You"), false);
+  assert.equal(
+    element(fixture, "leaderboardList").children.some((row) =>
+      row.textContent.includes("You"),
+    ),
+    false,
+  );
   assert.equal(element(fixture, "leaderboardShowcaseList").children.length, 2);
 });
 
@@ -946,5 +970,10 @@ test("destroy clears personal identity state and rendered markers", async () => 
   fixture.leaderboard.destroyLeaderboard();
 
   assert.equal(fixture.leaderboard.getPersonalState().status, "idle");
-  assert.equal(renderedText(fixture).includes("You"), false);
+  assert.equal(
+    element(fixture, "leaderboardList").children.some((row) =>
+      row.textContent.includes("You"),
+    ),
+    false,
+  );
 });

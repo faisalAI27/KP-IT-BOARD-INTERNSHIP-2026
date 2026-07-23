@@ -42,7 +42,10 @@ test("public, contributor, and admin pages load the final polish with cache-safe
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    assert.match(html, /styles\/main\.css\?v=20260720-final-polish/);
+    const expectedMainVersion = ["index.html", "leaderboard.html"].includes(page)
+      ? "styles/main.css?v=20260723-leaderboard-flow"
+      : "styles/main.css?v=20260720-final-polish";
+    assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 
   for (const page of [
