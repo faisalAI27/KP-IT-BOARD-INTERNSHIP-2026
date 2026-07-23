@@ -16,7 +16,8 @@ The production dashboard repeated its contribution call to action, gave a large 
 
 ### July 23 reading and Rabab refinement
 
-- The dashboard contribution area is no longer a dark hero. It is a compact cream/light-green panel with shorter copy, two always-visible choices, a woven edge, and one quiet corner motif.
+- The dashboard contribution area is no longer a dark hero. It is a compact cream/light-green panel with shorter copy, two always-visible choices, and one quiet corner motif.
+- The dashboard header now leads with a concise two-tone “Salaam, [first name].” greeting. Its salutation, name, and gold underline reveal once in a short stagger, while reduced-motion users receive the complete static greeting.
 - The reviewed Pashto sentence now sits in a warm parchment reading panel with `lang="ps"`, `dir="rtl"`, one keyboard focus stop, an optional English meaning, and an understated sentence-replacement action.
 - Visible Pashto words are rendered as non-focusable inline spans separated by their original whitespace text nodes. This keeps screen-reader output, copying, selection, punctuation, RTL order, review text, and the stored/API sentence exact while allowing a stable `scale(1.08)` pointer treatment.
 - Sentence replacement crossfades in place. Touch uses sentence-level feedback, and reduced motion removes word and Rabab transforms while retaining color/state feedback.
@@ -30,8 +31,15 @@ The production dashboard repeated its contribution call to action, gave a large 
 - “Choose how you want to share your voice” remains the dominant heading while fitting in two lines at 375, 430, 1024, and 1440 px and one line at 768 px in the tested production layout.
 - Both actions use the same pale surface, compact internal rhythm, reserved label space, and 92 px desktop minimum height. The recommended state is communicated with a quiet badge and clay border rather than a different card treatment.
 - Fine-pointer hover and keyboard focus lift the card by 3 px and move its arrow by 4 px over 220 ms. The panel enters once from 12 px over 380 ms; reduced motion removes all of these transforms and the entrance.
-- An original inline SVG diamond-and-stitch pattern replaces the previous segmented edge and scopes the dashboard embroidery to the dashboard body. The main background is now cream with two soft radial washes, not graph paper; low-opacity embroidery stays behind content in selected corners and the second corner is removed on mobile.
+- Original inline SVG diamond-and-stitch embroidery is scoped to the dashboard body. The main background is now cream with two soft radial washes, not graph paper; low-opacity embroidery stays behind content in selected corners and the second corner is removed on mobile. The contribution panel keeps a clean left edge so decoration cannot be mistaken for status icons.
 - No JavaScript, route, link, ID, authentication, API, recorder, contribution, or backend contract changed in this refinement.
+
+### July 23 profile and privacy refinement
+
+- The profile page now uses one quiet workspace surface instead of separate identity, score, consent, and settings cards.
+- Identity and private account facts form one compact overview row. Editable settings remain primary, while contribution impact and consent sit in a secondary column separated by simple rules.
+- The decorative portrait rings, dark identity card, numbered data card, gradients, and nested shadows were removed. Form fields, live regions, retry actions, privacy wording, API calls, and all production IDs remain intact.
+- On narrower screens, the workspace becomes one column, facts remain scannable, privacy sections separate with horizontal rules, and the save action expands to a full-width touch target.
 
 ## New recording journey
 
@@ -57,7 +65,7 @@ Stopping, resetting, changing flows, closing the long-form disclosure, destroyin
 
 ## Visual and motion system
 
-The existing forest, ivory, cream, clay, and restrained gold palette remains intact. The contribution hub uses its own original SVG diamond-and-stitch edge; a related low-opacity embroidery motif sits in two selected dashboard-workspace corners. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
+The existing forest, ivory, cream, clay, and restrained gold palette remains intact. A low-opacity embroidery motif sits in two selected dashboard-workspace corners while the contribution panel keeps a clean edge. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
 
 Motion uses transform and opacity: four dashboard groups enter over 300–400 ms after ready, recent rows and statuses resolve once, statistics transition once from placeholders, and recorder states distinguish idle, permission request, live recording, processing, playback-ready, and success. The live waveform still reflects real Web Audio input. `prefers-reduced-motion` removes entry, breathing, pulse, spinner, status, and reveal animations.
 

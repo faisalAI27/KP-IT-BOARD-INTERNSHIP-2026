@@ -72,6 +72,22 @@ test("public data-use page and private profile expose the consent explanation sa
   assert.doesNotMatch(`${dataUse}\n${profilePartial}`, /accessToken|refreshToken|userId/);
 });
 
+test("private profile uses one minimal workspace instead of stacked cards", async () => {
+  const [profile, css] = await Promise.all([
+    read("sections/workspace-profile.html"),
+    read("styles/workspace-pages.css"),
+  ]);
+
+  assert.equal((profile.match(/class="profile-workspace"/g) ?? []).length, 1);
+  assert.match(profile, /class="profile-workspace-grid"/);
+  assert.match(profile, /class="profile-insights"/);
+  assert.doesNotMatch(profile, /account-detail-card|profile-portrait-rings|profile-data-number|✦/);
+  assert.match(css, /\.profile-workspace\s*{[\s\S]*?border:\s*1px solid var\(--line\)[\s\S]*?background:/);
+  assert.match(css, /\.profile-score-card,\s*\.profile-consent-card\s*{[\s\S]*?border:\s*0[\s\S]*?box-shadow:\s*none/);
+  assert.match(css, /\.profile-insights\s*{[\s\S]*?border-left:\s*1px solid var\(--line\)/);
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.profile-insights,[\s\S]*?grid-template-columns:\s*1fr/);
+});
+
 
 test("all contributor pages use the verified workspace route guard", async () => {
   for (const name of ["dashboard.html", "contribute.html", "my-contributions.html", "profile.html", "settings.html"]) {

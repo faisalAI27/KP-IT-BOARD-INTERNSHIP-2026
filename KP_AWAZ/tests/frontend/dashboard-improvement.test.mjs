@@ -102,13 +102,20 @@ test("dashboard hierarchy and motion keep recording first", async () => {
   ]);
   assert.ok(html.indexOf("dashboard-contribute-hub") < html.indexOf("recent-voices"));
   assert.ok(html.indexOf("recent-voices") < html.indexOf("dashboard-stat-strip"));
-  assert.match(css, /dashboard-page-header[\s\S]*300ms/);
+  assert.doesNotMatch(html, /Your contributor dashboard/);
+  assert.doesNotMatch(html, /Help Pashto speech technology understand voices like yours/);
+  assert.match(html, /class="dashboard-greeting-salutation">Salaam,/);
+  assert.match(html, /class="dashboard-greeting-person"><span id="workspaceGreetingName">contributor<\/span>\.<\/span>/);
+  assert.match(css, /dashboard-greeting-salutation[\s\S]*280ms/);
+  assert.match(css, /dashboard-greeting-person[\s\S]*300ms 90ms/);
+  assert.match(css, /dashboard-greeting-line[\s\S]*scaleX\(0\)/);
   assert.match(css, /dashboard-contribute-hub[\s\S]*380ms[\s\S]*cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
   assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?transform 220ms cubic-bezier\(0\.2, 0\.8, 0\.2, 1\)/);
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?translateY\(-3px\)/);
   assert.match(css, /\.dashboard-recording-choice:focus-visible[\s\S]*?translateY\(-3px\)/);
   assert.match(css, /\.dashboard-recording-choice:focus-visible \.dashboard-choice-arrow[\s\S]*?translateX\(4px\)/);
   assert.match(css, /dashboard-stat-value-in/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?dashboard-greeting-person::after[\s\S]*?animation:\s*none/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dashboard-recording-choice:hover[\s\S]*?transform:\s*none/);
 });
 
@@ -119,7 +126,7 @@ test("dashboard replaces graph paper with scoped original embroidery", async () 
   assert.match(bodyBlock, /background-image:\s*[\s\S]*?radial-gradient/);
   assert.doesNotMatch(bodyBlock, /linear-gradient/);
   assert.match(css, /\.dashboard-body \.workspace-main::before,\s*\.dashboard-body \.workspace-main::after\s*{[\s\S]*?opacity:\s*0\.075/);
-  assert.match(css, /\.dashboard-contribute-hub::after\s*{[\s\S]*?var\(--dashboard-border-pattern\)/);
+  assert.doesNotMatch(css, /--dashboard-border-pattern|\.dashboard-contribute-hub::after/);
   assert.match(css, /pointer-events:\s*none/);
   assert.match(css, /@media \(max-width: 650px\)[\s\S]*?\.dashboard-body \.workspace-main::after\s*{[\s\S]*?display:\s*none/);
 });

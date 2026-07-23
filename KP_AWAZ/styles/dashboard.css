@@ -1,13 +1,56 @@
 .dashboard-page-header {
-  margin-bottom: 28px;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 20px;
 }
 
-.dashboard-page-header h1 {
+.dashboard-page-header .dashboard-greeting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  margin-top: 0;
+  color: var(--forest-deep);
   font-size: clamp(2.65rem, 5vw, 4.55rem);
+  column-gap: 0.18em;
+  line-height: 0.98;
+  text-wrap: balance;
 }
 
-.workspace-body[data-workspace-state="ready"] .dashboard-page-header {
-  animation: dashboard-enter 300ms 20ms var(--ease-standard) both;
+.dashboard-greeting-salutation,
+.dashboard-greeting-person {
+  display: inline-block;
+}
+
+.dashboard-greeting-person {
+  position: relative;
+  isolation: isolate;
+  color: var(--terracotta-dark);
+}
+
+.dashboard-greeting-person::after {
+  position: absolute;
+  z-index: -1;
+  right: -0.02em;
+  bottom: 0.02em;
+  left: -0.02em;
+  height: 0.1em;
+  border-radius: 999px;
+  background: rgba(231, 169, 76, 0.42);
+  content: "";
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.workspace-body[data-workspace-state="ready"] .dashboard-greeting-salutation {
+  animation: dashboard-greeting-in 280ms 20ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.workspace-body[data-workspace-state="ready"] .dashboard-greeting-person {
+  animation: dashboard-greeting-in 300ms 90ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.workspace-body[data-workspace-state="ready"] .dashboard-greeting-person::after {
+  animation: dashboard-greeting-line 260ms 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .workspace-body[data-workspace-state="ready"] .dashboard-contribute-hub {
@@ -57,7 +100,6 @@ body.workspace-body.dashboard-body {
 }
 
 .dashboard-contribute-hub {
-  --dashboard-border-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='28' viewBox='0 0 8 28'%3E%3Cg fill='none' stroke-linejoin='round'%3E%3Cpath d='M4 1 7 7 4 13 1 7Z' stroke='%239c4b2e'/%3E%3Ccircle cx='4' cy='7' r='1.2' fill='%23e7a94c' stroke='none'/%3E%3Cpath d='m4 15 3 6-3 6-3-6Z' stroke='%233e6259'/%3E%3Ccircle cx='4' cy='21' r='1.2' fill='%23d6bd91' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
   position: relative;
   isolation: isolate;
   display: grid;
@@ -72,8 +114,7 @@ body.workspace-body.dashboard-body {
   gap: 14px;
 }
 
-.dashboard-contribute-hub::before,
-.dashboard-contribute-hub::after {
+.dashboard-contribute-hub::before {
   position: absolute;
   z-index: -1;
   pointer-events: none;
@@ -89,19 +130,6 @@ body.workspace-body.dashboard-body {
   background-image: var(--dashboard-embroidery-pattern);
   background-size: 108px 78px;
   mask-image: linear-gradient(135deg, black, transparent 76%);
-}
-
-.dashboard-contribute-hub::after {
-  top: 14px;
-  bottom: 14px;
-  left: 0;
-  width: 8px;
-  border-radius: 0 5px 5px 0;
-  background-image: var(--dashboard-border-pattern);
-  background-position: top center;
-  background-repeat: repeat-y;
-  background-size: 8px 28px;
-  opacity: 0.58;
 }
 
 .dashboard-hub-heading {
@@ -495,10 +523,6 @@ body.workspace-body.dashboard-body {
     opacity: 0.05;
   }
 
-  .dashboard-contribute-hub::after {
-    opacity: 0.42;
-  }
-
   .dashboard-hub-heading h2 {
     max-width: 520px;
     font-size: clamp(1.65rem, 7.2vw, 1.9rem);
@@ -561,6 +585,16 @@ body.workspace-body.dashboard-body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes dashboard-greeting-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboard-greeting-line {
+  from { opacity: 0; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
 @keyframes dashboard-panel-enter {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -582,7 +616,8 @@ body.workspace-body.dashboard-body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .workspace-body[data-workspace-state="ready"] :is(.dashboard-page-header, .dashboard-contribute-hub, .dashboard-section-heading, .dashboard-stat-strip, .dashboard-panel),
+  .workspace-body[data-workspace-state="ready"] :is(.dashboard-greeting-salutation, .dashboard-greeting-person, .dashboard-contribute-hub, .dashboard-section-heading, .dashboard-stat-strip, .dashboard-panel),
+  .workspace-body[data-workspace-state="ready"] .dashboard-greeting-person::after,
   .dashboard-recent-list li,
   .dashboard-recent-list b,
   .dashboard-stat-strip strong.is-loaded {
@@ -604,6 +639,15 @@ body.workspace-body.dashboard-body {
 }
 
 @media (max-width: 650px) {
+  .dashboard-page-header {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dashboard-page-header .dashboard-greeting {
+    font-size: clamp(2.35rem, 12vw, 3rem);
+  }
+
   .dashboard-body .workspace-main::before {
     width: 230px;
     height: 170px;
