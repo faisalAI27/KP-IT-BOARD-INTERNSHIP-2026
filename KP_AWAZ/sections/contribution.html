@@ -1,17 +1,15 @@
-<section class="contribute-section" id="contribute" aria-labelledby="recordingStudioTitle">
+<section class="contribute-section rabab-recorder-section" id="contribute" aria-labelledby="recordingStudioTitle">
   <div class="contribution-auth-status" id="contributionAuthStatus" role="status" aria-live="polite">
     <span id="contributionAuthMessage">Verifying your account before recording…</span>
     <button class="btn btn-primary btn-sm" id="contributionSignInButton" type="button" hidden>Sign in</button>
   </div>
 
-  <article class="voice-card glass-card mic-enhanced-card reveal tilt" id="contribution-panel" style="--delay: 130ms">
-    <header class="card-heading">
-      <div>
-        <span class="micro-label"><i aria-hidden="true"></i> Today’s voice mission</span>
-        <h2 id="recordingStudioTitle">Keep one piece of<br /><em>Pashto alive.</em></h2>
-        <p>Read the sentence, record naturally, and submit. Everything happens here—no extra page or unnecessary clicks.</p>
-      </div>
-      <span class="privacy-pill">Private until reviewed</span>
+  <article class="rabab-recorder-page" id="contribution-panel">
+    <span class="rabab-privacy-pill">Private until reviewed</span>
+    <header class="rabab-page-header">
+      <span class="rabab-eyebrow">Today’s voice mission</span>
+      <h1 id="recordingStudioTitle">Keep one piece of <em>Pashto alive.</em></h1>
+      <p>Read the provided sentence, record it naturally, and listen once before submitting. Your recording stays private while it is reviewed.</p>
     </header>
 
     <form id="donateForm" data-form="donate" novalidate>
@@ -19,20 +17,20 @@
       <input id="donor-language" name="language" type="hidden" value="Pashto" />
       <input type="radio" name="sentence-source" value="provided" checked hidden />
       <span class="sr-only" id="contributionModeLabel">Reviewed Pashto sentence</span>
-      <span class="sr-only" id="contributionModeDescription">Your sentence is ready below.</span>
+      <span class="sr-only" id="contributionModeDescription">Read the provided sentence below before recording.</span>
 
-      <ol class="journey" id="recordingJourney" aria-label="Recording progress">
-        <li class="journey-step active is-active" data-recording-step="1" aria-current="step">
+      <ol class="rabab-steps" id="recordingJourney" aria-label="Recording progress">
+        <li class="rabab-step active is-active" data-recording-step="1" aria-current="step">
           <b class="journey-step-number" aria-hidden="true">1</b>
           <span>Read sentence</span>
         </li>
-        <li class="journey-step" data-recording-step="2">
+        <li class="rabab-step" data-recording-step="2">
           <b class="journey-step-number" aria-hidden="true">2</b>
           <span>Record voice</span>
         </li>
-        <li class="journey-step" data-recording-step="3">
+        <li class="rabab-step" data-recording-step="3">
           <b class="journey-step-number" aria-hidden="true">3</b>
-          <span>Submit &amp; earn XP</span>
+          <span>Review &amp; submit</span>
         </li>
       </ol>
 
@@ -41,105 +39,109 @@
         <button class="btn btn-quiet btn-sm" id="retrySentencePrompts" type="button">Try again</button>
       </div>
 
-      <section aria-labelledby="guidedRecordingTitle">
-        <h3 class="sr-only" id="guidedRecordingTitle">Record your sentence</h3>
+      <section class="rabab-sentence-panel sentence-source" id="providedSentenceSource" aria-labelledby="providedSentenceLabel">
+        <div class="rabab-sentence-head">
+          <span class="rabab-language-chip">Pashto · پښتو</span>
+          <span id="sentenceNumber">Sentence 1</span>
+        </div>
+        <div class="rabab-sentence-label" id="providedSentenceLabel">
+          <span>Read this sentence aloud</span>
+          <strong>Provided by KP AWAZ</strong>
+        </div>
+        <p class="rabab-pashto-sentence pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
+          زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
+        </p>
+        <p class="rabab-sentence-meaning" id="providedMeaning">
+          My language is my identity, and my voice shapes its future.
+        </p>
+      </section>
 
-        <div class="record-stage" id="donateRecordStage">
+      <section aria-labelledby="guidedRecordingTitle">
+        <h2 class="sr-only" id="guidedRecordingTitle">Record the provided Pashto sentence</h2>
+
+        <div class="rabab-recorder-stage" id="donateRecordStage">
           <div class="xp-float" id="donateXpFloat" aria-hidden="true">+20 XP</div>
 
-          <div class="mic-console">
-            <span class="mic-halo" aria-hidden="true"></span>
-            <span class="mic-orbit" aria-hidden="true"></span>
-            <span class="mic-orbit-inner" aria-hidden="true"></span>
-            <span class="pulse-ring one" aria-hidden="true"></span>
-            <span class="pulse-ring two" aria-hidden="true"></span>
-            <span class="pulse-ring three" aria-hidden="true"></span>
-            <button class="record-orb" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
-              <svg class="icon-mic" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" />
+          <div class="rabab-instrument-zone">
+            <button class="rabab-record-button" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
+              <svg class="rabab-instrument-art" viewBox="0 0 180 380" aria-hidden="true">
+                <defs>
+                  <linearGradient id="rababWood" x1="0" x2="1">
+                    <stop stop-color="#7d4128" />
+                    <stop offset=".48" stop-color="#c87645" />
+                    <stop offset="1" stop-color="#64301f" />
+                  </linearGradient>
+                  <linearGradient id="rababSkin" x1="0" y1="0" x2="0" y2="1">
+                    <stop stop-color="#efd69f" />
+                    <stop offset="1" stop-color="#c39a66" />
+                  </linearGradient>
+                </defs>
+                <path d="M76 20c4-13 24-13 28 0l-3 112H79L76 20Z" fill="url(#rababWood)" />
+                <path d="M74 22h32M78 43h26M80 64h22" stroke="#e9bd65" stroke-width="3" stroke-linecap="round" />
+                <path d="M68 126c-11 22-19 39-21 61-2 21 7 36 1 56-8 28-7 64 18 83 13 10 35 10 48 0 25-19 26-55 18-83-6-20 3-35 1-56-2-22-10-39-21-61H68Z" fill="url(#rababWood)" stroke="#4f291d" stroke-width="4" />
+                <path d="M63 173c-11 24-10 88 4 116 10 20 36 20 46 0 14-28 15-92 4-116-12-17-42-17-54 0Z" fill="url(#rababSkin)" stroke="#784b31" stroke-width="3" />
+                <ellipse cx="90" cy="235" rx="16" ry="20" fill="#155848" />
+                <path d="M90 217v36M76 235h28M80 224l20 22M100 224l-20 22" stroke="#e9bd65" stroke-width="2" />
+                <path d="M71 294c10 8 28 8 38 0" stroke="#724025" stroke-width="5" stroke-linecap="round" />
+                <path class="rabab-reactive-string string-one" d="M85 23v297" stroke="#fff0c9" stroke-width="1.5" />
+                <path class="rabab-reactive-string string-two" d="M90 23v297" stroke="#fff0c9" stroke-width="1.2" />
+                <path class="rabab-reactive-string string-three" d="M95 23v297" stroke="#fff0c9" stroke-width="1.5" />
+                <path d="M69 326c-6 10-7 20-7 30h56c0-10-1-20-7-30" fill="#713b24" />
+                <path d="M58 355h64v9c0 7-6 12-13 12H71c-7 0-13-5-13-12v-9Z" fill="#42251b" />
               </svg>
-              <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="6.5" y="6.5" width="11" height="11" rx="2.2" fill="currentColor" stroke="none" />
-              </svg>
-              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m8 5 11 7-11 7V5Z" fill="currentColor" stroke="none" />
-              </svg>
+              <span class="rabab-record-state-icon" aria-hidden="true"></span>
             </button>
-            <span class="record-cue" id="donateRecordCue"><span class="tap-dot" aria-hidden="true"></span>Tap to start</span>
+            <span class="rabab-tap-label" id="donateRecordCue">
+              <span class="rabab-tap-dot" aria-hidden="true"></span>
+              Tap the Rabab to start
+            </span>
           </div>
 
-          <div class="record-copy">
-            <div class="record-status-row">
-              <span class="record-status">
-                <span class="status-dot" aria-hidden="true"></span>
-                <span id="donateRecordStateLabel">Ready when you are</span>
-              </span>
-              <span class="quality-chip">Clear voice · 10–20 sec</span>
+          <div class="rabab-record-content">
+            <span class="rabab-record-status">
+              <i aria-hidden="true"></i>
+              <span id="donateRecordStateLabel">Ready when you are</span>
+            </span>
+            <h2 id="donateRecCallout">Your voice, in its natural rhythm.</h2>
+            <p id="donateRecStatus" role="status" aria-live="polite">Speak at your normal pace. Tap the Rabab again when finished.</p>
+            <div class="rabab-signal-head">
+              <span>Live voice signal</span>
+              <span id="donateSignalState">Waiting</span>
             </div>
-            <h3 id="donateRecCallout">Tap once to record</h3>
-            <p id="donateRecStatus" role="status" aria-live="polite">Speak at your normal pace. Tap again when finished.</p>
-            <div class="signal-panel">
-              <div class="signal-head">
-                <span>Voice signal</span>
-                <span class="signal-live" id="donateSignalState">Waiting</span>
-              </div>
-              <div class="visualizer" id="donateSignalVisualizer" aria-hidden="true"></div>
-              <canvas class="live-waveform-canvas" id="donateWaveform" width="720" height="120" aria-hidden="true"></canvas>
+            <div class="rabab-wave-wrap">
+              <canvas id="donateWaveform" width="720" height="120" aria-label="Live voice waveform"></canvas>
             </div>
           </div>
 
-          <div class="record-meta">
-            <div class="timer-card">
-              <span class="timer-label">Duration</span>
-              <time class="timer" id="donateRecTimer">00:00</time>
-              <span class="timer-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="rabab-side-actions">
+            <div class="rabab-timer-card">
+              <small>Duration</small>
+              <time class="rabab-timer" id="donateRecTimer">00:00</time>
             </div>
-            <button class="ghost-action" id="nextSentenceBtn" type="button">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 7h-7a4 4 0 0 0-4 4v1" />
-                <path d="m17 4 3 3-3 3" />
-                <path d="M4 17h7a4 4 0 0 0 4-4v-1" />
-                <path d="m7 20-3-3 3-3" />
-              </svg>
-              Another sentence
-            </button>
+            <button class="rabab-secondary-action" id="nextSentenceBtn" type="button">Another sentence</button>
           </div>
-
-          <audio class="mic-template-playback" id="donateRecPlayback" hidden></audio>
         </div>
       </section>
 
-      <div class="sentence-source sentence-card" id="providedSentenceSource">
-        <div class="sentence-top">
-          <span class="language-pill">Pashto · پښتو</span>
-          <span class="sentence-number" id="sentenceNumber">Sentence 1</span>
+      <section class="rabab-review" id="donateReview" aria-labelledby="donateReviewTitle" hidden>
+        <div class="rabab-review-copy">
+          <h2 id="donateReviewTitle">Your recording is ready</h2>
+          <p>Listen once. If it sounds natural and clear, submit it for private review.</p>
+          <p class="sr-only" id="reviewSentence" lang="ps" dir="rtl"></p>
         </div>
-        <div class="sentence-content">
-          <p class="pashto pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
-            زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
-          </p>
-          <p class="translation sentence-meaning" id="providedMeaning">
-            My language is my identity, and my voice shapes its future.
-          </p>
+        <audio id="donateRecPlayback" controls hidden></audio>
+        <div class="rabab-review-actions">
+          <button class="rabab-secondary-action" id="donateRecordAgain" type="button" disabled>Record again</button>
+          <button class="rabab-submit-button" id="submitDonation" type="submit" disabled>Submit recording</button>
         </div>
-      </div>
-
-      <section class="review-actions" id="donateReview" aria-labelledby="donateReviewTitle" hidden>
-        <div class="sr-only">
-          <h3 id="donateReviewTitle">Listen once, then submit when you are ready.</h3>
-          <p id="reviewSentence" lang="ps" dir="rtl"></p>
-        </div>
-        <button class="secondary-button" id="donateRecordAgain" type="button">Record again</button>
-        <button class="primary-button submit-recording" id="submitDonation" type="submit" disabled>Submit recording</button>
         <p class="submission-error review-error" id="donationError" role="alert" tabindex="-1" hidden></p>
       </section>
 
-      <section class="submission-success" id="success-donate" aria-live="polite" hidden>
+      <section class="submission-success rabab-submission-success" id="success-donate" aria-live="polite" hidden>
         <span class="success-mark" aria-hidden="true">✓</span>
         <div>
-          <h3>Your recording has been submitted.</h3>
-          <p>It is private and marked Under review. We will add reviewer feedback to your recording history.</p>
+          <h2>Your recording has been submitted.</h2>
+          <p>It is private and marked Under review. Reviewer feedback will appear in your recording history.</p>
         </div>
         <div class="contribution-success-links">
           <button class="btn btn-primary btn-sm" id="donateAgainBtn" type="button">Record another sentence</button>
@@ -147,7 +149,8 @@
         </div>
       </section>
     </form>
-    <div class="cultural-threads" aria-hidden="true"></div>
+
+    <div class="rabab-cultural-thread" aria-hidden="true"></div>
   </article>
-  <div class="mic-template-toast" id="micTemplateToast" role="status" aria-live="polite"></div>
+  <div class="rabab-template-toast" id="micTemplateToast" role="status" aria-live="polite"></div>
 </section>
