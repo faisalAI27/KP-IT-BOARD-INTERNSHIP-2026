@@ -47,6 +47,7 @@ test("all required production pages are assembled", async () => {
     "reset-password.html",
     "dashboard.html",
     "contribute.html",
+    "donate-text.html",
     "my-contributions.html",
     "profile.html",
     "settings.html",

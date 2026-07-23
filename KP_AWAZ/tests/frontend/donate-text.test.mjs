@@ -13,17 +13,33 @@ const root = new URL("../../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
 
-test("Donate Text is placed after the guided Record Voice section", async () => {
-  const [page, recording, donateText] = await Promise.all([
+test("Donate Text has its own protected workspace page beside Record Voice", async () => {
+  const [recordPage, textPage, recording, donateText, sidebar, shell] = await Promise.all([
     read("contribute.html"),
+    read("donate-text.html"),
     read("sections/contribution.html"),
     read("sections/donate-text.html"),
+    read("sections/workspace-sidebar.html"),
+    read("scripts/modules/workspace-shell.js"),
   ]);
 
+  assert.match(recordPage, /sections\/contribution\.html/);
+  assert.doesNotMatch(recordPage, /sections\/donate-text\.html|donate-text\.css|modules\/donate-text/);
+  assert.match(textPage, /sections\/donate-text\.html/);
+  assert.doesNotMatch(textPage, /sections\/contribution\.html|mic-enhanced-template/);
+  assert.match(textPage, /scripts\/donate-text-page-app\.js/);
+  assert.match(textPage, /data-workspace-state="loading"/);
+  assert.match(donateText, /<h1 id="donateTextTitle">Donate Text<\/h1>/);
   assert.ok(
-    page.indexOf("sections/donate-text.html") >
-      page.indexOf("sections/contribution.html"),
+    sidebar.indexOf('href="donate-text.html"') >
+      sidebar.indexOf('href="contribute.html?mode=guided"'),
   );
+  assert.ok(
+    sidebar.indexOf('href="donate-text.html"') <
+      sidebar.indexOf('href="my-contributions.html"'),
+  );
+  assert.match(sidebar, /href="donate-text\.html" data-workspace-link="donate-text"/);
+  assert.match(shell, /"donate-text":\s*"donate-text\.html"/);
   assert.match(donateText, /id="donate-text"/);
   assert.match(donateText, /id="donateTextSentence"/);
   assert.match(donateText, /id="donateTextFileInput"/);

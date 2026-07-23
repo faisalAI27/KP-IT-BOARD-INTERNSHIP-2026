@@ -100,6 +100,7 @@ test("every production page uses the Khyber Voice emblem as its favicon", async 
     "reset-password.html",
     "dashboard.html",
     "contribute.html",
+    "donate-text.html",
     "my-contributions.html",
     "profile.html",
     "settings.html",

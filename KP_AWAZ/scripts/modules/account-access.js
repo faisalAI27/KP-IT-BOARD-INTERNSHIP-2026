@@ -28,6 +28,7 @@ export const SUCCESS_REDIRECT_DELAY_MS = 650;
 const ALLOWED_DESTINATIONS = new Set([
   "dashboard.html",
   "contribute.html",
+  "donate-text.html",
   "my-contributions.html",
   "profile.html",
   "settings.html",

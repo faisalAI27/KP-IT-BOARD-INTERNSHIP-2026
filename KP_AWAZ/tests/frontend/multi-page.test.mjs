@@ -13,7 +13,7 @@ test("public and protected architecture contains every required page", async () 
   const names = [
     "index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html",
     "auth.html", "forgot-password.html", "reset-password.html",
-    "dashboard.html", "contribute.html", "my-contributions.html",
+    "dashboard.html", "contribute.html", "donate-text.html", "my-contributions.html",
     "profile.html", "settings.html", "admin.html",
   ];
   const pages = await Promise.all(names.map(read));
@@ -107,7 +107,7 @@ test("profile and privacy are merged into one refined Settings workspace", async
 
 
 test("all contributor pages use the verified workspace route guard", async () => {
-  for (const name of ["dashboard.html", "contribute.html", "my-contributions.html", "profile.html", "settings.html"]) {
+  for (const name of ["dashboard.html", "contribute.html", "donate-text.html", "my-contributions.html", "profile.html", "settings.html"]) {
     const html = await read(name);
     assert.match(html, /data-workspace-state="loading"/);
     assert.match(html, /sections\/workspace-sidebar\.html/);
@@ -154,7 +154,7 @@ test("recovery pages use Supabase-only password controls and generic account mes
 test("focused dashboard routes both recording modes and uses only private contributor services", async () => {
   const [html, source] = await Promise.all([read("dashboard.html"), read("scripts/dashboard-app.js")]);
   assert.match(html, /href="contribute\.html\?mode=guided"/);
-  assert.match(html, /href="contribute\.html#donate-text"/);
+  assert.match(html, /href="donate-text\.html"/);
   assert.doesNotMatch(html, /dashboardLeaderboardList|voice-orbit|profile-compass|dashboardRejectedCount/);
   assert.match(html, /id="dashboardRecentList"/);
   assert.match(source, /statistics\.approvedContributions/);

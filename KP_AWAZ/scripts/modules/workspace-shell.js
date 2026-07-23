@@ -19,6 +19,7 @@ import { appConfig } from "../config.js";
 const WORKSPACE_PAGES = new Set([
   "overview",
   "contribute",
+  "donate-text",
   "contributions",
   "profile",
   "settings",
@@ -26,6 +27,7 @@ const WORKSPACE_PAGES = new Set([
 const PAGE_DESTINATIONS = Object.freeze({
   overview: "dashboard.html",
   contribute: "contribute.html",
+  "donate-text": "donate-text.html",
   contributions: "my-contributions.html",
   profile: "profile.html",
   settings: "settings.html",

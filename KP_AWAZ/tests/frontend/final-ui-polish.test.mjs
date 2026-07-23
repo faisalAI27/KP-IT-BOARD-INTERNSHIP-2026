@@ -49,6 +49,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
   for (const page of [
     "dashboard.html",
     "contribute.html",
+    "donate-text.html",
     "my-contributions.html",
     "profile.html",
     "settings.html",

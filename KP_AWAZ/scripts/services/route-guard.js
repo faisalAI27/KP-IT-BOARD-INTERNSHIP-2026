@@ -11,6 +11,7 @@ export const AUTH_ONLY_PAGES = Object.freeze(["auth.html"]);
 export const PROTECTED_PAGES = Object.freeze([
   "dashboard.html",
   "contribute.html",
+  "donate-text.html",
   "my-contributions.html",
   "profile.html",
   "settings.html",

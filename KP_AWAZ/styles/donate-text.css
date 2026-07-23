@@ -16,6 +16,10 @@
   scroll-margin-top: 2rem;
 }
 
+.donate-text-page-body .donate-text-section {
+  margin-top: 0;
+}
+
 @keyframes donate-text-colorflow {
   to {
     background-position: 144px 0;
@@ -116,7 +120,7 @@
   background: currentColor;
 }
 
-.donate-text-heading h2 {
+.donate-text-heading h1 {
   margin: 0.75rem 0 0.5rem;
   color: var(--text-green-950);
   font-family: Georgia, "Times New Roman", serif;
@@ -284,14 +288,14 @@
   gap: 0.75rem;
 }
 
-.donate-text-panel-head h3,
-.donate-text-note-grid h3 {
+.donate-text-panel-head h2,
+.donate-text-note-grid h2 {
   margin: 0;
   color: var(--text-green-950);
   font-family: Georgia, "Times New Roman", serif;
 }
 
-.donate-text-panel-head h3 {
+.donate-text-panel-head h2 {
   font-size: clamp(1.55rem, 2.8vw, 2rem);
 }
 
@@ -551,7 +555,7 @@
   border-radius: 18px;
 }
 
-.donate-text-note-grid h3 {
+.donate-text-note-grid h2 {
   font-size: 1.1rem;
 }
 
@@ -695,7 +699,7 @@
     border-radius: 22px;
   }
 
-  .donate-text-heading h2 {
+  .donate-text-heading h1 {
     font-size: 2.8rem;
   }
 

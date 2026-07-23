@@ -18,6 +18,7 @@ const productionPages = [
   "reset-password.html",
   "dashboard.html",
   "contribute.html",
+  "donate-text.html",
   "my-contributions.html",
   "profile.html",
   "settings.html",

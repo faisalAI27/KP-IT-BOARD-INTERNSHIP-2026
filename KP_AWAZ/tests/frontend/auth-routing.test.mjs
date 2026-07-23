@@ -110,7 +110,7 @@ test("page categories contain the required public, auth-only, and protected page
   ]);
   assert.deepEqual(AUTH_ONLY_PAGES, ["auth.html"]);
   assert.deepEqual(PROTECTED_PAGES, [
-    "dashboard.html", "contribute.html", "my-contributions.html", "profile.html", "settings.html",
+    "dashboard.html", "contribute.html", "donate-text.html", "my-contributions.html", "profile.html", "settings.html",
   ]);
 });
 

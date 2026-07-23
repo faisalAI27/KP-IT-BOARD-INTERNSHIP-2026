@@ -64,7 +64,7 @@ test("password and OTP values are not persisted or logged by account access", as
 
 test("member workspace is split into real pages with shared navigation", async () => {
   const pages = await Promise.all(
-    ["dashboard.html", "contribute.html", "my-contributions.html", "profile.html", "settings.html"].map((name) =>
+    ["dashboard.html", "contribute.html", "donate-text.html", "my-contributions.html", "profile.html", "settings.html"].map((name) =>
       readFile(new URL(name, projectRoot), "utf8"),
     ),
   );
@@ -81,6 +81,7 @@ test("member workspace is split into real pages with shared navigation", async (
   assert.match(sidebar, /href="my-contributions\.html"/);
   assert.doesNotMatch(sidebar, /href="profile\.html"/);
   assert.match(sidebar, /href="contribute\.html\?mode=guided"/);
+  assert.match(sidebar, /href="donate-text\.html" data-workspace-link="donate-text"/);
   assert.match(sidebar, /href="settings\.html"[\s\S]*?Profile, privacy &amp; security/);
 });
 
