@@ -96,6 +96,27 @@ test("About page states the Stage A and Stage B boundary", async () => {
 });
 
 
+test("About hero uses a responsive Bab-e-Khyber photograph with restrained motion", async () => {
+  const [about, publicCss] = await Promise.all([
+    read("about.html"),
+    read("styles/public-pages.css"),
+  ]);
+
+  assert.match(about, /class="about-landmark"/);
+  assert.match(about, /about-bab-e-khyber-720\.jpg/);
+  assert.match(about, /about-bab-e-khyber-1440\.jpg/);
+  assert.match(
+    about,
+    /alt="Bab-e-Khyber gateway in Khyber Pakhtunkhwa beneath warm morning light\."/,
+  );
+  assert.match(about, /width="1440"[\s\S]*height="1080"/);
+  assert.match(about, /fetchpriority="high"/);
+  assert.match(publicCss, /@keyframes about-landmark-drift/);
+  assert.match(publicCss, /\.about-landmark img[\s\S]*animation: none/);
+  assert.doesNotMatch(about, /class="mountain-loom"/);
+});
+
+
 test("How It Works page documents all ten real contribution stages", async () => {
   const page = await read("how-it-works.html");
 
