@@ -78,6 +78,25 @@ test("Sites build includes its static worker and persisted project metadata", as
   );
 });
 
+test("every build fingerprints runtime assets to prevent stale auth configuration", async () => {
+  const build = await read("tools/build.mjs");
+  const stampIndex = build.indexOf("await stampRuntimeAssetVersions()");
+  const sitesIndex = build.indexOf("await writeSitesArtifacts()");
+
+  assert.match(build, /createHash\("sha256"\)/);
+  assert.match(build, /\/\(\[\?&\]v=\)\[A-Za-z0-9\._-\]\+\/g/);
+  assert.ok(stampIndex >= 0);
+  assert.ok(sitesIndex > stampIndex);
+});
+
+test("production assets exclude regenerated Finder duplicate copies", async () => {
+  const build = await read("tools/build.mjs");
+
+  assert.match(build, /filter: shouldCopy/);
+  assert.match(build, /!\/ 2\(\?:\\\.\|\$\)\/\.test\(name\)/);
+  assert.match(build, /name !== "\.DS_Store"/);
+});
+
 
 test("audio uploads have a longer bounded timeout than JSON requests", () => {
   assert.equal(API_REQUEST_TIMEOUT_MS, appConfig.api.requestTimeoutMs);

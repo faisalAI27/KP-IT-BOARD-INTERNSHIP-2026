@@ -147,8 +147,6 @@ const ACCOUNT_ELEMENT_IDS = [
   "createAccountSubmit",
   "createAccountSubmitLabel",
   "createAccountMessage",
-  "accountStatusFailure",
-  "retryAccountStatusButton",
   "existingAccountPanel",
   "existingAccountSignInButton",
   "existingAccountGoogleButton",
@@ -532,14 +530,13 @@ test("Use a different email clears account guidance and signup secrets", async (
 });
 
 
-test("account-status failure blocks signup, restores controls, and can retry", async () => {
+test("account-status failure falls back to authoritative Supabase signup", async () => {
   let checks = 0;
   const fixture = createAccountFixture({
     authApi: {
-      async checkAccountStatus(email) {
+      async checkAccountStatus() {
         checks += 1;
-        if (checks === 1) throw new Error("private upstream detail");
-        return { accountExists: false, email: email.trim().toLowerCase() };
+        throw new Error("private upstream detail");
       },
     },
   });
@@ -552,20 +549,10 @@ test("account-status failure blocks signup, restores controls, and can retry", a
   byId(fixture, "createAccountForm").dispatch("submit");
   await flush();
 
-  assert.equal(fixture.calls.signUp.length, 0);
-  assert.equal(byId(fixture, "accountStatusFailure").hidden, false);
-  assert.equal(
-    byId(fixture, "createAccountMessage").textContent,
-    "We could not check this email right now. Please try again.",
-  );
-  assert.equal(byId(fixture, "createEmail").disabled, false);
-  assert.equal(byId(fixture, "createPassword").value, "strong-password");
-
-  byId(fixture, "retryAccountStatusButton").dispatch("click");
-  await flush();
-  assert.equal(checks, 2);
+  assert.equal(checks, 1);
   assert.equal(fixture.calls.signUp.length, 1);
   assert.equal(byId(fixture, "accountOtpStep").hidden, false);
+  assert.equal(byId(fixture, "createAccountMessage").textContent, "");
 });
 
 

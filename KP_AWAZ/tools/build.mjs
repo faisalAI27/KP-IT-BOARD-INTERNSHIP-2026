@@ -1,5 +1,6 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildSupabaseVendorBundle } from "./build-supabase-vendor.mjs";
@@ -162,12 +163,56 @@ async function assemblePage(pageName) {
 }
 
 async function copyRuntimeAssets() {
+  const shouldCopy = (sourcePath) => {
+    const name = sourcePath.split(/[\\/]/).at(-1);
+    return name !== ".DS_Store" && !/ 2(?:\.|$)/.test(name);
+  };
   for (const directory of ["assets", "scripts", "styles"]) {
     await cp(resolve(projectRoot, directory), resolve(outputRoot, directory), {
       recursive: true,
       force: true,
+      filter: shouldCopy,
     });
   }
+}
+
+async function runtimeTextFiles(directory) {
+  const files = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const entryPath = resolve(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await runtimeTextFiles(entryPath)));
+    } else if (/\.(?:css|html|js)$/.test(entry.name)) {
+      files.push(entryPath);
+    }
+  }
+  return files.sort();
+}
+
+async function stampRuntimeAssetVersions() {
+  const runtimeFiles = [
+    ...(await runtimeTextFiles(resolve(outputRoot, "scripts"))),
+    ...(await runtimeTextFiles(resolve(outputRoot, "styles"))),
+  ];
+  const hash = createHash("sha256");
+  for (const filePath of runtimeFiles) {
+    hash.update(relative(outputRoot, filePath));
+    hash.update(await readFile(filePath));
+  }
+  const assetVersion = hash.digest("hex").slice(0, 12);
+  const versionedFiles = [
+    ...runtimeFiles,
+    ...productionPages.map((pageName) => resolve(outputRoot, pageName)),
+  ];
+  for (const filePath of versionedFiles) {
+    const source = await readFile(filePath, "utf8");
+    const versioned = source.replace(
+      /([?&]v=)[A-Za-z0-9._-]+/g,
+      `$1${assetVersion}`,
+    );
+    if (versioned !== source) await writeFile(filePath, versioned, "utf8");
+  }
+  return assetVersion;
 }
 
 async function writeSitesArtifacts() {
@@ -250,5 +295,6 @@ await copyRuntimeAssets();
 if (buildEnvironment === "production") {
   await writeRuntimeConfiguration(runtimeConfig);
 }
+const assetVersion = await stampRuntimeAssetVersions();
 await writeSitesArtifacts();
-console.log(`Frontend files created in ${outputRoot}`);
+console.log(`Frontend files created in ${outputRoot} (assets ${assetVersion})`);

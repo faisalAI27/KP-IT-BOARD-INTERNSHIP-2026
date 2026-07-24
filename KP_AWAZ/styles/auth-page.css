@@ -781,13 +781,6 @@ body[data-auth-view="otp"] .access-card {
   outline-offset: 2px;
 }
 
-.account-status-failure {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-.account-status-failure button,
 .existing-account-actions > button:last-child {
   border: 0;
   background: transparent;

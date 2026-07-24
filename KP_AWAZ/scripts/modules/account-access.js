@@ -54,8 +54,6 @@ const SAFE_MESSAGES = Object.freeze({
     "Your account exists, but KP AWAZ could not verify the session. Please sign in again.",
   AUTH_REQUEST_TIMEOUT:
     "We could not complete the authentication request. Please try again.",
-  ACCOUNT_STATUS_CHECK_FAILED:
-    "We could not check this email right now. Please try again.",
 });
 
 const ACCESS_VIEW_CONTENT = Object.freeze({
@@ -223,7 +221,6 @@ export class AccountAccess {
     this._activeEmail = "";
     this._activeDisplayName = "";
     this._existingAccount = false;
-    this._accountStatusFailed = false;
     this._resendAvailableAt = 0;
     this._workspaceVerificationFailed = false;
     this._workspaceActions = null;
@@ -274,7 +271,6 @@ export class AccountAccess {
     this._activeEmail = "";
     this._activeDisplayName = "";
     this._existingAccount = false;
-    this._accountStatusFailed = false;
     this._workspaceVerificationFailed = false;
     this._workspaceActions = null;
     this._action = null;
@@ -327,8 +323,6 @@ export class AccountAccess {
       createSubmit: "createAccountSubmit",
       createSubmitLabel: "createAccountSubmitLabel",
       createMessage: "createAccountMessage",
-      accountStatusFailure: "accountStatusFailure",
-      retryAccountStatus: "retryAccountStatusButton",
       existingAccountPanel: "existingAccountPanel",
       existingAccountSignIn: "existingAccountSignInButton",
       existingAccountGoogle: "existingAccountGoogleButton",
@@ -378,9 +372,6 @@ export class AccountAccess {
       event.preventDefault();
       void this._createAccount();
     });
-    this._listen(this._elements.retryAccountStatus, "click", () => {
-      void this._createAccount();
-    });
     this._listen(this._elements.existingAccountSignIn, "click", () => {
       this._switchExistingAccountToSignIn();
     });
@@ -392,12 +383,6 @@ export class AccountAccess {
     });
     this._listen(this._elements.existingAccountDifferentEmail, "click", () => {
       this._useDifferentEmail();
-    });
-    this._listen(this._elements.createEmail, "input", () => {
-      if (!this._accountStatusFailed) return;
-      this._accountStatusFailed = false;
-      this._setMessage(this._elements.createMessage, "", "");
-      this._render();
     });
     this._listen(this._elements.otpForm, "submit", (event) => {
       event.preventDefault();
@@ -575,7 +560,6 @@ export class AccountAccess {
 
   async _createAccount() {
     if (!this._beginAction("account_check")) return;
-    this._accountStatusFailed = false;
     this._existingAccount = false;
     const form = this._elements.createForm;
     const displayName = this._elements.displayName.value.trim();
@@ -593,15 +577,19 @@ export class AccountAccess {
       return;
     }
 
-    let signupStarted = false;
     try {
-      const status = await this._auth.checkAccountStatus(email);
-      if (status.accountExists) {
+      let status = null;
+      try {
+        status = await this._auth.checkAccountStatus(email);
+      } catch {
+        // The administrator-only existence lookup is optional. Supabase still
+        // performs the authoritative signup and safely reports account races.
+      }
+      if (status?.accountExists) {
         this._showExistingAccount(status.email);
         return;
       }
 
-      signupStarted = true;
       this._action = "create";
       this._render();
       const result = await this._auth.signUpWithPassword({
@@ -631,15 +619,6 @@ export class AccountAccess {
     } catch (error) {
       if (error?.code === "ACCOUNT_ALREADY_EXISTS") {
         this._showExistingAccount(email);
-        return;
-      }
-      if (!signupStarted) {
-        this._accountStatusFailed = true;
-        this._setMessage(
-          this._elements.createMessage,
-          SAFE_MESSAGES.ACCOUNT_STATUS_CHECK_FAILED,
-          "error",
-        );
         return;
       }
       this._setMessage(
@@ -838,7 +817,6 @@ export class AccountAccess {
   _showExistingAccount(email) {
     this._activeEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
     this._existingAccount = true;
-    this._accountStatusFailed = false;
     this._createStep = "details";
     this._clearSecrets();
     this._clearMessages();
@@ -876,7 +854,6 @@ export class AccountAccess {
     this._activeEmail = "";
     this._activeDisplayName = "";
     this._existingAccount = false;
-    this._accountStatusFailed = false;
     this._createStep = "details";
     this._updatePasswordFeedback();
   }
@@ -1053,7 +1030,6 @@ export class AccountAccess {
     this._elements.createForm.setAttribute("aria-busy", String(creating));
     this._elements.createForm.hidden = this._existingAccount;
     this._elements.existingAccountPanel.hidden = !this._existingAccount;
-    this._elements.accountStatusFailure.hidden = !this._accountStatusFailed;
     this._elements.otpForm.setAttribute("aria-busy", String(verifying || resending));
     this._elements.signInForm.setAttribute("aria-busy", String(signingIn));
     for (const element of [
@@ -1075,7 +1051,6 @@ export class AccountAccess {
     this._elements.existingAccountGoogle.disabled = usingGoogle;
     this._elements.existingAccountSignIn.disabled = usingGoogle;
     this._elements.existingAccountDifferentEmail.disabled = usingGoogle;
-    this._elements.retryAccountStatus.disabled = creating;
     this._elements.createSubmit.setAttribute(
       "aria-busy",
       String(creating),
