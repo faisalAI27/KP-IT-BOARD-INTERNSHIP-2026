@@ -7,7 +7,11 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from app.config import Settings
+from app.config import (
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+    DEFAULT_SUPABASE_URL,
+    Settings,
+)
 from app.services.supabase_auth import (
     AccountStatusNotConfiguredError,
     AccountStatusUnavailableError,
@@ -79,6 +83,19 @@ def test_supabase_settings_allow_missing_development_configuration() -> None:
 
     assert configured.supabase_url == ""
     assert configured.supabase_publishable_key == ""
+
+
+def test_local_authentication_has_durable_public_supabase_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_PUBLISHABLE_KEY", raising=False)
+    monkeypatch.delenv("SUPABASE_SECRET_KEY", raising=False)
+    configured = Settings(_env_file=None)
+
+    assert configured.supabase_url == DEFAULT_SUPABASE_URL
+    assert configured.supabase_publishable_key == DEFAULT_SUPABASE_PUBLISHABLE_KEY
+    assert configured.supabase_secret_key == ""
 
 
 def test_supabase_settings_normalize_url_and_require_positive_timeout() -> None:

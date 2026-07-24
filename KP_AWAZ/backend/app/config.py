@@ -19,6 +19,12 @@ def build_default_database_url(backend_root: Path = BACKEND_ROOT) -> str:
 
 
 DEFAULT_DATABASE_URL = build_default_database_url()
+DEFAULT_SUPABASE_URL = "https://hiaaggzinpancamdjryx.supabase.co"
+# Supabase publishable keys are intentionally safe for browser and source-code
+# use. Server-only administrator keys remain environment-only.
+DEFAULT_SUPABASE_PUBLISHABLE_KEY = (
+    "sb_publishable_n1UnKIc041PaXgmZM-hRpw_f60XCkxE"
+)
 
 
 class Settings(BaseSettings):
@@ -48,8 +54,8 @@ class Settings(BaseSettings):
     min_imported_sentence_length: int = Field(default=3, gt=0)
     max_imported_sentence_length: int = Field(default=500, gt=0)
     admin_api_key: str = ""
-    supabase_url: str = ""
-    supabase_publishable_key: str = ""
+    supabase_url: str = DEFAULT_SUPABASE_URL
+    supabase_publishable_key: str = DEFAULT_SUPABASE_PUBLISHABLE_KEY
     supabase_secret_key: str = ""
     supabase_auth_timeout_seconds: float = Field(default=5, gt=0)
     supabase_admin_timeout_seconds: float = Field(default=3, gt=0, le=10)
