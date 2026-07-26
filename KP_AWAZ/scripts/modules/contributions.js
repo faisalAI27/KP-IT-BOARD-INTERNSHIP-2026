@@ -1,7 +1,7 @@
 import { getSentencePrompts } from "../services/contributions-api.js?v=20260723-guided-only";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
-import { initRababRecorderTemplate } from "./rabab-recorder-template.js?v=20260723-rabab-recorder";
-import { createRecorder } from "./recorder.js?v=20260723-rabab-recorder";
+import { initRababRecorderTemplate } from "./rabab-recorder-template.js?v=20260726-focused-recorder";
+import { createRecorder } from "./recorder.js?v=20260726-focused-recorder";
 
 const SENTENCE_LOAD_ERROR =
   "The reviewed Pashto sentence could not be loaded. Try again before recording.";
@@ -194,8 +194,8 @@ export async function initContributions({ profile = {} } = {}) {
     playbackId: "donateRecPlayback",
     calloutId: "donateRecCallout",
     visualizerCanvasId: "donateWaveform",
-    idleStatus: "Speak at your normal pace. Tap the Rabab again when finished.",
-    idleCallout: "Your voice, in its natural rhythm.",
+    idleStatus: "Speak at your normal pace. Tap again when finished.",
+    idleCallout: "Tap once to record",
     recordingStatus: "The sentence stays visible. Tap again when finished.",
     previewOnReady: true,
     canStart: () =>

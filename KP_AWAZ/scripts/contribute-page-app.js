@@ -1,4 +1,4 @@
-import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260723-rabab-motion";
+import { destroyContributions, initContributions } from "./modules/contributions.js?v=20260726-focused-recorder";
 import { destroyWorkspace, initializeWorkspace } from "./modules/workspace-shell.js?v=20260723-auth-config-v2";
 
 

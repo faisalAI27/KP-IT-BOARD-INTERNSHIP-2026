@@ -69,7 +69,7 @@ test("focused contribution flow keeps profile fields hidden and account consent 
   assert.match(css, /min-height:\s*44px/);
 });
 
-test("guided reading uses one enhanced microphone without the long-form disclosure", async () => {
+test("guided reading uses one focused microphone without the long-form disclosure", async () => {
   const [html, css, micCss, contributionSource, recorderSource, visualizerSource] = await Promise.all([
     read("sections/contribution.html"),
     read("styles/rabab-recorder.css"),
@@ -79,27 +79,26 @@ test("guided reading uses one enhanced microphone without the long-form disclosu
     read("scripts/modules/audio-visualizer.js"),
   ]);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
-  assert.match(html, /class="rabab-instrument-art"/);
-  assert.equal((html.match(/class="rabab-reactive-string string-(?:one|two|three)"/g) ?? []).length, 3);
-  assert.match(html, /id="donateRecCallout">Your voice, in its natural rhythm\.<\/h2>/);
+  assert.match(html, /class="focused-record-orb rabab-record-button"/);
+  assert.match(html, /<rect x="9" y="3" width="6" height="11" rx="3"><\/rect>/);
+  assert.match(html, /id="donateRecCallout">Tap once to record<\/h2>/);
   assert.doesNotMatch(html, /<textarea|Your Pashto sentence|خپله جمله دلته ولیکئ/);
-  assert.match(html, /Read this sentence aloud/);
-  assert.match(html, /Provided by KP AWAZ/);
+  assert.match(html, /Read this reviewed sentence aloud/);
   assert.doesNotMatch(html, /openRecCallout|open-recording-disclosure|longer story/);
   assert.doesNotMatch(contributionSource, /openRecorder|openRecordingDisclosure|recordSoundForm/);
   assert.match(contributionSource, /className = "pashto-word"/);
   assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
-  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?scale\(1\.08\)/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pashto-word:hover[\s\S]*?transform:\s*none/);
-  assert.match(micCss, /@keyframes rabab-thread-flow/);
-  assert.match(micCss, /\.rabab-cultural-thread\s*{[\s\S]*?animation:\s*rabab-thread-flow 7s linear infinite/);
-  assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation:\s*none !important/);
+  assert.match(css, /\.focused-pashto-sentence \.pashto-word:hover\s*{[\s\S]*?scale\(1\.08\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(micCss, /@keyframes focused-thread-flow/);
+  assert.match(micCss, /\.focused-cultural-thread\s*{[\s\S]*?animation:\s*focused-thread-flow 9s linear infinite/);
+  assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*0\.01ms\s*!important/);
   assert.match(recorderSource, /previewOnReady/);
   assert.match(visualizerSource, /createMediaStreamSource\(stream\)/);
   assert.match(visualizerSource, /onLevel/);
 });
 
-test("record voice implements the supplied Rabab recorder template and motion", async () => {
+test("record voice implements the supplied focused recorder template and motion", async () => {
   const [page, html, css, source, presenterSource, recorderSource] = await Promise.all([
     read("contribute.html"),
     read("sections/contribution.html"),
@@ -108,22 +107,22 @@ test("record voice implements the supplied Rabab recorder template and motion", 
     read("scripts/modules/rabab-recorder-template.js"),
     read("scripts/modules/recorder.js"),
   ]);
-  assert.match(page, /styles\/rabab-recorder\.css\?v=20260723-rabab-motion/);
-  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260723-auth-config-v2/);
+  assert.match(page, /styles\/rabab-recorder\.css\?v=20260726-focused-recorder/);
+  assert.match(page, /scripts\/contribute-page-app\.js\?v=20260726-focused-recorder/);
   assert.doesNotMatch(page, /styles\/mic-enhanced-template\.css|styles\/contribution\.css/);
   assert.doesNotMatch(page, /donate-text/);
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
-  assert.match(html, /class="rabab-recorder-page" id="contribution-panel"/);
+  assert.match(html, /class="focused-voice-card rabab-recorder-page" id="contribution-panel"/);
   assert.match(html, /Today’s voice mission/);
-  assert.match(html, /Keep one piece of <em>Pashto alive\.<\/em>/);
-  assert.match(html, /class="rabab-recorder-stage" id="donateRecordStage"/);
-  assert.match(html, /class="rabab-instrument-zone"/);
-  assert.match(html, /class="rabab-record-button" id="donateRecBtn"/);
-  assert.equal((html.match(/class="rabab-orbit-line rabab-orbit-line-(?:inner|outer)"/g) ?? []).length, 2);
-  assert.match(html, /viewBox="0 0 180 380"/);
+  assert.match(html, /Keep one piece of<br \/><em>Pashto alive\.<\/em>/);
+  assert.match(html, /class="focused-record-stage rabab-recorder-stage" id="donateRecordStage"/);
+  assert.match(html, /class="focused-record-orb-wrap"/);
+  assert.match(html, /class="focused-record-orb rabab-record-button" id="donateRecBtn"/);
+  assert.equal((html.match(/class="focused-pulse-ring (?:one|two)"/g) ?? []).length, 2);
+  assert.match(html, /viewBox="0 0 24 24"/);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"/);
-  assert.ok(html.indexOf("providedSentenceSource") < html.indexOf("donateRecordStage"));
-  assert.match(html, /<ol class="rabab-steps"[^>]*aria-label="Recording progress"/);
+  assert.ok(html.indexOf("donateRecordStage") < html.indexOf("providedSentenceSource"));
+  assert.match(html, /<ol class="focused-journey rabab-steps"[^>]*aria-label="Recording progress"/);
   assert.equal((html.match(/data-recording-step="[123]"/g) ?? []).length, 3);
   assert.match(html, /Review &amp; submit/);
   assert.match(html, /id="donateXpFloat"[^>]*>\+20 XP</);
@@ -144,16 +143,14 @@ test("record voice implements the supplied Rabab recorder template and motion", 
   assert.match(recorderSource, /previewOnReady && audioBlob/);
   assert.match(recorderSource, /playback\.play\?\.\(\)/);
   assert.match(recorderSource, /classList\.add\("playing"\)/);
-  assert.match(css, /@keyframes rabab-orbit/);
-  assert.match(css, /@keyframes rabab-orbit-reverse/);
-  assert.match(css, /@keyframes rabab-hover-sway/);
-  assert.match(css, /\.rabab-record-button:hover:not\(:disabled\) \.rabab-instrument-art\s*{[\s\S]*?animation:\s*rabab-hover-sway/);
-  assert.match(css, /\.rabab-pashto-sentence:hover\s*{[\s\S]*?transform:\s*scale\(1\.025\)/);
-  assert.match(css, /@keyframes rabab-ambient-drift/);
-  assert.match(css, /@keyframes rabab-soft-pulse/);
-  assert.match(css, /@keyframes rabab-sheen/);
-  assert.match(css, /\.rabab-recorder-stage\.is-recording/);
-  assert.match(css, /@media \(max-width: 820px\)[\s\S]*?\.rabab-recorder-stage\s*{[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.match(css, /@keyframes focused-ring-pulse/);
+  assert.match(css, /@keyframes focused-orb-pulse/);
+  assert.match(css, /\.focused-record-orb:hover:not\(:disabled\)\s*{/);
+  assert.match(css, /\.focused-pashto-sentence:hover\s*{[\s\S]*?scale\(1\.018\)/);
+  assert.match(css, /@keyframes focused-shimmer/);
+  assert.match(css, /@keyframes focused-thread-flow/);
+  assert.match(css, /\.focused-record-stage\.is-recording/);
+  assert.match(css, /@media \(max-width: 460px\)[\s\S]*?\.focused-record-stage\s*{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration:\s*0\.01ms\s*!important/);
 });
 

@@ -122,17 +122,17 @@ export function initRababRecorderTemplate({
       setJourney(3);
       stateLabel.textContent = "Playing back";
       signalState.textContent = "Playing";
-      setCue("Tap the Rabab to pause");
+      setCue("Tap to pause");
     } else if (reviewing) {
       setJourney(3);
       stateLabel.textContent = "Voice captured";
       signalState.textContent = "Complete";
-      setCue("Tap the Rabab to preview");
+      setCue("Tap to preview");
     } else if (recording) {
       setJourney(2);
-      stateLabel.textContent = "Listening gently";
+      stateLabel.textContent = "Recording now";
       signalState.textContent = "Live";
-      setCue("Tap the Rabab again to finish");
+      setCue("Tap again to finish");
     } else if (requesting || processing) {
       setJourney(2);
       stateLabel.textContent = requesting
@@ -144,12 +144,12 @@ export function initRababRecorderTemplate({
       setJourney(1);
       stateLabel.textContent = "Microphone unavailable";
       signalState.textContent = "Blocked";
-      setCue("Tap the Rabab to try again");
+      setCue("Tap to try again");
     } else {
       setJourney(1);
       stateLabel.textContent = "Ready when you are";
       signalState.textContent = "Waiting";
-      setCue("Tap the Rabab to start");
+      setCue("Tap once to record");
     }
 
     if (reviewing && !readyPreviously) {
