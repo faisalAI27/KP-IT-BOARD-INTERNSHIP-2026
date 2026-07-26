@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
 import math
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -12,7 +13,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.consent import CONSENT_POLICY_VERSION
-from app.models import Contribution, Sentence
+from app.models import (
+    Contribution,
+    RecordingDeviceMetadata,
+    Sentence,
+    Transcript,
+)
 from app.services.audio_storage import (
     AudioStorageError,
     StagedAudioUpload,
@@ -42,6 +48,14 @@ from app.services.withdrawal_service import (
 
 TRUE_CONSENT_VALUES = frozenset({"true", "1", "yes", "on"})
 REVIEW_FILTERS = frozenset({"all", "pending", "approved", "rejected"})
+DEVICE_CATEGORIES = frozenset({"desktop", "mobile", "tablet", "unknown"})
+PLATFORM_FAMILIES = frozenset(
+    {"Android", "ChromeOS", "iOS", "Linux", "macOS", "Windows", "Unknown"}
+)
+BROWSER_FAMILIES = frozenset(
+    {"Chrome", "Edge", "Firefox", "Safari", "Other", "Unknown"}
+)
+DEVICE_METADATA_MAX_JSON_CHARACTERS = 2_048
 
 
 class ContributionServiceError(Exception):
@@ -79,6 +93,11 @@ class InvalidRecordingTopicError(ContributionServiceError):
 class InvalidSentenceSourceError(ContributionServiceError):
     code = "INVALID_SENTENCE_SOURCE"
     default_message = "Sentence source must be provided or custom."
+
+
+class InvalidDeviceMetadataError(ContributionServiceError):
+    code = "INVALID_DEVICE_METADATA"
+    default_message = "The recording device metadata is invalid."
 
 
 class ConsentRequiredError(ContributionServiceError):
@@ -189,6 +208,7 @@ class GuidedContributionInput:
     audio_mime_type: str
     audio_content: bytes | None
     audio_duration_seconds: float | None = None
+    device_metadata_json: str | None = None
     staged_audio: StagedAudioUpload | None = None
 
 
@@ -205,6 +225,7 @@ class OpenRecordingInput:
     audio_mime_type: str
     audio_content: bytes | None
     audio_duration_seconds: float | None = None
+    device_metadata_json: str | None = None
     staged_audio: StagedAudioUpload | None = None
 
 
@@ -294,6 +315,102 @@ def _validate_duration(duration_seconds: float | None) -> float | None:
     return round(float(duration_seconds), 3)
 
 
+def _optional_integer(
+    value: object,
+    *,
+    minimum: int,
+    maximum: int,
+) -> int | None:
+    if value is None:
+        return None
+    if (
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or not minimum <= value <= maximum
+    ):
+        raise InvalidDeviceMetadataError()
+    return value
+
+
+def _optional_boolean(value: object) -> bool | None:
+    if value is None:
+        return None
+    if not isinstance(value, bool):
+        raise InvalidDeviceMetadataError()
+    return value
+
+
+def _validate_device_metadata(
+    raw_metadata: str | None,
+) -> dict[str, object] | None:
+    if raw_metadata is None or not raw_metadata.strip():
+        return None
+    if len(raw_metadata) > DEVICE_METADATA_MAX_JSON_CHARACTERS:
+        raise InvalidDeviceMetadataError()
+    try:
+        metadata = json.loads(raw_metadata)
+    except (TypeError, ValueError) as error:
+        raise InvalidDeviceMetadataError() from error
+    if not isinstance(metadata, dict):
+        raise InvalidDeviceMetadataError()
+
+    allowed_keys = {
+        "schemaVersion",
+        "deviceCategory",
+        "platformFamily",
+        "browserFamily",
+        "captureApi",
+        "sampleRateHz",
+        "channelCount",
+        "echoCancellation",
+        "noiseSuppression",
+        "autoGainControl",
+    }
+    if set(metadata) - allowed_keys:
+        raise InvalidDeviceMetadataError()
+    if metadata.get("schemaVersion") != 1:
+        raise InvalidDeviceMetadataError()
+
+    device_category = metadata.get("deviceCategory", "unknown")
+    platform_family = metadata.get("platformFamily", "Unknown")
+    browser_family = metadata.get("browserFamily", "Unknown")
+    capture_api = metadata.get("captureApi", "MediaRecorder")
+    if (
+        device_category not in DEVICE_CATEGORIES
+        or platform_family not in PLATFORM_FAMILIES
+        or browser_family not in BROWSER_FAMILIES
+        or capture_api != "MediaRecorder"
+    ):
+        raise InvalidDeviceMetadataError()
+
+    return {
+        "metadata_version": 1,
+        "device_category": device_category,
+        "platform_family": platform_family,
+        "browser_family": browser_family,
+        "capture_api": capture_api,
+        "sample_rate_hz": _optional_integer(
+            metadata.get("sampleRateHz"),
+            minimum=8_000,
+            maximum=384_000,
+        ),
+        "channel_count": _optional_integer(
+            metadata.get("channelCount"),
+            minimum=1,
+            maximum=32,
+        ),
+        "echo_cancellation": _optional_boolean(
+            metadata.get("echoCancellation")
+        ),
+        "noise_suppression": _optional_boolean(
+            metadata.get("noiseSuppression")
+        ),
+        "auto_gain_control": _optional_boolean(
+            metadata.get("autoGainControl")
+        ),
+    }
+
+
 def _validated_audio(
     *,
     filename: str,
@@ -367,6 +484,7 @@ def _persist_contribution(
     staged_audio: StagedAudioUpload | None,
     duration_seconds: float | None,
     validated_audio: ValidatedAudio,
+    device_metadata: dict[str, object] | None,
     creation_failure_message: str | None = None,
 ) -> Contribution:
     """Store validated audio and atomically persist its contribution metadata."""
@@ -419,6 +537,24 @@ def _persist_contribution(
         created_at=created_at,
         updated_at=created_at,
     )
+    if device_metadata is not None:
+        contribution.device_metadata = RecordingDeviceMetadata(
+            created_at=created_at,
+            **device_metadata,
+        )
+    if contribution_type == "guided" and sentence_text:
+        contribution.transcripts.append(
+            Transcript(
+                transcript_type="prompt_reference",
+                text=sentence_text,
+                language=language,
+                source="sentence_snapshot",
+                confidence=None,
+                is_verified=False,
+                created_at=created_at,
+                updated_at=created_at,
+            )
+        )
 
     try:
         database.add(contribution)
@@ -472,6 +608,9 @@ def create_guided_contribution(
         content=contribution_input.audio_content,
         staged_audio=contribution_input.staged_audio,
     )
+    device_metadata = _validate_device_metadata(
+        contribution_input.device_metadata_json
+    )
 
     return _persist_contribution(
         database,
@@ -488,6 +627,7 @@ def create_guided_contribution(
         staged_audio=contribution_input.staged_audio,
         duration_seconds=contribution_input.audio_duration_seconds,
         validated_audio=validated_audio,
+        device_metadata=device_metadata,
     )
 
 
@@ -514,6 +654,9 @@ def create_open_recording(
         content=contribution_input.audio_content,
         staged_audio=contribution_input.staged_audio,
     )
+    device_metadata = _validate_device_metadata(
+        contribution_input.device_metadata_json
+    )
 
     return _persist_contribution(
         database,
@@ -530,6 +673,7 @@ def create_open_recording(
         staged_audio=contribution_input.staged_audio,
         duration_seconds=contribution_input.audio_duration_seconds,
         validated_audio=validated_audio,
+        device_metadata=device_metadata,
     )
 
 

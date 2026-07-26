@@ -16,8 +16,10 @@ from app.models import (  # noqa: F401 - registers metadata
     ImportBatch,
     PointLedgerEntry,
     Profile,
+    RecordingDeviceMetadata,
     Sentence,
     TextContribution,
+    Transcript,
     WithdrawalRequest,
 )
 from app.routes import (

@@ -25,7 +25,9 @@ from app.utils.text_normalization import normalize_language_name
 if TYPE_CHECKING:
     from app.models.point_ledger_entry import PointLedgerEntry
     from app.models.profile import Profile
+    from app.models.recording_device_metadata import RecordingDeviceMetadata
     from app.models.sentence import Sentence
+    from app.models.transcript import Transcript
     from app.models.withdrawal_request import WithdrawalRequest
 
 
@@ -164,6 +166,17 @@ class Contribution(Base):
     )
     withdrawal_requests: Mapped[list["WithdrawalRequest"]] = relationship(
         back_populates="contribution",
+        passive_deletes=True,
+    )
+    device_metadata: Mapped["RecordingDeviceMetadata | None"] = relationship(
+        back_populates="contribution",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
+    )
+    transcripts: Mapped[list["Transcript"]] = relationship(
+        back_populates="contribution",
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 

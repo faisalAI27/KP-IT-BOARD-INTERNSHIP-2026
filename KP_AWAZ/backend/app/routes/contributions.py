@@ -254,6 +254,7 @@ async def submit_guided_voice_contribution(
     audio: Annotated[UploadFile, File()],
     sentence_id: Annotated[str | None, Form(alias="sentenceId")] = None,
     audioDurationSeconds: Annotated[float | None, Form(ge=0)] = None,
+    deviceMetadata: Annotated[str | None, Form()] = None,
 ) -> ContributionCreatedResponse | JSONResponse:
     """Accept one guided recording using the existing frontend field names."""
 
@@ -279,6 +280,7 @@ async def submit_guided_voice_contribution(
             audio_mime_type=audio.content_type or "",
             audio_content=None,
             audio_duration_seconds=audioDurationSeconds,
+            device_metadata_json=deviceMetadata,
             staged_audio=staged_audio,
         )
         contribution = create_guided_contribution(
@@ -318,6 +320,7 @@ async def submit_open_recording(
     audio: Annotated[UploadFile, File()],
     topic: Annotated[str | None, Form()] = None,
     audioDurationSeconds: Annotated[float | None, Form(ge=0)] = None,
+    deviceMetadata: Annotated[str | None, Form()] = None,
 ) -> ContributionCreatedResponse | JSONResponse:
     """Accept one consented open recording with an optional topic."""
 
@@ -342,6 +345,7 @@ async def submit_open_recording(
             audio_mime_type=audio.content_type or "",
             audio_content=None,
             audio_duration_seconds=audioDurationSeconds,
+            device_metadata_json=deviceMetadata,
             staged_audio=staged_audio,
         )
         contribution = create_open_recording(

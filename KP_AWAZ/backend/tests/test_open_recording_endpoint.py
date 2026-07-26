@@ -124,6 +124,7 @@ def test_swagger_uses_exact_multipart_field_names(client: TestClient) -> None:
         "consentPolicyVersion",
         "audio",
         "audioDurationSeconds",
+        "deviceMetadata",
     }
     assert set(form_schema["required"]) == {
         "contributorName",

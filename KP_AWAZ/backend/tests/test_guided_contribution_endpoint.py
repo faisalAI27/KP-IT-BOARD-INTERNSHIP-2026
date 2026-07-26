@@ -1,6 +1,7 @@
 """Multipart endpoint tests for guided voice contributions."""
 
 import hashlib
+import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,7 +15,7 @@ import app.routes.contributions as contribution_route_module
 import app.services.contribution_service as contribution_service_module
 from app.config import settings
 from app.consent import CONSENT_POLICY_VERSION
-from app.models import Contribution, Sentence
+from app.models import Contribution, RecordingDeviceMetadata, Sentence, Transcript
 from app.services.audio_storage import AudioStorageError, resolve_audio_storage_path
 from app.utils.text_normalization import normalize_sentence_text
 from tests.conftest import TEST_AUTHORIZATION, authenticate_test_user
@@ -141,6 +142,84 @@ def test_browser_reported_duration_is_stored_when_available(
     assert response.status_code == 201
     assert contribution is not None
     assert contribution.duration_seconds == 12.25
+
+
+def test_privacy_safe_device_metadata_and_prompt_reference_are_stored(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    sentence = add_sentence(db_session)
+    data = valid_form_data()
+    data.update(
+        {
+            "sentenceSource": "provided",
+            "sentenceId": sentence.id,
+            "deviceMetadata": json.dumps(
+                {
+                    "schemaVersion": 1,
+                    "deviceCategory": "desktop",
+                    "platformFamily": "macOS",
+                    "browserFamily": "Safari",
+                    "captureApi": "MediaRecorder",
+                    "sampleRateHz": 48000,
+                    "channelCount": 1,
+                    "echoCancellation": True,
+                    "noiseSuppression": True,
+                    "autoGainControl": False,
+                }
+            ),
+        }
+    )
+
+    response = post_guided(client, data=data)
+    contribution_id = response.json()["id"]
+    device = db_session.scalar(
+        select(RecordingDeviceMetadata).where(
+            RecordingDeviceMetadata.contribution_id == contribution_id
+        )
+    )
+    transcript = db_session.scalar(
+        select(Transcript).where(
+            Transcript.contribution_id == contribution_id
+        )
+    )
+
+    assert response.status_code == 201
+    assert device is not None
+    assert device.device_category == "desktop"
+    assert device.platform_family == "macOS"
+    assert device.browser_family == "Safari"
+    assert device.sample_rate_hz == 48000
+    assert device.channel_count == 1
+    assert device.echo_cancellation is True
+    assert transcript is not None
+    assert transcript.transcript_type == "prompt_reference"
+    assert transcript.text == sentence.text
+    assert transcript.source == "sentence_snapshot"
+    assert transcript.is_verified is False
+
+
+def test_raw_or_unknown_device_metadata_is_rejected(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    data = valid_form_data()
+    data["deviceMetadata"] = json.dumps(
+        {
+            "schemaVersion": 1,
+            "deviceCategory": "desktop",
+            "platformFamily": "macOS",
+            "browserFamily": "Safari",
+            "captureApi": "MediaRecorder",
+            "rawUserAgent": "must never be stored",
+        }
+    )
+
+    response = post_guided(client, data=data)
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "INVALID_DEVICE_METADATA"
+    assert contribution_count(db_session) == 0
 
 
 def test_valid_custom_sentence_returns_201(client: TestClient) -> None:

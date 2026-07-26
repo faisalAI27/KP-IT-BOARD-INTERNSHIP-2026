@@ -11,6 +11,91 @@ export const RECORDING_MIME_TYPE_PREFERENCES = Object.freeze([
 const RECORDING_FAILURE_MESSAGE =
   "The browser could not complete the recording. Please try again.";
 
+function detectPlatformFamily(platform = "", userAgent = "") {
+  const value = `${platform} ${userAgent}`.toLowerCase();
+  if (/iphone|ipad|ipod/.test(value)) return "iOS";
+  if (value.includes("android")) return "Android";
+  if (value.includes("cros")) return "ChromeOS";
+  if (value.includes("win")) return "Windows";
+  if (value.includes("mac")) return "macOS";
+  if (value.includes("linux")) return "Linux";
+  return "Unknown";
+}
+
+function detectBrowserFamily(brands = [], userAgent = "") {
+  const brandNames = brands
+    .map((entry) => (typeof entry?.brand === "string" ? entry.brand : ""))
+    .join(" ");
+  const value = `${brandNames} ${userAgent}`;
+  if (/Microsoft Edge|Edg\//i.test(value)) return "Edge";
+  if (/Firefox|FxiOS/i.test(value)) return "Firefox";
+  if (/Google Chrome|Chromium|Chrome\/|CriOS/i.test(value)) return "Chrome";
+  if (/Safari/i.test(value) && !/Chrome|Chromium|CriOS|Edg\//i.test(value)) {
+    return "Safari";
+  }
+  return value.trim() ? "Other" : "Unknown";
+}
+
+function detectDeviceCategory({ mobile, userAgent = "" } = {}) {
+  if (mobile === true) return "mobile";
+  if (/iPad|Tablet/i.test(userAgent)) return "tablet";
+  if (/Android/i.test(userAgent) && !/Mobile/i.test(userAgent)) return "tablet";
+  if (/Mobi|iPhone|iPod|Android/i.test(userAgent)) return "mobile";
+  if (typeof mobile === "boolean" || userAgent) return "desktop";
+  return "unknown";
+}
+
+export function buildPrivacySafeDeviceMetadata({
+  stream,
+  navigatorObject = globalThis.navigator,
+} = {}) {
+  const userAgent =
+    typeof navigatorObject?.userAgent === "string"
+      ? navigatorObject.userAgent
+      : "";
+  const userAgentData = navigatorObject?.userAgentData;
+  const platform =
+    typeof userAgentData?.platform === "string"
+      ? userAgentData.platform
+      : typeof navigatorObject?.platform === "string"
+        ? navigatorObject.platform
+        : "";
+  const track = stream?.getAudioTracks?.()[0];
+  let settings = {};
+  try {
+    settings = track?.getSettings?.() ?? {};
+  } catch {
+    settings = {};
+  }
+
+  const metadata = {
+    schemaVersion: 1,
+    deviceCategory: detectDeviceCategory({
+      mobile: userAgentData?.mobile,
+      userAgent,
+    }),
+    platformFamily: detectPlatformFamily(platform, userAgent),
+    browserFamily: detectBrowserFamily(userAgentData?.brands, userAgent),
+    captureApi: "MediaRecorder",
+  };
+  const optionalSettings = {
+    sampleRateHz: settings.sampleRate,
+    channelCount: settings.channelCount,
+    echoCancellation: settings.echoCancellation,
+    noiseSuppression: settings.noiseSuppression,
+    autoGainControl: settings.autoGainControl,
+  };
+  Object.entries(optionalSettings).forEach(([key, value]) => {
+    if (
+      typeof value === "boolean" ||
+      (Number.isInteger(value) && value > 0)
+    ) {
+      metadata[key] = value;
+    }
+  });
+  return metadata;
+}
+
 export function getRecordingCapability({
   isSecureContext = globalThis.isSecureContext,
   mediaDevices = globalThis.navigator?.mediaDevices,
@@ -135,6 +220,7 @@ export function createRecorder({
   let playbackUrl = null;
   let audioBlob = null;
   let capturedDurationSeconds = 0;
+  let capturedDeviceMetadata = null;
   let sessionId = 0;
   let destroyed = false;
 
@@ -186,6 +272,7 @@ export function createRecorder({
     revokePlaybackUrl();
     audioBlob = null;
     capturedDurationSeconds = 0;
+    capturedDeviceMetadata = null;
     playback.removeAttribute("src");
     playback.hidden = true;
     playback.load();
@@ -243,6 +330,7 @@ export function createRecorder({
       return;
     }
     capturedDurationSeconds = secondsElapsed;
+    capturedDeviceMetadata = session.deviceMetadata;
     revokePlaybackUrl();
     playbackUrl = URL.createObjectURL(audioBlob);
     playback.src = playbackUrl;
@@ -262,6 +350,7 @@ export function createRecorder({
       blob: audioBlob,
       url: playbackUrl,
       durationSeconds: capturedDurationSeconds,
+      deviceMetadata: capturedDeviceMetadata,
     });
   }
 
@@ -392,6 +481,7 @@ export function createRecorder({
       stream,
       chunks: [],
       selectedMimeType,
+      deviceMetadata: buildPrivacySafeDeviceMetadata({ stream }),
       stopReason: null,
       stopRequested: false,
     };
@@ -523,6 +613,7 @@ export function createRecorder({
     destroy,
     getBlob: () => audioBlob,
     getDurationSeconds: () => capturedDurationSeconds,
+    getDeviceMetadata: () => capturedDeviceMetadata,
     getUrl: () => playbackUrl,
     hasRecording: () => Boolean(audioBlob),
     isRecording: () => recording || starting,

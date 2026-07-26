@@ -281,6 +281,11 @@ function appendAudioDuration(formData, durationSeconds) {
   }
 }
 
+function appendDeviceMetadata(formData, deviceMetadata) {
+  if (!deviceMetadata || typeof deviceMetadata !== "object") return;
+  formData.append("deviceMetadata", JSON.stringify(deviceMetadata));
+}
+
 export function appendCurrentConsent(
   formData,
   { consentGiven, consentPolicyVersion },
@@ -399,6 +404,7 @@ export class ContributionsApi {
     consentPolicyVersion,
     audioBlob,
     audioDurationSeconds,
+    deviceMetadata,
   }) {
     const formData = new FormData();
     formData.append("contributorName", contributorName);
@@ -410,6 +416,7 @@ export class ContributionsApi {
     }
     appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
     appendAudioDuration(formData, audioDurationSeconds);
+    appendDeviceMetadata(formData, deviceMetadata);
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/voice", formData);
   }
@@ -422,6 +429,7 @@ export class ContributionsApi {
     consentPolicyVersion,
     audioBlob,
     audioDurationSeconds,
+    deviceMetadata,
   }) {
     const formData = new FormData();
     formData.append("contributorName", contributorName);
@@ -429,6 +437,7 @@ export class ContributionsApi {
     formData.append("topic", topic);
     appendCurrentConsent(formData, { consentGiven, consentPolicyVersion });
     appendAudioDuration(formData, audioDurationSeconds);
+    appendDeviceMetadata(formData, deviceMetadata);
     appendAudio(formData, audioBlob);
     return this._postForm("/contributions/open-recording", formData);
   }

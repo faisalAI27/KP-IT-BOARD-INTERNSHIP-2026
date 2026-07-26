@@ -837,6 +837,28 @@ test("recording duration is sent only as finite nonnegative metadata", async () 
   assert.equal(request().options.body.get("audioDurationSeconds"), "12.5");
 });
 
+test("privacy-safe device metadata is serialized with a recording", async () => {
+  const request = installJsonFetch(successBody, { status: 201 });
+  const deviceMetadata = {
+    schemaVersion: 1,
+    deviceCategory: "desktop",
+    platformFamily: "macOS",
+    browserFamily: "Safari",
+    captureApi: "MediaRecorder",
+    sampleRateHz: 48000,
+    channelCount: 1,
+  };
+
+  await contributionApi.submitVoiceDonation(
+    voiceInput({ deviceMetadata }),
+  );
+
+  assert.deepEqual(
+    JSON.parse(request().options.body.get("deviceMetadata")),
+    deviceMetadata,
+  );
+});
+
 
 test("zero-byte Blob is rejected before fetch", () => {
   let fetchCalls = 0;

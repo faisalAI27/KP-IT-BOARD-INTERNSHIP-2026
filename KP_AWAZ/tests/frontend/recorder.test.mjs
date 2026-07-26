@@ -3,6 +3,7 @@ import { afterEach, test } from "node:test";
 
 import {
   RECORDING_MIME_TYPE_PREFERENCES,
+  buildPrivacySafeDeviceMetadata,
   createRecorder,
   getRecordingCapability,
   selectSupportedRecordingMimeType,
@@ -20,6 +21,48 @@ const originalGlobals = {
   revokeObjectURL: URL.revokeObjectURL,
   consoleError: console.error,
 };
+
+
+test("device metadata is coarse and excludes stable device identifiers", () => {
+  const metadata = buildPrivacySafeDeviceMetadata({
+    navigatorObject: {
+      userAgent:
+        "Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15",
+      platform: "MacIntel",
+    },
+    stream: {
+      getAudioTracks() {
+        return [
+          {
+            getSettings() {
+              return {
+                deviceId: "stable-device-id",
+                groupId: "stable-group-id",
+                label: "Private microphone name",
+                sampleRate: 48000,
+                channelCount: 1,
+                echoCancellation: true,
+              };
+            },
+          },
+        ];
+      },
+    },
+  });
+
+  assert.deepEqual(metadata, {
+    schemaVersion: 1,
+    deviceCategory: "desktop",
+    platformFamily: "macOS",
+    browserFamily: "Safari",
+    captureApi: "MediaRecorder",
+    sampleRateHz: 48000,
+    channelCount: 1,
+    echoCancellation: true,
+  });
+  assert.equal(JSON.stringify(metadata).includes("stable-device-id"), false);
+  assert.equal(JSON.stringify(metadata).includes("Private microphone"), false);
+});
 
 
 class FakeClassList {
