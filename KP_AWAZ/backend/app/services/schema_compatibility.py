@@ -91,6 +91,54 @@ def ensure_profile_data_use_schema(engine: Engine) -> None:
         raise SchemaCompatibilityError() from error
 
 
+def ensure_text_contribution_review_schema(engine: Engine) -> None:
+    """Add text-review fields without replacing submitted written content."""
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    try:
+        with engine.begin() as connection:
+            schema = inspect(connection)
+            if not schema.has_table("text_contributions"):
+                return
+            column_names = {
+                column["name"] for column in schema.get_columns("text_contributions")
+            }
+            if "reviewed_at" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE text_contributions ADD COLUMN reviewed_at DATETIME"
+                )
+            if "rejection_reason" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE text_contributions "
+                    "ADD COLUMN rejection_reason VARCHAR(500)"
+                )
+            connection.exec_driver_sql(
+                "UPDATE text_contributions SET status = 'queued' "
+                "WHERE status IS NULL OR trim(status) = ''"
+            )
+            connection.exec_driver_sql(
+                "UPDATE text_contributions SET status = lower(trim(status)) "
+                "WHERE lower(trim(status)) IN ('queued', 'approved', 'rejected') "
+                "AND status != lower(trim(status))"
+            )
+            connection.exec_driver_sql(
+                "UPDATE text_contributions SET rejection_reason = NULL "
+                "WHERE status != 'rejected'"
+            )
+            connection.exec_driver_sql(
+                "CREATE INDEX IF NOT EXISTS ix_text_contributions_status "
+                "ON text_contributions (status)"
+            )
+            connection.exec_driver_sql(
+                "CREATE INDEX IF NOT EXISTS ix_text_contributions_user_status "
+                "ON text_contributions (user_id, status)"
+            )
+    except SQLAlchemyError as error:
+        raise SchemaCompatibilityError() from error
+
+
 def ensure_contribution_ownership_schema(engine: Engine) -> None:
     """Add required contribution fields without rewriting existing SQLite rows."""
 

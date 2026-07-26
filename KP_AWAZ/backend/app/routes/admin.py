@@ -11,6 +11,8 @@ from app.schemas import (
     AdminContributionListResponse,
     AdminContributionResponse,
     AdminHealthResponse,
+    AdminTextContributionListResponse,
+    AdminTextContributionResponse,
     AdminWithdrawalRequestListResponse,
     AdminWithdrawalRequestResponse,
     AdminWithdrawalResolutionRequest,
@@ -22,6 +24,12 @@ from app.services.admin_contribution_review_service import (
     get_admin_contribution,
     get_contribution_audio_file,
     list_admin_contributions,
+)
+from app.services.admin_text_contribution_review_service import (
+    AdminTextContributionReviewError,
+    apply_text_contribution_review,
+    get_admin_text_contribution,
+    list_admin_text_contributions,
 )
 from app.services.withdrawal_service import (
     AdminWithdrawalRecord,
@@ -45,6 +53,15 @@ def admin_health(
 
 
 def _safe_review_error(error: AdminContributionReviewError) -> JSONResponse:
+    return JSONResponse(
+        status_code=error.http_status,
+        content={"message": error.message, "code": error.code},
+    )
+
+
+def _safe_text_review_error(
+    error: AdminTextContributionReviewError,
+) -> JSONResponse:
     return JSONResponse(
         status_code=error.http_status,
         content={"message": error.message, "code": error.code},
@@ -175,6 +192,94 @@ def review_admin_contribution(
     except AdminContributionReviewError as error:
         return _safe_review_error(error)
     return AdminContributionResponse.from_contribution(contribution)
+
+
+@router.get(
+    "/text-contributions",
+    response_model=AdminTextContributionListResponse,
+)
+def admin_text_contribution_list(
+    _authenticated: Annotated[None, Depends(require_admin_api_key)],
+    database: Annotated[Session, Depends(get_db)],
+    review_status: Annotated[str, Query(alias="status")] = "pending",
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AdminTextContributionListResponse | JSONResponse:
+    """Return one protected page of typed and file-based text donations."""
+
+    try:
+        items, total, normalized_status = list_admin_text_contributions(
+            database=database,
+            review_status=review_status,
+            limit=limit,
+            offset=offset,
+        )
+    except AdminTextContributionReviewError as error:
+        return _safe_text_review_error(error)
+    return AdminTextContributionListResponse(
+        items=[
+            AdminTextContributionResponse.from_text_contribution(
+                item,
+                include_content=False,
+            )
+            for item in items
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+        status=normalized_status,
+    )
+
+
+@router.get(
+    "/text-contributions/{contribution_id}",
+    response_model=AdminTextContributionResponse,
+)
+def admin_text_contribution_detail(
+    contribution_id: str,
+    _authenticated: Annotated[None, Depends(require_admin_api_key)],
+    database: Annotated[Session, Depends(get_db)],
+) -> AdminTextContributionResponse | JSONResponse:
+    """Return full written content only inside the protected admin workflow."""
+
+    try:
+        contribution = get_admin_text_contribution(
+            database=database,
+            contribution_id=contribution_id,
+        )
+    except AdminTextContributionReviewError as error:
+        return _safe_text_review_error(error)
+    return AdminTextContributionResponse.from_text_contribution(
+        contribution,
+        include_content=True,
+    )
+
+
+@router.patch(
+    "/text-contributions/{contribution_id}/review",
+    response_model=AdminTextContributionResponse,
+)
+def review_admin_text_contribution(
+    contribution_id: str,
+    request: ContributionReviewRequest,
+    _authenticated: Annotated[None, Depends(require_admin_api_key)],
+    database: Annotated[Session, Depends(get_db)],
+) -> AdminTextContributionResponse | JSONResponse:
+    """Approve or reject one donated written-text submission."""
+
+    try:
+        contribution = apply_text_contribution_review(
+            database=database,
+            contribution_id=contribution_id,
+            review_status=request.status,
+            rejection_reason=request.rejectionReason,
+        )
+    except AdminTextContributionReviewError as error:
+        return _safe_text_review_error(error)
+    return AdminTextContributionResponse.from_text_contribution(
+        contribution,
+        include_content=True,
+    )
 
 
 @router.get(

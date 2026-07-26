@@ -219,6 +219,120 @@ export function validateAdminContributionPage(body, expectedStatus, status = 200
 }
 
 
+export function validateAdminTextContribution(item, status = 200) {
+  const textContent = optionalString(item?.textContent);
+  const originalFilename = optionalString(item?.originalFilename);
+  const mimeType = optionalString(item?.mimeType);
+  const rejectionReason = optionalString(item?.rejectionReason);
+  const ownerDisplayName = optionalString(item?.ownerDisplayName);
+  const reviewStatus =
+    typeof item?.reviewStatus === "string"
+      ? item.reviewStatus.trim().toLowerCase()
+      : "";
+  const valid =
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    typeof item.id === "string" &&
+    Boolean(item.id.trim()) &&
+    ["manual", "file"].includes(item.submissionMethod) &&
+    typeof item.language === "string" &&
+    Boolean(item.language.trim()) &&
+    typeof item.textType === "string" &&
+    Boolean(item.textType.trim()) &&
+    typeof item.textPreview === "string" &&
+    Boolean(item.textPreview.trim()) &&
+    textContent !== undefined &&
+    Number.isInteger(item.contentLength) &&
+    item.contentLength >= 1 &&
+    originalFilename !== undefined &&
+    mimeType !== undefined &&
+    (item.fileSize === null ||
+      (Number.isInteger(item.fileSize) && item.fileSize >= 1)) &&
+    ADMIN_FILTERS.has(reviewStatus) &&
+    (item.reviewedAt === null ||
+      (typeof item.reviewedAt === "string" &&
+        !Number.isNaN(Date.parse(item.reviewedAt)))) &&
+    rejectionReason !== undefined &&
+    typeof item.createdAt === "string" &&
+    !Number.isNaN(Date.parse(item.createdAt)) &&
+    typeof item.hasOwner === "boolean" &&
+    ownerDisplayName !== undefined;
+  if (!valid) {
+    throw new AdminReviewApiError(
+      "The admin API returned an invalid text contribution.",
+      { code: "INVALID_ADMIN_TEXT_CONTRIBUTION_RESPONSE", status },
+    );
+  }
+  return {
+    id: item.id.trim(),
+    submissionMethod: item.submissionMethod,
+    language: item.language.trim(),
+    textType: item.textType.trim(),
+    textPreview: item.textPreview,
+    textContent,
+    contentLength: item.contentLength,
+    originalFilename,
+    mimeType,
+    fileSize: item.fileSize,
+    reviewStatus,
+    reviewedAt: item.reviewedAt,
+    rejectionReason: reviewStatus === "rejected" ? rejectionReason : null,
+    createdAt: item.createdAt,
+    hasOwner: item.hasOwner,
+    ownerDisplayName,
+  };
+}
+
+
+export function validateAdminTextContributionPage(
+  body,
+  expectedStatus,
+  status = 200,
+) {
+  const filter = validFilter(expectedStatus);
+  let items = null;
+  if (Array.isArray(body?.items)) {
+    try {
+      items = body.items.map((item) =>
+        validateAdminTextContribution(item, status),
+      );
+    } catch {
+      items = null;
+    }
+  }
+  const responseStatus =
+    typeof body?.status === "string" ? body.status.trim().toLowerCase() : "";
+  const valid =
+    body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    items &&
+    Number.isInteger(body.total) &&
+    body.total >= 0 &&
+    Number.isInteger(body.limit) &&
+    body.limit >= 1 &&
+    body.limit <= 100 &&
+    Number.isInteger(body.offset) &&
+    body.offset >= 0 &&
+    responseStatus === filter &&
+    items.length <= body.limit;
+  if (!valid) {
+    throw new AdminReviewApiError(
+      "The donated-text queue returned an invalid response.",
+      { code: "INVALID_ADMIN_TEXT_QUEUE_RESPONSE", status },
+    );
+  }
+  return {
+    items,
+    total: body.total,
+    limit: body.limit,
+    offset: body.offset,
+    status: responseStatus,
+  };
+}
+
+
 export function validateAdminWithdrawalRequest(item, status = 200) {
   const scope = typeof item?.scope === "string" ? item.scope.trim().toLowerCase() : "";
   const requestStatus =
@@ -487,6 +601,83 @@ export class AdminReviewApi {
     return validateAdminContribution(response);
   }
 
+  async listTextContributions({
+    adminKey,
+    status = "pending",
+    limit = 20,
+    offset = 0,
+  }) {
+    const filter = validFilter(status);
+    const safeLimit = paginationValue(limit, {
+      name: "limit",
+      defaultValue: 20,
+      minimum: 1,
+      maximum: 100,
+    });
+    const safeOffset = paginationValue(offset, {
+      name: "offset",
+      defaultValue: 0,
+      minimum: 0,
+    });
+    const query = new URLSearchParams({
+      status: filter,
+      limit: String(safeLimit),
+      offset: String(safeOffset),
+    });
+    const response = await this._request(`/admin/text-contributions?${query}`, {
+      adminKey,
+    });
+    return validateAdminTextContributionPage(response, filter);
+  }
+
+  async getTextContribution({ adminKey, contributionId }) {
+    const id = encodeURIComponent(validContributionId(contributionId));
+    const response = await this._request(`/admin/text-contributions/${id}`, {
+      adminKey,
+    });
+    return validateAdminTextContribution(response);
+  }
+
+  async reviewTextContribution({
+    adminKey,
+    contributionId,
+    status,
+    rejectionReason = "",
+  }) {
+    const id = encodeURIComponent(validContributionId(contributionId));
+    const reviewStatus =
+      typeof status === "string" ? status.trim().toLowerCase() : "";
+    if (!REVIEW_STATUSES.has(reviewStatus)) {
+      throw new AdminReviewApiError("The text review decision is invalid.", {
+        code: "INVALID_TEXT_REVIEW_STATUS",
+      });
+    }
+    const reason =
+      typeof rejectionReason === "string" ? rejectionReason.trim() : "";
+    if (reviewStatus === "rejected" && !reason) {
+      throw new AdminReviewApiError(
+        "A rejection reason is required for donated text.",
+        { code: "TEXT_REJECTION_REASON_REQUIRED" },
+      );
+    }
+    if (reason.length > 500) {
+      throw new AdminReviewApiError("The rejection reason is too long.", {
+        code: "INVALID_TEXT_REJECTION_REASON",
+      });
+    }
+    const payload = { status: reviewStatus };
+    if (reviewStatus === "rejected") payload.rejectionReason = reason;
+    const response = await this._request(
+      `/admin/text-contributions/${id}/review`,
+      {
+        adminKey,
+        method: "PATCH",
+        body: payload,
+      },
+    );
+    return validateAdminTextContribution(response);
+  }
+
   async listWithdrawalRequests({
     adminKey,
     status = "requested",
@@ -574,6 +765,21 @@ export function getAdminContributionAudio(options) {
 
 export function reviewAdminContribution(options) {
   return defaultAdminReviewApi.reviewContribution(options);
+}
+
+
+export function getAdminTextContributions(options) {
+  return defaultAdminReviewApi.listTextContributions(options);
+}
+
+
+export function getAdminTextContribution(options) {
+  return defaultAdminReviewApi.getTextContribution(options);
+}
+
+
+export function reviewAdminTextContribution(options) {
+  return defaultAdminReviewApi.reviewTextContribution(options);
 }
 
 

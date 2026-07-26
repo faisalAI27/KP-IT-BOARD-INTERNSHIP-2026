@@ -560,6 +560,228 @@
   color: var(--ink-soft);
 }
 
+.admin-text-review {
+  display: grid;
+  margin-top: 24px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  gap: 16px;
+}
+
+.admin-text-review__heading {
+  align-items: flex-start;
+}
+
+.admin-text-review__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper-soft);
+  gap: 16px;
+}
+
+.admin-text-contribution-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-text-card {
+  display: grid;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  gap: 10px;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.admin-text-card:has(.admin-text-detail) {
+  border-color: rgba(62, 98, 89, 0.46);
+  box-shadow: 0 10px 30px rgba(42, 71, 64, 0.08);
+}
+
+.admin-text-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-text-card__heading > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.admin-text-card__heading strong {
+  color: var(--pine-dark);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.admin-text-source {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(214, 164, 67, 0.13);
+  color: #704d16;
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.admin-text-card__preview {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.admin-text-card__preview[lang="ps"] {
+  font-family: Georgia, "Noto Nastaliq Urdu", serif;
+  text-align: right;
+}
+
+.admin-text-card__meta {
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.admin-text-card__open {
+  min-height: 44px;
+  justify-self: start;
+}
+
+.admin-text-detail {
+  display: grid;
+  margin-top: 6px;
+  padding: 18px;
+  border-top: 1px solid var(--line);
+  background: var(--paper-soft);
+  gap: 14px;
+  animation: admin-text-detail-in 220ms ease both;
+}
+
+.admin-text-detail:focus-visible {
+  outline: 3px solid var(--honey);
+  outline-offset: 3px;
+}
+
+.admin-text-detail h3 {
+  color: var(--pine-dark);
+  font-size: 1rem;
+}
+
+.admin-text-detail pre {
+  max-height: 380px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.admin-text-detail pre[lang="ps"] {
+  font-family: Georgia, "Noto Nastaliq Urdu", serif;
+  text-align: right;
+}
+
+.admin-text-metadata {
+  display: grid;
+  border: 1px solid var(--line);
+  background: var(--line);
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-text-metadata > div {
+  min-width: 0;
+  padding: 11px 12px;
+  background: #fff;
+}
+
+.admin-text-metadata dt {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-text-metadata dd {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-text-review-form {
+  display: grid;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  gap: 12px;
+}
+
+.admin-text-review-form label {
+  display: grid;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.admin-text-review-form textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 11px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.admin-text-review-form small {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.admin-text-review :is(button, textarea):focus-visible {
+  outline: 3px solid var(--honey);
+  outline-offset: 2px;
+}
+
+@keyframes admin-text-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-withdrawals {
   margin-top: 24px;
   padding: clamp(20px, 3vw, 30px);
@@ -918,6 +1140,15 @@
     min-height: 260px;
   }
 
+  .admin-text-review__toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-text-review__toolbar .admin-pending-count {
+    margin-left: 0;
+  }
+
   .admin-phrase-tools,
   .admin-phrase-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -957,6 +1188,10 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-text-metadata {
+    grid-template-columns: 1fr;
+  }
+
   .admin-phrase-heading {
     align-items: stretch;
     flex-direction: column;
@@ -978,8 +1213,14 @@
   .admin-connect__copy,
   .admin-connect__form,
   .admin-queue,
-  .admin-detail {
+  .admin-detail,
+  .admin-text-review {
     padding: 22px;
+  }
+
+  .admin-text-card__heading,
+  .admin-text-card__heading > div {
+    display: grid;
   }
 
   .admin-filter-list {
@@ -1024,5 +1265,15 @@
   .admin-withdrawal-card__heading,
   .admin-withdrawal-card__actions {
     display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-text-card {
+    transition: none;
+  }
+
+  .admin-text-detail {
+    animation: none;
   }
 }

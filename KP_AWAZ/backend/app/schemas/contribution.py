@@ -187,3 +187,92 @@ class AdminContributionListResponse(BaseModel):
     limit: int
     offset: int
     status: str
+
+
+class AdminTextContributionResponse(BaseModel):
+    """Safe donated-text metadata for the protected admin workflow."""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    id: str
+    submission_method: Literal["manual", "file"] = Field(alias="submissionMethod")
+    language: str
+    text_type: str = Field(alias="textType")
+    text_preview: str = Field(alias="textPreview")
+    text_content: str | None = Field(alias="textContent")
+    content_length: int = Field(alias="contentLength", ge=1)
+    original_filename: str | None = Field(alias="originalFilename")
+    mime_type: str | None = Field(alias="mimeType")
+    file_size: int | None = Field(alias="fileSize", ge=1)
+    review_status: Literal["pending", "approved", "rejected"] = Field(
+        alias="reviewStatus"
+    )
+    reviewed_at: datetime | None = Field(alias="reviewedAt")
+    rejection_reason: str | None = Field(alias="rejectionReason")
+    created_at: datetime = Field(alias="createdAt")
+    has_owner: bool = Field(alias="hasOwner")
+    owner_display_name: str | None = Field(alias="ownerDisplayName")
+
+    @field_validator("created_at", "reviewed_at")
+    @classmethod
+    def normalize_text_timestamps_to_utc(
+        cls, value: datetime | None
+    ) -> datetime | None:
+        return _as_utc(value) if value is not None else None
+
+    @classmethod
+    def from_text_contribution(
+        cls,
+        contribution: object,
+        *,
+        include_content: bool,
+    ) -> "AdminTextContributionResponse":
+        """Reduce one ORM row without exposing account or database identifiers."""
+
+        content = str(getattr(contribution, "text_content"))
+        compact_preview = " ".join(content.split())
+        if len(compact_preview) > 240:
+            compact_preview = f"{compact_preview[:237].rstrip()}…"
+        database_status = str(getattr(contribution, "status")).strip().lower()
+        review_status = "pending" if database_status == "queued" else database_status
+        profile = getattr(contribution, "profile", None)
+        rejection_reason = getattr(contribution, "rejection_reason", None)
+        if review_status != "rejected":
+            rejection_reason = None
+        return cls.model_validate(
+            {
+                "id": getattr(contribution, "id"),
+                "submissionMethod": getattr(contribution, "submission_method"),
+                "language": getattr(contribution, "language"),
+                "textType": getattr(contribution, "text_type"),
+                "textPreview": compact_preview,
+                "textContent": content if include_content else None,
+                "contentLength": len(content),
+                "originalFilename": getattr(
+                    contribution,
+                    "original_filename",
+                    None,
+                ),
+                "mimeType": getattr(contribution, "mime_type", None),
+                "fileSize": getattr(contribution, "file_size", None),
+                "reviewStatus": review_status,
+                "reviewedAt": getattr(contribution, "reviewed_at", None),
+                "rejectionReason": rejection_reason,
+                "createdAt": getattr(contribution, "created_at"),
+                "hasOwner": getattr(contribution, "user_id", None) is not None,
+                "ownerDisplayName": getattr(profile, "display_name", None),
+            }
+        )
+
+
+class AdminTextContributionListResponse(BaseModel):
+    """Paginated protected donated-text review queue."""
+
+    items: list[AdminTextContributionResponse]
+    total: int
+    limit: int
+    offset: int
+    status: str

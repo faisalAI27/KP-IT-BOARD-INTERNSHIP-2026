@@ -9,6 +9,8 @@ from app.schemas.auth import (
 from app.schemas.contribution import (
     AdminContributionListResponse,
     AdminContributionResponse,
+    AdminTextContributionListResponse,
+    AdminTextContributionResponse,
     ContributionCreatedResponse,
     ContributionReviewRequest,
     MyContributionListResponse,
@@ -60,6 +62,8 @@ __all__ = [
     "AdminWithdrawalResolutionRequest",
     "AdminContributionListResponse",
     "AdminContributionResponse",
+    "AdminTextContributionListResponse",
+    "AdminTextContributionResponse",
     "AccountStatusRequest",
     "AccountStatusResponse",
     "AuthenticatedUserResponse",

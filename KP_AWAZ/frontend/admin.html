@@ -9,7 +9,7 @@
     />
     <title>Contribution review | KP Awaz</title>
     <link rel="icon" href="assets/images/khyber-voice-mark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/admin.css?v=20260719-phrases" />
+    <link rel="stylesheet" href="styles/admin.css?v=20260726-text-review" />
     <link rel="stylesheet" href="styles/final-polish.css?v=20260720-final-polish" />
   </head>
   <body class="admin-page">
@@ -32,11 +32,11 @@
       <section id="adminConnectionView" class="admin-connect" aria-labelledby="adminConnectTitle">
         <div class="admin-connect__copy">
           <span class="admin-eyebrow">Restricted workspace</span>
-          <h1 id="adminConnectTitle">Review donated voices</h1>
+          <h1 id="adminConnectTitle">Review donated voices and text</h1>
           <p>
-            Connect with the temporary backend admin key to inspect recordings and
-            record review decisions. The key stays in this page's memory only and is
-            cleared when you disconnect or close the page.
+            Connect with the temporary backend admin key to inspect recordings,
+            typed sentences, and uploaded text files. The key stays in this page's
+            memory only and is cleared when you disconnect or close the page.
           </p>
         </div>
 
@@ -66,7 +66,7 @@
         <div class="admin-dashboard__heading">
           <div>
             <span class="admin-eyebrow">Review workspace</span>
-            <h1 id="adminDashboardTitle">Voice contributions</h1>
+            <h1 id="adminDashboardTitle">Voice and text contributions</h1>
           </div>
           <button id="adminDisconnectButton" class="btn btn-secondary" type="button">
             Disconnect
@@ -256,6 +256,67 @@
             <p>Choose an item from the queue to inspect its metadata and protected audio.</p>
           </aside>
         </div>
+
+        <section
+          id="adminTextReviewPanel"
+          class="admin-text-review"
+          aria-labelledby="adminTextReviewTitle"
+        >
+          <div class="admin-panel-heading admin-text-review__heading">
+            <div>
+              <span class="admin-eyebrow">Written contributions</span>
+              <h2 id="adminTextReviewTitle">Donated text</h2>
+              <p id="adminTextReviewSummary" class="admin-panel-summary">
+                Connect securely to review typed text and uploaded files.
+              </p>
+            </div>
+            <button
+              id="adminRefreshTextButton"
+              class="btn btn-secondary btn-small"
+              type="button"
+            >
+              Refresh text
+            </button>
+          </div>
+
+          <div class="admin-text-review__toolbar">
+            <div
+              class="admin-filter-list"
+              role="group"
+              aria-label="Filter donated text by review status"
+            >
+              <button class="admin-filter is-active" type="button" data-admin-text-filter="pending" aria-pressed="true">Pending</button>
+              <button class="admin-filter" type="button" data-admin-text-filter="approved" aria-pressed="false">Approved</button>
+              <button class="admin-filter" type="button" data-admin-text-filter="rejected" aria-pressed="false">Rejected</button>
+              <button class="admin-filter" type="button" data-admin-text-filter="all" aria-pressed="false">All</button>
+            </div>
+            <span
+              id="adminTextPendingCount"
+              class="admin-pending-count"
+              role="status"
+              aria-live="polite"
+            >Pending text: 0</span>
+          </div>
+
+          <p id="adminTextReviewStatus" class="admin-status" role="status" aria-live="polite"></p>
+          <div id="adminTextReviewError" class="admin-message admin-message--error" role="alert" hidden>
+            <p id="adminTextReviewErrorMessage"></p>
+            <button id="adminRetryTextButton" class="btn btn-secondary btn-small" type="button">
+              Try again
+            </button>
+          </div>
+          <div id="adminTextReviewEmpty" class="admin-empty" hidden>
+            <strong>No donated text in this view.</strong>
+            <p>Choose another status or refresh the protected queue.</p>
+          </div>
+          <ul id="adminTextContributionList" class="admin-text-contribution-list"></ul>
+
+          <nav class="admin-pagination" aria-label="Donated text pages">
+            <button id="adminPreviousTextPageButton" class="btn btn-secondary btn-small" type="button">Previous</button>
+            <span id="adminTextPaginationStatus" aria-live="polite">No results</span>
+            <button id="adminNextTextPageButton" class="btn btn-secondary btn-small" type="button">Next</button>
+          </nav>
+        </section>
 
         <section
           id="adminWithdrawalPanel"
@@ -466,6 +527,6 @@
       </section>
     </main>
 
-    <script type="module" src="scripts/admin-app.js?v=20260719-phrases"></script>
+    <script type="module" src="scripts/admin-app.js?v=20260726-text-review"></script>
   </body>
 </html>

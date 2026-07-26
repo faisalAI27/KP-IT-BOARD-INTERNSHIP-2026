@@ -1,13 +1,18 @@
 """Persistent model for contributor-submitted written text."""
 
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.utils.text_normalization import normalize_language_name
+
+
+if TYPE_CHECKING:
+    from app.models.profile import Profile
 
 
 class TextContribution(Base):
@@ -30,6 +35,10 @@ class TextContribution(Base):
         CheckConstraint(
             "length(trim(text_content)) >= 1",
             name="ck_text_contribution_content",
+        ),
+        CheckConstraint(
+            "rejection_reason IS NULL OR length(rejection_reason) <= 500",
+            name="ck_text_contribution_rejection_reason_length",
         ),
         Index(
             "ix_text_contributions_user_status",
@@ -60,11 +69,20 @@ class TextContribution(Base):
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="queued", index=True
     )
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    rejection_reason: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+    profile: Mapped["Profile | None"] = relationship()
 
     def normalize_for_storage(self) -> None:
         """Apply the small set of storage invariants before persistence."""
