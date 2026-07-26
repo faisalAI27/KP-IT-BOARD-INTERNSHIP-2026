@@ -1,6 +1,6 @@
-dist/
-node_modules/
-scripts/vendor/
+frontend/dist/
+frontend/node_modules/
+frontend/scripts/vendor/
 .DS_Store
 
 /backups/

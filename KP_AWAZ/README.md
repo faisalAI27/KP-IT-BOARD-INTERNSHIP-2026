@@ -7,7 +7,7 @@ consent, and submit the recording for administrator review.
 
 This repository contains the complete Stage A MVP:
 
-- A 14-page static frontend built with HTML, CSS, and JavaScript modules
+- A 15-page static frontend built with HTML, CSS, and JavaScript modules
 - Supabase email/password, six-digit OTP, password recovery, and Google OAuth
 - A FastAPI application with SQLAlchemy and SQLite
 - Original-format private audio storage
@@ -303,6 +303,8 @@ service designed for concurrent writers.
 
 ## Frontend architecture
 
+All paths in this section are relative to `frontend/`.
+
 ### Page shells
 
 Source HTML stays small by loading reusable fragments from `sections/` during
@@ -455,14 +457,14 @@ Install frontend dependencies. This also builds the local browser-compatible
 Supabase vendor module:
 
 ```bash
-cd KP_AWAZ
+cd KP_AWAZ/frontend
 npm install
 ```
 
 Create the backend environment when it does not already exist:
 
 ```bash
-cd backend
+cd ../backend
 python3.13 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env
@@ -489,7 +491,7 @@ curl http://127.0.0.1:8000/api/readiness
 ### Terminal 2 — Frontend source
 
 ```bash
-cd KP_AWAZ
+cd KP_AWAZ/frontend
 python3 -m http.server 4173
 ```
 
@@ -499,12 +501,12 @@ development pages load section partials over HTTP.
 ### Fresh assembled demo
 
 ```bash
-cd KP_AWAZ
+cd KP_AWAZ/frontend
 npm run build
 python3 -m http.server 4173 --directory dist --bind 0.0.0.0
 ```
 
-The build creates all 14 pages in `dist/`, generates the Supabase vendor bundle,
+The build creates all 15 pages in `dist/`, generates the Supabase vendor bundle,
 assembles partials, and copies runtime assets. Use a new build for demos so a
 previous `dist/` directory or browser cache does not hide recent changes.
 
@@ -569,6 +571,7 @@ the current template checklist.
 Frontend:
 
 ```bash
+cd frontend
 npm test
 npm run build
 npm run scan:secrets
@@ -674,14 +677,18 @@ rollback, caching, and release smoke tests.
 
 ```text
 KP_AWAZ/
-├── *.html                         # 14 real public/auth/workspace/admin pages
-├── sections/                      # Reusable semantic HTML partials
-├── styles/                        # Shared, page-specific, responsive, and polish CSS
-├── scripts/
-│   ├── *-app.js                   # Page coordinators
-│   ├── modules/                   # UI state and lifecycle behavior
-│   └── services/                  # Supabase and FastAPI contracts
-├── assets/                        # Local logos and approved cultural imagery
+├── frontend/
+│   ├── *.html                     # 15 real public/auth/workspace/admin pages
+│   ├── sections/                  # Reusable semantic HTML partials
+│   ├── styles/                    # Shared, page-specific, responsive, and polish CSS
+│   ├── scripts/
+│   │   ├── *-app.js               # Page coordinators
+│   │   ├── modules/               # UI state and lifecycle behavior
+│   │   └── services/              # Supabase and FastAPI contracts
+│   ├── assets/                    # Local logos and approved cultural imagery
+│   ├── tests/                     # Node frontend regression suite
+│   ├── tools/                     # Build and secret-scan tools
+│   └── dist/                      # Ignored assembled production output
 ├── backend/
 │   ├── app/
 │   │   ├── routes/                # FastAPI HTTP layer
@@ -693,10 +700,7 @@ KP_AWAZ/
 │   ├── data/audio/raw/            # Ignored new recording storage
 │   ├── storage/                   # Ignored compatible legacy/import storage
 │   └── kp_awaz.db                 # Ignored development database
-├── tests/frontend/                # Node frontend regression suite
-├── tools/                         # Build and secret-scan tools
-├── docs/                          # Architecture, deployment, brand, and runbooks
-└── dist/                          # Ignored assembled production output
+└── docs/                          # Architecture, deployment, brand, and runbooks
 ```
 
 ## Further documentation

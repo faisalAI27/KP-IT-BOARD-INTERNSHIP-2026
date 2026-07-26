@@ -6,7 +6,7 @@ variables, images, URLs, or deployment logs.
 
 ## Architecture and software
 
-- Static frontend: Node.js 24 and npm 11 build 14 HTML pages into `dist/`.
+- Static frontend: Node.js 24 and npm 11 build 15 HTML pages into `dist/`.
 - API: Python 3.13, FastAPI, Uvicorn, and one writable backend process.
 - Metadata: one persistent SQLite file, conceptually `/data/database/kp_awaz.db`.
 - Recordings: private persistent raw audio at `/data/audio/raw`, organized by
@@ -91,6 +91,7 @@ Set the environment to `production`, use HTTPS API/frontend/Supabase URLs, and
 build:
 
 ```bash
+cd frontend
 npm ci
 npm run build
 npm run scan:secrets

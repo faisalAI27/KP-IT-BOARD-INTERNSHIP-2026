@@ -1,5 +1,8 @@
 # Frontend architecture
 
+All paths in this document are relative to `frontend/` unless explicitly
+prefixed otherwise.
+
 ## Responsibilities
 
 - `index.html` defines public-page metadata and section order only.
@@ -13,7 +16,6 @@
 - `sections/` owns semantic markup and visible copy.
 - `styles/` owns presentation, separated by page responsibility.
 - `scripts/modules/` owns browser behavior and DOM state.
-- `scripts/data/` contains temporary local data that can later come from the API.
 - `scripts/services/` is the only layer allowed to communicate with the backend.
 - `scripts/app.js` assembles the development page and initializes each feature.
 - `scripts/modules/workspace-shell.js` assembles and guards private pages,

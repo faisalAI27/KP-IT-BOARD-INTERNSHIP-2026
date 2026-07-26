@@ -1,5 +1,7 @@
 # KP AWAZ visual identity
 
+Asset paths in this document are relative to `frontend/`.
+
 ## A. Recommended concept — The Voice Gateway
 
 The KP AWAZ mark is a compact cultural gateway containing two mountain peaks and one continuous voice line. It represents a welcoming place where regional voices enter the digital future without turning the brand into a microphone, tourism badge, or government seal.
