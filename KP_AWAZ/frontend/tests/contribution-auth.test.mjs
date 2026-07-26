@@ -152,7 +152,7 @@ test("contribution partial provides an accessible login-required status", async 
 });
 
 
-test("the focused recording flow removes per-recording consent without fabricating acceptance", async () => {
+test("the focused recording flow verifies account-level consent before upload", async () => {
   const [html, source, api] = await Promise.all([
     readFile(new URL("../sections/contribution.html", import.meta.url), "utf8"),
     readFile(new URL("../scripts/modules/contributions.js", import.meta.url), "utf8"),
@@ -160,11 +160,12 @@ test("the focused recording flow removes per-recording consent without fabricati
   ]);
 
   assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 1);
-  assert.doesNotMatch(html, /type="checkbox"|consent-check|Consent policy version|I agree/i);
-  assert.doesNotMatch(source, /consentGiven\s*:|consentPolicyVersion\s*:|submitVoiceDonation\(|submitOpenRecording\(/);
-  assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
-  assert.match(source, /Never[\s\S]*synthesize consent or infer it from an earlier recording/);
-  assert.equal((source.match(/showAccountPolicyBlock\(/g) ?? []).length, 2);
+  assert.match(html, /id="accountConsentCheckbox"[^>]*type="checkbox"/);
+  assert.match(html, /Accept the current data-use policy for this account/);
+  assert.match(source, /getMyConsentSummary\(\)/);
+  assert.match(source, /acceptMyCurrentPolicy\(CONSENT_POLICY_VERSION\)/);
+  assert.match(source, /submitVoiceDonation\(\{/);
+  assert.doesNotMatch(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
   assert.match(api, /if \(consentGiven !== true\)/);
   assert.match(api, /formData\.append\("consentGiven", "true"\)/);
   assert.match(api, /formData\.append\("consentPolicyVersion", CONSENT_POLICY_VERSION\)/);
@@ -275,13 +276,14 @@ test("duplicate submission is prevented until the first completes", () => {
 });
 
 
-test("the account-policy blocker preserves the page and recording controls", async () => {
+test("submission errors preserve the page and recorded audio for retry", async () => {
   const source = await readFile(
     new URL("../scripts/modules/contributions.js", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /No recording was uploaded; your recording is still here/);
+  assert.match(source, /The recording could not be submitted\. It is still here to try again\./);
+  assert.match(source, /catch \(error\)[\s\S]*donationError\.hidden = false/);
   assert.doesNotMatch(source, /donateRecorder\.reset\(\);\s*donateForm\.classList\.add\("is-submitted"\)/);
   assert.doesNotMatch(source, /openRecorder\.reset\(\);\s*recordSuccess\.classList\.add\("show"\)/);
   assert.doesNotMatch(source, /document\.body\.inert|body\.style\.filter|filter:\s*blur/);

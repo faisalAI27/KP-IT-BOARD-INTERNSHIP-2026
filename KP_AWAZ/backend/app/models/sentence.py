@@ -51,6 +51,7 @@ class Sentence(Base):
     )
     language: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
+    roman_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     meaning: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     dialect: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -87,7 +88,14 @@ def prepare_sentence_for_storage(
     sentence.language = normalize_language_name(sentence.language)
     sentence.text = clean_sentence_text(sentence.text)
     sentence.normalized_text = normalize_sentence_text(sentence.text)
-    for field_name in ("category", "dialect", "source", "difficulty"):
+    for field_name in (
+        "roman_text",
+        "meaning",
+        "category",
+        "dialect",
+        "source",
+        "difficulty",
+    ):
         value = getattr(sentence, field_name)
         setattr(
             sentence,

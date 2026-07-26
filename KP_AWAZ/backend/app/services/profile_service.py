@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 from app.consent import CONSENT_POLICY_VERSION
 from app.models import Contribution
 from app.models.profile import Profile
-from app.schemas.profile import ProfileUpdateRequest
+from app.schemas.profile import (
+    ProfileConsentAcceptanceRequest,
+    ProfileUpdateRequest,
+)
 from app.services.supabase_auth import AuthenticatedUser
 from app.utils.text_normalization import normalize_language_name
 
@@ -60,6 +63,18 @@ class ProfileConsentQueryError(ProfileServiceError):
     code = "PROFILE_CONSENT_QUERY_FAILED"
     message = "Consent details could not be loaded. Please try again."
     http_status = 500
+
+
+class InvalidDataUseAcceptanceError(ProfileServiceError):
+    code = "DATA_USE_ACCEPTANCE_INVALID"
+    message = "Please accept the current data-use policy before submitting."
+    http_status = 400
+
+
+class DataUseAcceptanceRequiredError(ProfileServiceError):
+    code = "DATA_USE_ACCEPTANCE_REQUIRED"
+    message = "Accept the current data-use policy before submitting your recording."
+    http_status = 409
 
 
 def _utc_now() -> datetime:
@@ -289,9 +304,12 @@ def get_profile_consent_summary(
     database: Session,
     owner_user_id: str,
 ) -> dict[str, object]:
-    """Return only the verified owner's latest structured consent timestamp."""
+    """Return account acceptance and the latest contribution consent audit."""
 
     try:
+        profile = database.scalar(
+            select(Profile).where(Profile.id == owner_user_id)
+        )
         most_recent_consent = database.scalar(
             select(func.max(Contribution.consent_timestamp)).where(
                 Contribution.user_id == owner_user_id,
@@ -305,7 +323,64 @@ def get_profile_consent_summary(
         database.rollback()
         raise ProfileConsentQueryError() from error
 
+    accepted_policy_version = (
+        profile.data_use_policy_version if profile is not None else None
+    )
+    accepted_at = profile.data_use_accepted_at if profile is not None else None
     return {
         "currentPolicyVersion": CONSENT_POLICY_VERSION,
+        "acceptedPolicyVersion": accepted_policy_version,
+        "acceptedAt": accepted_at,
+        "isCurrent": (
+            accepted_policy_version == CONSENT_POLICY_VERSION
+            and accepted_at is not None
+        ),
         "mostRecentConsentAt": most_recent_consent,
     }
+
+
+def accept_current_data_use_policy(
+    *,
+    database: Session,
+    profile: Profile,
+    acceptance: ProfileConsentAcceptanceRequest,
+) -> dict[str, object]:
+    """Persist explicit current-policy acceptance for one verified profile."""
+
+    if (
+        acceptance.accepted is not True
+        or acceptance.policy_version != CONSENT_POLICY_VERSION
+    ):
+        raise InvalidDataUseAcceptanceError()
+
+    if (
+        profile.data_use_policy_version != CONSENT_POLICY_VERSION
+        or profile.data_use_accepted_at is None
+    ):
+        now = _utc_now()
+        profile.data_use_policy_version = CONSENT_POLICY_VERSION
+        profile.data_use_accepted_at = now
+        profile.updated_at = now
+        try:
+            database.add(profile)
+            database.commit()
+            database.refresh(profile)
+        except SQLAlchemyError as error:
+            database.rollback()
+            raise ProfilePersistenceError() from error
+
+    return get_profile_consent_summary(
+        database=database,
+        owner_user_id=profile.id,
+    )
+
+
+def require_current_data_use_acceptance(profile: Profile) -> str:
+    """Return the verified policy version or reject recording submission."""
+
+    if (
+        profile.data_use_policy_version != CONSENT_POLICY_VERSION
+        or profile.data_use_accepted_at is None
+    ):
+        raise DataUseAcceptanceRequiredError()
+    return CONSENT_POLICY_VERSION

@@ -32,6 +32,9 @@ const STATISTICS = Object.freeze({
 });
 const CONSENT_SUMMARY = Object.freeze({
   currentPolicyVersion: "1.0",
+  acceptedPolicyVersion: "1.0",
+  acceptedAt: "2026-07-18T08:00:00Z",
+  isCurrent: true,
   mostRecentConsentAt: "2026-07-18T08:30:00Z",
 });
 
@@ -135,15 +138,44 @@ test("consent summary GET uses the private current-user endpoint", async () => {
 });
 
 
+test("account consent PATCH stores explicit current-policy acceptance", async () => {
+  const { api, calls } = fixture({
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return response({ body: CONSENT_SUMMARY });
+    },
+  });
+
+  const result = await api.acceptMyCurrentPolicy("1.0");
+
+  assert.deepEqual(result, CONSENT_SUMMARY);
+  assert.equal(calls[0].url, "http://127.0.0.1:8000/api/profile/me/consent");
+  assert.equal(calls[0].options.method, "PATCH");
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    accepted: true,
+    policyVersion: "1.0",
+  });
+});
+
+
 test("consent summary accepts null legacy date and rejects unsafe fields", () => {
   assert.deepEqual(
     validateProfileConsentResponse({
       currentPolicyVersion: "1.0",
+      acceptedPolicyVersion: null,
+      acceptedAt: null,
+      isCurrent: false,
       mostRecentConsentAt: null,
       userId: "private-user",
       consentGiven: true,
     }),
-    { currentPolicyVersion: "1.0", mostRecentConsentAt: null },
+    {
+      currentPolicyVersion: "1.0",
+      acceptedPolicyVersion: null,
+      acceptedAt: null,
+      isCurrent: false,
+      mostRecentConsentAt: null,
+    },
   );
   for (const invalid of [
     null,
@@ -151,6 +183,7 @@ test("consent summary accepts null legacy date and rejects unsafe fields", () =>
     { ...CONSENT_SUMMARY, currentPolicyVersion: "" },
     { ...CONSENT_SUMMARY, mostRecentConsentAt: "not-a-date" },
     { ...CONSENT_SUMMARY, mostRecentConsentAt: 42 },
+    { ...CONSENT_SUMMARY, isCurrent: false },
   ]) {
     assert.throws(
       () => validateProfileConsentResponse(invalid),

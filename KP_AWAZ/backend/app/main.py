@@ -39,6 +39,7 @@ from app.services.profile_service import ProfileServiceError
 from app.services.points_ledger_service import PointsLedgerError
 from app.services.schema_compatibility import (
     ensure_contribution_ownership_schema,
+    ensure_profile_data_use_schema,
     ensure_sentence_phrase_schema,
 )
 from app.services.runtime_configuration import prepare_runtime_storage
@@ -52,6 +53,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     prepare_runtime_storage(settings)
     Base.metadata.create_all(bind=engine)
     ensure_contribution_ownership_schema(engine)
+    ensure_profile_data_use_schema(engine)
     ensure_sentence_phrase_schema(engine)
     yield
 

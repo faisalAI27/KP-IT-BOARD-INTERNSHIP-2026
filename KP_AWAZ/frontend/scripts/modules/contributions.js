@@ -1,4 +1,12 @@
-import { getSentencePrompts } from "../services/contributions-api.js?v=20260723-guided-only";
+import {
+  CONSENT_POLICY_VERSION,
+  getSentencePrompts,
+  submitVoiceDonation,
+} from "../services/contributions-api.js?v=20260726-account-consent";
+import {
+  acceptMyCurrentPolicy,
+  getMyConsentSummary,
+} from "../services/profile-api.js?v=20260726-account-consent";
 import { ContributionAuthController } from "./contribution-auth.js?v=20260717-member-workspace";
 import { initRababRecorderTemplate } from "./rabab-recorder-template.js?v=20260726-focused-recorder";
 import { createRecorder } from "./recorder.js?v=20260726-focused-recorder";
@@ -9,8 +17,8 @@ const NO_SENTENCE_PROMPTS =
   "No reviewed Pashto sentences are available right now. Please try again later.";
 export const DEMO_PASHTO_SENTENCE =
   "زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.";
-export const ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE =
-  "Submission is temporarily unavailable while KP AWAZ connects your verified account-level data-use acceptance. No recording was uploaded; your recording is still here to listen to or record again.";
+export const DEMO_ROMAN_PASHTO =
+  "Zama zhaba zama pehzhandana da, ao zama ghag da haghe ratlonkay jorawi.";
 
 let activeContributionCleanup = null;
 
@@ -44,6 +52,7 @@ export async function initContributions({ profile = {} } = {}) {
     'input[name="sentence-source"][value="provided"]',
   );
   const providedSentence = document.getElementById("providedSentence");
+  const providedRoman = document.getElementById("providedRoman");
   const providedMeaning = document.getElementById("providedMeaning");
   const sentenceNumber = document.getElementById("sentenceNumber");
   const nextSentenceButton = document.getElementById("nextSentenceBtn");
@@ -56,6 +65,11 @@ export async function initContributions({ profile = {} } = {}) {
   const donateRecordAgain = document.getElementById("donateRecordAgain");
   const reviewSentence = document.getElementById("reviewSentence");
   const submitDonationButton = document.getElementById("submitDonation");
+  const accountConsentPanel = document.getElementById("accountConsentPanel");
+  const accountConsentCheckbox = document.getElementById(
+    "accountConsentCheckbox",
+  );
+  const accountConsentStatus = document.getElementById("accountConsentStatus");
   const contributionAuthStatus = document.getElementById("contributionAuthStatus");
   const contributionAuthMessage = document.getElementById("contributionAuthMessage");
   const contributionSignInButton = document.getElementById(
@@ -68,6 +82,10 @@ export async function initContributions({ profile = {} } = {}) {
   let sentencePromptsReady = false;
   let sentencePromptsLoading = false;
   let authVerified = false;
+  let accountConsentCurrent = false;
+  let accountConsentLoading = false;
+  let submitting = false;
+  let consentRequestGeneration = 0;
   let destroyed = false;
   let donateRecorder;
   let accessController;
@@ -119,6 +137,7 @@ export async function initContributions({ profile = {} } = {}) {
     const sentence = getSelectedSentence();
     const update = () => {
       replaceProvidedSentenceText(sentence?.text ?? "");
+      providedRoman.textContent = sentence?.romanText ?? DEMO_ROMAN_PASHTO;
       providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
       sentenceNumber.textContent = sentence
         ? `Sentence ${sentenceIndex + 1} of ${pashtoSentences.length}`
@@ -160,7 +179,11 @@ export async function initContributions({ profile = {} } = {}) {
   function syncRecordAccess() {
     donateRecordButton.disabled = !authVerified || !sentencePromptsReady;
     submitDonationButton.disabled =
-      !authVerified || !donateRecorder?.hasRecording();
+      !authVerified ||
+      !donateRecorder?.hasRecording() ||
+      submitting ||
+      accountConsentLoading ||
+      (!accountConsentCurrent && !accountConsentCheckbox.checked);
   }
 
   function validateCurrentSentence({ focus = false } = {}) {
@@ -170,13 +193,49 @@ export async function initContributions({ profile = {} } = {}) {
     return false;
   }
 
-  function showAccountPolicyBlock(element) {
-    // TODO(account-policy): Re-enable uploads only after the authenticated profile API
-    // returns an explicit current-version acceptance with a server timestamp. Never
-    // synthesize consent or infer it from an earlier recording's consent fields.
-    element.textContent = ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE;
-    element.hidden = false;
-    element.focus?.();
+  function renderAccountConsent() {
+    accountConsentPanel.hidden = accountConsentCurrent;
+    accountConsentCheckbox.disabled =
+      accountConsentCurrent || accountConsentLoading || submitting;
+    accountConsentStatus.textContent = accountConsentCurrent
+      ? "Current data-use policy accepted for this account."
+      : accountConsentLoading
+        ? "Checking your account acceptance…"
+        : "Accept once to submit this and future recordings under the current policy.";
+    syncRecordAccess();
+  }
+
+  async function loadAccountConsent() {
+    const generation = ++consentRequestGeneration;
+    accountConsentLoading = true;
+    renderAccountConsent();
+    try {
+      const summary = await getMyConsentSummary();
+      if (destroyed || generation !== consentRequestGeneration) return;
+      accountConsentCurrent = summary.isCurrent;
+      accountConsentCheckbox.checked = summary.isCurrent;
+    } catch {
+      if (destroyed || generation !== consentRequestGeneration) return;
+      accountConsentCurrent = false;
+      accountConsentCheckbox.checked = false;
+      accountConsentStatus.textContent =
+        "Acceptance status could not be checked. You can still accept it below and submit.";
+    } finally {
+      if (!destroyed && generation === consentRequestGeneration) {
+        accountConsentLoading = false;
+        renderAccountConsent();
+      }
+    }
+  }
+
+  function setSubmitButtonLabel(label, { arrow = false } = {}) {
+    submitDonationButton.replaceChildren(document.createTextNode(label));
+    if (arrow) {
+      const arrowMark = document.createElement("span");
+      arrowMark.setAttribute("aria-hidden", "true");
+      arrowMark.textContent = "→";
+      submitDonationButton.append(" ", arrowMark);
+    }
   }
 
   function hideDonateReview() {
@@ -207,6 +266,7 @@ export async function initContributions({ profile = {} } = {}) {
       donateReview.hidden = false;
       donateRecordAgain.disabled = false;
       submitDonationButton.disabled = !authVerified;
+      syncRecordAccess();
     },
     onReset: hideDonateReview,
   });
@@ -227,11 +287,19 @@ export async function initContributions({ profile = {} } = {}) {
   function clearContributionSession() {
     resetDonationFlow();
     authVerified = false;
+    accountConsentCurrent = false;
+    accountConsentLoading = false;
+    consentRequestGeneration += 1;
+    accountConsentCheckbox.checked = false;
+    renderAccountConsent();
     syncRecordAccess();
   }
 
   function updateContributionAccess({ verified }) {
     authVerified = verified;
+    if (verified) {
+      void loadAccountConsent();
+    }
     syncRecordAccess();
   }
 
@@ -243,6 +311,7 @@ export async function initContributions({ profile = {} } = {}) {
     nextSentenceButton.disabled = true;
     clearSentenceTransitions();
     replaceProvidedSentenceText(DEMO_PASHTO_SENTENCE);
+    providedRoman.textContent = DEMO_ROMAN_PASHTO;
     providedMeaning.textContent =
       "Preview only — a reviewed sentence will replace this example when recording is available.";
     sentenceNumber.textContent = "Preview sentence";
@@ -294,7 +363,11 @@ export async function initContributions({ profile = {} } = {}) {
     donateRecorder.reset();
     donateRecordButton.focus();
   });
-  donateForm.addEventListener("submit", (event) => {
+  accountConsentCheckbox.addEventListener("change", () => {
+    donationError.hidden = true;
+    syncRecordAccess();
+  });
+  donateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     donationError.hidden = true;
     if (!accessController.canContribute()) return;
@@ -303,7 +376,70 @@ export async function initContributions({ profile = {} } = {}) {
       donateRecordButton.focus();
       return;
     }
-    showAccountPolicyBlock(donationError);
+    if (!accountConsentCurrent && !accountConsentCheckbox.checked) {
+      donationError.textContent =
+        "Accept the current data-use policy before submitting.";
+      donationError.hidden = false;
+      accountConsentCheckbox.focus();
+      return;
+    }
+
+    const submission = accessController.beginSubmission("guided");
+    if (!submission) return;
+    submitting = true;
+    setSubmitButtonLabel("Submitting…");
+    renderAccountConsent();
+
+    try {
+      if (!accountConsentCurrent) {
+        const summary = await acceptMyCurrentPolicy(CONSENT_POLICY_VERSION);
+        if (!accessController.isCurrent(submission)) return;
+        accountConsentCurrent = summary.isCurrent;
+        if (!accountConsentCurrent) {
+          throw new Error(
+            "The current data-use policy could not be accepted. Please try again.",
+          );
+        }
+      }
+
+      const sentence = getSelectedSentence();
+      await submitVoiceDonation({
+        contributorName: donorName.value,
+        language: donorLanguage.value,
+        sentence: sentence.text,
+        sentenceSource: "provided",
+        sentenceId: sentence.id,
+        consentGiven: true,
+        consentPolicyVersion: CONSENT_POLICY_VERSION,
+        audioBlob: donateRecorder.getBlob(),
+        audioDurationSeconds: donateRecorder.getDurationSeconds(),
+        deviceMetadata: donateRecorder.getDeviceMetadata(),
+      });
+      if (!accessController.isCurrent(submission)) return;
+
+      donateReview.hidden = true;
+      donateForm.classList.add("is-submitted");
+      donateSuccess.hidden = false;
+      donateSuccess.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+      globalThis.dispatchEvent?.(
+        new CustomEvent("kpawaz:contribution-submitted", {
+          detail: { type: "guided" },
+        }),
+      );
+    } catch (error) {
+      if (!accessController.isCurrent(submission)) return;
+      donationError.textContent =
+        typeof error?.message === "string" && error.message.trim()
+          ? error.message.trim()
+          : "The recording could not be submitted. It is still here to try again.";
+      donationError.hidden = false;
+      donationError.focus();
+    } finally {
+      const sessionStillCurrent = accessController.finishSubmission(submission);
+      submitting = false;
+      setSubmitButtonLabel("Submit recording", { arrow: true });
+      if (sessionStillCurrent) renderAccountConsent();
+    }
   });
 
   document.getElementById("donateAgainBtn").addEventListener("click", () => {
@@ -312,6 +448,7 @@ export async function initContributions({ profile = {} } = {}) {
   });
 
   applyProfileDefaults();
+  renderAccountConsent();
   providedSentenceInput.checked = true;
   accessController = new ContributionAuthController({
     recorders: [donateRecorder],

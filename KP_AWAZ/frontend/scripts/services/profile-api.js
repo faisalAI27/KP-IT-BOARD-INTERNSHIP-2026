@@ -133,17 +133,27 @@ export function validateProfileConsentResponse(payload, status = 200) {
       ? payload.currentPolicyVersion.trim()
       : "";
   const mostRecentConsentAt = payload?.mostRecentConsentAt;
+  const acceptedPolicyVersion = safeNullableString(payload?.acceptedPolicyVersion);
+  const acceptedAt = payload?.acceptedAt;
   const validTimestamp =
     mostRecentConsentAt === null ||
     (typeof mostRecentConsentAt === "string" &&
       !Number.isNaN(Date.parse(mostRecentConsentAt)));
+  const validAcceptedAt =
+    acceptedAt === null ||
+    (typeof acceptedAt === "string" && !Number.isNaN(Date.parse(acceptedAt)));
 
   if (
     !payload ||
     typeof payload !== "object" ||
     Array.isArray(payload) ||
     !version ||
-    !validTimestamp
+    !validTimestamp ||
+    acceptedPolicyVersion === undefined ||
+    !validAcceptedAt ||
+    typeof payload.isCurrent !== "boolean" ||
+    payload.isCurrent !==
+      (acceptedPolicyVersion === version && acceptedAt !== null)
   ) {
     throw new ProfileApiError(
       "The consent service returned an invalid response.",
@@ -151,7 +161,13 @@ export function validateProfileConsentResponse(payload, status = 200) {
     );
   }
 
-  return { currentPolicyVersion: version, mostRecentConsentAt };
+  return {
+    currentPolicyVersion: version,
+    acceptedPolicyVersion,
+    acceptedAt,
+    isCurrent: payload.isCurrent,
+    mostRecentConsentAt,
+  };
 }
 
 
@@ -277,6 +293,24 @@ export class ProfileApi {
     });
   }
 
+  async acceptMyCurrentPolicy(policyVersion) {
+    const version =
+      typeof policyVersion === "string" ? policyVersion.trim() : "";
+    if (!version || version.length > 20) {
+      throw new ProfileApiError("A valid data-use policy is required.", {
+        code: "DATA_USE_ACCEPTANCE_INVALID",
+      });
+    }
+    return this._request(
+      "PATCH",
+      { accepted: true, policyVersion: version },
+      {
+        path: PROFILE_CONSENT_PATH,
+        validate: validateProfileConsentResponse,
+      },
+    );
+  }
+
   async _request(
     method,
     payload = null,
@@ -330,3 +364,5 @@ export const updateMyProfile = (updates) => profileApi.updateMyProfile(updates);
 export const getMyContributionStatistics = () =>
   profileApi.getMyContributionStatistics();
 export const getMyConsentSummary = () => profileApi.getMyConsentSummary();
+export const acceptMyCurrentPolicy = (policyVersion) =>
+  profileApi.acceptMyCurrentPolicy(policyVersion);

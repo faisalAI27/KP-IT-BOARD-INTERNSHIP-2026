@@ -50,7 +50,7 @@ test("guided recording keeps a Pashto preview visible when live prompts are unav
   assert.match(source, /sentencePromptsReady = false/);
 });
 
-test("focused contribution flow keeps profile fields hidden and account consent honest", async () => {
+test("focused contribution flow keeps profile fields hidden and uses account consent", async () => {
   const [html, source, css] = await Promise.all([
     read("sections/contribution.html"),
     read("scripts/modules/contributions.js"),
@@ -60,9 +60,9 @@ test("focused contribution flow keeps profile fields hidden and account consent 
   assert.match(html, /id="donor-language"[\s\S]*type="hidden"/);
   assert.doesNotMatch(html, /Step [123] of 3|Continue to recording|Continue to review/);
   assert.equal((html.match(/>\s*Submit recording\s*</g) ?? []).length, 1);
-  assert.doesNotMatch(html, /checkbox|consent-check|I agree/i);
-  assert.match(source, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
-  assert.doesNotMatch(source, /consentGiven\s*:\s*true/);
+  assert.match(html, /id="accountConsentCheckbox"/);
+  assert.match(source, /acceptMyCurrentPolicy\(CONSENT_POLICY_VERSION\)/);
+  assert.match(source, /consentGiven:\s*true/);
   assert.match(source, /profile\.displayName/);
   assert.doesNotMatch(source, /openRecorder|openRecordingDisclosure|recordSoundForm/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
@@ -79,6 +79,8 @@ test("guided reading uses one focused microphone without the long-form disclosur
     read("scripts/modules/audio-visualizer.js"),
   ]);
   assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
+  assert.match(html, /id="providedRoman"[^>]*lang="ps-Latn"[^>]*dir="ltr"/);
+  assert.match(contributionSource, /sentence\?\.romanText \?\? DEMO_ROMAN_PASHTO/);
   assert.match(html, /class="focused-record-orb rabab-record-button"/);
   assert.match(html, /<rect x="9" y="3" width="6" height="11" rx="3"><\/rect>/);
   assert.match(html, /id="donateRecCallout">Tap once to record<\/h2>/);

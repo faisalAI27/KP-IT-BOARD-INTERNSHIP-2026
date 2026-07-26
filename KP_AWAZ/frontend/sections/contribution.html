@@ -97,6 +97,12 @@
         <p class="focused-pashto-sentence pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
           زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
         </p>
+        <div class="focused-roman-pashto" aria-labelledby="providedRomanLabel">
+          <span id="providedRomanLabel">Roman Pashto</span>
+          <p id="providedRoman" lang="ps-Latn" dir="ltr">
+            Zama zhaba zama pehzhandana da, ao zama ghag da haghe ratlonkay jorawi.
+          </p>
+        </div>
         <p class="focused-translation" id="providedMeaning">
           My language is my identity, and my voice shapes its future.
         </p>
@@ -109,6 +115,17 @@
           <p class="sr-only" id="reviewSentence" lang="ps" dir="rtl"></p>
         </div>
         <audio id="donateRecPlayback" controls hidden></audio>
+        <div class="focused-account-consent" id="accountConsentPanel">
+          <label for="accountConsentCheckbox">
+            <input id="accountConsentCheckbox" type="checkbox" />
+            <span>
+              <strong>Accept the current data-use policy for this account</strong>
+              Your recording stays private while it is reviewed. You can review how KP AWAZ stores and uses contributions in the
+              <a href="data-use.html">data-use policy</a>.
+            </span>
+          </label>
+          <p id="accountConsentStatus" role="status" aria-live="polite">Checking your account acceptance…</p>
+        </div>
         <div class="focused-review-actions">
           <button class="focused-secondary-button" id="donateRecordAgain" type="button" disabled>Record again</button>
           <button class="focused-primary-button" id="submitDonation" type="submit" disabled>Submit recording <span aria-hidden="true">→</span></button>

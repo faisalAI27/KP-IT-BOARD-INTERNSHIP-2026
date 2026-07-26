@@ -736,6 +736,32 @@
   line-height: 1.55;
 }
 
+.focused-roman-pashto {
+  margin: 4px 0 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(15, 59, 51, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.focused-roman-pashto > span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--focused-clay-600);
+  font-size: 0.625rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.focused-roman-pashto p {
+  margin: 0;
+  color: var(--focused-pine-900);
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
 .focused-review {
   display: grid;
   align-items: center;
@@ -768,6 +794,53 @@
   width: 100%;
   min-height: 44px;
   grid-column: 1 / -1;
+}
+
+.focused-account-consent {
+  padding: 13px 14px;
+  border: 1px solid rgba(33, 101, 85, 0.2);
+  border-radius: 13px;
+  background: rgba(230, 240, 232, 0.5);
+  grid-column: 1 / -1;
+}
+
+.focused-account-consent[hidden] {
+  display: none;
+}
+
+.focused-account-consent label {
+  display: grid;
+  align-items: start;
+  color: var(--focused-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  cursor: pointer;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.focused-account-consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--focused-pine-700);
+}
+
+.focused-account-consent strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--focused-pine-900);
+}
+
+.focused-account-consent a {
+  color: var(--focused-clay-700);
+  font-weight: 750;
+}
+
+.focused-account-consent p {
+  margin: 7px 0 0 30px;
+  color: var(--focused-muted);
+  font-size: 0.75rem;
 }
 
 .focused-review-actions,

@@ -68,7 +68,7 @@ test("public data-use page and unified settings expose the consent explanation s
   assert.match(settingsPartial, /id="settingsConsentDate"/);
   assert.match(settingsPartial, /href="data-use\.html"/);
   assert.match(settingsApp, /getMyConsentSummary\(\)/);
-  assert.match(settingsApp, /legacy consent status unknown/);
+  assert.match(settingsApp, /account-level acceptance is current/);
   assert.doesNotMatch(`${dataUse}\n${settingsPartial}`, /accessToken|refreshToken|userId/);
 });
 
@@ -127,9 +127,9 @@ test("production contribution services contain no mock data path", async () => {
     read("scripts/modules/contributions.js"),
   ]);
   assert.doesNotMatch(`${config}\n${contributionApi}`, /useMock|mockDelayMs|pashto-sentences/);
-  assert.match(contributionModule, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
-  assert.match(contributionModule, /No recording was uploaded; your recording is still here/);
-  assert.doesNotMatch(contributionModule, /submitVoiceDonation\(|submitOpenRecording\(/);
+  assert.match(contributionModule, /acceptMyCurrentPolicy\(CONSENT_POLICY_VERSION\)/);
+  assert.match(contributionModule, /submitVoiceDonation\(\{/);
+  assert.doesNotMatch(contributionModule, /ACCOUNT_POLICY_SUBMISSION_BLOCK_MESSAGE/);
 });
 
 

@@ -23,6 +23,7 @@ def ensure_sentence_phrase_schema(engine: Engine) -> None:
         return
 
     optional_columns = {
+        "roman_text": "TEXT",
         "category": "VARCHAR(100)",
         "dialect": "VARCHAR(100)",
         "source": "VARCHAR(255)",
@@ -59,6 +60,33 @@ def ensure_sentence_phrase_schema(engine: Engine) -> None:
                 "CREATE INDEX IF NOT EXISTS ix_sentences_language_active_usage "
                 "ON sentences (language, is_active, times_assigned)"
             )
+    except SQLAlchemyError as error:
+        raise SchemaCompatibilityError() from error
+
+
+def ensure_profile_data_use_schema(engine: Engine) -> None:
+    """Add account-level policy acceptance fields without replacing profiles."""
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    try:
+        with engine.begin() as connection:
+            schema = inspect(connection)
+            if not schema.has_table("profiles"):
+                return
+            column_names = {
+                column["name"] for column in schema.get_columns("profiles")
+            }
+            if "data_use_policy_version" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE profiles "
+                    "ADD COLUMN data_use_policy_version VARCHAR(20)"
+                )
+            if "data_use_accepted_at" not in column_names:
+                connection.exec_driver_sql(
+                    "ALTER TABLE profiles ADD COLUMN data_use_accepted_at DATETIME"
+                )
     except SQLAlchemyError as error:
         raise SchemaCompatibilityError() from error
 

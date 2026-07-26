@@ -163,10 +163,16 @@ def test_consent_summary_returns_current_version_and_latest_owner_record(
     assert response.status_code == 200
     assert response.json() == {
         "currentPolicyVersion": CONSENT_POLICY_VERSION,
+        "acceptedPolicyVersion": None,
+        "acceptedAt": None,
+        "isCurrent": False,
         "mostRecentConsentAt": "2026-07-17T10:00:00Z",
     }
     assert set(response.json()) == {
         "currentPolicyVersion",
+        "acceptedPolicyVersion",
+        "acceptedAt",
+        "isCurrent",
         "mostRecentConsentAt",
     }
 
@@ -193,6 +199,52 @@ def test_legacy_consent_is_not_invented_in_private_summary(
     assert legacy.consent_policy_version is None
     assert legacy.consent_timestamp is None
     assert legacy.is_externally_release_ready is False
+
+
+def test_account_data_use_acceptance_is_persisted_and_idempotent(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    authenticate_as(user())
+
+    first = client.patch(
+        "/api/profile/me/consent",
+        headers=authorization(),
+        json={"accepted": True, "policyVersion": CONSENT_POLICY_VERSION},
+    )
+    second = client.patch(
+        "/api/profile/me/consent",
+        headers=authorization(),
+        json={"accepted": True, "policyVersion": CONSENT_POLICY_VERSION},
+    )
+
+    assert first.status_code == 200
+    assert first.json()["isCurrent"] is True
+    assert first.json()["acceptedPolicyVersion"] == CONSENT_POLICY_VERSION
+    assert first.json()["acceptedAt"] is not None
+    assert second.json()["acceptedAt"] == first.json()["acceptedAt"]
+    profile = db_session.get(Profile, USER_ID)
+    assert profile is not None
+    assert profile.data_use_policy_version == CONSENT_POLICY_VERSION
+    assert profile.data_use_accepted_at is not None
+
+
+def test_account_data_use_acceptance_rejects_false_or_old_policy(
+    client: TestClient,
+) -> None:
+    authenticate_as(user())
+
+    for payload in (
+        {"accepted": False, "policyVersion": CONSENT_POLICY_VERSION},
+        {"accepted": True, "policyVersion": "0.9"},
+    ):
+        response = client.patch(
+            "/api/profile/me/consent",
+            headers=authorization(),
+            json=payload,
+        )
+        assert response.status_code == 400
+        assert response.json()["code"] == "DATA_USE_ACCEPTANCE_INVALID"
 
 
 def test_first_authenticated_get_creates_and_returns_profile(
@@ -415,7 +467,7 @@ def test_only_current_user_profile_routes_are_registered() -> None:
         if route.path.startswith("/api/profile")
     ]
 
-    assert len(profile_routes) == 5
+    assert len(profile_routes) == 6
     assert {path for path, _methods in profile_routes} == {
         "/api/profile/me",
         "/api/profile/me/consent",

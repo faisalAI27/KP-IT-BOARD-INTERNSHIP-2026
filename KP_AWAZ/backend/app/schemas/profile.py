@@ -53,9 +53,12 @@ class ProfileConsentSummaryResponse(BaseModel):
     )
 
     current_policy_version: str = Field(alias="currentPolicyVersion")
+    accepted_policy_version: str | None = Field(alias="acceptedPolicyVersion")
+    accepted_at: datetime | None = Field(alias="acceptedAt")
+    is_current: bool = Field(alias="isCurrent")
     most_recent_consent_at: datetime | None = Field(alias="mostRecentConsentAt")
 
-    @field_validator("most_recent_consent_at")
+    @field_validator("accepted_at", "most_recent_consent_at")
     @classmethod
     def normalize_optional_timestamp_to_utc(
         cls,
@@ -66,6 +69,25 @@ class ProfileConsentSummaryResponse(BaseModel):
         if value.tzinfo is None or value.utcoffset() is None:
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
+
+
+class ProfileConsentAcceptanceRequest(BaseModel):
+    """Explicit acceptance of the current account-level data-use policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    accepted: StrictBool
+    policy_version: str = Field(alias="policyVersion")
+
+    @field_validator("policy_version", mode="before")
+    @classmethod
+    def normalize_policy_version(cls, value: object) -> object:
+        if not isinstance(value, str):
+            raise ValueError("Policy version must be a string.")
+        cleaned = value.strip()
+        if not cleaned or len(cleaned) > 20:
+            raise ValueError("A valid policy version is required.")
+        return cleaned
 
 
 class ProfileUpdateRequest(BaseModel):

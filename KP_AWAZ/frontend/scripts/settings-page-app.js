@@ -180,13 +180,15 @@ async function loadConsent({ pageGeneration, expectedUserId }) {
     const consent = await getMyConsentSummary();
     if (!isCurrent(pageGeneration, expectedUserId)) return;
     document.getElementById("settingsConsentVersion").textContent =
-      `Version ${consent.currentPolicyVersion}`;
+      consent.isCurrent
+        ? `Version ${consent.acceptedPolicyVersion} · Accepted`
+        : `Version ${consent.currentPolicyVersion} · Action needed`;
     document.getElementById("settingsConsentDate").textContent =
-      formatConsentDate(consent.mostRecentConsentAt);
+      formatConsentDate(consent.acceptedAt);
     document.getElementById("settingsConsentNote").textContent =
-      consent.mostRecentConsentAt
-        ? "This is your latest structured consent for a submitted recording."
-        : "No structured consent is recorded yet. Older contributions have legacy consent status unknown.";
+      consent.isCurrent
+        ? "Your account-level acceptance is current and will be verified before each recording upload."
+        : "You will be asked to accept the current policy before your next recording is submitted.";
     status.hidden = true;
   } catch {
     if (!isCurrent(pageGeneration, expectedUserId)) return;

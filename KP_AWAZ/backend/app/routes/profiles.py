@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_authenticated_user
 from app.schemas import (
+    ProfileConsentAcceptanceRequest,
     ProfileContributionStatisticsResponse,
     PersonalPointsResponse,
     ProfileConsentSummaryResponse,
@@ -17,6 +18,7 @@ from app.services.contribution_statistics_service import (
     get_profile_contribution_statistics,
 )
 from app.services.profile_service import (
+    accept_current_data_use_policy,
     get_or_create_profile,
     get_profile_consent_summary,
     update_profile,
@@ -43,6 +45,27 @@ def get_current_profile_consent(
         get_profile_consent_summary(
             database=database,
             owner_user_id=profile.id,
+        )
+    )
+
+
+@router.patch("/me/consent", response_model=ProfileConsentSummaryResponse)
+def patch_current_profile_consent(
+    acceptance: ProfileConsentAcceptanceRequest,
+    user: Annotated[AuthenticatedUser, Depends(require_authenticated_user)],
+    database: Annotated[Session, Depends(get_db)],
+) -> ProfileConsentSummaryResponse:
+    """Store explicit current data-use acceptance for the verified caller."""
+
+    profile = get_or_create_profile(
+        database=database,
+        authenticated_user=user,
+    )
+    return ProfileConsentSummaryResponse.model_validate(
+        accept_current_data_use_policy(
+            database=database,
+            profile=profile,
+            acceptance=acceptance,
         )
     )
 

@@ -16,6 +16,7 @@ from app.schemas.contribution import (
     TextContributionBatchResponse,
 )
 from app.schemas.profile import (
+    ProfileConsentAcceptanceRequest,
     ProfileConsentSummaryResponse,
     ProfileResponse,
     ProfileUpdateRequest,
@@ -78,6 +79,7 @@ __all__ = [
     "PhraseImportSummaryResponse",
     "PhraseUpdateRequest",
     "ProfileResponse",
+    "ProfileConsentAcceptanceRequest",
     "ProfileConsentSummaryResponse",
     "ProfileContributionStatisticsResponse",
     "ProfileUpdateRequest",

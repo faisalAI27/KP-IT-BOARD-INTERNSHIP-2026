@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.consent import CONSENT_POLICY_VERSION
 from app.dependencies import get_db, require_authenticated_user
 from app.schemas import (
     ContributionCreatedResponse,
@@ -25,6 +26,12 @@ from app.services.contribution_service import (
     get_user_contributions,
 )
 from app.services.profile_service import ProfileServiceError, get_or_create_profile
+from app.services.profile_service import (
+    accept_current_data_use_policy,
+    require_current_data_use_acceptance,
+)
+from app.schemas.profile import ProfileConsentAcceptanceRequest
+from app.models import Profile
 from app.services.text_contribution_service import (
     TextContributionItemInput,
     TextContributionServiceError,
@@ -114,6 +121,45 @@ def _safe_text_filename(filename: str) -> str | None:
     ):
         return None
     return display_name
+
+
+def _verified_submission_policy(
+    *,
+    database: Session,
+    profile: Profile,
+    consent_given: str,
+    policy_version: str,
+) -> str:
+    """Migrate explicit legacy submission consent into the verified profile."""
+
+    explicit_acceptance = consent_given.strip().lower() in {
+        "true",
+        "1",
+        "yes",
+        "on",
+    }
+    if (
+        explicit_acceptance
+        and policy_version.strip() == CONSENT_POLICY_VERSION
+        and (
+            profile.data_use_policy_version != CONSENT_POLICY_VERSION
+            or profile.data_use_accepted_at is None
+        )
+    ):
+        accept_current_data_use_policy(
+            database=database,
+            profile=profile,
+            acceptance=ProfileConsentAcceptanceRequest(
+                accepted=True,
+                policyVersion=policy_version,
+            ),
+        )
+    if (
+        profile.data_use_policy_version == CONSENT_POLICY_VERSION
+        and profile.data_use_accepted_at is not None
+    ):
+        return require_current_data_use_acceptance(profile)
+    return policy_version
 
 
 @router.post(
@@ -264,6 +310,12 @@ async def submit_guided_voice_contribution(
             database=database,
             authenticated_user=user,
         )
+        verified_policy_version = _verified_submission_policy(
+            database=database,
+            profile=profile,
+            consent_given=consentGiven,
+            policy_version=consentPolicyVersion,
+        )
         staged_audio = await read_bounded_upload(
             audio,
             settings.max_audio_upload_bytes,
@@ -275,7 +327,7 @@ async def submit_guided_voice_contribution(
             sentence_source=sentence_source,
             sentence_id=sentence_id,
             consent_given=consentGiven,
-            consent_policy_version=consentPolicyVersion,
+            consent_policy_version=verified_policy_version,
             audio_filename=audio.filename or "recording",
             audio_mime_type=audio.content_type or "",
             audio_content=None,
@@ -331,6 +383,12 @@ async def submit_open_recording(
             database=database,
             authenticated_user=user,
         )
+        verified_policy_version = _verified_submission_policy(
+            database=database,
+            profile=profile,
+            consent_given=consentGiven,
+            policy_version=consentPolicyVersion,
+        )
         staged_audio = await read_bounded_upload(
             audio,
             settings.max_audio_upload_bytes,
@@ -340,7 +398,7 @@ async def submit_open_recording(
             language=language,
             topic=topic,
             consent_given=consentGiven,
-            consent_policy_version=consentPolicyVersion,
+            consent_policy_version=verified_policy_version,
             audio_filename=audio.filename or "recording",
             audio_mime_type=audio.content_type or "",
             audio_content=None,

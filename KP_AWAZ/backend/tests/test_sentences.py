@@ -11,7 +11,7 @@ from app.models import Sentence
 from app.utils.text_normalization import normalize_sentence_text
 
 
-PUBLIC_FIELDS = {"id", "language", "text", "meaning"}
+PUBLIC_FIELDS = {"id", "language", "text", "romanText", "meaning"}
 PRIVATE_FIELDS = {
     "normalized_text",
     "source_type",
@@ -26,6 +26,7 @@ def make_sentence(
     language: str = "Pashto",
     text: str = "هر غږ ارزښت لري.",
     meaning: str | None = "Every voice has value.",
+    roman_text: str | None = None,
     is_active: bool = True,
 ) -> Sentence:
     """Build a valid sentence model for database and endpoint tests."""
@@ -33,6 +34,7 @@ def make_sentence(
     return Sentence(
         language=language,
         text=text,
+        roman_text=roman_text,
         meaning=meaning,
         normalized_text=normalize_sentence_text(text),
         source_type="custom",
@@ -57,7 +59,10 @@ def test_retrieve_pashto_sentences(
     client: TestClient, db_session: Session
 ) -> None:
     records = [
-        make_sentence(text="زما ژبه زما پېژندنه ده."),
+        make_sentence(
+            text="زما ژبه زما پېژندنه ده.",
+            roman_text="Zama zhaba zama pehzhandana da.",
+        ),
         make_sentence(text="هر غږ ارزښت لري."),
     ]
     insert_sentences(db_session, records)
@@ -70,6 +75,8 @@ def test_retrieve_pashto_sentences(
         record.id for record in records
     }
     assert all(set(item) == PUBLIC_FIELDS for item in response_data)
+    romanized = next(item for item in response_data if item["id"] == records[0].id)
+    assert romanized["romanText"] == "Zama zhaba zama pehzhandana da."
 
 
 def test_language_filtering(client: TestClient, db_session: Session) -> None:

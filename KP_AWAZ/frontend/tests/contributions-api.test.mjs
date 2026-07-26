@@ -22,6 +22,7 @@ const sentence = {
   id: "11111111-1111-4111-8111-111111111111",
   language: "Pashto",
   text: "هر غږ ارزښت لري.",
+  romanText: "Har ghag arzakh larai.",
   meaning: "Every voice has value.",
 };
 const successBody = {

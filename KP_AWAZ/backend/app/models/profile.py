@@ -57,6 +57,12 @@ class Profile(Base):
     last_login_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
+    data_use_policy_version: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )
+    data_use_accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     contributions: Mapped[list["Contribution"]] = relationship(
         back_populates="profile",

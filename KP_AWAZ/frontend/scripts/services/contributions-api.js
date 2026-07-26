@@ -382,6 +382,9 @@ export class ContributionsApi {
           sentence.language.trim() &&
           typeof sentence.text === "string" &&
           sentence.text.trim() &&
+          (sentence.romanText === undefined ||
+            sentence.romanText === null ||
+            typeof sentence.romanText === "string") &&
           (sentence.meaning === null || typeof sentence.meaning === "string"),
       );
 
