@@ -201,6 +201,13 @@ function createEnhancedFixture({
   },
   context = () => personalContext(),
   publicGet = null,
+  profileUpdate = async () => ({ leaderboardOptIn: true }),
+  contributionsGet = async () => ({
+    items: [],
+    total: 0,
+    limit: 100,
+    offset: 0,
+  }),
   prefersReducedMotion = () => false,
   schedule = (callback) => callback(),
 } = {}) {
@@ -212,6 +219,8 @@ function createEnhancedFixture({
     selector === 'a[href="#leaderboard"]' ? [leaderboardLink] : [];
   const publicCalls = [];
   const contextCalls = [];
+  const profileCalls = [];
+  const contributionCalls = [];
   const leaderboardApi = {
     async getPublicLeaderboard(pagination) {
       publicCalls.push({ ...pagination });
@@ -223,6 +232,18 @@ function createEnhancedFixture({
     async getPersonalLeaderboardContext(pagination) {
       contextCalls.push({ ...pagination });
       return context(contextCalls.length, pagination);
+    },
+  };
+  const profileApi = {
+    async updateMyProfile(updates) {
+      profileCalls.push({ ...updates });
+      return profileUpdate(profileCalls.length, updates);
+    },
+  };
+  const contributionsApi = {
+    async getMyContributions(pagination) {
+      contributionCalls.push({ ...pagination });
+      return contributionsGet(contributionCalls.length, pagination);
     },
   };
   let state = authState;
@@ -238,6 +259,8 @@ function createEnhancedFixture({
   const leaderboard = new Leaderboard({
     root,
     leaderboardApi,
+    profileApi,
+    contributionsApi,
     authApi,
     eventTarget,
     prefersReducedMotion,
@@ -247,11 +270,13 @@ function createEnhancedFixture({
   return {
     authApi,
     contextCalls,
+    contributionCalls,
     eventTarget,
     leaderboard,
     leaderboardApi,
     leaderboardLink,
     publicCalls,
+    profileCalls,
     root,
     setAuthState(nextState) {
       state = nextState;
@@ -867,14 +892,24 @@ test("reduced-motion preference disables smooth personal-row scrolling", async (
 });
 
 
-test("ineligible user sees private score, reason, and Account visibility action", async () => {
+test("ineligible user can explicitly join the leaderboard from their private score", async () => {
   const fixture = createEnhancedFixture({
-    context: () =>
-      personalContext({ eligible: false, optIn: false, approved: 7 }),
-  });
-  let accountClicks = 0;
-  element(fixture, "authHeaderButton").addEventListener("click", () => {
-    accountClicks += 1;
+    context: (call) =>
+      call === 1
+        ? personalContext({ eligible: false, optIn: false, approved: 2 })
+        : personalContext({
+            eligible: true,
+            optIn: true,
+            approved: 2,
+            items: [
+              {
+                rank: 3,
+                displayName: "Faisal Imran",
+                approvedContributions: 2,
+                isCurrentUser: true,
+              },
+            ],
+          }),
   });
   await settle();
   fixture.leaderboardLink.dispatch("click");
@@ -885,11 +920,68 @@ test("ineligible user sees private score, reason, and Account visibility action"
     element(fixture, "leaderboardPersonalMessage").textContent,
     "Not currently ranked.",
   );
-  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /7 approved/);
-  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /Account/);
+  assert.match(element(fixture, "leaderboardPersonalDetails").textContent, /2 approved/);
+  assert.match(
+    element(fixture, "leaderboardPersonalDetails").textContent,
+    /Show me on the leaderboard/,
+  );
   assert.equal(element(fixture, "leaderboardManageVisibility").hidden, false);
   element(fixture, "leaderboardManageVisibility").dispatch("click");
-  assert.equal(accountClicks, 1);
+  await settle();
+
+  assert.deepEqual(fixture.profileCalls, [{ leaderboardOptIn: true }]);
+  assert.equal(element(fixture, "leaderboardManageVisibility").hidden, true);
+  assert.equal(fixture.leaderboard.getPersonalState().status, "eligible");
+  assert.match(element(fixture, "leaderboardPersonalMessage").textContent, /#1/);
+});
+
+
+test("current contributor row expands all private contribution summaries", async () => {
+  const fixture = createEnhancedFixture({
+    contributionsGet: () => ({
+      items: [
+        {
+          id: "recording-1",
+          contributionType: "sentence",
+          sentenceText: "ستړی مه شې",
+          topic: null,
+          createdAt: "2026-07-26T08:00:00Z",
+          reviewStatus: "approved",
+        },
+        {
+          id: "recording-2",
+          contributionType: "sentence",
+          sentenceText: "پښتو زموږ ژبه ده",
+          topic: null,
+          createdAt: "2026-07-26T08:10:00Z",
+          reviewStatus: "approved",
+        },
+      ],
+      total: 2,
+      limit: 100,
+      offset: 0,
+    }),
+  });
+  await settle();
+  fixture.leaderboardLink.dispatch("click");
+  await settle();
+
+  const currentRow = element(fixture, "leaderboardList").children[0];
+  const toggle = currentRow.children[1].children[0];
+  assert.equal(toggle.tagName, "BUTTON");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  toggle.dispatch("click");
+  await settle();
+
+  assert.deepEqual(fixture.contributionCalls, [
+    { limit: 100, offset: 0, status: "all" },
+  ]);
+  const rows = element(fixture, "leaderboardList").children;
+  assert.equal(rows.length, 2);
+  assert.equal(rows[1].className, "leaderboard-contribution-details-row");
+  assert.match(rows[1].textContent, /ستړی مه شې/);
+  assert.match(rows[1].textContent, /پښتو زموږ ژبه ده/);
+  assert.match(rows[1].textContent, /Private to your signed-in account/);
 });
 
 

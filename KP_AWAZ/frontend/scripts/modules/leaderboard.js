@@ -2,11 +2,18 @@ import {
   getPersonalLeaderboardContext,
   getPublicLeaderboard,
 } from "../services/leaderboard-api.js?v=20260717-member-workspace";
+import { getMyContributions } from "../services/contributions-api.js?v=20260726-account-consent";
+import { updateMyProfile } from "../services/profile-api.js?v=20260726-account-consent";
 import {
   getCurrentAuthState,
   subscribeToAuthChanges,
 } from "../services/auth-service.js?v=20260723-auth-config-v2";
-import { CONTRIBUTION_CREATED_EVENT } from "./my-contributions.js?v=20260717-member-workspace";
+import {
+  CONTRIBUTION_CREATED_EVENT,
+  formatContributionDate,
+  formatContributionReviewStatus,
+  formatContributionType,
+} from "./my-contributions.js?v=20260717-member-workspace";
 import { animateLeaderboardCounter } from "./leaderboard-template-motion.js?v=20260723-refined-surfaces";
 
 
@@ -167,6 +174,11 @@ function emptyPersonalState() {
 }
 
 
+function emptyContributionState() {
+  return { status: "idle", items: [], total: 0, error: null };
+}
+
+
 function cloneState(state) {
   return {
     status: state.status,
@@ -208,12 +220,16 @@ const defaultAuthApi = Object.freeze({
   getCurrentAuthState,
   subscribeToAuthChanges,
 });
+const defaultProfileApi = Object.freeze({ updateMyProfile });
+const defaultContributionsApi = Object.freeze({ getMyContributions });
 
 
 export class Leaderboard {
   constructor({
     root = globalThis.document,
     leaderboardApi = defaultLeaderboardApi,
+    profileApi = defaultProfileApi,
+    contributionsApi = defaultContributionsApi,
     authApi = null,
     eventTarget = globalThis.window,
     schedule = (callback) => globalThis.requestAnimationFrame(callback),
@@ -222,6 +238,8 @@ export class Leaderboard {
   } = {}) {
     this._root = root;
     this._api = leaderboardApi;
+    this._profileApi = profileApi;
+    this._contributionsApi = contributionsApi;
     this._auth = authApi;
     this._eventTarget = eventTarget;
     this._schedule = schedule;
@@ -234,13 +252,18 @@ export class Leaderboard {
     this._generation = 0;
     this._showcaseGeneration = 0;
     this._personalGeneration = 0;
+    this._contributionsGeneration = 0;
     this._lifecycleId = 0;
     this._activeUserId = null;
     this._leaderboardOpened = false;
     this._currentRow = null;
+    this._currentContributionsExpanded = false;
+    this._visibilityStatus = "idle";
+    this._visibilityError = "";
     this._state = emptyState();
     this._showcase = emptyShowcaseState();
     this._personal = emptyPersonalState();
+    this._contributions = emptyContributionState();
     this._handleContributionCreated = () => {
       if (
         this._destroyed ||
@@ -269,6 +292,7 @@ export class Leaderboard {
     this._state = emptyState();
     this._showcase = emptyShowcaseState();
     this._personal = emptyPersonalState();
+    this._contributions = emptyContributionState();
     this._render();
     void this.refresh();
     if (this._elements.showcaseEnabled) void this.refreshShowcase();
@@ -488,6 +512,123 @@ export class Leaderboard {
     }
   }
 
+  async toggleCurrentContributions() {
+    if (
+      this._destroyed ||
+      !this._initialized ||
+      this._personal.status !== "eligible"
+    ) {
+      return false;
+    }
+    this._currentContributionsExpanded = !this._currentContributionsExpanded;
+    this._render();
+    if (
+      this._currentContributionsExpanded &&
+      ["idle", "error"].includes(this._contributions.status)
+    ) {
+      return this.loadCurrentUserContributions();
+    }
+    return true;
+  }
+
+  async loadCurrentUserContributions() {
+    if (
+      this._destroyed ||
+      !this._initialized ||
+      !this._activeUserId ||
+      this._contributions.status === "loading"
+    ) {
+      return false;
+    }
+    const generation = ++this._contributionsGeneration;
+    const lifecycleId = this._lifecycleId;
+    const expectedUserId = this._activeUserId;
+    this._contributions = { ...this._contributions, status: "loading", error: null };
+    this._render();
+    try {
+      const response = await this._contributionsApi.getMyContributions({
+        limit: 100,
+        offset: 0,
+        status: "all",
+      });
+      if (
+        generation !== this._contributionsGeneration ||
+        lifecycleId !== this._lifecycleId ||
+        expectedUserId !== this._activeUserId
+      ) {
+        return false;
+      }
+      this._contributions = {
+        status: "loaded",
+        items: Array.isArray(response?.items)
+          ? response.items.map((item) => ({ ...item }))
+          : [],
+        total: Number.isInteger(response?.total) ? response.total : 0,
+        error: null,
+      };
+      this._render();
+      return true;
+    } catch {
+      if (
+        generation !== this._contributionsGeneration ||
+        lifecycleId !== this._lifecycleId ||
+        expectedUserId !== this._activeUserId
+      ) {
+        return false;
+      }
+      this._contributions = {
+        status: "error",
+        items: [],
+        total: 0,
+        error: "Your contributions could not be loaded. Select Retry.",
+      };
+      this._render();
+      return false;
+    }
+  }
+
+  async enableLeaderboardVisibility() {
+    if (
+      this._destroyed ||
+      !this._initialized ||
+      !this._activeUserId ||
+      this._personal.status !== "ineligible" ||
+      this._personal.leaderboardOptIn ||
+      this._visibilityStatus === "loading"
+    ) {
+      return false;
+    }
+    const lifecycleId = this._lifecycleId;
+    const expectedUserId = this._activeUserId;
+    this._visibilityStatus = "loading";
+    this._visibilityError = "";
+    this._renderPersonalStatus();
+    try {
+      await this._profileApi.updateMyProfile({ leaderboardOptIn: true });
+      if (
+        lifecycleId !== this._lifecycleId ||
+        expectedUserId !== this._activeUserId
+      ) {
+        return false;
+      }
+      this._visibilityStatus = "idle";
+      await Promise.all([this.refresh(), this.loadPersonalContext()]);
+      return true;
+    } catch {
+      if (
+        lifecycleId !== this._lifecycleId ||
+        expectedUserId !== this._activeUserId
+      ) {
+        return false;
+      }
+      this._visibilityStatus = "error";
+      this._visibilityError =
+        "Leaderboard visibility could not be updated. Please try again.";
+      this._renderPersonalStatus();
+      return false;
+    }
+  }
+
   destroyLeaderboard() {
     if (this._destroyed) return;
     this._destroyed = true;
@@ -495,10 +636,14 @@ export class Leaderboard {
     this._generation += 1;
     this._showcaseGeneration += 1;
     this._personalGeneration += 1;
+    this._contributionsGeneration += 1;
     this._lifecycleId += 1;
     this._activeUserId = null;
     this._leaderboardOpened = false;
     this._currentRow = null;
+    this._currentContributionsExpanded = false;
+    this._visibilityStatus = "idle";
+    this._visibilityError = "";
     this._unsubscribeAuth?.();
     this._unsubscribeAuth = null;
     for (const { element, type, listener } of this._bindings) {
@@ -508,6 +653,7 @@ export class Leaderboard {
     this._state = emptyState();
     this._showcase = emptyShowcaseState();
     this._personal = emptyPersonalState();
+    this._contributions = emptyContributionState();
     this._render();
   }
 
@@ -548,7 +694,6 @@ export class Leaderboard {
         personalDetails: "leaderboardPersonalDetails",
         personalRetry: "retryLeaderboardContextButton",
         manageVisibility: "leaderboardManageVisibility",
-        accountButton: "authHeaderButton",
       },
       template: {
         personalRank: "leaderboardPersonalRank",
@@ -596,7 +741,7 @@ export class Leaderboard {
         void this.loadPersonalContext();
       });
       this._listen(this._elements.manageVisibility, "click", () => {
-        this._elements.accountButton.click?.();
+        void this.enableLeaderboardVisibility();
       });
       for (const link of this._root.querySelectorAll?.(
         'a[href="#leaderboard"]',
@@ -635,6 +780,9 @@ export class Leaderboard {
     if (!userId) {
       this._activeUserId = null;
       this._personalGeneration += 1;
+      this._contributionsGeneration += 1;
+      this._currentContributionsExpanded = false;
+      this._contributions = emptyContributionState();
       this._personal = emptyPersonalState();
       this._render();
       return;
@@ -642,6 +790,9 @@ export class Leaderboard {
     if (userId !== this._activeUserId) {
       this._activeUserId = userId;
       this._personalGeneration += 1;
+      this._contributionsGeneration += 1;
+      this._currentContributionsExpanded = false;
+      this._contributions = emptyContributionState();
       this._personal = emptyPersonalState();
       this._render();
       if (this._leaderboardOpened) void this.loadPersonalContext();
@@ -707,7 +858,33 @@ export class Leaderboard {
     const name = this._root.createElement("span");
     name.className = "leaderboard-contributor-name";
     name.textContent = item.displayName;
-    contributor.append(name);
+    if (item.isCurrentUser) {
+      const toggle = this._root.createElement("button");
+      toggle.className = "leaderboard-contributor-toggle";
+      toggle.setAttribute("type", "button");
+      toggle.setAttribute(
+        "aria-expanded",
+        String(this._currentContributionsExpanded),
+      );
+      toggle.setAttribute("aria-controls", "leaderboardCurrentContributions");
+      toggle.setAttribute(
+        "aria-label",
+        `${this._currentContributionsExpanded ? "Hide" : "Show"} all of your contributions`,
+      );
+      toggle.append(name);
+      const hint = this._root.createElement("span");
+      hint.className = "leaderboard-expand-hint";
+      hint.textContent = this._currentContributionsExpanded
+        ? "Hide contributions"
+        : "View all contributions";
+      toggle.append(hint);
+      toggle.addEventListener("click", () => {
+        void this.toggleCurrentContributions();
+      });
+      contributor.append(toggle);
+    } else {
+      contributor.append(name);
+    }
     if (item.isCurrentUser) {
       const you = this._root.createElement("span");
       you.className = "leaderboard-you-badge";
@@ -731,6 +908,82 @@ export class Leaderboard {
     approved.append(approvedNumber, approvedLabel);
     entry.append(rankCell, contributor, approved);
     return entry;
+  }
+
+  _createContributionDetails() {
+    const row = this._root.createElement("tr");
+    row.className = "leaderboard-contribution-details-row";
+    const cell = this._root.createElement("td");
+    cell.setAttribute("colspan", "3");
+    const panel = this._root.createElement("section");
+    panel.className = "leaderboard-contribution-details";
+    panel.setAttribute("id", "leaderboardCurrentContributions");
+    panel.setAttribute("aria-label", "Your private contribution history");
+    panel.setAttribute("aria-live", "polite");
+    const heading = this._root.createElement("div");
+    heading.className = "leaderboard-contribution-details-head";
+    const title = this._root.createElement("strong");
+    title.textContent = "Your contributions";
+    const privacy = this._root.createElement("span");
+    privacy.textContent = "Private to your signed-in account";
+    heading.append(title, privacy);
+    panel.append(heading);
+
+    if (this._contributions.status === "loading") {
+      const status = this._root.createElement("p");
+      status.className = "leaderboard-contribution-details-status";
+      status.textContent = "Loading all your contributions…";
+      panel.append(status);
+    } else if (this._contributions.status === "error") {
+      const error = this._root.createElement("p");
+      error.className = "leaderboard-contribution-details-status";
+      error.textContent = this._contributions.error;
+      const retry = this._root.createElement("button");
+      retry.className = "btn btn-quiet";
+      retry.setAttribute("type", "button");
+      retry.textContent = "Retry";
+      retry.addEventListener("click", () => {
+        void this.loadCurrentUserContributions();
+      });
+      panel.append(error, retry);
+    } else if (this._contributions.status === "loaded") {
+      const list = this._root.createElement("ul");
+      list.className = "leaderboard-private-contribution-list";
+      for (const item of this._contributions.items) {
+        const listItem = this._root.createElement("li");
+        const copy = this._root.createElement("div");
+        const itemTitle = this._root.createElement("strong");
+        itemTitle.textContent =
+          item.sentenceText || item.topic || formatContributionType(item.contributionType);
+        const meta = this._root.createElement("span");
+        meta.textContent = `${formatContributionType(item.contributionType)} · ${formatContributionDate(item.createdAt)}`;
+        copy.append(itemTitle, meta);
+        const badge = this._root.createElement("b");
+        badge.setAttribute("data-status", item.reviewStatus);
+        badge.textContent = formatContributionReviewStatus(item.reviewStatus);
+        listItem.append(copy, badge);
+        list.append(listItem);
+      }
+      if (this._contributions.items.length > 0) {
+        panel.append(list);
+      } else {
+        const empty = this._root.createElement("p");
+        empty.className = "leaderboard-contribution-details-status";
+        empty.textContent = "You have not submitted any contributions yet.";
+        panel.append(empty);
+      }
+      const historyLink = this._root.createElement("a");
+      historyLink.className = "leaderboard-full-history-link";
+      historyLink.setAttribute("href", "my-contributions.html");
+      historyLink.textContent =
+        this._contributions.total > this._contributions.items.length
+          ? `Open all ${this._contributions.total} contributions →`
+          : "Open full recording history →";
+      panel.append(historyLink);
+    }
+    cell.append(panel);
+    row.append(cell);
+    return row;
   }
 
   _createShowcaseEntry(item, position) {
@@ -768,7 +1021,13 @@ export class Leaderboard {
 
   _renderList(items) {
     this._currentRow = null;
-    const entries = items.map((item) => this._createEntry(item));
+    const entries = [];
+    for (const item of items) {
+      entries.push(this._createEntry(item));
+      if (item.isCurrentUser && this._currentContributionsExpanded) {
+        entries.push(this._createContributionDetails());
+      }
+    }
     this._elements.list.replaceChildren(...entries);
   }
 
@@ -797,7 +1056,14 @@ export class Leaderboard {
     const visible = state.status !== "idle";
     this._elements.personalStatus.hidden = !visible;
     this._elements.personalRetry.hidden = state.status !== "error";
-    this._elements.manageVisibility.hidden = state.status !== "ineligible";
+    this._elements.manageVisibility.hidden =
+      state.status !== "ineligible" || state.leaderboardOptIn;
+    this._elements.manageVisibility.disabled =
+      this._visibilityStatus === "loading";
+    this._elements.manageVisibility.textContent =
+      this._visibilityStatus === "loading"
+        ? "Updating visibility…"
+        : "Show me on the leaderboard";
     if (!visible) {
       this._elements.personalMessage.textContent = "";
       this._elements.personalDetails.textContent = "";
@@ -835,7 +1101,9 @@ export class Leaderboard {
       this._elements.personalMessage.textContent = "Not currently ranked.";
       this._elements.personalDetails.textContent = state.leaderboardOptIn
         ? `Your private score is ${approved}. You will become eligible after a recording is approved.`
-        : `Your private score is ${approved}. Turn on leaderboard visibility in Account to participate.`;
+        : this._visibilityStatus === "error"
+          ? `${approved}. ${this._visibilityError}`
+          : `Your private score is ${approved}. Choose “Show me on the leaderboard” to participate.`;
       this._renderPersonalMetrics(state);
     }
   }

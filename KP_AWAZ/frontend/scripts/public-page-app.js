@@ -3,7 +3,7 @@ import { initFaq } from "./modules/faq.js";
 import {
   destroyLeaderboard,
   initializeLeaderboard,
-} from "./modules/leaderboard.js?v=20260717-member-workspace";
+} from "./modules/leaderboard.js?v=20260726-leaderboard-history";
 import { initLeaderboardTemplateMotion } from "./modules/leaderboard-template-motion.js?v=20260723-refined-surfaces";
 import { loadPartials } from "./modules/partials.js?v=20260717-member-workspace";
 import { PublicRouting } from "./modules/public-routing.js?v=20260720-public-polish";

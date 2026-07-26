@@ -42,7 +42,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    const expectedMainVersion = "styles/main.css?v=20260723-khyber-voice-logo";
+    const expectedMainVersion = "styles/main.css?v=20260726-leaderboard-history";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 
