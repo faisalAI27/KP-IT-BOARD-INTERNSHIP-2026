@@ -189,14 +189,14 @@ test("record voice implements the supplied focused recorder template and motion"
   assert.doesNotMatch(page, /contribute-page-header|Your contributor journey|Record your voice\.|My recordings/);
   assert.match(html, /class="focused-voice-card rabab-recorder-page" id="contribution-panel"/);
   assert.match(html, /Today’s voice mission/);
-  assert.match(html, /Keep one piece of<br \/><em>Pashto alive\.<\/em>/);
+  assert.match(html, /Keep one piece of<br \/> <em>Pashto alive\.<\/em>/);
   assert.match(html, /class="focused-record-stage rabab-recorder-stage" id="donateRecordStage"/);
   assert.match(html, /class="focused-record-orb-wrap"/);
   assert.match(html, /class="focused-record-orb rabab-record-button" id="donateRecBtn"/);
   assert.equal((html.match(/class="focused-pulse-ring (?:one|two)"/g) ?? []).length, 2);
   assert.match(html, /viewBox="0 0 24 24"/);
   assert.match(html, /lang="ps"\s+dir="rtl"[^>]*data-provided-script-face/);
-  assert.ok(html.indexOf("donateRecordStage") < html.indexOf("providedSentenceSource"));
+  assert.ok(html.indexOf("providedSentenceSource") < html.indexOf("donateRecordStage"));
   assert.match(html, /<ol class="focused-journey rabab-steps"[^>]*aria-label="Recording progress"/);
   assert.equal((html.match(/data-recording-step="[123]"/g) ?? []).length, 3);
   assert.match(html, /Review &amp; submit/);

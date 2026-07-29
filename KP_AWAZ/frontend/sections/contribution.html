@@ -8,7 +8,7 @@
     <header class="focused-card-heading">
       <div>
         <span class="focused-micro-label"><i aria-hidden="true"></i> Today’s voice mission</span>
-        <h1 id="recordingStudioTitle">Keep one piece of<br /><em>Pashto alive.</em></h1>
+        <h1 id="recordingStudioTitle">Keep one piece of<br /> <em>Pashto alive.</em></h1>
         <p>Read the reviewed sentence, record naturally, and listen once before submitting. Your recording stays private while it is reviewed.</p>
       </div>
       <span class="focused-privacy-pill">Private until reviewed</span>
@@ -40,53 +40,6 @@
         <span id="sentencePromptMessage"></span>
         <button class="focused-secondary-button" id="retrySentencePrompts" type="button">Try again</button>
       </div>
-
-      <section aria-labelledby="guidedRecordingTitle">
-        <h2 class="sr-only" id="guidedRecordingTitle">Record the provided Pashto sentence</h2>
-        <div class="focused-record-stage rabab-recorder-stage" id="donateRecordStage">
-          <div class="xp-float" id="donateXpFloat" aria-hidden="true">+20 XP</div>
-
-          <div class="focused-record-orb-wrap">
-            <span class="focused-pulse-ring one" aria-hidden="true"></span>
-            <span class="focused-pulse-ring two" aria-hidden="true"></span>
-            <button class="focused-record-orb rabab-record-button" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="11" rx="3"></rect>
-                <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"></path>
-              </svg>
-            </button>
-            <span class="focused-record-cue" id="donateRecordCue">
-              <span class="rabab-tap-dot" aria-hidden="true"></span>
-              Tap once to record
-            </span>
-          </div>
-
-          <div class="focused-record-copy">
-            <span class="focused-record-status">
-              <i aria-hidden="true"></i>
-              <span id="donateRecordStateLabel">Ready when you are</span>
-            </span>
-            <h2 id="donateRecCallout">Tap once to record</h2>
-            <p id="donateRecStatus" role="status" aria-live="polite">Speak at your normal pace. Tap again when finished.</p>
-            <div class="focused-signal-head">
-              <span>Live voice signal</span>
-              <span id="donateSignalState">Waiting</span>
-            </div>
-          </div>
-
-          <div class="focused-record-meta">
-            <div class="focused-timer-card">
-              <small>Duration</small>
-              <time class="focused-timer" id="donateRecTimer">00:00</time>
-            </div>
-            <button class="focused-ghost-action" id="nextSentenceBtn" type="button">Another sentence</button>
-          </div>
-
-          <div class="focused-visualizer" aria-hidden="true">
-            <canvas id="donateWaveform" width="720" height="120"></canvas>
-          </div>
-        </div>
-      </section>
 
       <section
         class="focused-sentence-card sentence-source"
@@ -144,6 +97,53 @@
         <p class="focused-translation" id="providedMeaning">
           My language is my identity, and my voice shapes its future.
         </p>
+      </section>
+
+      <section aria-labelledby="guidedRecordingTitle">
+        <h2 class="sr-only" id="guidedRecordingTitle">Record the provided Pashto sentence</h2>
+        <div class="focused-record-stage rabab-recorder-stage" id="donateRecordStage">
+          <div class="xp-float" id="donateXpFloat" aria-hidden="true">+20 XP</div>
+
+          <div class="focused-record-orb-wrap">
+            <span class="focused-pulse-ring one" aria-hidden="true"></span>
+            <span class="focused-pulse-ring two" aria-hidden="true"></span>
+            <button class="focused-record-orb rabab-record-button" id="donateRecBtn" type="button" aria-label="Start recording" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+                <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"></path>
+              </svg>
+            </button>
+            <span class="focused-record-cue" id="donateRecordCue">
+              <span class="rabab-tap-dot" aria-hidden="true"></span>
+              Tap once to record
+            </span>
+          </div>
+
+          <div class="focused-record-copy">
+            <span class="focused-record-status">
+              <i aria-hidden="true"></i>
+              <span id="donateRecordStateLabel">Ready when you are</span>
+            </span>
+            <h2 id="donateRecCallout">Tap once to record</h2>
+            <p id="donateRecStatus" role="status" aria-live="polite">Speak at your normal pace. Tap again when finished.</p>
+            <div class="focused-signal-head">
+              <span>Live voice signal</span>
+              <span id="donateSignalState">Waiting</span>
+            </div>
+          </div>
+
+          <div class="focused-record-meta">
+            <div class="focused-timer-card">
+              <small>Duration</small>
+              <time class="focused-timer" id="donateRecTimer">00:00</time>
+            </div>
+            <button class="focused-ghost-action" id="nextSentenceBtn" type="button">Another sentence</button>
+          </div>
+
+          <div class="focused-visualizer" aria-hidden="true">
+            <canvas id="donateWaveform" width="720" height="120"></canvas>
+          </div>
+        </div>
       </section>
 
       <section class="focused-review rabab-review" id="donateReview" aria-labelledby="donateReviewTitle" hidden>

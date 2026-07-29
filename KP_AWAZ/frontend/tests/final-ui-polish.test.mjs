@@ -56,7 +56,7 @@ test("shared design foundation exposes the final KP AWAZ token system", async ()
 });
 
 
-test("public, contributor, and admin pages load the final polish with cache-safe URLs", async () => {
+test("public, contributor, and admin pages load polish layers with cache-safe URLs", async () => {
   const mainCss = await read("styles/main.css");
   assert.match(mainCss, /final-polish\.css\?v=20260729-soft-system/);
   assert.ok(
@@ -82,7 +82,9 @@ test("public, contributor, and admin pages load the final polish with cache-safe
     const html = await read(page);
     const stylesheets = [...html.matchAll(/href="(styles\/[^"]+\.css[^\"]*)"/g)].map((match) => match[1]);
     const expectedPolish = "styles/final-polish.css?v=20260729-soft-system";
-    assert.equal(stylesheets.at(-1), expectedPolish);
+    const expectedMobile = "styles/mobile-refinement.css?v=20260730-mobile-first";
+    assert.ok(stylesheets.includes(expectedPolish));
+    assert.equal(stylesheets.at(-1), expectedMobile);
   }
 });
 
