@@ -51,10 +51,14 @@ function formatElapsed(elapsedMs) {
 export class VoiceDemo {
   constructor(root, options = {}) {
     this.root = root;
-    this.words = [...root.querySelectorAll("[data-voice-word]")];
+    this.words = [...root.querySelectorAll("[data-voice-script-face] [data-voice-word]")];
     this.wave = root.querySelector("[data-voice-wave]");
     this.progress = root.querySelector("[data-voice-progress]");
     this.control = root.querySelector("[data-voice-control]");
+    this.languageToggle = root.querySelector("[data-voice-language-toggle]");
+    this.scriptFace = root.querySelector("[data-voice-script-face]");
+    this.romanFace = root.querySelector("[data-voice-roman-face]");
+    this.languageHint = root.querySelector("[data-voice-language-hint]");
     this.prompt = root.querySelector("[data-voice-prompt]");
     this.stateLabel = root.querySelector("[data-voice-state-label]");
     this.time = root.querySelector("[data-voice-time]");
@@ -75,6 +79,7 @@ export class VoiceDemo {
     this.revealObserver = null;
 
     this.handleControl = this.handleControl.bind(this);
+    this.handleLanguageToggle = this.handleLanguageToggle.bind(this);
     this.handleMotionChange = this.handleMotionChange.bind(this);
     this.handleReveal = this.handleReveal.bind(this);
     this.tick = this.tick.bind(this);
@@ -87,7 +92,9 @@ export class VoiceDemo {
 
     this.buildWaveform();
     this.control.addEventListener("click", this.handleControl);
+    this.languageToggle?.addEventListener("click", this.handleLanguageToggle);
     this.motionQuery.addEventListener?.("change", this.handleMotionChange);
+    this.setLanguage("script");
     this.handleMotionChange();
     this.render();
     this.initializeReveal();
@@ -142,6 +149,30 @@ export class VoiceDemo {
       return;
     }
     this.play();
+  }
+
+  handleLanguageToggle() {
+    const nextLanguage = this.root.dataset.voiceLanguage === "roman"
+      ? "script"
+      : "roman";
+    this.setLanguage(nextLanguage);
+  }
+
+  setLanguage(language) {
+    const showRoman = language === "roman";
+    this.root.dataset.voiceLanguage = showRoman ? "roman" : "script";
+    this.languageToggle?.setAttribute("aria-pressed", String(showRoman));
+    this.languageToggle?.setAttribute(
+      "aria-label",
+      showRoman ? "Show Pashto script" : "Show Roman Pashto",
+    );
+    this.scriptFace?.setAttribute("aria-hidden", String(showRoman));
+    this.romanFace?.setAttribute("aria-hidden", String(!showRoman));
+    if (this.languageHint) {
+      this.languageHint.textContent = showRoman
+        ? "Tap to show Pashto script"
+        : "Tap to show Roman Pashto";
+    }
   }
 
   play() {
@@ -199,6 +230,7 @@ export class VoiceDemo {
     if (this.frameId !== null) this.cancelFrame(this.frameId);
     this.revealObserver?.disconnect();
     this.control?.removeEventListener("click", this.handleControl);
+    this.languageToggle?.removeEventListener("click", this.handleLanguageToggle);
     this.motionQuery.removeEventListener?.("change", this.handleMotionChange);
     this.frameId = null;
     this.revealObserver = null;

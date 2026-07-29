@@ -7,6 +7,7 @@ import {
   VOICE_DEMO_STATE_COPY,
   VOICE_DEMO_WAVEFORM,
   VOICE_DEMO_WORD_TIMINGS,
+  VoiceDemo,
   voiceWordState,
 } from "../scripts/modules/voice-demo.js";
 
@@ -32,8 +33,9 @@ test("voice sample has accurate Pashto, honest copy, and accessible controls", a
   const words = [...demo.matchAll(/<span data-voice-word>([^<]+)<\/span>/g)]
     .map((match) => match[1]);
 
-  assert.match(demo, /lang="ps" dir="rtl"/);
+  assert.match(demo, /lang="ps"\s+dir="rtl"/);
   assert.deepEqual(words, ["زموږ", "غږ", "زموږ", "راتلونکی", "دی"]);
+  assert.match(demo, /Zamung ghag zamung ratlonkay dey\./);
   assert.match(demo, /Our voice is our future\./);
   assert.match(demo, /Visual sample/);
   assert.match(demo, /does not play audio, record your microphone or use speech recognition/);
@@ -47,11 +49,75 @@ test("voice sample has accurate Pashto, honest copy, and accessible controls", a
   );
   assert.match(
     demo,
+    /class="voice-demo-language-toggle"[\s\S]*aria-label="Show Roman Pashto"[\s\S]*aria-pressed="false"[\s\S]*data-voice-language-toggle/,
+  );
+  assert.match(
+    demo,
+    /data-voice-script-face[\s\S]*aria-hidden="true"[\s\S]*data-voice-roman-face/,
+  );
+  assert.match(
+    demo,
     /<button[\s\S]*class="voice-demo-wave" aria-hidden="true" data-voice-wave[\s\S]*<\/button>/,
   );
   assert.match(demo, /Tap the wave to see the sentence flow/);
   assert.doesNotMatch(demo, /class="btn voice-demo-control"|Play visual sample/);
   assert.doesNotMatch(demo, /<audio|autoplay|getUserMedia|MediaRecorder/i);
+});
+
+
+test("language toggle swaps accessible faces without changing waveform state", () => {
+  const attributes = () => {
+    const values = new Map();
+    return {
+      textContent: "",
+      setAttribute(name, value) {
+        values.set(name, value);
+      },
+      getAttribute(name) {
+        return values.get(name);
+      },
+    };
+  };
+  const toggle = attributes();
+  const scriptFace = attributes();
+  const romanFace = attributes();
+  const languageHint = attributes();
+  const words = Array.from({ length: 5 }, attributes);
+  const elements = new Map([
+    ["[data-voice-language-toggle]", toggle],
+    ["[data-voice-script-face]", scriptFace],
+    ["[data-voice-roman-face]", romanFace],
+    ["[data-voice-language-hint]", languageHint],
+  ]);
+  const rootElement = {
+    dataset: { voiceLanguage: "script", voiceState: "playing" },
+    querySelectorAll(selector) {
+      return selector === "[data-voice-script-face] [data-voice-word]" ? words : [];
+    },
+    querySelector(selector) {
+      return elements.get(selector) ?? null;
+    },
+  };
+  const voiceDemo = new VoiceDemo(rootElement, {
+    motionQuery: { matches: false },
+  });
+
+  assert.equal(voiceDemo.words.length, 5);
+  voiceDemo.setLanguage("script");
+  voiceDemo.handleLanguageToggle();
+
+  assert.equal(rootElement.dataset.voiceLanguage, "roman");
+  assert.equal(rootElement.dataset.voiceState, "playing");
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  assert.equal(toggle.getAttribute("aria-label"), "Show Pashto script");
+  assert.equal(scriptFace.getAttribute("aria-hidden"), "true");
+  assert.equal(romanFace.getAttribute("aria-hidden"), "false");
+  assert.equal(languageHint.textContent, "Tap to show Pashto script");
+
+  voiceDemo.handleLanguageToggle();
+  assert.equal(rootElement.dataset.voiceLanguage, "script");
+  assert.equal(toggle.getAttribute("aria-pressed"), "false");
+  assert.equal(toggle.getAttribute("aria-label"), "Show Roman Pashto");
 });
 
 
@@ -88,6 +154,8 @@ test("animation is deterministic, resumable, reduced-motion aware, and initializ
   assert.equal(VOICE_DEMO_STATE_COPY.paused.prompt, "Tap the wave to continue");
   assert.equal(VOICE_DEMO_STATE_COPY.complete.prompt, "Tap the wave to replay");
   assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(source, /\[data-voice-script-face\] \[data-voice-word\]/);
+  assert.match(source, /handleLanguageToggle/);
   assert.match(source, /HTMLAudioElement\.currentTime \* 1000/);
   assert.match(app, /import \{ initVoiceDemo \}/);
   assert.match(app, /voiceDemo = initVoiceDemo\(\)/);
@@ -96,6 +164,9 @@ test("animation is deterministic, resumable, reduced-motion aware, and initializ
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /\.voice-demo-wave-control\s*{[\s\S]*?min-height:\s*148px/s);
   assert.match(css, /\.voice-demo-wave-control:focus-visible/);
+  assert.match(css, /\.voice-demo-language-toggle:focus-visible/);
+  assert.match(css, /rotateY\(180deg\)/);
+  assert.match(css, /data-voice-language="roman"/);
   assert.match(css, /touch-action:\s*manipulation/);
   assert.doesNotMatch(css, /\.voice-demo-control/);
 });

@@ -178,7 +178,7 @@ test("public layouts include accessible structure and required responsive breakp
     read("styles/public-pages.css"),
   ]);
 
-  assert.match(hero, /alt="Pashtun musicians perform rabab and mangi at a cultural gathering in Pakistan\."/);
+  assert.match(hero, /alt="Folk singers gather on a hillside at the Qaqlasht Festival in Upper Chitral\."/);
   assert.match(trust, /aria-labelledby="trustTitle"/);
   assert.match(trust, /aria-label="KP AWAZ trust commitments"/);
   assert.match(sectionsCss, /\.trust-layout/);

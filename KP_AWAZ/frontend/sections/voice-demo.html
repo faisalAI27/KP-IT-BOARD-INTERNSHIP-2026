@@ -1,4 +1,9 @@
-<section class="voice-demo section-pad" aria-labelledby="voiceDemoTitle" data-voice-demo>
+<section
+  class="voice-demo section-pad"
+  aria-labelledby="voiceDemoTitle"
+  data-voice-demo
+  data-voice-language="script"
+>
   <div class="wrap voice-demo-layout">
     <div class="voice-demo-copy">
       <span class="eyebrow-line">A voice in motion</span>
@@ -18,13 +23,41 @@
         <span class="voice-demo-time" aria-hidden="true" data-voice-time>00:00 / 00:04</span>
       </div>
 
-      <p class="voice-demo-sentence" lang="ps" dir="rtl">
-        <span data-voice-word>زموږ</span>
-        <span data-voice-word>غږ</span>
-        <span data-voice-word>زموږ</span>
-        <span data-voice-word>راتلونکی</span>
-        <span data-voice-word>دی</span>
-      </p>
+      <button
+        class="voice-demo-language-toggle"
+        type="button"
+        aria-label="Show Roman Pashto"
+        aria-pressed="false"
+        data-voice-language-toggle
+      >
+        <span class="voice-demo-language-inner">
+          <span
+            class="voice-demo-language-face voice-demo-language-script"
+            lang="ps"
+            dir="rtl"
+            aria-hidden="false"
+            data-voice-script-face
+          >
+            <span data-voice-word>زموږ</span>
+            <span data-voice-word>غږ</span>
+            <span data-voice-word>زموږ</span>
+            <span data-voice-word>راتلونکی</span>
+            <span data-voice-word>دی</span>
+          </span>
+          <span
+            class="voice-demo-language-face voice-demo-language-roman"
+            lang="ps-Latn"
+            dir="ltr"
+            aria-hidden="true"
+            data-voice-roman-face
+          >
+            Zamung ghag zamung ratlonkay dey.
+          </span>
+        </span>
+        <span class="voice-demo-language-hint" aria-hidden="true" data-voice-language-hint>
+          Tap to show Roman Pashto
+        </span>
+      </button>
       <p class="voice-demo-meaning">
         <span>Meaning</span>
         Our voice is our future.
