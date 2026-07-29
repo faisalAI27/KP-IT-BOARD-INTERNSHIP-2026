@@ -12,6 +12,7 @@ test("homepage assembles the focused public story in the required order", async 
 
   const partials = [
     "sections/hero.html",
+    "sections/voice-demo.html",
     "sections/why-it-matters.html",
     "sections/impact.html",
     "sections/how-it-works.html",
@@ -177,7 +178,7 @@ test("public layouts include accessible structure and required responsive breakp
     read("styles/public-pages.css"),
   ]);
 
-  assert.match(hero, /alt="Women attend a community education meeting in Lower Dir, Khyber Pakhtunkhwa\."/);
+  assert.match(hero, /alt="Pashtun musicians perform rabab and mangi at a cultural gathering in Pakistan\."/);
   assert.match(trust, /aria-labelledby="trustTitle"/);
   assert.match(trust, /aria-label="KP AWAZ trust commitments"/);
   assert.match(sectionsCss, /\.trust-layout/);

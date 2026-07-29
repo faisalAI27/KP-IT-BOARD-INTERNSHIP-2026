@@ -2,9 +2,11 @@ import { initFaq } from "./modules/faq.js";
 import { initNavigation } from "./modules/navigation.js";
 import { loadPartials, restoreHashPosition } from "./modules/partials.js?v=20260717-member-workspace";
 import { PublicRouting } from "./modules/public-routing.js?v=20260720-public-polish";
+import { initVoiceDemo } from "./modules/voice-demo.js?v=20260729-voice-demo";
 
 
 let routing = null;
+let voiceDemo = null;
 
 
 function showBootError() {
@@ -21,6 +23,7 @@ async function bootstrap() {
     await loadPartials();
     initNavigation();
     initFaq();
+    voiceDemo = initVoiceDemo();
     restoreHashPosition();
     document.body.dataset.appState = "ready";
     routing = new PublicRouting();
@@ -33,6 +36,7 @@ async function bootstrap() {
 
 
 window.addEventListener("beforeunload", () => {
+  voiceDemo?.destroy();
   routing?.destroy();
 }, { once: true });
 

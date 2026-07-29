@@ -1,0 +1,64 @@
+<section class="voice-demo section-pad" aria-labelledby="voiceDemoTitle" data-voice-demo>
+  <div class="wrap voice-demo-layout">
+    <div class="voice-demo-copy">
+      <span class="eyebrow-line">A voice in motion</span>
+      <h2 id="voiceDemoTitle">See a Pashto sentence come alive, word by word.</h2>
+      <p>
+        This visual sample illustrates the rhythm of reading a prompted sentence.
+        It does not play audio, record your microphone or use speech recognition.
+      </p>
+    </div>
+
+    <div class="voice-demo-card">
+      <div class="voice-demo-card-head">
+        <span class="voice-demo-badge">
+          <span aria-hidden="true"></span>
+          Visual sample
+        </span>
+        <span class="voice-demo-time" aria-hidden="true" data-voice-time>00:00 / 00:04</span>
+      </div>
+
+      <p class="voice-demo-sentence" lang="ps" dir="rtl">
+        <span data-voice-word>زموږ</span>
+        <span data-voice-word>غږ</span>
+        <span data-voice-word>زموږ</span>
+        <span data-voice-word>راتلونکی</span>
+        <span data-voice-word>دی</span>
+      </p>
+      <p class="voice-demo-meaning">
+        <span>Meaning</span>
+        Our voice is our future.
+      </p>
+
+      <div class="voice-demo-wave" aria-hidden="true" data-voice-wave></div>
+
+      <div
+        class="voice-demo-progress"
+        role="progressbar"
+        aria-label="Visual sentence reading progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        data-voice-progress
+      >
+        <span data-voice-progress-fill></span>
+      </div>
+
+      <div class="voice-demo-actions">
+        <button
+          class="btn voice-demo-control"
+          type="button"
+          aria-pressed="false"
+          data-voice-control
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path class="voice-demo-play-icon" d="M7 5.2 14 10l-7 4.8Z" />
+            <path class="voice-demo-pause-icon" d="M6.5 5.5v9M13.5 5.5v9" />
+          </svg>
+          <span data-voice-control-label>Play visual sample</span>
+        </button>
+        <p>Words already read remain visible; the current word receives the strongest emphasis.</p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -42,7 +42,9 @@ test("public, contributor, and admin pages load the final polish with cache-safe
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    const expectedMainVersion = "styles/main.css?v=20260726-leaderboard-history";
+    const expectedMainVersion = page === "index.html"
+      ? "styles/main.css?v=20260729-voice-demo"
+      : "styles/main.css?v=20260726-leaderboard-history";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 
@@ -83,7 +85,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
     read("sections/hero.html"),
   ]);
 
-  assert.match(hero, /src="assets\/images\/lower-dir-community-meeting-1440\.webp"/);
+  assert.match(hero, /src="assets\/images\/pashtun-music-gathering-1016\.webp"/);
   assert.doesNotMatch(css, /url\s*\(/i);
   assert.doesNotMatch(css, /\.hero-cultural-frame\s+img|\.cultural-hero\s+img|\.access-page\s+img/);
   assert.match(css, /:focus-visible/);

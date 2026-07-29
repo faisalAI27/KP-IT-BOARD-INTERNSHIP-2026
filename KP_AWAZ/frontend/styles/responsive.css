@@ -5,17 +5,17 @@
   }
 
   .hero-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 0.84fr);
     gap: 40px;
   }
 
   .hero-art {
-    min-height: 540px;
+    min-height: 500px;
   }
 
   .hero-cultural-frame {
     right: 0;
-    height: 510px;
+    height: 470px;
   }
 
   .steps {
@@ -146,15 +146,15 @@
   }
 
   .hero-art {
-    width: min(100%, 590px);
-    min-height: 585px;
+    width: min(100%, 620px);
+    min-height: 530px;
     margin: 10px auto 0;
   }
 
   .hero-cultural-frame {
     right: 50%;
-    width: 445px;
-    height: 540px;
+    width: min(100%, 520px);
+    height: 498px;
     transform: translateX(50%);
   }
 
@@ -334,12 +334,16 @@
   }
 
   .hero-art {
-    min-height: 505px;
+    min-height: 455px;
   }
 
   .hero-cultural-frame {
-    width: min(92%, 395px);
-    height: 465px;
+    width: min(100%, 430px);
+    height: 415px;
+  }
+
+  .hero-cultural-frame img {
+    object-position: 51% 48%;
   }
 
   .section-head h2,

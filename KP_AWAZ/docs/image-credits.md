@@ -2,20 +2,20 @@
 
 ## Landing-page hero
 
-- **Subject:** A community meeting about the right to education in Lower Dir,
-  Khyber Pakhtunkhwa
-- **Original title:** “Caption 9 - DEWA - Dir KP - Community Meeting with
-  Females on Right to Education”
-- **Creator:** USAID Pakistan
-- **Date:** 8 July 2013
-- **Source:** [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Caption_9_-_DEWA_-_Dir_KP_-_Community_Meeting_with_Females_on_Right_to_Education_(9237758410).jpg)
-- **License:** Public domain in the United States as a work prepared by a U.S.
-  Agency for International Development employee as part of official duties.
-  Wikimedia Commons records a completed Flickr license review for the file.
-- **Local adaptations:** The original 2052 × 1460 JPEG was resized and encoded
-  as 720 × 512 and 1440 × 1025 WebP files. No people or scene elements were
-  generated, removed or composited. The homepage frame applies a responsive
-  `object-fit: cover` display crop.
+- **Subject:** Pashtun musicians performing rabab and mangi at a cultural
+  gathering in Pakistan, with community attendees visible behind them
+- **Original title:** “Pashtunist 02”
+- **Creator:** Pashtunist (Wikimedia Commons contributor)
+- **Date:** 23 December 2020
+- **Source:** [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Pashtunist_02.png)
+- **License:** [Creative Commons Attribution-ShareAlike 4.0 International
+  (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/). The creator
+  published the photograph as their own work. The local adaptations are
+  distributed under the same license.
+- **Local adaptations:** The original 1016 × 676 PNG was resized and encoded as
+  640 × 426 and 1016 × 676 WebP files. No people or scene elements were
+  generated, removed or composited. The homepage frame applies separate
+  responsive `object-fit: cover` display crops.
 - **Local files:**
-  `frontend/assets/images/lower-dir-community-meeting-720.webp` and
-  `frontend/assets/images/lower-dir-community-meeting-1440.webp`
+  `frontend/assets/images/pashtun-music-gathering-640.webp` and
+  `frontend/assets/images/pashtun-music-gathering-1016.webp`

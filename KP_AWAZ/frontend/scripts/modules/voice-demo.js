@@ -1,0 +1,157 @@
+export const VOICE_DEMO_DURATION_MS = 4300;
+
+export const VOICE_DEMO_WORD_TIMINGS = Object.freeze([
+  Object.freeze({ start: 0, end: 720 }),
+  Object.freeze({ start: 720, end: 1380 }),
+  Object.freeze({ start: 1380, end: 2100 }),
+  Object.freeze({ start: 2100, end: 3260 }),
+  Object.freeze({ start: 3260, end: 3960 }),
+]);
+
+export const VOICE_DEMO_WAVEFORM = Object.freeze([
+  0.34, 0.58, 0.42, 0.76, 0.5, 0.86, 0.62, 0.38,
+  0.72, 0.94, 0.55, 0.8, 0.46, 0.68, 0.9, 0.6,
+  0.4, 0.74, 0.52, 0.84, 0.64, 0.44, 0.7, 0.36,
+]);
+
+export function voiceWordState(elapsedMs, timing) {
+  if (elapsedMs < timing.start) return "upcoming";
+  if (elapsedMs >= timing.end) return "completed";
+  return "current";
+}
+
+function formatElapsed(elapsedMs) {
+  const seconds = Math.min(4, Math.floor(elapsedMs / 1000));
+  return `00:0${seconds} / 00:04`;
+}
+
+export class VoiceDemo {
+  constructor(root, options = {}) {
+    this.root = root;
+    this.words = [...root.querySelectorAll("[data-voice-word]")];
+    this.wave = root.querySelector("[data-voice-wave]");
+    this.progress = root.querySelector("[data-voice-progress]");
+    this.control = root.querySelector("[data-voice-control]");
+    this.controlLabel = root.querySelector("[data-voice-control-label]");
+    this.time = root.querySelector("[data-voice-time]");
+    this.elapsedMs = 0;
+    this.startedAt = 0;
+    this.frameId = null;
+    this.state = "idle";
+
+    this.now = options.now ?? (() => performance.now());
+    this.requestFrame = options.requestFrame ?? ((callback) => requestAnimationFrame(callback));
+    this.cancelFrame = options.cancelFrame ?? ((id) => cancelAnimationFrame(id));
+    this.motionQuery = options.motionQuery
+      ?? window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    this.handleControl = this.handleControl.bind(this);
+    this.handleMotionChange = this.handleMotionChange.bind(this);
+    this.tick = this.tick.bind(this);
+  }
+
+  initialize() {
+    if (!this.control || !this.progress || this.words.length !== VOICE_DEMO_WORD_TIMINGS.length) {
+      return this;
+    }
+
+    this.buildWaveform();
+    this.control.addEventListener("click", this.handleControl);
+    this.motionQuery.addEventListener?.("change", this.handleMotionChange);
+    this.handleMotionChange();
+    this.render();
+    return this;
+  }
+
+  buildWaveform() {
+    if (!this.wave) return;
+    const fragment = document.createDocumentFragment();
+    VOICE_DEMO_WAVEFORM.forEach((height, index) => {
+      const bar = document.createElement("span");
+      bar.style.setProperty("--voice-bar", `${Math.round(12 + height * 32)}px`);
+      bar.style.setProperty("--voice-delay", `${-index * 37}ms`);
+      fragment.append(bar);
+    });
+    this.wave.replaceChildren(fragment);
+  }
+
+  handleMotionChange() {
+    this.root.dataset.reducedMotion = String(this.motionQuery.matches);
+  }
+
+  handleControl() {
+    if (this.state === "playing") {
+      this.pause();
+      return;
+    }
+    this.play();
+  }
+
+  play() {
+    if (this.state === "complete") this.elapsedMs = 0;
+    this.state = "playing";
+    this.startedAt = this.now() - this.elapsedMs;
+    this.render();
+    this.frameId = this.requestFrame(this.tick);
+  }
+
+  pause() {
+    if (this.state !== "playing") return;
+    this.elapsedMs = Math.min(VOICE_DEMO_DURATION_MS, this.now() - this.startedAt);
+    this.state = "paused";
+    if (this.frameId !== null) this.cancelFrame(this.frameId);
+    this.frameId = null;
+    this.render();
+  }
+
+  tick() {
+    this.elapsedMs = Math.min(VOICE_DEMO_DURATION_MS, this.now() - this.startedAt);
+    if (this.elapsedMs >= VOICE_DEMO_DURATION_MS) {
+      this.state = "complete";
+      this.frameId = null;
+      this.render();
+      return;
+    }
+    this.render();
+    this.frameId = this.requestFrame(this.tick);
+  }
+
+  render() {
+    const progressValue = Math.round((this.elapsedMs / VOICE_DEMO_DURATION_MS) * 100);
+    this.root.dataset.voiceState = this.state;
+    this.root.style.setProperty("--voice-progress", String(progressValue / 100));
+    this.progress?.setAttribute("aria-valuenow", String(progressValue));
+    if (this.time) this.time.textContent = formatElapsed(this.elapsedMs);
+
+    this.words.forEach((word, index) => {
+      const state = voiceWordState(this.elapsedMs, VOICE_DEMO_WORD_TIMINGS[index]);
+      word.dataset.wordState = state;
+    });
+
+    const playing = this.state === "playing";
+    this.control?.setAttribute("aria-pressed", String(playing));
+    if (this.controlLabel) {
+      this.controlLabel.textContent = playing
+        ? "Pause visual sample"
+        : this.state === "complete"
+          ? "Replay visual sample"
+          : "Play visual sample";
+    }
+  }
+
+  destroy() {
+    if (this.frameId !== null) this.cancelFrame(this.frameId);
+    this.control?.removeEventListener("click", this.handleControl);
+    this.motionQuery.removeEventListener?.("change", this.handleMotionChange);
+    this.frameId = null;
+  }
+}
+
+export function initVoiceDemo(scope = document) {
+  const root = scope.querySelector("[data-voice-demo]");
+  if (!root) return null;
+  return new VoiceDemo(root).initialize();
+}
+
+// A future real-audio adapter can supply HTMLAudioElement.currentTime * 1000 as
+// the clock and replace VOICE_DEMO_WORD_TIMINGS with aligned transcript timestamps.

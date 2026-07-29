@@ -22,19 +22,19 @@ test("homepage uses the final public mission heading exactly", async () => {
 test("cultural hero image is local, accessible, and practical for the web", async () => {
   const hero = await readFile(heroUrl, "utf8");
   const sources = [
-    "assets/images/lower-dir-community-meeting-720.webp",
-    "assets/images/lower-dir-community-meeting-1440.webp",
+    "assets/images/pashtun-music-gathering-640.webp",
+    "assets/images/pashtun-music-gathering-1016.webp",
   ];
 
   assert.match(hero, /<picture>/);
-  assert.match(hero, /srcset="assets\/images\/lower-dir-community-meeting-720\.webp"/);
-  assert.match(hero, /lower-dir-community-meeting-720\.webp 720w/);
-  assert.match(hero, /lower-dir-community-meeting-1440\.webp 1440w/);
-  assert.match(hero, /sizes="\(max-width: 900px\) min\(92vw, 445px\), 445px"/);
-  assert.match(hero, /width="1440"\s+height="1025"/);
+  assert.match(hero, /srcset="assets\/images\/pashtun-music-gathering-640\.webp"/);
+  assert.match(hero, /pashtun-music-gathering-640\.webp 640w/);
+  assert.match(hero, /pashtun-music-gathering-1016\.webp 1016w/);
+  assert.match(hero, /sizes="\(max-width: 680px\) min\(92vw, 430px\), \(max-width: 900px\) 520px, 510px"/);
+  assert.match(hero, /width="1016"\s+height="676"/);
   assert.match(
     hero,
-    /alt="Women attend a community education meeting in Lower Dir, Khyber Pakhtunkhwa\."/,
+    /alt="Pashtun musicians perform rabab and mangi at a cultural gathering in Pakistan\."/,
   );
   assert.match(hero, /decoding="async"/);
   assert.match(hero, /fetchpriority="high"/);
@@ -57,9 +57,9 @@ test("hero artwork has explicit responsive crop behavior without legacy art", as
 
   assert.match(hero, /<figure class="hero-art">/);
   assert.match(heroCss, /\.hero-cultural-frame img\s*{[^}]*object-fit:\s*cover;/s);
-  assert.match(heroCss, /object-position:\s*49% center;/);
+  assert.match(heroCss, /object-position:\s*50% 46%;/);
   assert.match(responsiveCss, /\.hero-cultural-frame\s*{/);
-  assert.match(responsiveCss, /object-position:\s*center 55%;/);
+  assert.match(responsiveCss, /object-position:\s*51% 48%;/);
 
   const legacyNames = /art-frame|art-sun|sound-core|mountain-front|wave-line/;
   assert.doesNotMatch(hero, legacyNames);
@@ -74,9 +74,10 @@ test("documented photo provenance matches the local hero asset", async () => {
     "utf8",
   );
 
-  assert.match(credit, /Lower Dir,\s+Khyber Pakhtunkhwa/);
-  assert.match(credit, /USAID Pakistan/);
+  assert.match(credit, /Pashtun musicians performing rabab and mangi/);
+  assert.match(credit, /Pashtunist/);
   assert.match(credit, /Wikimedia Commons/);
-  assert.match(credit, /Public domain/);
-  assert.match(credit, /lower-dir-community-meeting-1440\.webp/);
+  assert.match(credit, /CC BY-SA 4\.0/);
+  assert.match(credit, /pashtun-music-gathering-1016\.webp/);
+  assert.doesNotMatch(credit, /Lower Dir|USAID Pakistan/);
 });
