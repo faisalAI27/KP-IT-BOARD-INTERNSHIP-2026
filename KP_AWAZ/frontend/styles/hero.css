@@ -31,29 +31,6 @@
   z-index: 2;
 }
 
-.hero-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  color: var(--pine-dark);
-  font-family: var(--font-ui);
-  font-size: var(--type-sm);
-  font-weight: 600;
-  letter-spacing: normal;
-  text-transform: uppercase;
-}
-
-.hero-kicker::before {
-  width: 9px;
-  height: 9px;
-  border: 3px solid rgba(10, 101, 91, 0.16);
-  border-radius: 50%;
-  background: var(--pine);
-  content: "";
-  box-sizing: content-box;
-}
-
 .hero h1 {
   max-width: 680px;
   font-size: clamp(3rem, 4.5vw, 4rem);
@@ -75,31 +52,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-}
-
-.hero-principles {
-  display: flex;
-  margin-top: 36px;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-}
-
-.hero-principles span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink-soft);
-  font-size: var(--type-sm);
-  font-weight: 750;
-}
-
-.hero-principles span::before {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--honey);
-  content: "";
 }
 
 .hero-art {

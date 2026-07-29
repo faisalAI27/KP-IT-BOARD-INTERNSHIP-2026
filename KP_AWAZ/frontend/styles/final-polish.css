@@ -84,20 +84,11 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
-.hero-kicker,
 .story-kicker,
 .eyebrow-line,
 .workspace-eyebrow,
 .admin-eyebrow {
   letter-spacing: normal;
-}
-
-.hero-principles {
-  width: fit-content;
-  padding: 10px 14px;
-  border: 1px solid rgba(10, 101, 91, 0.12);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.38);
 }
 
 .trust-section,
@@ -152,7 +143,6 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
     box-shadow var(--duration-standard) var(--ease-standard);
 }
 
-.hero-principles,
 .trust-points,
 .collection-context dl,
 .score-rule dl {
@@ -640,12 +630,6 @@ body.workspace-body {
 }
 
 @media (max-width: 680px) {
-  .hero-principles {
-    width: 100%;
-    justify-content: center;
-    border-radius: var(--radius);
-  }
-
   .workspace-main {
     padding-top: 5.5rem;
   }

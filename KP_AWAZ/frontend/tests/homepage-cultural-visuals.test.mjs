@@ -15,6 +15,10 @@ test("homepage uses the final public mission heading exactly", async () => {
     hero,
     /<h1>Let technology hear Khyber Pakhtunkhwa\.<\/h1>/,
   );
+  assert.doesNotMatch(
+    hero,
+    /Community-powered voice data|Community-led|Human-reviewed|hero-principles|hero-kicker/,
+  );
   assert.doesNotMatch(hero, /8 languages|supported languages/i);
 });
 

@@ -43,7 +43,7 @@ test("voice sample has accurate Pashto, honest copy, and accessible controls", a
     ["Zamung", "ghag", "zamung", "ratlonkay", "dey."],
   );
   assert.match(demo, /Our voice is our future\./);
-  assert.match(demo, /Visual sample/);
+  assert.doesNotMatch(demo, />\s*Visual sample\s*</);
   assert.match(demo, /does not play audio, record your microphone or use speech recognition/);
   assert.match(demo, /role="progressbar"/);
   assert.match(demo, /aria-valuemin="0"/);

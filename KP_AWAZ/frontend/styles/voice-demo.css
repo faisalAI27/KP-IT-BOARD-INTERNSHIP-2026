@@ -70,28 +70,8 @@
 .voice-demo-card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 20px;
-}
-
-.voice-demo-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--pine-dark);
-  font-size: var(--type-xs);
-  font-weight: 850;
-  letter-spacing: normal;
-  text-transform: uppercase;
-}
-
-.voice-demo-badge > span {
-  width: 9px;
-  height: 9px;
-  border: 2px solid var(--card);
-  border-radius: 50%;
-  background: var(--terracotta);
-  box-shadow: 0 0 0 3px rgba(10, 101, 91, 0.17);
 }
 
 .voice-demo-time {
@@ -514,7 +494,6 @@
 }
 
 @media (max-width: 360px) {
-  .voice-demo-card-head,
   .voice-demo-meaning {
     align-items: flex-start;
     flex-direction: column;
