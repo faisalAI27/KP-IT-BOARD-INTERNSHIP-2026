@@ -946,25 +946,6 @@
   line-height: 1.5;
 }
 
-.focused-cultural-thread {
-  position: absolute;
-  z-index: 3;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 9px;
-  opacity: 0.82;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--focused-pine-800) 0 18px,
-    var(--focused-gold-500) 18px 32px,
-    var(--focused-clay-600) 32px 48px,
-    var(--focused-cream-200) 48px 57px
-  );
-  background-size: 114px 100%;
-  animation: focused-thread-flow 9s linear infinite;
-}
-
 .focused-template-toast {
   position: fixed;
   z-index: 80;
@@ -1048,10 +1029,6 @@
 @keyframes focused-confetti-fall {
   0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
   100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(var(--r)); }
-}
-
-@keyframes focused-thread-flow {
-  to { background-position: 114px 0; }
 }
 
 @media (max-width: 980px) {

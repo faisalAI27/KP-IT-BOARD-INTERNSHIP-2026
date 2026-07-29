@@ -92,8 +92,8 @@ test("guided reading uses one focused microphone without the long-form disclosur
   assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
   assert.match(css, /\.focused-pashto-sentence \.pashto-word:hover\s*{[\s\S]*?scale\(1\.08\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(micCss, /@keyframes focused-thread-flow/);
-  assert.match(micCss, /\.focused-cultural-thread\s*{[\s\S]*?animation:\s*focused-thread-flow 9s linear infinite/);
+  assert.doesNotMatch(html, /focused-cultural-thread/);
+  assert.doesNotMatch(micCss, /focused-cultural-thread|focused-thread-flow/);
   assert.match(micCss, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*0\.01ms\s*!important/);
   assert.match(recorderSource, /previewOnReady/);
   assert.match(visualizerSource, /createMediaStreamSource\(stream\)/);
@@ -150,7 +150,7 @@ test("record voice implements the supplied focused recorder template and motion"
   assert.match(css, /\.focused-record-orb:hover:not\(:disabled\)\s*{/);
   assert.match(css, /\.focused-pashto-sentence:hover\s*{[\s\S]*?scale\(1\.018\)/);
   assert.match(css, /@keyframes focused-shimmer/);
-  assert.match(css, /@keyframes focused-thread-flow/);
+  assert.doesNotMatch(css, /focused-cultural-thread|focused-thread-flow/);
   assert.match(css, /\.focused-record-stage\.is-recording/);
   assert.match(css, /@media \(max-width: 460px\)[\s\S]*?\.focused-record-stage\s*{[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration:\s*0\.01ms\s*!important/);
