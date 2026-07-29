@@ -30,34 +30,38 @@
         Our voice is our future.
       </p>
 
-      <div class="voice-demo-wave" aria-hidden="true" data-voice-wave></div>
-
-      <div
-        class="voice-demo-progress"
-        role="progressbar"
-        aria-label="Visual sentence reading progress"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow="0"
-        data-voice-progress
-      >
-        <span data-voice-progress-fill></span>
-      </div>
-
-      <div class="voice-demo-actions">
+      <div class="voice-demo-interaction">
         <button
-          class="btn voice-demo-control"
+          class="voice-demo-wave-control"
           type="button"
+          aria-label="Play visual sentence sample"
           aria-pressed="false"
           data-voice-control
         >
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path class="voice-demo-play-icon" d="M7 5.2 14 10l-7 4.8Z" />
-            <path class="voice-demo-pause-icon" d="M6.5 5.5v9M13.5 5.5v9" />
-          </svg>
-          <span data-voice-control-label>Play visual sample</span>
+          <span class="voice-demo-prompt">
+            <span class="voice-demo-cue" aria-hidden="true"></span>
+            <span data-voice-prompt>Tap the wave to see the sentence flow</span>
+          </span>
+
+          <span class="voice-demo-wave" aria-hidden="true" data-voice-wave></span>
+
+          <span class="voice-demo-state-row" aria-hidden="true">
+            <span data-voice-state-label>Ready</span>
+            <span>Visual timing only</span>
+          </span>
         </button>
-        <p>Words already read remain visible; the current word receives the strongest emphasis.</p>
+
+        <div
+          class="voice-demo-progress"
+          role="progressbar"
+          aria-label="Visual sentence reading progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          data-voice-progress
+        >
+          <span data-voice-progress-fill></span>
+        </div>
       </div>
     </div>
   </div>

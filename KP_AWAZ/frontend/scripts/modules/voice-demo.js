@@ -14,6 +14,29 @@ export const VOICE_DEMO_WAVEFORM = Object.freeze([
   0.4, 0.74, 0.52, 0.84, 0.64, 0.44, 0.7, 0.36,
 ]);
 
+export const VOICE_DEMO_STATE_COPY = Object.freeze({
+  idle: Object.freeze({
+    accessibleName: "Play visual sentence sample",
+    prompt: "Tap the wave to see the sentence flow",
+    label: "Ready",
+  }),
+  playing: Object.freeze({
+    accessibleName: "Pause visual sentence sample",
+    prompt: "Tap the wave to pause the flow",
+    label: "Voice in motion",
+  }),
+  paused: Object.freeze({
+    accessibleName: "Resume visual sentence sample",
+    prompt: "Tap the wave to continue",
+    label: "Paused",
+  }),
+  complete: Object.freeze({
+    accessibleName: "Replay visual sentence sample",
+    prompt: "Tap the wave to replay",
+    label: "Complete",
+  }),
+});
+
 export function voiceWordState(elapsedMs, timing) {
   if (elapsedMs < timing.start) return "upcoming";
   if (elapsedMs >= timing.end) return "completed";
@@ -32,7 +55,8 @@ export class VoiceDemo {
     this.wave = root.querySelector("[data-voice-wave]");
     this.progress = root.querySelector("[data-voice-progress]");
     this.control = root.querySelector("[data-voice-control]");
-    this.controlLabel = root.querySelector("[data-voice-control-label]");
+    this.prompt = root.querySelector("[data-voice-prompt]");
+    this.stateLabel = root.querySelector("[data-voice-state-label]");
     this.time = root.querySelector("[data-voice-time]");
     this.elapsedMs = 0;
     this.startedAt = 0;
@@ -44,9 +68,15 @@ export class VoiceDemo {
     this.cancelFrame = options.cancelFrame ?? ((id) => cancelAnimationFrame(id));
     this.motionQuery = options.motionQuery
       ?? window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.observerFactory = options.observerFactory
+      ?? (typeof IntersectionObserver === "function"
+        ? (callback, observerOptions) => new IntersectionObserver(callback, observerOptions)
+        : null);
+    this.revealObserver = null;
 
     this.handleControl = this.handleControl.bind(this);
     this.handleMotionChange = this.handleMotionChange.bind(this);
+    this.handleReveal = this.handleReveal.bind(this);
     this.tick = this.tick.bind(this);
   }
 
@@ -60,6 +90,7 @@ export class VoiceDemo {
     this.motionQuery.addEventListener?.("change", this.handleMotionChange);
     this.handleMotionChange();
     this.render();
+    this.initializeReveal();
     return this;
   }
 
@@ -77,6 +108,32 @@ export class VoiceDemo {
 
   handleMotionChange() {
     this.root.dataset.reducedMotion = String(this.motionQuery.matches);
+    if (this.motionQuery.matches) this.revealImmediately();
+  }
+
+  initializeReveal() {
+    if (this.motionQuery.matches || !this.observerFactory) {
+      this.revealImmediately();
+      return;
+    }
+
+    this.root.dataset.revealReady = "true";
+    this.revealObserver = this.observerFactory(this.handleReveal, {
+      rootMargin: "0px 0px -8% 0px",
+      threshold: 0.2,
+    });
+    this.revealObserver.observe(this.root);
+  }
+
+  handleReveal(entries) {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    this.revealImmediately();
+  }
+
+  revealImmediately() {
+    this.root.classList.add("is-visible");
+    this.revealObserver?.disconnect();
+    this.revealObserver = null;
   }
 
   handleControl() {
@@ -124,26 +181,27 @@ export class VoiceDemo {
     if (this.time) this.time.textContent = formatElapsed(this.elapsedMs);
 
     this.words.forEach((word, index) => {
-      const state = voiceWordState(this.elapsedMs, VOICE_DEMO_WORD_TIMINGS[index]);
+      const state = this.state === "idle"
+        ? "upcoming"
+        : voiceWordState(this.elapsedMs, VOICE_DEMO_WORD_TIMINGS[index]);
       word.dataset.wordState = state;
     });
 
     const playing = this.state === "playing";
+    const stateCopy = VOICE_DEMO_STATE_COPY[this.state];
     this.control?.setAttribute("aria-pressed", String(playing));
-    if (this.controlLabel) {
-      this.controlLabel.textContent = playing
-        ? "Pause visual sample"
-        : this.state === "complete"
-          ? "Replay visual sample"
-          : "Play visual sample";
-    }
+    this.control?.setAttribute("aria-label", stateCopy.accessibleName);
+    if (this.prompt) this.prompt.textContent = stateCopy.prompt;
+    if (this.stateLabel) this.stateLabel.textContent = stateCopy.label;
   }
 
   destroy() {
     if (this.frameId !== null) this.cancelFrame(this.frameId);
+    this.revealObserver?.disconnect();
     this.control?.removeEventListener("click", this.handleControl);
     this.motionQuery.removeEventListener?.("change", this.handleMotionChange);
     this.frameId = null;
+    this.revealObserver = null;
   }
 }
 

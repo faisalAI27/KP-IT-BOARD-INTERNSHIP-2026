@@ -4,6 +4,7 @@ import { test } from "node:test";
 
 import {
   VOICE_DEMO_DURATION_MS,
+  VOICE_DEMO_STATE_COPY,
   VOICE_DEMO_WAVEFORM,
   VOICE_DEMO_WORD_TIMINGS,
   voiceWordState,
@@ -40,9 +41,16 @@ test("voice sample has accurate Pashto, honest copy, and accessible controls", a
   assert.match(demo, /aria-valuemin="0"/);
   assert.match(demo, /aria-valuemax="100"/);
   assert.match(demo, /aria-valuenow="0"/);
-  assert.match(demo, /class="voice-demo-wave" aria-hidden="true"/);
-  assert.match(demo, /<button[\s\S]*type="button"[\s\S]*aria-pressed="false"/);
-  assert.match(demo, /Play visual sample/);
+  assert.match(
+    demo,
+    /<button[\s\S]*class="voice-demo-wave-control"[\s\S]*type="button"[\s\S]*aria-label="Play visual sentence sample"[\s\S]*aria-pressed="false"/,
+  );
+  assert.match(
+    demo,
+    /<button[\s\S]*class="voice-demo-wave" aria-hidden="true" data-voice-wave[\s\S]*<\/button>/,
+  );
+  assert.match(demo, /Tap the wave to see the sentence flow/);
+  assert.doesNotMatch(demo, /class="btn voice-demo-control"|Play visual sample/);
   assert.doesNotMatch(demo, /<audio|autoplay|getUserMedia|MediaRecorder/i);
 });
 
@@ -72,7 +80,13 @@ test("animation is deterministic, resumable, reduced-motion aware, and initializ
   assert.match(source, /requestAnimationFrame/);
   assert.match(source, /this\.startedAt = this\.now\(\) - this\.elapsedMs/);
   assert.match(source, /this\.state === "complete"/);
-  assert.match(source, /Replay visual sample/);
+  assert.equal(VOICE_DEMO_STATE_COPY.idle.accessibleName, "Play visual sentence sample");
+  assert.equal(VOICE_DEMO_STATE_COPY.playing.accessibleName, "Pause visual sentence sample");
+  assert.equal(VOICE_DEMO_STATE_COPY.paused.accessibleName, "Resume visual sentence sample");
+  assert.equal(VOICE_DEMO_STATE_COPY.complete.accessibleName, "Replay visual sentence sample");
+  assert.equal(VOICE_DEMO_STATE_COPY.playing.label, "Voice in motion");
+  assert.equal(VOICE_DEMO_STATE_COPY.paused.prompt, "Tap the wave to continue");
+  assert.equal(VOICE_DEMO_STATE_COPY.complete.prompt, "Tap the wave to replay");
   assert.match(source, /prefers-reduced-motion: reduce/);
   assert.match(source, /HTMLAudioElement\.currentTime \* 1000/);
   assert.match(app, /import \{ initVoiceDemo \}/);
@@ -80,7 +94,31 @@ test("animation is deterministic, resumable, reduced-motion aware, and initializ
   assert.match(app, /voiceDemo\?\.destroy\(\)/);
   assert.match(mainCss, /voice-demo\.css/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /\.voice-demo-control\s*{[\s\S]*?min-width:\s*190px/s);
+  assert.match(css, /\.voice-demo-wave-control\s*{[\s\S]*?min-height:\s*148px/s);
+  assert.match(css, /\.voice-demo-wave-control:focus-visible/);
+  assert.match(css, /touch-action:\s*manipulation/);
+  assert.doesNotMatch(css, /\.voice-demo-control/);
+});
+
+
+test("scroll reveal is one-time, reduced-motion safe, and never autoplays", async () => {
+  const [source, css] = await Promise.all([
+    read("scripts/modules/voice-demo.js"),
+    read("styles/voice-demo.css"),
+  ]);
+  const revealHandler = source.match(/handleReveal\(entries\)\s*{([\s\S]*?)\n  }/)?.[1] ?? "";
+  const revealSetup = source.match(/initializeReveal\(\)\s*{([\s\S]*?)\n  }/)?.[1] ?? "";
+
+  assert.match(source, /IntersectionObserver/);
+  assert.match(source, /this\.root\.dataset\.revealReady = "true"/);
+  assert.match(source, /this\.revealObserver\.observe\(this\.root\)/);
+  assert.match(source, /this\.root\.classList\.add\("is-visible"\)/);
+  assert.match(source, /this\.revealObserver\?\.disconnect\(\)/);
+  assert.doesNotMatch(revealHandler, /\.play\(/);
+  assert.doesNotMatch(revealSetup, /\.play\(/);
+  assert.match(css, /\[data-reveal-ready="true"\]:not\(\.is-visible\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
 
