@@ -88,21 +88,59 @@
         </div>
       </section>
 
-      <section class="focused-sentence-card sentence-source" id="providedSentenceSource" aria-labelledby="providedSentenceLabel">
+      <section
+        class="focused-sentence-card sentence-source"
+        id="providedSentenceSource"
+        aria-labelledby="providedSentenceLabel"
+        data-sentence-language="script"
+      >
         <div class="focused-sentence-top">
           <span class="focused-language-pill">Pashto · پښتو</span>
           <span id="sentenceNumber">Sentence 1</span>
         </div>
         <div class="sr-only" id="providedSentenceLabel">Read this reviewed sentence aloud</div>
-        <p class="focused-pashto-sentence pashto-sentence" id="providedSentence" lang="ps" dir="rtl" tabindex="0">
-          زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
-        </p>
-        <div class="focused-roman-pashto" aria-labelledby="providedRomanLabel">
-          <span id="providedRomanLabel">Roman Pashto</span>
-          <p id="providedRoman" lang="ps-Latn" dir="ltr">
-            Zama zhaba zama pehzhandana da, ao zama ghag da haghe ratlonkay jorawi.
-          </p>
-        </div>
+        <button
+          class="focused-sentence-language-toggle"
+          id="providedSentenceToggle"
+          type="button"
+          aria-label="Show Roman Pashto"
+          aria-describedby="providedSentence"
+          aria-pressed="false"
+          data-provided-language-toggle
+        >
+          <span class="focused-sentence-language-inner">
+            <span
+              class="focused-sentence-language-face focused-sentence-script-face"
+              lang="ps"
+              dir="rtl"
+              aria-hidden="false"
+              data-provided-script-face
+            >
+              <span class="focused-pashto-sentence pashto-sentence" id="providedSentence">
+                زما ژبه زما پېژندنه ده، او زما غږ د هغې راتلونکی جوړوي.
+              </span>
+            </span>
+            <span
+              class="focused-sentence-language-face focused-roman-pashto"
+              lang="ps-Latn"
+              dir="ltr"
+              aria-hidden="true"
+              data-provided-roman-face
+            >
+              <span id="providedRomanLabel">Roman Pashto</span>
+              <span id="providedRoman">
+                Zama zhaba zama pehzhandana da, ao zama ghag da haghe ratlonkay jorawi.
+              </span>
+            </span>
+          </span>
+          <span
+            class="focused-sentence-language-hint"
+            aria-hidden="true"
+            data-provided-language-hint
+          >
+            Tap to show Roman Pashto
+          </span>
+        </button>
         <p class="focused-translation" id="providedMeaning">
           My language is my identity, and my voice shapes its future.
         </p>

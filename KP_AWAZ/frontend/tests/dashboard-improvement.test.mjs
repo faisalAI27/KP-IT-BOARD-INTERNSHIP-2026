@@ -4,7 +4,9 @@ import { constants } from "node:fs";
 import { test } from "node:test";
 
 import {
+  createSentenceLanguageToggle,
   DEMO_PASHTO_SENTENCE,
+  getSentenceLanguageView,
   normalizeContributionMode,
   tokenizeSentenceWords,
 } from "../scripts/modules/contributions.js";
@@ -37,6 +39,74 @@ test("Pashto sentence tokens preserve exact RTL text and punctuation", () => {
     tokens.filter(({ isWord }) => isWord).map(({ text }) => text),
     ["زما", "ژبه،", "زما", "غږ", "دی.", "هو!"],
   );
+});
+
+test("recording sentence language view exposes predictable accessible flip state", () => {
+  assert.deepEqual(getSentenceLanguageView("script"), {
+    language: "script",
+    showRoman: false,
+    accessibleName: "Show Roman Pashto",
+    hint: "Tap to show Roman Pashto",
+  });
+  assert.deepEqual(getSentenceLanguageView("roman"), {
+    language: "roman",
+    showRoman: true,
+    accessibleName: "Show Pashto script",
+    hint: "Tap to show Pashto script",
+  });
+  assert.deepEqual(getSentenceLanguageView("unexpected"), getSentenceLanguageView("script"));
+});
+
+test("recording sentence flip synchronizes visible and accessible language state", () => {
+  const element = () => {
+    const attributes = new Map();
+    const listeners = new Map();
+    return {
+      dataset: {},
+      textContent: "",
+      setAttribute(name, value) {
+        attributes.set(name, value);
+      },
+      getAttribute(name) {
+        return attributes.get(name);
+      },
+      addEventListener(name, listener) {
+        listeners.set(name, listener);
+      },
+      removeEventListener(name, listener) {
+        if (listeners.get(name) === listener) listeners.delete(name);
+      },
+      dispatch(name) {
+        listeners.get(name)?.();
+      },
+    };
+  };
+  const source = element();
+  source.dataset.sentenceLanguage = "script";
+  const toggle = element();
+  const scriptFace = element();
+  const romanFace = element();
+  const hint = element();
+  const controller = createSentenceLanguageToggle({
+    source,
+    toggle,
+    scriptFace,
+    romanFace,
+    hint,
+  });
+
+  toggle.dispatch("click");
+  assert.equal(source.dataset.sentenceLanguage, "roman");
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  assert.equal(toggle.getAttribute("aria-label"), "Show Pashto script");
+  assert.equal(toggle.getAttribute("aria-describedby"), "providedRoman");
+  assert.equal(scriptFace.getAttribute("aria-hidden"), "true");
+  assert.equal(romanFace.getAttribute("aria-hidden"), "false");
+  assert.equal(hint.textContent, "Tap to show Pashto script");
+
+  controller.destroy();
+  toggle.dispatch("click");
+  assert.equal(source.dataset.sentenceLanguage, "roman");
 });
 
 test("guided recording keeps a Pashto preview visible when live prompts are unavailable", async () => {
@@ -78,8 +148,8 @@ test("guided reading uses one focused microphone without the long-form disclosur
     read("scripts/modules/recorder.js"),
     read("scripts/modules/audio-visualizer.js"),
   ]);
-  assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"[^>]*tabindex="0"/);
-  assert.match(html, /id="providedRoman"[^>]*lang="ps-Latn"[^>]*dir="ltr"/);
+  assert.match(html, /lang="ps"\s+dir="rtl"[^>]*data-provided-script-face/);
+  assert.match(html, /lang="ps-Latn"\s+dir="ltr"[^>]*data-provided-roman-face/);
   assert.match(contributionSource, /sentence\?\.romanText \?\? DEMO_ROMAN_PASHTO/);
   assert.match(html, /class="focused-record-orb rabab-record-button"/);
   assert.match(html, /<rect x="9" y="3" width="6" height="11" rx="3"><\/rect>/);
@@ -91,6 +161,9 @@ test("guided reading uses one focused microphone without the long-form disclosur
   assert.match(contributionSource, /className = "pashto-word"/);
   assert.match(contributionSource, /document\.createTextNode\(token\.text\)/);
   assert.match(css, /\.focused-pashto-sentence \.pashto-word:hover\s*{[\s\S]*?scale\(1\.08\)/);
+  assert.match(html, /id="providedSentenceToggle"[\s\S]*aria-label="Show Roman Pashto"[\s\S]*aria-describedby="providedSentence"[\s\S]*aria-pressed="false"/);
+  assert.match(contributionSource, /setProvidedSentenceLanguage/);
+  assert.match(contributionSource, /toggle\.addEventListener\("click", handleToggle\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.doesNotMatch(html, /focused-cultural-thread/);
   assert.doesNotMatch(micCss, /focused-cultural-thread|focused-thread-flow/);
@@ -122,7 +195,7 @@ test("record voice implements the supplied focused recorder template and motion"
   assert.match(html, /class="focused-record-orb rabab-record-button" id="donateRecBtn"/);
   assert.equal((html.match(/class="focused-pulse-ring (?:one|two)"/g) ?? []).length, 2);
   assert.match(html, /viewBox="0 0 24 24"/);
-  assert.match(html, /id="providedSentence"[^>]*lang="ps"[^>]*dir="rtl"/);
+  assert.match(html, /lang="ps"\s+dir="rtl"[^>]*data-provided-script-face/);
   assert.ok(html.indexOf("donateRecordStage") < html.indexOf("providedSentenceSource"));
   assert.match(html, /<ol class="focused-journey rabab-steps"[^>]*aria-label="Recording progress"/);
   assert.equal((html.match(/data-recording-step="[123]"/g) ?? []).length, 3);
@@ -148,7 +221,11 @@ test("record voice implements the supplied focused recorder template and motion"
   assert.match(css, /@keyframes focused-ring-pulse/);
   assert.match(css, /@keyframes focused-orb-pulse/);
   assert.match(css, /\.focused-record-orb:hover:not\(:disabled\)\s*{/);
-  assert.match(css, /\.focused-pashto-sentence:hover\s*{[\s\S]*?scale\(1\.018\)/);
+  assert.match(css, /\.focused-sentence-language-toggle:hover \.focused-pashto-sentence,[\s\S]*?scale\(1\.018\)/);
+  assert.match(css, /data-sentence-language="roman"[\s\S]*?rotateY\(180deg\)/);
+  assert.match(css, /\.focused-sentence-language-toggle:focus-visible/);
+  assert.match(css, /touch-action:\s*manipulation/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.focused-sentence-language-inner/);
   assert.match(css, /@keyframes focused-shimmer/);
   assert.doesNotMatch(css, /focused-cultural-thread|focused-thread-flow/);
   assert.match(css, /\.focused-record-stage\.is-recording/);

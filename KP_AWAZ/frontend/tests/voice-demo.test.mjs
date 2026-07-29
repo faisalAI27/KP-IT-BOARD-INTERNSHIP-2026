@@ -34,8 +34,14 @@ test("voice sample has accurate Pashto, honest copy, and accessible controls", a
     .map((match) => match[1]);
 
   assert.match(demo, /lang="ps"\s+dir="rtl"/);
-  assert.deepEqual(words, ["زموږ", "غږ", "زموږ", "راتلونکی", "دی"]);
-  assert.match(demo, /Zamung ghag zamung ratlonkay dey\./);
+  assert.deepEqual(
+    words.slice(0, 5),
+    ["زموږ", "غږ", "زموږ", "راتلونکی", "دی"],
+  );
+  assert.deepEqual(
+    words.slice(5),
+    ["Zamung", "ghag", "zamung", "ratlonkay", "dey."],
+  );
   assert.match(demo, /Our voice is our future\./);
   assert.match(demo, /Visual sample/);
   assert.match(demo, /does not play audio, record your microphone or use speech recognition/);
@@ -82,7 +88,8 @@ test("language toggle swaps accessible faces without changing waveform state", (
   const scriptFace = attributes();
   const romanFace = attributes();
   const languageHint = attributes();
-  const words = Array.from({ length: 5 }, attributes);
+  const scriptWords = Array.from({ length: 5 }, attributes);
+  const romanWords = Array.from({ length: 5 }, attributes);
   const elements = new Map([
     ["[data-voice-language-toggle]", toggle],
     ["[data-voice-script-face]", scriptFace],
@@ -92,7 +99,13 @@ test("language toggle swaps accessible faces without changing waveform state", (
   const rootElement = {
     dataset: { voiceLanguage: "script", voiceState: "playing" },
     querySelectorAll(selector) {
-      return selector === "[data-voice-script-face] [data-voice-word]" ? words : [];
+      if (selector === "[data-voice-script-face] [data-voice-word]") {
+        return scriptWords;
+      }
+      if (selector === "[data-voice-roman-face] [data-voice-word]") {
+        return romanWords;
+      }
+      return [];
     },
     querySelector(selector) {
       return elements.get(selector) ?? null;
@@ -103,6 +116,7 @@ test("language toggle swaps accessible faces without changing waveform state", (
   });
 
   assert.equal(voiceDemo.words.length, 5);
+  assert.equal(voiceDemo.romanWords.length, 5);
   voiceDemo.setLanguage("script");
   voiceDemo.handleLanguageToggle();
 
@@ -132,6 +146,42 @@ test("word alignment data produces one current word and preserves completed word
   assert.equal(states.filter((state) => state === "current").length, 1);
 });
 
+test("Pashto and Roman Pashto use the same timing index and render identical states", () => {
+  const word = () => ({ dataset: {} });
+  const scriptWords = Array.from({ length: 5 }, word);
+  const romanWords = Array.from({ length: 5 }, word);
+  const rootElement = {
+    dataset: {},
+    style: { setProperty() {} },
+    querySelectorAll(selector) {
+      if (selector === "[data-voice-script-face] [data-voice-word]") {
+        return scriptWords;
+      }
+      if (selector === "[data-voice-roman-face] [data-voice-word]") {
+        return romanWords;
+      }
+      return [];
+    },
+    querySelector() {
+      return null;
+    },
+  };
+  const voiceDemo = new VoiceDemo(rootElement, {
+    motionQuery: { matches: false },
+  });
+  voiceDemo.state = "playing";
+  voiceDemo.elapsedMs = 1600;
+  voiceDemo.render();
+
+  const scriptStates = scriptWords.map(({ dataset }) => dataset.wordState);
+  const romanStates = romanWords.map(({ dataset }) => dataset.wordState);
+  assert.deepEqual(
+    scriptStates,
+    ["completed", "completed", "current", "upcoming", "upcoming"],
+  );
+  assert.deepEqual(romanStates, scriptStates);
+});
+
 
 test("animation is deterministic, resumable, reduced-motion aware, and initialized by the app", async () => {
   const [source, app, css, mainCss] = await Promise.all([
@@ -155,6 +205,9 @@ test("animation is deterministic, resumable, reduced-motion aware, and initializ
   assert.equal(VOICE_DEMO_STATE_COPY.complete.prompt, "Tap the wave to replay");
   assert.match(source, /prefers-reduced-motion: reduce/);
   assert.match(source, /\[data-voice-script-face\] \[data-voice-word\]/);
+  assert.match(source, /\[data-voice-roman-face\] \[data-voice-word\]/);
+  assert.match(source, /this\.wordTracks = \[this\.scriptWords, this\.romanWords\]/);
+  assert.match(css, /\.voice-demo-language-face \[data-word-state="current"\]/);
   assert.match(source, /handleLanguageToggle/);
   assert.match(source, /HTMLAudioElement\.currentTime \* 1000/);
   assert.match(app, /import \{ initVoiceDemo \}/);

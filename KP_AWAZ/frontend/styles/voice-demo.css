@@ -199,7 +199,7 @@
   pointer-events: none;
 }
 
-.voice-demo-language-script [data-voice-word] {
+.voice-demo-language-face [data-voice-word] {
   position: relative;
   display: inline-block;
   border-radius: 10px;
@@ -210,11 +210,11 @@
     transform var(--duration-standard) var(--ease-standard);
 }
 
-.voice-demo-language-script [data-word-state="completed"] {
+.voice-demo-language-face [data-word-state="completed"] {
   color: var(--pine);
 }
 
-.voice-demo-language-script [data-word-state="current"] {
+.voice-demo-language-face [data-word-state="current"] {
   padding-inline: 8px;
   background: rgba(51, 103, 154, 0.3);
   color: var(--forest-deep);
@@ -562,12 +562,12 @@
     transform: none;
   }
 
-  .voice-demo-language-script [data-voice-word],
+  .voice-demo-language-face [data-voice-word],
   .voice-demo-progress > span {
     transition: none;
   }
 
-  .voice-demo-language-script [data-word-state="current"] {
+  .voice-demo-language-face [data-word-state="current"] {
     transform: none;
   }
 }

@@ -36,6 +36,63 @@ export function normalizeContributionMode() {
   return "guided";
 }
 
+export function getSentenceLanguageView(language = "script") {
+  const showRoman = language === "roman";
+  return {
+    language: showRoman ? "roman" : "script",
+    showRoman,
+    accessibleName: showRoman ? "Show Pashto script" : "Show Roman Pashto",
+    hint: showRoman
+      ? "Tap to show Pashto script"
+      : "Tap to show Roman Pashto",
+  };
+}
+
+export function createSentenceLanguageToggle({
+  source,
+  toggle,
+  scriptFace,
+  romanFace,
+  hint,
+}) {
+  if (!source || !toggle || !scriptFace || !romanFace || !hint) {
+    return {
+      setLanguage() {},
+      destroy() {},
+    };
+  }
+
+  function setLanguage(language) {
+    const view = getSentenceLanguageView(language);
+    source.dataset.sentenceLanguage = view.language;
+    toggle.setAttribute("aria-pressed", String(view.showRoman));
+    toggle.setAttribute("aria-label", view.accessibleName);
+    toggle.setAttribute(
+      "aria-describedby",
+      view.showRoman ? "providedRoman" : "providedSentence",
+    );
+    scriptFace.setAttribute("aria-hidden", String(view.showRoman));
+    romanFace.setAttribute("aria-hidden", String(!view.showRoman));
+    hint.textContent = view.hint;
+  }
+
+  function handleToggle() {
+    setLanguage(
+      source.dataset.sentenceLanguage === "roman" ? "script" : "roman",
+    );
+  }
+
+  toggle.addEventListener("click", handleToggle);
+  setLanguage(source.dataset.sentenceLanguage);
+
+  return {
+    setLanguage,
+    destroy() {
+      toggle.removeEventListener("click", handleToggle);
+    },
+  };
+}
+
 export function destroyContributions() {
   activeContributionCleanup?.();
 }
@@ -51,8 +108,22 @@ export async function initContributions({ profile = {} } = {}) {
   const providedSentenceInput = document.querySelector(
     'input[name="sentence-source"][value="provided"]',
   );
+  const providedSentenceSource = document.getElementById("providedSentenceSource");
+  const providedSentenceToggle = document.getElementById("providedSentenceToggle");
   const providedSentence = document.getElementById("providedSentence");
   const providedRoman = document.getElementById("providedRoman");
+  const providedScriptFace = document.querySelector("[data-provided-script-face]");
+  const providedRomanFace = document.querySelector("[data-provided-roman-face]");
+  const providedLanguageHint = document.querySelector(
+    "[data-provided-language-hint]",
+  );
+  const sentenceLanguageToggle = createSentenceLanguageToggle({
+    source: providedSentenceSource,
+    toggle: providedSentenceToggle,
+    scriptFace: providedScriptFace,
+    romanFace: providedRomanFace,
+    hint: providedLanguageHint,
+  });
   const providedMeaning = document.getElementById("providedMeaning");
   const sentenceNumber = document.getElementById("sentenceNumber");
   const nextSentenceButton = document.getElementById("nextSentenceBtn");
@@ -107,7 +178,7 @@ export async function initContributions({ profile = {} } = {}) {
   function clearSentenceTransitions() {
     sentenceTransitionTimeouts.forEach((handle) => window.clearTimeout(handle));
     sentenceTransitionTimeouts.clear();
-    providedSentence.classList.remove("is-leaving", "is-entering");
+    providedSentenceToggle.classList.remove("is-leaving", "is-entering");
   }
 
   function scheduleSentenceTransition(callback, delay) {
@@ -133,9 +204,14 @@ export async function initContributions({ profile = {} } = {}) {
     providedSentence.replaceChildren(fragment);
   }
 
+  function setProvidedSentenceLanguage(language) {
+    sentenceLanguageToggle.setLanguage(language);
+  }
+
   function renderProvidedSentence({ animate = false } = {}) {
     const sentence = getSelectedSentence();
     const update = () => {
+      setProvidedSentenceLanguage("script");
       replaceProvidedSentenceText(sentence?.text ?? "");
       providedRoman.textContent = sentence?.romanText ?? DEMO_ROMAN_PASHTO;
       providedMeaning.textContent = sentence?.meaning ?? "Meaning not available.";
@@ -152,13 +228,13 @@ export async function initContributions({ profile = {} } = {}) {
       return;
     }
 
-    providedSentence.classList.add("is-leaving");
+    providedSentenceToggle.classList.add("is-leaving");
     scheduleSentenceTransition(() => {
       update();
-      providedSentence.classList.remove("is-leaving");
-      providedSentence.classList.add("is-entering");
+      providedSentenceToggle.classList.remove("is-leaving");
+      providedSentenceToggle.classList.add("is-entering");
       scheduleSentenceTransition(() => {
-        providedSentence.classList.remove("is-entering");
+        providedSentenceToggle.classList.remove("is-entering");
       }, 190);
     }, 110);
   }
@@ -310,6 +386,7 @@ export async function initContributions({ profile = {} } = {}) {
     providedSentenceInput.disabled = true;
     nextSentenceButton.disabled = true;
     clearSentenceTransitions();
+    setProvidedSentenceLanguage("script");
     replaceProvidedSentenceText(DEMO_PASHTO_SENTENCE);
     providedRoman.textContent = DEMO_ROMAN_PASHTO;
     providedMeaning.textContent =
@@ -355,7 +432,7 @@ export async function initContributions({ profile = {} } = {}) {
     donateRecorder.reset();
     sentenceIndex = (sentenceIndex + 1) % pashtoSentences.length;
     renderProvidedSentence({ animate: true });
-    providedSentence.focus({ preventScroll: true });
+    providedSentenceToggle.focus({ preventScroll: true });
   });
   retrySentencePrompts.addEventListener("click", loadSentencePrompts);
 
@@ -444,10 +521,11 @@ export async function initContributions({ profile = {} } = {}) {
 
   document.getElementById("donateAgainBtn").addEventListener("click", () => {
     resetDonationFlow();
-    providedSentence.focus({ preventScroll: true });
+    providedSentenceToggle.focus({ preventScroll: true });
   });
 
   applyProfileDefaults();
+  setProvidedSentenceLanguage("script");
   renderAccountConsent();
   providedSentenceInput.checked = true;
   accessController = new ContributionAuthController({
@@ -462,6 +540,7 @@ export async function initContributions({ profile = {} } = {}) {
     if (destroyed) return;
     destroyed = true;
     clearSentenceTransitions();
+    sentenceLanguageToggle.destroy();
     rababRecorderPresenter.destroy();
     accessController.destroy();
     donateRecorder.destroy();
@@ -472,7 +551,7 @@ export async function initContributions({ profile = {} } = {}) {
 
   if (sentencePromptsReady) {
     window.requestAnimationFrame(() => {
-      providedSentence.focus({ preventScroll: true });
+      providedSentenceToggle.focus({ preventScroll: true });
     });
   }
   return true;

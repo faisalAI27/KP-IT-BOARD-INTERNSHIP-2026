@@ -51,7 +51,14 @@ function formatElapsed(elapsedMs) {
 export class VoiceDemo {
   constructor(root, options = {}) {
     this.root = root;
-    this.words = [...root.querySelectorAll("[data-voice-script-face] [data-voice-word]")];
+    this.scriptWords = [
+      ...root.querySelectorAll("[data-voice-script-face] [data-voice-word]"),
+    ];
+    this.romanWords = [
+      ...root.querySelectorAll("[data-voice-roman-face] [data-voice-word]"),
+    ];
+    this.wordTracks = [this.scriptWords, this.romanWords];
+    this.words = this.scriptWords;
     this.wave = root.querySelector("[data-voice-wave]");
     this.progress = root.querySelector("[data-voice-progress]");
     this.control = root.querySelector("[data-voice-control]");
@@ -86,7 +93,10 @@ export class VoiceDemo {
   }
 
   initialize() {
-    if (!this.control || !this.progress || this.words.length !== VOICE_DEMO_WORD_TIMINGS.length) {
+    const tracksAreAligned = this.wordTracks.every(
+      (track) => track.length === VOICE_DEMO_WORD_TIMINGS.length,
+    );
+    if (!this.control || !this.progress || !tracksAreAligned) {
       return this;
     }
 
@@ -211,11 +221,13 @@ export class VoiceDemo {
     this.progress?.setAttribute("aria-valuenow", String(progressValue));
     if (this.time) this.time.textContent = formatElapsed(this.elapsedMs);
 
-    this.words.forEach((word, index) => {
-      const state = this.state === "idle"
-        ? "upcoming"
-        : voiceWordState(this.elapsedMs, VOICE_DEMO_WORD_TIMINGS[index]);
-      word.dataset.wordState = state;
+    this.wordTracks.forEach((track) => {
+      track.forEach((word, index) => {
+        const state = this.state === "idle"
+          ? "upcoming"
+          : voiceWordState(this.elapsedMs, VOICE_DEMO_WORD_TIMINGS[index]);
+        word.dataset.wordState = state;
+      });
     });
 
     const playing = this.state === "playing";
