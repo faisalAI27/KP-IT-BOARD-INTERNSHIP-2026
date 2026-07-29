@@ -1,4 +1,4 @@
-@import url("./foundation.css?v=20260729-kpitb-system");
+@import url("./foundation.css?v=20260729-soft-system");
 
 .sr-only {
   position: absolute;
@@ -13,10 +13,8 @@
 body.workspace-body {
   min-height: 100vh;
   background:
-    linear-gradient(90deg, rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    var(--brand-surface);
-  background-size: 42px 42px;
+    radial-gradient(circle at 92% 4%, var(--blue-soft), transparent 28rem),
+    var(--surface-page);
 }
 
 .workspace-sidebar {
@@ -28,9 +26,9 @@ body.workspace-body {
   flex-direction: column;
   padding: 28px 20px 20px;
   background:
-    radial-gradient(circle at 80% 10%, rgba(59, 195, 178, 0.14), transparent 15rem),
+    radial-gradient(circle at 80% 10%, rgba(59, 195, 178, 0.1), transparent 16rem),
     var(--brand-navy);
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(247, 251, 252, 0.78);
   box-shadow: none;
 }
 
@@ -58,9 +56,9 @@ body.workspace-body {
 .workspace-brand small {
   display: block;
   margin-top: 5px;
-  color: rgba(255, 255, 255, 0.45);
-  font-family: Inter, ui-sans-serif, sans-serif;
-  font-size: 0.75rem;
+  color: rgba(247, 251, 252, 0.62);
+  font-family: var(--font-ui);
+  font-size: var(--type-xs);
   font-weight: 650;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -75,8 +73,8 @@ body.workspace-body {
 .workspace-nav-label {
   display: block;
   padding: 0 12px 9px;
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.75rem;
+  color: rgba(247, 251, 252, 0.56);
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -95,8 +93,8 @@ body.workspace-body {
   padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: 13px;
-  color: rgba(255, 255, 255, 0.67);
-  font-size: 0.86rem;
+  color: rgba(247, 251, 252, 0.78);
+  font-size: var(--type-sm);
   font-weight: 680;
   gap: 12px;
   transition:
@@ -122,7 +120,7 @@ body.workspace-body {
 }
 
 .workspace-navigation a:hover {
-  background: rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.055);
   color: white;
   transform: translateX(2px);
 }
@@ -133,8 +131,8 @@ body.workspace-body {
 }
 
 .workspace-navigation a.is-active {
-  border-color: rgba(59, 195, 178, 0.32);
-  background: linear-gradient(90deg, rgba(59, 195, 178, 0.22), rgba(51, 103, 154, 0.1));
+  border-color: var(--border-active);
+  background: rgba(59, 195, 178, 0.14);
   color: var(--brand-white);
 }
 
@@ -167,8 +165,8 @@ body.workspace-body {
 .workspace-navigation a small {
   display: block;
   margin-top: 2px;
-  color: rgba(255, 255, 255, 0.42);
-  font-size: 0.75rem;
+  color: rgba(247, 251, 252, 0.62);
+  font-size: var(--type-xs);
   font-weight: 550;
 }
 
@@ -218,27 +216,27 @@ body.workspace-body {
 
 .workspace-identity strong {
   color: white;
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
 }
 
 .workspace-identity span:not(.workspace-avatar) {
   margin-top: 2px;
-  color: rgba(255, 255, 255, 0.42);
-  font-size: 0.75rem;
+  color: rgba(247, 251, 252, 0.62);
+  font-size: var(--type-xs);
 }
 
 .workspace-sign-out {
   display: flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: space-between;
   padding: 0 13px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 11px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(247, 251, 252, 0.76);
   cursor: pointer;
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   font-weight: 760;
 }
 
@@ -263,7 +261,7 @@ body.workspace-body {
   z-index: 0;
   width: clamp(220px, 32vw, 470px);
   height: clamp(150px, 24vw, 320px);
-  opacity: 0.16;
+  opacity: 0.07;
   background:
     linear-gradient(45deg, transparent 43%, rgba(59, 195, 178, 0.34) 44% 47%, transparent 48%),
     linear-gradient(-45deg, transparent 43%, rgba(51, 103, 154, 0.24) 44% 47%, transparent 48%),
@@ -316,7 +314,7 @@ body.workspace-body {
 }
 
 .workspace-loading-shell small {
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
 }
 
 .workspace-loading-mark {
@@ -360,7 +358,7 @@ body.workspace-body {
 .workspace-guard span {
   margin-top: 4px;
   color: var(--ink-soft);
-  font-size: 0.85rem;
+  font-size: var(--type-sm);
 }
 
 .workspace-page-header {
@@ -375,7 +373,7 @@ body.workspace-body {
   display: inline-flex;
   align-items: center;
   color: var(--terracotta);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   gap: 9px;
   letter-spacing: normal;
@@ -391,7 +389,7 @@ body.workspace-body {
 
 .workspace-page-header h1 {
   margin-top: 10px;
-  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-size: clamp(2.5rem, 5vw, var(--type-5xl));
   letter-spacing: normal;
   line-height: 1.2;
 }
@@ -413,9 +411,9 @@ body.workspace-body {
   padding: 10px 17px;
   border: 1px solid var(--line-strong);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--pine-dark);
-  font-size: 0.79rem;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
   font-weight: 800;
   gap: 8px;
 }
@@ -441,7 +439,7 @@ body.workspace-body {
 
 .workspace-section-heading p {
   color: var(--ink-soft);
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
 }
 
 .workspace-menu-button {

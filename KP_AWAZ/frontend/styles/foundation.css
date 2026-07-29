@@ -49,8 +49,9 @@
 :root {
   color-scheme: light;
 
-  /* Live KPITB institutional palette, applied to the approved KP AWAZ identity. */
+  /* Approved KPITB-inspired identity colours. */
   --brand-navy: #001a33;
+  --brand-teal: #3bc3b2;
   --brand-green: #3bc3b2;
   --brand-blue: #33679a;
   --brand-grey: #9d9d9d;
@@ -58,19 +59,46 @@
   --brand-gradient: linear-gradient(205deg, #3bc3b2 0%, #001a33 90.26%);
   --brand-news-gradient: linear-gradient(251.19deg, #3bc3b2 -11.64%, #001a34 91.73%);
 
-  /* Supporting tones also present in the live KPITB styles. */
+  /* Strong identity tones are reserved for actions and dark anchor areas. */
   --brand-navy-soft: #001a34;
   --brand-green-strong: #0a655b;
   --brand-green-deep: #03453b;
   --brand-blue-strong: #243d7d;
-  --brand-mint: #f1f9f8;
-  --brand-sky: #f1f1f1;
-  --brand-surface: #ffffff;
-  --brand-surface-strong: #f9f9f9;
-  --brand-text: #212529;
-  --brand-text-muted: #6c757d;
-  --brand-border: #ececec;
-  --brand-border-strong: #d4d4d4;
+
+  /* Calm interface surfaces derived from the approved identity. */
+  --surface-page: #f7fafb;
+  --surface-section: #f1f6f7;
+  --surface-mint: #edf8f6;
+  --surface-blue: #f0f5f9;
+  --surface-card: #ffffff;
+  --surface-card-hover: #fbfdfd;
+  --surface-dark-soft: #082f42;
+
+  /* Accessible text roles. */
+  --text-primary: #162b34;
+  --text-secondary: #586b74;
+  --text-muted: #60737d;
+  --text-on-dark: #f7fbfc;
+  --text-on-dark-muted: rgba(247, 251, 252, 0.72);
+
+  /* Quiet borders and accent washes. */
+  --border-soft: rgba(0, 26, 51, 0.08);
+  --border-default: rgba(0, 26, 51, 0.13);
+  --border-active: rgba(59, 195, 178, 0.38);
+  --teal-soft: rgba(59, 195, 178, 0.1);
+  --teal-medium: rgba(59, 195, 178, 0.18);
+  --blue-soft: rgba(51, 103, 154, 0.09);
+  --blue-medium: rgba(51, 103, 154, 0.16);
+
+  /* Compatibility roles for existing components. */
+  --brand-mint: var(--surface-mint);
+  --brand-sky: var(--surface-blue);
+  --brand-surface: var(--surface-page);
+  --brand-surface-strong: var(--surface-section);
+  --brand-text: var(--text-primary);
+  --brand-text-muted: var(--text-secondary);
+  --brand-border: var(--border-soft);
+  --brand-border-strong: var(--border-default);
   --brand-danger: #dc3545;
   --brand-danger-soft: #fff2f3;
   --brand-success: #198754;
@@ -79,31 +107,31 @@
   /* Backward-compatible semantic aliases used by existing components. */
   --forest-deep: var(--brand-navy);
   --forest: var(--brand-green-strong);
-  --forest-soft: var(--brand-mint);
+  --forest-soft: var(--surface-mint);
   --pine: var(--forest);
   --pine-dark: var(--brand-green-deep);
-  --ivory: var(--brand-surface);
-  --cream: var(--brand-surface-strong);
-  --surface: var(--brand-white);
-  --surface-muted: var(--brand-surface-strong);
-  --earth: var(--brand-text);
-  --earth-soft: var(--brand-text-muted);
+  --ivory: var(--surface-page);
+  --cream: var(--surface-section);
+  --surface: var(--surface-card);
+  --surface-muted: var(--surface-mint);
+  --earth: var(--text-primary);
+  --earth-soft: var(--text-secondary);
   --clay: var(--brand-green-strong);
   --clay-dark: var(--brand-green-deep);
   --gold: var(--brand-blue);
 
   --paper: var(--ivory);
   --paper-soft: var(--cream);
-  --card: var(--surface);
+  --card: var(--surface-card);
   --ink: var(--earth);
   --ink-soft: var(--earth-soft);
   --terracotta: var(--clay);
   --terracotta-dark: var(--clay-dark);
   --honey: var(--gold);
 
-  --line: rgba(0, 0, 0, 0.125);
-  --line-strong: var(--brand-border-strong);
-  --line-forest: rgba(59, 195, 178, 0.4);
+  --line: var(--border-soft);
+  --line-strong: var(--border-default);
+  --line-forest: var(--border-active);
   --focus-ring: var(--brand-blue);
 
   /* Shared spacing rhythm. */
@@ -123,10 +151,21 @@
   --font-ui: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-pashto: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
 
-  --shadow-xs: 0 4px 14px rgba(0, 26, 51, 0.04);
-  --shadow-sm: 0 10px 30px rgba(0, 26, 51, 0.07);
-  --shadow-md: 0 18px 48px rgba(0, 26, 51, 0.1);
-  --shadow-lg: 0 24px 64px rgba(0, 26, 51, 0.14);
+  /* Shared type scale: labels, supporting text, body, and display roles. */
+  --type-xs: 0.8125rem;
+  --type-sm: 0.875rem;
+  --type-base: 1rem;
+  --type-lg: 1.125rem;
+  --type-xl: 1.25rem;
+  --type-2xl: 1.5rem;
+  --type-3xl: 2rem;
+  --type-4xl: 2.75rem;
+  --type-5xl: 3.5rem;
+
+  --shadow-xs: 0 3px 12px rgba(0, 26, 51, 0.035);
+  --shadow-sm: 0 8px 24px rgba(0, 26, 51, 0.055);
+  --shadow-md: 0 14px 38px rgba(0, 26, 51, 0.075);
+  --shadow-lg: 0 20px 52px rgba(0, 26, 51, 0.1);
   --shadow-focus: 0 0 0 4px rgba(51, 103, 154, 0.2);
 
   --radius-xs: 4px;
@@ -379,7 +418,7 @@ svg {
 .btn-sm {
   min-height: 44px;
   padding: 9px 17px;
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
 }
 
 .text-link {
@@ -387,6 +426,6 @@ svg {
   align-items: center;
   gap: 7px;
   color: var(--terracotta-dark);
-  font-size: 0.91rem;
+  font-size: var(--type-sm);
   font-weight: 700;
 }

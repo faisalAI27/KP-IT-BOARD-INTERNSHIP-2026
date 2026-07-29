@@ -51,10 +51,10 @@
   position: relative;
   overflow: hidden;
   padding: clamp(26px, 4vw, 42px);
-  border: 1px solid var(--line-forest);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .voice-demo-card::before {
@@ -62,14 +62,8 @@
   top: 0;
   right: 0;
   left: 0;
-  height: 7px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--pine) 0 38px,
-    var(--honey) 38px 58px,
-    var(--terracotta) 58px 82px,
-    var(--paper-soft) 82px 96px
-  );
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-teal), rgba(51, 103, 154, 0.45), transparent 86%);
   content: "";
 }
 
@@ -85,7 +79,7 @@
   align-items: center;
   gap: 9px;
   color: var(--pine-dark);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -102,7 +96,7 @@
 
 .voice-demo-time {
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-variant-numeric: tabular-nums;
   font-weight: 750;
 }
@@ -116,11 +110,11 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px 16px;
-  border: 1px solid rgba(10, 101, 91, 0.17);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   background:
     linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)),
-    var(--surface-muted);
+    var(--surface-mint);
   color: var(--ink);
   font-family: var(--font-pashto);
   font-size: clamp(2rem, 4.6vw, 3.35rem);
@@ -157,12 +151,12 @@
   align-items: baseline;
   gap: 10px;
   color: var(--ink-soft);
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
 }
 
 .voice-demo-meaning span {
   color: var(--terracotta-dark);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -184,8 +178,8 @@
   border-radius: 22px;
   appearance: none;
   background:
-    linear-gradient(115deg, rgba(51, 103, 154, 0.08), transparent 46%),
-    rgba(237, 246, 244, 0.7);
+    linear-gradient(115deg, var(--blue-soft), transparent 46%),
+    var(--surface-mint);
   color: var(--ink);
   cursor: pointer;
   text-align: left;
@@ -240,7 +234,7 @@
 .voice-demo-prompt {
   justify-content: flex-start;
   color: var(--pine-dark);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   letter-spacing: normal;
 }
@@ -320,7 +314,7 @@
 
 .voice-demo-state-row {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.4;
 }
 

@@ -45,8 +45,8 @@
   position: relative;
   color: #000;
   font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 400;
+  font-size: var(--type-sm);
+  font-weight: 500;
   line-height: 1.5;
   white-space: nowrap;
   transition: color 0.2s ease;

@@ -242,7 +242,7 @@
   .nav-cta .btn {
     min-height: 37px;
     padding: 8px 13px;
-    font-size: 0.76rem;
+    font-size: var(--type-sm);
   }
 
   .nav-cta .btn svg {
@@ -518,7 +518,7 @@
 
   .nav-cta .public-account-link::before {
     content: "A";
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
     font-weight: 850;
   }
 
@@ -569,16 +569,16 @@
     min-width: 28px;
     max-width: 28px;
     max-height: 28px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .leaderboard-contributor-name {
-    font-size: 0.82rem;
+    font-size: var(--type-sm);
   }
 
   .leaderboard-approved-count span {
     display: block;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .leaderboard-error {
@@ -674,7 +674,7 @@
 
   .faq-q {
     gap: 16px;
-    font-size: 0.86rem;
+    font-size: var(--type-sm);
   }
 
   .foot-grid {

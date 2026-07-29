@@ -38,7 +38,7 @@
   margin-bottom: 20px;
   color: var(--pine-dark);
   font-family: var(--font-ui);
-  font-size: 0.875rem;
+  font-size: var(--type-sm);
   font-weight: 600;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -90,7 +90,7 @@
   align-items: center;
   gap: 8px;
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 750;
 }
 
@@ -117,7 +117,7 @@
   overflow: hidden;
   border: 8px solid var(--paper-soft);
   border-radius: 220px 220px 28px 28px;
-  background: #d7c8ad;
+  background: var(--surface-section);
   box-shadow: var(--shadow-md);
   isolation: isolate;
 }

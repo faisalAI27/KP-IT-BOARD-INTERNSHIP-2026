@@ -26,16 +26,26 @@ Do not repeat the tagline as nearby HTML text. The stacked lockup must not be us
 | `--brand-grey` | `#9D9D9D` | Restrained neutral details |
 | `--brand-white` | `#FFFFFF` | Light surfaces and reverse artwork |
 | `--brand-gradient` | mint → deep navy | KPITB programme-section treatment; never apply it to the logo image itself |
-| `--brand-text` | `#212529` | Standard text on light surfaces |
-| `--brand-text-muted` | `#6C757D` | Supporting and utility text |
-| `--brand-surface-strong` | `#F9F9F9` | Quiet alternate sections |
-| `--brand-border` | `#ECECEC` | Light dividers and boundaries |
+| `--surface-page` | `#F7FAFB` | Calm application and public-page canvas |
+| `--surface-section` | `#F1F6F7` | Quiet section and inactive-control surface |
+| `--surface-mint` | `#EDF8F6` | Selected, recommended, and consent surfaces |
+| `--surface-blue` | `#F0F5F9` | Institutional information surfaces |
+| `--surface-card` | `#FFFFFF` | Primary card and form surface |
+| `--surface-card-hover` | `#FBFDFD` | Subtle nested and hover surface |
+| `--text-primary` | `#162B34` | Standard high-contrast text on light surfaces |
+| `--text-secondary` | `#586B74` | Supporting copy |
+| `--text-muted` | `#60737D` | Compact labels and metadata |
+| `--border-soft` | navy at 8% | Quiet dividers and card boundaries |
+| `--border-default` | navy at 13% | Inputs and stronger boundaries |
 
 The interface palette and mint-to-navy gradient were measured from the live
 KPITB website. The approved KP AWAZ PNG artwork keeps its own embedded colours
-unchanged. Dark mint values found in the KPITB stylesheet are used when small
-text needs stronger contrast. Bootstrap red and green remain reserved for
-errors/destructive actions and confirmed success states.
+unchanged. The strongest identity values are reserved for primary actions,
+selected states, the contributor navigation, and occasional dark anchor
+sections. Most interface area uses the derived light surfaces above. Dark
+mint values remain available when compact mint text needs stronger contrast.
+Bootstrap red and green remain reserved for errors/destructive actions and
+confirmed success states.
 
 ## Typography
 
@@ -48,9 +58,11 @@ KP AWAZ uses the same split typography observed on the live KPITB website:
 
 The locally hosted font files in `frontend/assets/fonts/kpitb/` mirror the
 files loaded by the reference site. Standard body copy is 16px/24px. The
-desktop institutional scale is 64px for the largest headings, 48px for major
-section headings, 32px for card/feature headings, 20px for compact headings,
-and 16px for body text and buttons.
+interface scale uses 13px compact metadata, 14px supporting labels, 16px body
+copy, 18–24px compact headings, 32px feature headings, 44px section headings,
+and 56px product-page headings. A 64px display size remains available only
+for the largest public storytelling headline when its supporting copy is at
+least 16px.
 
 ## Frontend implementation
 

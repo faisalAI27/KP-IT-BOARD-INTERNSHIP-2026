@@ -3,16 +3,16 @@
   --dashboard-green-950: var(--brand-navy);
   --dashboard-green-900: var(--brand-green-deep);
   --dashboard-green-800: var(--brand-green-strong);
-  --dashboard-cream: var(--brand-surface);
-  --dashboard-paper: var(--brand-white);
-  --dashboard-paper-soft: var(--brand-surface-strong);
-  --dashboard-ink: var(--brand-navy);
-  --dashboard-muted: var(--brand-text-muted);
+  --dashboard-cream: var(--surface-page);
+  --dashboard-paper: var(--surface-card);
+  --dashboard-paper-soft: var(--surface-section);
+  --dashboard-ink: var(--text-primary);
+  --dashboard-muted: var(--text-secondary);
   --dashboard-gold: var(--brand-blue);
-  --dashboard-gold-soft: #f1f1f1;
+  --dashboard-gold-soft: var(--surface-section);
   --dashboard-terracotta: var(--brand-green-strong);
-  --dashboard-line: rgba(0, 26, 51, 0.12);
-  --dashboard-shadow: 0 16px 40px rgba(0, 26, 51, 0.08);
+  --dashboard-line: var(--border-soft);
+  --dashboard-shadow: var(--shadow-sm);
 }
 
 body.workspace-body.dashboard-body {
@@ -20,10 +20,8 @@ body.workspace-body.dashboard-body {
   overflow-x: hidden;
   background-color: var(--dashboard-cream);
   background-image:
-    linear-gradient(rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 72% 12%, rgba(59, 195, 178, 0.1), transparent 26%);
-  background-size: 48px 48px, 48px 48px, auto;
+    radial-gradient(circle at 78% 4%, var(--teal-soft), transparent 29rem),
+    radial-gradient(circle at 16% 72%, var(--blue-soft), transparent 34rem);
   color: var(--dashboard-ink);
 }
 
@@ -40,7 +38,7 @@ body.workspace-body.dashboard-body {
 }
 
 .dashboard-body .workspace-content {
-  width: min(100%, 1300px);
+  width: min(100%, 1180px);
 }
 
 .dashboard-colorflow-corner {
@@ -49,7 +47,7 @@ body.workspace-body.dashboard-body {
   right: -18px;
   width: 320px;
   height: 220px;
-  opacity: 0.1;
+  opacity: 0.035;
   background:
     linear-gradient(
       45deg,
@@ -87,7 +85,7 @@ body.workspace-body.dashboard-body {
   margin: 0;
   color: var(--dashboard-green-950);
   font-family: var(--font-display);
-  font-size: clamp(3rem, 6.8vw, 4rem);
+  font-size: clamp(2.75rem, 5vw, var(--type-5xl));
   font-weight: 800;
   gap: 0.18em;
   letter-spacing: normal;
@@ -107,12 +105,12 @@ body.workspace-body.dashboard-body {
 .dashboard-profile-link {
   min-height: 48px;
   padding: 13px 20px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.04);
-  color: #001a34;
-  font-size: 0.76rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
   font-weight: 800;
   line-height: 20px;
   white-space: nowrap;
@@ -136,13 +134,11 @@ body.workspace-body.dashboard-body {
 .dashboard-colorflow-shell {
   position: relative;
   overflow: hidden;
-  padding: 26px;
-  border: 1px solid rgba(0, 26, 51, 0.11);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.76);
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  background: var(--surface-card);
   box-shadow: var(--dashboard-shadow);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 .dashboard-colorflow-shell::before {
@@ -150,14 +146,8 @@ body.workspace-body.dashboard-body {
   top: 0;
   right: 0;
   left: 0;
-  height: 6px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--dashboard-gold) 0 18px,
-    var(--dashboard-green-800) 18px 36px,
-    var(--dashboard-terracotta) 36px 54px,
-    #f1f1f1 54px 72px
-  );
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-teal), rgba(51, 103, 154, 0.42), transparent 82%);
   content: "";
 }
 
@@ -169,7 +159,7 @@ body.workspace-body.dashboard-body {
   display: flex;
   align-items: center;
   color: var(--dashboard-terracotta);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   gap: 12px;
   letter-spacing: normal;
@@ -202,7 +192,7 @@ body.workspace-body.dashboard-body {
 
 .dashboard-block-title h2 {
   max-width: 620px;
-  font-size: clamp(1.9rem, 3.8vw, 3.25rem);
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
   text-wrap: balance;
 }
 
@@ -210,7 +200,7 @@ body.workspace-body.dashboard-body {
   max-width: 360px;
   margin: 18px 0 0;
   color: var(--dashboard-muted);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -233,31 +223,36 @@ body.workspace-body.dashboard-body {
   overflow: hidden;
   align-items: center;
   padding: 18px 20px;
-  border: 1px solid rgba(3, 69, 59, 0.15);
-  border-radius: 22px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface-card-hover);
   color: var(--dashboard-green-950);
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
   outline-offset: 4px;
   touch-action: manipulation;
   transition:
-    transform 220ms ease,
     border-color 220ms ease,
+    background-color 220ms ease,
     box-shadow 220ms ease;
+}
+
+.dashboard-recording-choice.is-recommended {
+  border-color: var(--border-active);
+  background: var(--surface-mint);
 }
 
 .dashboard-recording-choice:hover,
 .dashboard-recording-choice:focus-visible {
-  border-color: rgba(3, 69, 59, 0.28);
-  box-shadow: 0 12px 24px rgba(0, 26, 51, 0.07);
-  transform: translateY(-3px);
+  border-color: var(--border-active);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
 }
 
 .dashboard-choice-number {
   align-self: start;
   color: var(--dashboard-terracotta);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
 }
@@ -272,11 +267,11 @@ body.workspace-body.dashboard-body {
   align-items: center;
   margin-bottom: 8px;
   padding: 5px 10px;
-  border: 1px solid rgba(51, 103, 154, 0.22);
+  border: 1px solid var(--blue-medium);
   border-radius: var(--radius-pill);
-  background: rgba(51, 103, 154, 0.14);
-  color: #33679a;
-  font-size: 0.75rem;
+  background: var(--blue-soft);
+  color: var(--brand-blue);
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -295,8 +290,8 @@ body.workspace-body.dashboard-body {
 
 .dashboard-choice-copy small {
   margin-top: 6px;
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--type-xs);
   line-height: 1.45;
 }
 
@@ -305,9 +300,9 @@ body.workspace-body.dashboard-body {
   width: 46px;
   height: 46px;
   place-items: center;
-  border: 1px solid rgba(3, 69, 59, 0.18);
+  border: 1px solid var(--border-default);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--surface-card);
   color: var(--dashboard-green-900);
   transition:
     color 220ms ease,
@@ -348,7 +343,7 @@ body.workspace-body.dashboard-body {
   min-height: 44px;
   align-items: center;
   color: var(--dashboard-green-900);
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   font-weight: 900;
   gap: 8px;
   white-space: nowrap;
@@ -367,10 +362,10 @@ body.workspace-body.dashboard-body {
   margin: 0;
   padding: 22px;
   border: 1px solid rgba(0, 26, 51, 0.09);
-  border-radius: 20px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border-radius: 16px;
+  background: var(--surface-section);
   color: var(--dashboard-muted);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   text-align: center;
 }
 
@@ -390,9 +385,9 @@ body.workspace-body.dashboard-body {
   min-height: 80px;
   align-items: center;
   padding: 17px 18px;
-  border: 1px solid rgba(0, 26, 51, 0.13);
-  border-radius: 20px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: var(--surface-card-hover);
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 15px;
   transition:
@@ -450,8 +445,8 @@ body.workspace-body.dashboard-body {
 }
 
 .dashboard-mini-copy small {
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--type-xs);
   line-height: 1.45;
 }
 
@@ -461,7 +456,7 @@ body.workspace-body.dashboard-body {
   border-radius: var(--radius-pill);
   background: var(--dashboard-status-bg);
   color: var(--dashboard-status-color);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   white-space: nowrap;
 }
@@ -482,9 +477,9 @@ body.workspace-body.dashboard-body {
   padding-top: 22px;
   padding-bottom: 22px;
   border-color: rgba(3, 69, 59, 0.16);
-  border-radius: 24px;
+  border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(17, 76, 64, 0.04), rgba(51, 103, 154, 0.03)),
+    linear-gradient(135deg, var(--teal-soft), var(--blue-soft)),
     var(--dashboard-paper);
 }
 
@@ -495,14 +490,14 @@ body.workspace-body.dashboard-body {
 .dashboard-summary-main > h2 {
   max-width: 420px;
   margin: 6px 0 10px;
-  font-size: 2.5rem;
+  font-size: 2.25rem;
 }
 
 .dashboard-summary-main > p {
   max-width: 470px;
   margin: 0 0 18px;
   color: var(--dashboard-muted);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -516,9 +511,9 @@ body.workspace-body.dashboard-body {
   padding: 9px 12px;
   border: 1px solid rgba(0, 26, 51, 0.08);
   border-radius: var(--radius-pill);
-  background: #fff;
-  color: #6c757d;
-  font-size: 0.75rem;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: var(--type-xs);
   font-weight: 800;
 }
 
@@ -527,7 +522,7 @@ body.workspace-body.dashboard-body {
   align-items: center;
   margin-top: 16px;
   color: var(--dashboard-green-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   gap: 8px;
 }
@@ -554,8 +549,8 @@ body.workspace-body.dashboard-body {
   min-width: 0;
   padding: 18px;
   border: 1px solid rgba(0, 26, 51, 0.09);
-  border-radius: 22px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border-radius: 18px;
+  background: var(--surface-section);
   transition:
     transform 220ms ease,
     border-color 220ms ease,
@@ -575,9 +570,8 @@ body.workspace-body.dashboard-body {
 }
 
 .dashboard-stat-card:hover {
-  border-color: rgba(0, 26, 51, 0.15);
-  box-shadow: 0 12px 24px rgba(0, 26, 51, 0.06);
-  transform: translateY(-3px);
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-xs);
 }
 
 .dashboard-stat-mark {
@@ -590,7 +584,7 @@ body.workspace-body.dashboard-body {
   background: var(--dashboard-stat-chip-bg);
   color: var(--dashboard-stat-accent);
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
 }
 
@@ -600,22 +594,22 @@ body.workspace-body.dashboard-body {
   overflow-wrap: anywhere;
   color: var(--dashboard-green-950);
   font-family: var(--font-display);
-  font-size: 2.875rem;
+  font-size: 2.5rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .dashboard-stat-card p {
   margin: 0;
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--type-xs);
 }
 
 .dashboard-stat-card small {
   display: block;
   margin-top: 9px;
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -667,7 +661,7 @@ body.workspace-body.dashboard-body {
   }
 
   .dashboard-greeting {
-    font-size: clamp(2.85rem, 13vw, 4rem);
+    font-size: clamp(2.5rem, 11vw, 3.25rem);
   }
 
   .dashboard-profile-link {
@@ -682,7 +676,7 @@ body.workspace-body.dashboard-body {
   }
 
   .dashboard-block-title h2 {
-    font-size: clamp(2rem, 9vw, 2.65rem);
+    font-size: clamp(1.9rem, 8vw, 2.35rem);
   }
 
   .dashboard-section-head {
@@ -730,7 +724,7 @@ body.workspace-body.dashboard-body {
   }
 
   .dashboard-greeting {
-    font-size: clamp(2.55rem, 13vw, 3.3rem);
+    font-size: clamp(2.35rem, 11vw, 3rem);
   }
 
   .dashboard-colorflow-stack {

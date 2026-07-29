@@ -1,4 +1,4 @@
-@import url("./foundation.css?v=20260729-kpitb-system");
+@import url("./foundation.css?v=20260729-soft-system");
 
 .admin-page {
   min-height: 100vh;
@@ -9,7 +9,7 @@
 
 .admin-header {
   border-bottom: 1px solid var(--line);
-  background: rgba(249, 249, 249, 0.94);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(18px);
 }
 
@@ -42,7 +42,7 @@
 .admin-brand-context {
   display: grid;
   color: var(--brand-navy);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -59,7 +59,7 @@
 .admin-field-meta,
 .admin-status {
   color: var(--ink-soft);
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
 }
 
 .admin-header__badge {
@@ -95,15 +95,14 @@
 .admin-connect__copy {
   display: grid;
   align-content: center;
-  background:
-    linear-gradient(145deg, rgba(3, 69, 59, 0.98), rgba(0, 26, 51, 0.99));
+  background: linear-gradient(145deg, #0b4250, var(--surface-dark-soft));
   color: var(--paper);
   gap: 16px;
 }
 
 .admin-connect__copy h1 {
   color: #fff;
-  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
   line-height: 1.04;
 }
 
@@ -114,7 +113,7 @@
 
 .admin-eyebrow {
   color: var(--terracotta-dark);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -132,7 +131,7 @@
 
 .admin-connect__form label,
 .admin-review label {
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
   font-weight: 800;
 }
 
@@ -217,18 +216,18 @@
 .admin-pending-count {
   margin-left: auto;
   padding: 7px 11px;
-  border: 1px solid rgba(214, 164, 67, 0.3);
+  border: 1px solid var(--blue-medium);
   border-radius: 999px;
-  background: rgba(214, 164, 67, 0.11);
+  background: var(--blue-soft);
   color: #33679a;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   white-space: nowrap;
 }
 
 .admin-filters > span:not(.admin-pending-count) {
   color: var(--ink-soft);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -247,7 +246,7 @@
   background: transparent;
   cursor: pointer;
   color: var(--ink-soft);
-  font-size: 0.85rem;
+  font-size: var(--type-sm);
   font-weight: 750;
 }
 
@@ -326,7 +325,7 @@
 .admin-empty p {
   margin-top: 3px;
   color: var(--ink-soft);
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
 }
 
 .admin-contribution-list {
@@ -372,7 +371,7 @@
   margin-top: 9px;
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: var(--type-sm);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -381,7 +380,7 @@
   flex-wrap: wrap;
   margin-top: 10px;
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .admin-status-badge {
@@ -392,7 +391,7 @@
   border-radius: 999px;
   background: var(--paper-soft);
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -416,7 +415,7 @@
 
 .admin-pagination span {
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   text-align: center;
 }
 
@@ -451,7 +450,7 @@
 
 .admin-detail__prompt span {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -478,7 +477,7 @@
 
 .admin-metadata dt {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -487,7 +486,7 @@
 .admin-metadata dd {
   margin: 3px 0 0;
   overflow-wrap: anywhere;
-  font-size: 0.88rem;
+  font-size: var(--type-sm);
   font-weight: 650;
 }
 
@@ -634,9 +633,9 @@
 .admin-text-source {
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(214, 164, 67, 0.13);
+  background: var(--blue-soft);
   color: #33679a;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   text-transform: uppercase;
 }
@@ -645,7 +644,7 @@
   display: -webkit-box;
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: var(--type-base);
   line-height: 1.65;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -659,7 +658,7 @@
 
 .admin-text-card__meta {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.55;
   overflow-wrap: anywhere;
 }
@@ -699,7 +698,7 @@
   background: #fff;
   color: var(--ink);
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: var(--type-sm);
   line-height: 1.7;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -726,7 +725,7 @@
 
 .admin-text-metadata dt {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -735,7 +734,7 @@
 .admin-text-metadata dd {
   margin: 3px 0 0;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   overflow-wrap: anywhere;
 }
 
@@ -749,7 +748,7 @@
 .admin-text-review-form label {
   display: grid;
   color: var(--ink);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   gap: 6px;
 }
@@ -830,14 +829,14 @@
 .admin-withdrawal-card__meta,
 .admin-withdrawal-card__reason {
   color: var(--ink-soft);
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
 }
 
 .admin-withdrawal-card label {
   display: grid;
   margin-top: 5px;
   color: var(--ink);
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   gap: 6px;
 }
@@ -887,7 +886,7 @@
 
 .admin-phrase-stats span {
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 750;
 }
 
@@ -922,7 +921,7 @@
 .admin-phrase-dialog label {
   display: grid;
   color: var(--ink);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   gap: 6px;
 }
@@ -960,7 +959,7 @@
 
 .admin-import-summary dt {
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 750;
 }
 
@@ -1007,7 +1006,7 @@
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
 }
 
 .admin-phrase-table th,
@@ -1021,7 +1020,7 @@
 .admin-phrase-table th {
   background: var(--paper-soft);
   color: var(--ink-soft);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   letter-spacing: normal;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1040,7 +1039,7 @@
   max-width: 56ch;
   overflow-wrap: anywhere;
   color: var(--ink);
-  font-size: 0.96rem;
+  font-size: var(--type-base);
   line-height: 1.65;
   white-space: normal;
 }
@@ -1085,7 +1084,7 @@
   border-left: 3px solid var(--honey);
   background: var(--paper-soft);
   color: var(--ink-soft);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
 }
 
 .admin-phrase-edit-grid {
@@ -1097,7 +1096,7 @@
 .btn-small {
   min-height: 38px;
   padding: 9px 15px;
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
 }
 
 .btn-secondary {

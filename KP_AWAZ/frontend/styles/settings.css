@@ -3,23 +3,20 @@
   --settings-green-950: var(--brand-navy);
   --settings-green-900: var(--brand-green-deep);
   --settings-green-800: var(--brand-green-strong);
-  --settings-cream: var(--brand-surface);
-  --settings-paper: var(--brand-white);
-  --settings-paper-soft: var(--brand-surface-strong);
-  --settings-ink: var(--brand-navy);
-  --settings-muted: var(--brand-text-muted);
+  --settings-cream: var(--surface-page);
+  --settings-paper: var(--surface-card);
+  --settings-paper-soft: var(--surface-section);
+  --settings-ink: var(--text-primary);
+  --settings-muted: var(--text-secondary);
   --settings-gold: var(--brand-blue);
-  --settings-gold-soft: #f1f1f1;
+  --settings-gold-soft: var(--surface-section);
   --settings-terracotta: var(--brand-green-strong);
-  --settings-line: rgba(0, 26, 51, 0.12);
-  --settings-shadow: 0 16px 40px rgba(0, 26, 51, 0.08);
+  --settings-line: var(--border-soft);
+  --settings-shadow: var(--shadow-sm);
   overflow-x: hidden;
   background-color: var(--settings-cream);
   background-image:
-    linear-gradient(rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 72% 12%, rgba(59, 195, 178, 0.1), transparent 26%);
-  background-size: 48px 48px, 48px 48px, auto;
+    radial-gradient(circle at 76% 6%, var(--teal-soft), transparent 28rem);
   color: var(--settings-ink);
 }
 
@@ -36,7 +33,7 @@
 }
 
 .settings-body .workspace-content {
-  width: min(100%, 1300px);
+  width: min(100%, 1180px);
 }
 
 .settings-template-corner {
@@ -45,7 +42,7 @@
   right: -18px;
   width: 320px;
   height: 220px;
-  opacity: 0.1;
+  opacity: 0.035;
   background:
     linear-gradient(
       45deg,
@@ -100,12 +97,12 @@
   flex: 0 0 auto;
   align-items: center;
   padding: 12px 20px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.04);
-  color: #001a34;
-  font-size: 0.76rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+  color: var(--text-primary);
+  font-size: var(--type-sm);
   font-weight: 800;
 }
 
@@ -114,12 +111,10 @@
   overflow: hidden;
   margin-top: 28px;
   padding: 26px;
-  border: 1px solid rgba(0, 26, 51, 0.11);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  background: var(--surface-card);
   box-shadow: var(--settings-shadow);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 .settings-template-shell::before {
@@ -127,14 +122,8 @@
   top: 0;
   right: 0;
   left: 0;
-  height: 6px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--settings-gold) 0 18px,
-    var(--settings-green-800) 18px 36px,
-    var(--settings-terracotta) 36px 54px,
-    #f1f1f1 54px 72px
-  );
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-teal), rgba(51, 103, 154, 0.42), transparent 82%);
   content: "";
 }
 
@@ -151,19 +140,19 @@
 .settings-template-block {
   min-width: 0;
   padding: 20px;
-  border: 1px solid rgba(0, 26, 51, 0.1);
-  border-radius: 22px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface-card-hover);
   transition:
-    transform 220ms ease,
     border-color 220ms ease,
+    background-color 220ms ease,
     box-shadow 220ms ease;
 }
 
 .settings-template-block:hover {
-  border-color: rgba(0, 26, 51, 0.16);
-  box-shadow: 0 10px 20px rgba(0, 26, 51, 0.05);
-  transform: translateY(-2px);
+  border-color: var(--border-active);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
 }
 
 .settings-block-head,
@@ -190,7 +179,7 @@
   max-width: 720px;
   margin: 5px 0 0;
   color: var(--settings-muted);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -202,11 +191,11 @@
   align-items: center;
   justify-content: center;
   padding: 7px 11px;
-  border: 1px solid rgba(51, 103, 154, 0.22);
+  border: 1px solid var(--blue-medium);
   border-radius: var(--radius-pill);
-  background: rgba(51, 103, 154, 0.14);
-  color: #33679a;
-  font-size: 0.75rem;
+  background: var(--blue-soft);
+  color: var(--brand-blue);
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -230,8 +219,8 @@
 }
 
 .settings-field label {
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -267,14 +256,14 @@
 }
 
 .settings-field input[readonly] {
-  background: rgba(239, 234, 224, 0.65);
-  color: #6c757d;
+  background: var(--surface-section);
+  color: var(--text-muted);
   cursor: default;
 }
 
 .settings-field small {
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.5;
 }
 
@@ -312,7 +301,7 @@
 .settings-account-facts dt,
 .settings-consent-facts dt {
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .settings-account-facts dd,
@@ -320,7 +309,7 @@
   margin: 0;
   color: var(--settings-green-950);
   overflow-wrap: anywhere;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-align: right;
 }
@@ -356,7 +345,7 @@
   background: rgba(3, 69, 59, 0.08);
   color: var(--settings-green-900);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   transform: translateY(-50%);
 }
@@ -395,14 +384,14 @@ label.settings-preference-row {
 
 .settings-preference-copy strong {
   color: var(--settings-green-950);
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
 }
 
 .settings-preference-copy small {
   max-width: 650px;
   margin-top: 4px;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.5;
 }
 
@@ -473,7 +462,7 @@ label.settings-preference-row {
 .settings-save-note {
   margin: 0;
   color: var(--settings-muted);
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   line-height: 1.5;
 }
 
@@ -493,7 +482,7 @@ label.settings-preference-row {
   border-radius: 13px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   font-weight: 850;
   transition:
     transform 200ms ease,
@@ -545,7 +534,7 @@ label.settings-preference-row {
 .settings-message {
   padding: 11px 12px;
   border-radius: 11px;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.45;
 }
 
@@ -571,7 +560,7 @@ label.settings-preference-row {
   border-radius: 14px;
   background: rgba(51, 103, 154, 0.1);
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.55;
 }
 
@@ -602,14 +591,14 @@ label.settings-preference-row {
 .settings-impact-values span {
   margin-top: 4px;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .settings-inline-status,
 .settings-consent-note {
   margin: 14px 0 0;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.55;
 }
 
@@ -626,7 +615,7 @@ label.settings-preference-row {
   display: inline-flex;
   margin-top: 14px;
   color: #dc3545;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
 }
 
@@ -676,7 +665,7 @@ label.settings-preference-row {
 .settings-withdrawal-history > p {
   margin-top: 8px;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .settings-withdrawal-history ul {
@@ -698,7 +687,7 @@ label.settings-preference-row {
 
 .settings-withdrawal-history li strong {
   overflow: hidden;
-  font-size: 0.76rem;
+  font-size: var(--type-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -708,7 +697,7 @@ label.settings-preference-row {
   border-radius: var(--radius-pill);
   background: rgba(51, 103, 154, 0.16);
   color: #33679a;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
 }
 
@@ -725,7 +714,7 @@ label.settings-preference-row {
 .settings-withdrawal-history li small {
   grid-column: 1 / -1;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .settings-data-boundary {
@@ -745,7 +734,7 @@ label.settings-preference-row {
 .settings-data-boundary p {
   margin: 0;
   color: var(--settings-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.65;
 }
 

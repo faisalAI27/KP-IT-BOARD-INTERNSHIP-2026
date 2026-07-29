@@ -1,9 +1,9 @@
 /* Focused voice recorder template, connected to the authenticated contribution flow. */
 .contribute-template-body {
   background:
-    radial-gradient(circle at 84% 0%, rgba(51, 103, 154, 0.16), transparent 26%),
-    radial-gradient(circle at 25% -12%, rgba(59, 195, 178, 0.1), transparent 24%),
-    linear-gradient(180deg, var(--brand-white) 0%, var(--brand-surface) 52%, var(--brand-surface-strong) 100%);
+    radial-gradient(circle at 84% 0%, var(--blue-soft), transparent 28rem),
+    radial-gradient(circle at 25% -12%, var(--teal-soft), transparent 26rem),
+    var(--surface-page);
 }
 
 .contribute-template-body .workspace-main {
@@ -20,14 +20,14 @@
   --focused-clay-500: var(--brand-green);
   --focused-gold-500: var(--brand-blue);
   --focused-gold-400: #33679a;
-  --focused-cream-50: var(--brand-white);
-  --focused-cream-100: var(--brand-surface);
-  --focused-cream-200: var(--brand-surface-strong);
-  --focused-sage-100: var(--brand-mint);
-  --focused-ink: var(--brand-navy);
-  --focused-muted: var(--brand-text-muted);
-  --focused-line: rgba(0, 26, 51, 0.13);
-  --focused-shadow: 0 24px 70px rgba(0, 26, 51, 0.11);
+  --focused-cream-50: var(--surface-card);
+  --focused-cream-100: var(--surface-card);
+  --focused-cream-200: var(--surface-section);
+  --focused-sage-100: var(--surface-mint);
+  --focused-ink: var(--text-primary);
+  --focused-muted: var(--text-secondary);
+  --focused-line: var(--border-soft);
+  --focused-shadow: var(--shadow-sm);
   display: grid;
   padding: 0;
   border: 0;
@@ -71,11 +71,11 @@
   justify-content: space-between;
   margin: 0 auto;
   padding: 11px 15px;
-  border: 1px solid rgba(3, 69, 59, 0.14);
+  border: 1px solid var(--border-active);
   border-radius: 14px;
-  background: rgba(230, 240, 232, 0.82);
+  background: var(--surface-mint);
   color: var(--focused-pine-950);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 760;
   gap: 16px;
 }
@@ -90,10 +90,9 @@
   margin: 0 auto;
   padding: clamp(24px, 3.4vw, 38px);
   border: 1px solid var(--focused-line);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.82);
+  border-radius: 24px;
+  background: var(--surface-card);
   box-shadow: var(--focused-shadow);
-  backdrop-filter: blur(16px);
   animation: focused-fade-up 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -101,7 +100,7 @@
   position: absolute;
   z-index: -1;
   inset: 11px;
-  border: 1px solid rgba(183, 90, 52, 0.13);
+  border: 1px solid var(--border-soft);
   border-radius: 22px;
   content: "";
   pointer-events: none;
@@ -114,13 +113,12 @@
   right: -55px;
   width: 250px;
   height: 250px;
-  opacity: 0.1;
+  opacity: 0.04;
   background:
     linear-gradient(45deg, transparent 45%, var(--focused-clay-600) 45% 55%, transparent 55%),
     linear-gradient(-45deg, transparent 45%, var(--focused-clay-600) 45% 55%, transparent 55%);
   background-size: 42px 42px;
   content: "";
-  animation: focused-spin-slow 60s linear infinite;
   pointer-events: none;
 }
 
@@ -140,7 +138,7 @@
   display: inline-flex;
   align-items: center;
   color: var(--focused-clay-600);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -158,10 +156,10 @@
   margin: 10px 0 8px;
   color: var(--focused-pine-900);
   font-family: var(--font-display);
-  font-size: clamp(2.25rem, 4.1vw, 3.6rem);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
   font-weight: 600;
   letter-spacing: normal;
-  line-height: 0.98;
+  line-height: 1.08;
 }
 
 .focused-card-heading h1 em {
@@ -173,7 +171,7 @@
   max-width: 640px;
   margin: 0;
   color: var(--focused-muted);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   line-height: 1.65;
 }
 
@@ -185,7 +183,7 @@
   border-radius: 999px;
   background: var(--focused-sage-100);
   color: var(--focused-pine-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   white-space: nowrap;
   gap: 7px;
@@ -220,9 +218,9 @@
   padding: 10px 12px;
   border: 1px solid var(--focused-line);
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.48);
+  background: var(--surface-card-hover);
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   gap: 9px;
   transition:
@@ -240,20 +238,20 @@
   border-radius: 50%;
   background: var(--focused-cream-200);
   color: var(--focused-pine-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .focused-journey-step.active,
 .focused-journey-step.is-active {
-  border-color: rgba(183, 90, 52, 0.28);
-  background: rgba(202, 107, 66, 0.08);
+  border-color: var(--border-active);
+  background: var(--teal-soft);
   color: var(--focused-clay-700);
 }
 
 .focused-journey-step.active b,
 .focused-journey-step.is-active b {
   background: var(--focused-clay-600);
-  box-shadow: 0 0 0 5px rgba(183, 90, 52, 0.08);
+  box-shadow: 0 0 0 5px var(--teal-soft);
   color: white;
 }
 
@@ -278,7 +276,7 @@
   border-radius: 13px;
   background: var(--brand-danger-soft);
   color: var(--brand-danger);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   line-height: 1.5;
 }
 
@@ -302,13 +300,13 @@
   align-items: center;
   overflow: hidden;
   padding: 25px 24px;
-  border: 1px solid rgba(51, 103, 154, 0.14);
-  border-radius: 24px;
+  border: 1px solid rgba(247, 251, 252, 0.1);
+  border-radius: 20px;
   background:
-    radial-gradient(circle at var(--spot-x) var(--spot-y), rgba(51, 103, 154, 0.08), transparent 29%),
-    linear-gradient(145deg, #001a34, #001a34 58%, #001a33);
-  box-shadow: 0 22px 50px rgba(3, 69, 59, 0.22);
-  color: white;
+    radial-gradient(circle at var(--spot-x) var(--spot-y), var(--blue-soft), transparent 32%),
+    var(--surface-dark-soft);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-on-dark);
   grid-template-columns: 126px minmax(0, 1fr) 120px;
   gap: 22px;
   transition:
@@ -317,14 +315,7 @@
 }
 
 .focused-record-stage::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  opacity: 0.12;
-  background: linear-gradient(115deg, transparent 25%, rgba(255, 255, 255, 0.11) 48%, transparent 70%);
-  content: "";
-  transform: translateX(-140%);
-  animation: focused-shimmer 8s ease-in-out infinite;
+  display: none;
 }
 
 .focused-record-stage::after {
@@ -345,8 +336,8 @@
 .focused-record-stage.is-recording {
   border-color: rgba(51, 103, 154, 0.36);
   box-shadow:
-    0 24px 58px rgba(3, 69, 59, 0.28),
-    0 0 0 1px rgba(51, 103, 154, 0.08) inset;
+    var(--shadow-md),
+    0 0 0 1px var(--blue-soft) inset;
 }
 
 .focused-record-orb-wrap {
@@ -372,7 +363,7 @@
   padding: 0;
   border: 1px solid rgba(51, 103, 154, 0.48);
   border-radius: 31px;
-  background: linear-gradient(145deg, rgba(51, 103, 154, 0.23), rgba(202, 107, 66, 0.34));
+  background: linear-gradient(145deg, var(--blue-medium), var(--teal-medium));
   box-shadow: 0 18px 44px rgba(5, 28, 24, 0.25);
   color: #d4d4d4;
   cursor: pointer;
@@ -454,8 +445,8 @@
   min-height: 22px;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 0.75rem;
+  color: var(--text-on-dark-muted);
+  font-size: var(--type-xs);
   font-weight: 760;
   text-align: center;
   gap: 6px;
@@ -482,7 +473,7 @@
   display: inline-flex;
   align-items: center;
   color: var(--focused-gold-400);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -498,7 +489,7 @@
 
 .focused-record-copy h2 {
   margin: 0;
-  color: white;
+  color: var(--text-on-dark);
   font-family: var(--font-display);
   font-size: clamp(1.35rem, 2.3vw, 1.75rem);
   font-weight: 600;
@@ -508,8 +499,8 @@
 .focused-record-copy > p {
   max-width: 440px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 0.75rem;
+  color: var(--text-on-dark-muted);
+  font-size: var(--type-xs);
   line-height: 1.55;
 }
 
@@ -519,7 +510,7 @@
   justify-content: space-between;
   margin-top: 15px;
   color: rgba(255, 255, 255, 0.58);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 760;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -557,7 +548,7 @@
 
 .focused-timer-card small {
   color: rgba(255, 255, 255, 0.48);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 760;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -577,7 +568,7 @@
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-decoration: underline;
   text-decoration-color: rgba(51, 103, 154, 0.38);
@@ -615,7 +606,7 @@
   top: 18px;
   left: 50%;
   color: #d4d4d4;
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   font-weight: 900;
   opacity: 0;
   pointer-events: none;
@@ -632,9 +623,9 @@
   width: 100%;
   max-width: 100%;
   padding: 18px 20px;
-  border: 1px solid rgba(3, 69, 59, 0.14);
+  border: 1px solid var(--border-soft);
   border-radius: 20px;
-  background: rgba(246, 249, 243, 0.7);
+  background: var(--surface-mint);
 }
 
 .focused-sentence-card::before {
@@ -659,13 +650,13 @@
   border-radius: 999px;
   background: var(--focused-sage-100);
   color: var(--focused-pine-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
 }
 
 .focused-sentence-top > span:last-child {
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
 }
 
@@ -694,8 +685,8 @@
 }
 
 .focused-pashto-sentence:hover {
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 26px rgba(3, 69, 59, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-xs);
   transform: scale(1.018);
 }
 
@@ -732,23 +723,23 @@
   padding-top: 10px;
   border-top: 1px solid var(--focused-line);
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.55;
 }
 
 .focused-roman-pashto {
   margin: 4px 0 10px;
   padding: 11px 13px;
-  border: 1px solid rgba(3, 69, 59, 0.1);
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.52);
+  background: var(--surface-card);
 }
 
 .focused-roman-pashto > span {
   display: block;
   margin-bottom: 3px;
   color: var(--focused-clay-600);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -769,7 +760,7 @@
   padding: 16px;
   border: 1px solid var(--focused-line);
   border-radius: 17px;
-  background: rgba(255, 255, 255, 0.68);
+  background: var(--surface-card-hover);
   grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr);
   gap: 14px 22px;
   animation: focused-fade-up 360ms ease both;
@@ -785,7 +776,7 @@
 .focused-review-copy p {
   margin: 0;
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.5;
 }
 
@@ -798,9 +789,9 @@
 
 .focused-account-consent {
   padding: 13px 14px;
-  border: 1px solid rgba(10, 101, 91, 0.2);
+  border: 1px solid var(--border-active);
   border-radius: 13px;
-  background: rgba(230, 240, 232, 0.5);
+  background: var(--surface-mint);
   grid-column: 1 / -1;
 }
 
@@ -812,7 +803,7 @@
   display: grid;
   align-items: start;
   color: var(--focused-muted);
-  font-size: 0.875rem;
+  font-size: var(--type-sm);
   line-height: 1.5;
   cursor: pointer;
   grid-template-columns: 20px minmax(0, 1fr);
@@ -840,7 +831,7 @@
 .focused-account-consent p {
   margin: 7px 0 0 30px;
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .focused-review-actions,
@@ -860,7 +851,7 @@
   padding: 0 17px;
   border: 1px solid transparent;
   border-radius: 13px;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   text-decoration: none;
   gap: 7px;
@@ -875,7 +866,7 @@
   position: relative;
   overflow: hidden;
   background: linear-gradient(135deg, var(--focused-clay-600), var(--focused-clay-700));
-  box-shadow: 0 12px 24px rgba(148, 69, 40, 0.2);
+  box-shadow: 0 10px 22px rgba(0, 26, 51, 0.16);
   color: white;
 }
 
@@ -891,12 +882,12 @@
 }
 
 .focused-primary-button:hover:not(:disabled) {
-  box-shadow: 0 15px 30px rgba(148, 69, 40, 0.26);
+  box-shadow: 0 13px 26px rgba(0, 26, 51, 0.2);
 }
 
 .focused-secondary-button:hover:not(:disabled) {
-  border-color: rgba(3, 69, 59, 0.3);
-  background: rgba(230, 240, 232, 0.5);
+  border-color: var(--border-active);
+  background: var(--surface-mint);
 }
 
 .focused-primary-button:focus-visible,
@@ -923,9 +914,9 @@
   align-items: center;
   margin-top: 15px;
   padding: 18px;
-  border: 1px solid rgba(10, 101, 91, 0.22);
+  border: 1px solid var(--border-active);
   border-radius: 18px;
-  background: rgba(230, 240, 232, 0.72);
+  background: var(--surface-mint);
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
 }
@@ -951,7 +942,7 @@
 .focused-submission-success p {
   margin: 0;
   color: var(--focused-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.5;
 }
 
@@ -986,7 +977,7 @@
   background: var(--focused-pine-950);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.25);
   color: white;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   pointer-events: none;
   transform: translate(-50%, 24px);
@@ -1077,7 +1068,7 @@
 
 @media (max-width: 720px) {
   .contribute-template-body .workspace-main {
-    padding: 22px 16px 30px;
+    padding: 88px 16px 30px;
   }
 
   .focused-voice-card {
@@ -1141,7 +1132,7 @@
   }
 
   .focused-record-cue {
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .focused-record-copy h2 {

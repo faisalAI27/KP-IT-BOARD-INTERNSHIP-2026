@@ -17,7 +17,7 @@
   margin-bottom: 11px;
   color: var(--terracotta);
   content: "PRIVATE REVIEW TRAIL";
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
 }

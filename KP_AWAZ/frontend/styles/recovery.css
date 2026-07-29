@@ -24,7 +24,7 @@
 .recovery-success p {
   margin-bottom: 20px;
   color: var(--auth-muted);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -39,7 +39,7 @@
   background: transparent;
   color: var(--auth-deep-green);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 820;
   text-decoration: underline;
   text-decoration-color: rgba(20, 58, 45, 0.3);

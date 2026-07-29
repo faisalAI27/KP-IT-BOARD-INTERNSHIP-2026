@@ -98,8 +98,8 @@ test("profile and privacy are merged into one refined Settings workspace", async
   assert.match(app, /updateMyProfile\(updates\)/);
   assert.match(app, /getMyContributionStatistics\(\)/);
   assert.match(app, /getMyConsentSummary\(\)/);
-  assert.match(css, /\.settings-template-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.76\)/);
-  assert.match(css, /\.settings-template-shell::before\s*{[\s\S]*?repeating-linear-gradient/);
+  assert.match(css, /\.settings-template-shell\s*{[\s\S]*?background:\s*var\(--surface-card\)/);
+  assert.match(css, /\.settings-template-shell::before\s*{[\s\S]*?height:\s*3px[\s\S]*?linear-gradient/);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.settings-field-grid,[\s\S]*?grid-template-columns:\s*1fr/);
   assert.doesNotMatch(sidebar, /href="profile\.html"/);
   assert.match(sidebar, /href="settings\.html"[\s\S]*?Profile, privacy &amp; security/);

@@ -109,7 +109,7 @@ test("record voice implements the supplied focused recorder template and motion"
     read("scripts/modules/rabab-recorder-template.js"),
     read("scripts/modules/recorder.js"),
   ]);
-  assert.match(page, /styles\/rabab-recorder\.css\?v=20260729-kpitb-system/);
+  assert.match(page, /styles\/rabab-recorder\.css\?v=20260729-soft-system/);
   assert.match(page, /scripts\/contribute-page-app\.js\?v=20260726-focused-recorder/);
   assert.doesNotMatch(page, /styles\/mic-enhanced-template\.css|styles\/contribution\.css/);
   assert.doesNotMatch(page, /donate-text/);
@@ -165,8 +165,8 @@ test("dashboard implements the supplied refined contribution surface", async () 
   assert.match(html, /Choose how you want to [\s\S]*share your voice/);
   assert.match(html, /Record a reviewed Pashto prompt, or open the dedicated Donate Text workspace/);
   assert.match(html, /dashboard-colorflow-shell dashboard-contribute-hub/);
-  assert.match(css, /\.dashboard-colorflow-shell\s*{[\s\S]*?background:\s*rgba\(255, 255, 255, 0\.76\)/);
-  assert.match(css, /\.dashboard-colorflow-shell::before\s*{[\s\S]*?height:\s*6px[\s\S]*?repeating-linear-gradient/);
+  assert.match(css, /\.dashboard-colorflow-shell\s*{[\s\S]*?background:\s*var\(--surface-card\)/);
+  assert.match(css, /\.dashboard-colorflow-shell::before\s*{[\s\S]*?height:\s*3px[\s\S]*?linear-gradient/);
   assert.match(css, /\.dashboard-colorflow-shell::after\s*{[\s\S]*?display:\s*none/);
   assert.match(css, /\.dashboard-recording-choice\s*{[\s\S]*?min-height:\s*116px/);
   assert.match(css, /\.dashboard-recording-choices\s*{[^}]*grid-auto-rows:\s*1fr/s);
@@ -188,7 +188,8 @@ test("dashboard hierarchy and restrained interactions keep recording first", asy
   assert.match(html, /class="dashboard-greeting-salutation">Salaam,/);
   assert.match(html, /class="dashboard-greeting-person"><span id="workspaceGreetingName">contributor<\/span>\.<\/span>/);
   assert.match(css, /\.dashboard-greeting-person\s*{[\s\S]*?color:\s*var\(--dashboard-terracotta\)/);
-  assert.match(css, /\.dashboard-recording-choice:hover,[\s\S]*?translateY\(-3px\)/);
+  const choiceHover = css.match(/\.dashboard-recording-choice:hover,[^{]+\{([^}]*)\}/)?.[1] ?? "";
+  assert.doesNotMatch(choiceHover, /transform:/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dashboard-recording-choice:hover[\s\S]*?transform:\s*none/);
   assert.match(source, /animateDashboardCounter/);
   assert.match(source, /initDashboardColorflow/);
@@ -197,11 +198,11 @@ test("dashboard hierarchy and restrained interactions keep recording first", asy
   assert.doesNotMatch(presenter, /--dashboard-(?:tilt|glow)-/);
 });
 
-test("dashboard carries the supplied grid and static woven corner", async () => {
+test("dashboard carries a soft ambient wash and static woven corner", async () => {
   const css = await read("styles/dashboard.css");
   const bodyBlock = css.match(/body\.workspace-body\.dashboard-body\s*{([\s\S]*?)\n}/)?.[1] ?? "";
-  assert.match(bodyBlock, /background-image:\s*[\s\S]*?linear-gradient[\s\S]*?radial-gradient/);
-  assert.match(bodyBlock, /background-size:\s*48px 48px, 48px 48px, auto/);
+  assert.match(bodyBlock, /background-image:\s*[\s\S]*?radial-gradient[\s\S]*?radial-gradient/);
+  assert.doesNotMatch(bodyBlock, /background-size:\s*48px 48px/);
   assert.match(css, /\.dashboard-colorflow-corner\s*{[\s\S]*?pointer-events:\s*none/);
   assert.doesNotMatch(css, /\.dashboard-colorflow-corner\s*{[^}]*animation:/s);
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.dashboard-colorflow-corner\s*{[\s\S]*?opacity:\s*0\.08/);

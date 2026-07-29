@@ -4,23 +4,20 @@
   --leaderboard-green-900: var(--brand-green-deep);
   --leaderboard-green-800: var(--brand-green-strong);
   --leaderboard-green-700: #0a655b;
-  --leaderboard-cream: var(--brand-surface);
-  --leaderboard-paper: var(--brand-white);
-  --leaderboard-ink: var(--brand-navy);
-  --leaderboard-muted: var(--brand-text-muted);
+  --leaderboard-cream: var(--surface-page);
+  --leaderboard-paper: var(--surface-card);
+  --leaderboard-ink: var(--text-primary);
+  --leaderboard-muted: var(--text-secondary);
   --leaderboard-gold: var(--brand-blue);
-  --leaderboard-gold-2: #f1f1f1;
+  --leaderboard-gold-2: var(--surface-section);
   --leaderboard-terracotta: var(--brand-green-strong);
   --leaderboard-terracotta-2: var(--brand-blue-strong);
-  --leaderboard-shadow: 0 16px 40px rgba(0, 26, 51, 0.08);
+  --leaderboard-shadow: var(--shadow-sm);
   position: relative;
   min-height: 100vh;
   overflow: hidden;
   background-image:
-    linear-gradient(rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 26, 51, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 72% 12%, rgba(51, 103, 154, 0.1), transparent 26%);
-  background-size: 48px 48px, 48px 48px, auto;
+    radial-gradient(circle at 72% 12%, var(--blue-soft), transparent 29rem);
   color: var(--leaderboard-ink);
 }
 
@@ -44,7 +41,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   right: 18px;
   width: 320px;
   height: 220px;
-  opacity: 0.1;
+  opacity: 0.035;
   background:
     linear-gradient(
       45deg,
@@ -72,14 +69,14 @@ body[data-leaderboard-page="true"] .leaderboard-section {
 .leaderboard-header-copy {
   flex: 1;
   padding-bottom: 18px;
-  border-bottom: 1px solid rgba(0, 26, 51, 0.13);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .leaderboard-template-eyebrow {
   display: flex;
   align-items: center;
   color: var(--leaderboard-terracotta);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   gap: 12px;
   letter-spacing: normal;
@@ -110,7 +107,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   max-width: 720px;
   margin: 0;
   color: var(--leaderboard-muted);
-  font-size: 0.92rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -127,12 +124,12 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   align-items: center;
   justify-content: center;
   padding: 13px 18px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.05);
-  color: #001a34;
-  font-size: 0.75rem;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+  color: var(--text-primary);
+  font-size: var(--type-xs);
   font-weight: 800;
   line-height: 20px;
   white-space: nowrap;
@@ -184,12 +181,10 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   position: relative;
   overflow: hidden;
   padding: 26px;
-  border: 1px solid rgba(0, 26, 51, 0.12);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  background: var(--surface-card);
   box-shadow: var(--leaderboard-shadow);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
 }
 
 .leaderboard-template-shell::before,
@@ -197,14 +192,8 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   position: absolute;
   right: 0;
   left: 0;
-  height: 6px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--leaderboard-gold) 0 18px,
-    var(--leaderboard-green-800) 18px 36px,
-    var(--leaderboard-terracotta-2) 36px 54px,
-    #f1f1f1 54px 72px
-  );
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-teal), rgba(51, 103, 154, 0.42), transparent 82%);
   content: "";
 }
 
@@ -234,9 +223,9 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   min-height: 210px;
   overflow: hidden;
   padding: 22px;
-  border: 1px solid rgba(3, 69, 59, 0.18);
-  border-radius: 24px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  background: var(--surface-card-hover);
 }
 
 .leaderboard-rank-card::before {
@@ -269,11 +258,11 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   display: inline-flex;
   align-items: center;
   padding: 10px 14px;
-  border: 1px solid rgba(51, 103, 154, 0.28);
+  border: 1px solid var(--blue-medium);
   border-radius: var(--radius-pill);
-  background: rgba(51, 103, 154, 0.14);
-  color: #33679a;
-  font-size: 0.75rem;
+  background: var(--blue-soft);
+  color: var(--brand-blue);
+  font-size: var(--type-xs);
   font-weight: 900;
   gap: 10px;
   letter-spacing: normal;
@@ -300,7 +289,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   max-width: 540px;
   margin: 0 0 12px;
   color: var(--leaderboard-muted);
-  font-size: 0.88rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -308,7 +297,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   display: flex;
   align-items: center;
   color: var(--leaderboard-green-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 700;
   gap: 8px;
   line-height: 1.45;
@@ -334,7 +323,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   border-color: rgba(17, 76, 64, 0.22);
   background: rgba(255, 255, 255, 0.7);
   color: var(--leaderboard-green-900);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .leaderboard-stat-grid {
@@ -350,9 +339,9 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   position: relative;
   overflow: hidden;
   padding: 18px;
-  border: 1px solid rgba(0, 26, 51, 0.1);
-  border-radius: 20px;
-  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface-section);
   transition:
     box-shadow 250ms ease,
     transform 250ms ease;
@@ -375,14 +364,14 @@ body[data-leaderboard-page="true"] .leaderboard-section {
 }
 
 .leaderboard-mini-stat[data-tone="clay"] {
-  --leaderboard-stat-accent: var(--leaderboard-terracotta);
-  --leaderboard-stat-bg: rgba(184, 84, 52, 0.12);
-  --leaderboard-stat-border: rgba(184, 84, 52, 0.22);
+  --leaderboard-stat-accent: var(--brand-teal);
+  --leaderboard-stat-bg: var(--teal-soft);
+  --leaderboard-stat-border: var(--teal-medium);
 }
 
 .leaderboard-mini-stat:hover {
-  box-shadow: 0 14px 24px rgba(0, 26, 51, 0.08);
-  transform: translateY(-4px);
+  box-shadow: var(--shadow-xs);
+  transform: translateY(-2px);
 }
 
 .leaderboard-mini-stat-icon {
@@ -394,7 +383,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   border-radius: 50%;
   background: var(--leaderboard-stat-bg);
   color: var(--leaderboard-stat-accent);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   font-weight: 900;
 }
 
@@ -410,15 +399,15 @@ body[data-leaderboard-page="true"] .leaderboard-section {
 
 .leaderboard-mini-stat > span:not(.leaderboard-mini-stat-icon) {
   display: block;
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
 }
 
 .leaderboard-mini-stat small {
   display: block;
   margin-top: 8px;
-  color: #6c757d;
-  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   line-height: 1.4;
@@ -451,7 +440,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
 
 .leaderboard-privacy-note p {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 650;
   line-height: 1.5;
 }
@@ -463,11 +452,11 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   overflow: hidden;
   margin: 0;
   padding: 26px;
-  border: 1px solid rgba(17, 76, 64, 0.2);
-  border-radius: 28px;
-  background: linear-gradient(180deg, #001a34, #001833);
-  box-shadow: 0 20px 40px rgba(3, 69, 59, 0.12);
-  color: #f9f9f9;
+  border: 1px solid rgba(247, 251, 252, 0.1);
+  border-radius: 22px;
+  background: var(--surface-dark-soft);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-on-dark);
 }
 
 .leaderboard-panel-hero {
@@ -501,7 +490,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
 .leaderboard-summary {
   margin: 0;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
   font-weight: 400;
   letter-spacing: normal;
   line-height: 1.55;
@@ -515,7 +504,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.88);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -530,7 +519,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   border-radius: 20px;
   background: rgba(249, 249, 249, 0.08);
   color: var(--leaderboard-paper);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   line-height: 1.55;
 }
 
@@ -599,7 +588,7 @@ body[data-leaderboard-page="true"] .leaderboard-section {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-align: left;
@@ -673,7 +662,7 @@ body .leaderboard-entry {
   border-radius: 50%;
   background: rgba(225, 230, 227, 0.1);
   color: #3bc3b2;
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
   font-weight: 900;
   line-height: 1;
 }
@@ -692,9 +681,9 @@ body .leaderboard-entry {
 }
 
 .leaderboard-entry-top-3 .leaderboard-rank-badge {
-  border-color: rgba(184, 84, 52, 0.24);
-  background: rgba(184, 84, 52, 0.1);
-  color: #f6b8ae;
+  border-color: var(--teal-medium);
+  background: var(--teal-soft);
+  color: var(--brand-teal);
 }
 
 .leaderboard-contributor {
@@ -745,7 +734,7 @@ body .leaderboard-entry {
 .leaderboard-expand-hint {
   margin-top: 5px;
   color: var(--leaderboard-gold-2);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
 }
@@ -755,7 +744,7 @@ body .leaderboard-entry {
   margin-top: 4px;
   color: rgba(255, 255, 255, 0.68);
   content: "Community contributor";
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .leaderboard-entry-top-1 .leaderboard-contributor::after {
@@ -773,7 +762,7 @@ body .leaderboard-entry {
   border-radius: var(--radius-pill);
   background: rgba(51, 103, 154, 0.96);
   color: #001a34;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 900;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -781,7 +770,7 @@ body .leaderboard-entry {
 
 .leaderboard-approved-count {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   line-height: 1.4;
   text-align: right;
 }
@@ -828,7 +817,7 @@ body .leaderboard-entry {
 
 .leaderboard-contribution-details-head span {
   color: rgba(255, 255, 255, 0.65);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .leaderboard-private-contribution-list {
@@ -856,13 +845,13 @@ body .leaderboard-entry {
 .leaderboard-private-contribution-list strong {
   overflow-wrap: anywhere;
   color: #fff;
-  font-size: 0.88rem;
+  font-size: var(--type-sm);
   line-height: 1.5;
 }
 
 .leaderboard-private-contribution-list span {
   color: rgba(255, 255, 255, 0.66);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .leaderboard-private-contribution-list b {
@@ -871,7 +860,7 @@ body .leaderboard-entry {
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.07);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   text-transform: uppercase;
 }
 
@@ -883,14 +872,14 @@ body .leaderboard-entry {
 
 .leaderboard-private-contribution-list b[data-status="rejected"] {
   border-color: rgba(241, 181, 159, 0.3);
-  background: rgba(184, 84, 52, 0.13);
-  color: #ffd8d2;
+  background: var(--teal-soft);
+  color: var(--text-on-dark);
 }
 
 .leaderboard-contribution-details-status {
   margin: 18px 0;
   color: rgba(255, 255, 255, 0.76);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   line-height: 1.6;
 }
 
@@ -900,7 +889,7 @@ body .leaderboard-entry {
   align-items: center;
   margin-top: 12px;
   color: var(--leaderboard-gold-2);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   text-decoration: none;
 }
@@ -923,8 +912,8 @@ body .leaderboard-entry {
 
 .leaderboard-load-more-error {
   margin: 0;
-  color: #ffd8d2;
-  font-size: 0.75rem;
+  color: var(--text-on-dark);
+  font-size: var(--type-xs);
   line-height: 1.45;
   text-align: center;
 }
@@ -949,7 +938,7 @@ body .leaderboard-entry {
   background: var(--leaderboard-green-950);
   box-shadow: 0 14px 34px rgba(3, 69, 59, 0.25);
   color: white;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   gap: 10px;
   opacity: 0;
   pointer-events: none;

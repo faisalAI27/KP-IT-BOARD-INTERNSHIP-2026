@@ -36,7 +36,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 /* Public website */
 .nav {
-  box-shadow: 0 8px 30px rgba(0, 26, 51, 0.035);
+  box-shadow: 0 6px 24px rgba(0, 26, 51, 0.03);
   backdrop-filter: blur(18px) saturate(115%);
   -webkit-backdrop-filter: blur(18px) saturate(115%);
 }
@@ -47,7 +47,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
   bottom: -1px;
   left: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(51, 103, 154, 0.72), transparent);
+  background: linear-gradient(90deg, transparent, rgba(51, 103, 154, 0.26), transparent);
   content: "";
   pointer-events: none;
 }
@@ -71,15 +71,16 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 .hero {
   background:
-    radial-gradient(circle at 8% 80%, rgba(51, 103, 154, 0.08), transparent 24rem),
-    linear-gradient(112deg, rgba(255, 255, 255, 0.28), transparent 58%);
+    radial-gradient(circle at 8% 80%, var(--blue-soft), transparent 24rem),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.42), transparent 58%),
+    var(--surface-page);
 }
 
 .hero-copy h1,
 .story-hero h1,
 .process-hero h1,
 .data-use-hero h1 {
-  color: #001a33;
+  color: var(--text-primary);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
@@ -100,9 +101,33 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 }
 
 .trust-section,
-.public-pattern-band,
 .final-cta {
-  background-color: var(--forest-deep);
+  background-color: var(--surface-dark-soft);
+}
+
+.public-pattern-band {
+  background-color: var(--surface-blue);
+  background-image: none;
+  color: var(--text-primary);
+}
+
+.public-pattern-band .responsibility-grid article {
+  border-color: var(--border-soft);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.public-pattern-band .responsibility-grid span,
+.public-pattern-band .about-band-link {
+  color: var(--brand-blue);
+}
+
+.public-pattern-band .responsibility-grid h2 {
+  color: var(--text-primary);
+}
+
+.public-pattern-band .responsibility-grid p {
+  color: var(--text-secondary);
 }
 
 .why-card,
@@ -187,11 +212,10 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 /* Contributor workspace */
 body.workspace-body {
-  background-color: #f9f9f9;
+  background-color: var(--surface-page);
   background-image:
-    radial-gradient(circle at 92% 4%, rgba(51, 103, 154, 0.075), transparent 24rem),
-    linear-gradient(90deg, rgba(10, 101, 91, 0.032) 1px, transparent 1px),
-    linear-gradient(rgba(10, 101, 91, 0.032) 1px, transparent 1px);
+    radial-gradient(circle at 92% 4%, var(--blue-soft), transparent 27rem),
+    radial-gradient(circle at 14% 84%, var(--teal-soft), transparent 30rem);
 }
 
 .workspace-sidebar {
@@ -282,8 +306,8 @@ body.workspace-body {
 
 .profile-portrait-card,
 .settings-data-card {
-  background-color: var(--forest-deep);
-  box-shadow: 0 26px 64px rgba(23, 62, 52, 0.17);
+  background-color: var(--surface-dark-soft);
+  box-shadow: var(--shadow-md);
 }
 
 .profile-portrait-card::after,
@@ -333,7 +357,7 @@ body.workspace-body {
   padding: clamp(1.25rem, 3vw, 2.25rem);
   border: 1px solid rgba(0, 26, 51, 0.08);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.72);
   box-shadow: var(--shadow-xs);
 }
 
@@ -341,7 +365,7 @@ body.workspace-body {
   padding: var(--space-2);
   border: 1px solid var(--line);
   border-radius: calc(var(--radius) + 2px);
-  background: rgba(237, 246, 244, 0.62);
+  background: var(--surface-mint);
 }
 
 .feature-tab {
@@ -357,7 +381,7 @@ body.workspace-body {
 
 .form-panel {
   border-color: rgba(0, 26, 51, 0.11);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .form-panel-head,
@@ -439,7 +463,7 @@ body.workspace-body {
 
 .leaderboard-showcase,
 .leaderboard-panel {
-  box-shadow: 0 24px 64px rgba(23, 62, 52, 0.14);
+  box-shadow: var(--shadow-md);
 }
 
 .leaderboard-podium-card {
@@ -458,12 +482,10 @@ body.workspace-body {
 
 /* Administrator workspace */
 .admin-page {
-  background-color: var(--paper);
+  background-color: var(--surface-page);
   background-image:
-    radial-gradient(circle at top left, rgba(51, 103, 154, 0.13), transparent 32rem),
-    linear-gradient(90deg, rgba(10, 101, 91, 0.026) 1px, transparent 1px),
-    linear-gradient(rgba(10, 101, 91, 0.026) 1px, transparent 1px);
-  background-size: auto, 48px 48px, 48px 48px;
+    radial-gradient(circle at top left, var(--blue-soft), transparent 32rem);
+  background-size: auto;
 }
 
 .admin-header {
@@ -528,7 +550,37 @@ body.workspace-body {
 .admin-phrase-filters,
 .admin-phrase-stats > div,
 .admin-withdrawal-card {
-  background: rgba(237, 246, 244, 0.82);
+  background: var(--surface-mint);
+}
+
+/* Balanced display scale across public and workspace pages. */
+.hero h1,
+.story-hero h1,
+.process-hero h1,
+.data-use-hero h1,
+.leaderboard-header-copy h2,
+.contributions-motion-header h1,
+.settings-template-header h1,
+.donate-text-heading h1,
+.workspace-page-header h1 {
+  font-size: clamp(2.65rem, 5vw, var(--type-5xl));
+  line-height: 1.12;
+}
+
+.section-head h2,
+.trust-copy h2,
+.contribute-intro h2,
+.faq-intro h2,
+.voice-demo-copy h2,
+.story-split h2,
+.story-closing h2 {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  line-height: 1.12;
+}
+
+.final-cta h2 {
+  font-size: clamp(2.4rem, 4.6vw, var(--type-5xl));
+  line-height: 1.08;
 }
 
 .admin-table-wrap {

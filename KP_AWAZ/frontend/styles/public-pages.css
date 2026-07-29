@@ -40,7 +40,7 @@
   margin-bottom: 16px;
   color: var(--terracotta-dark);
   font-family: var(--font-ui);
-  font-size: 0.875rem;
+  font-size: var(--type-sm);
   font-weight: 600;
   letter-spacing: normal;
   line-height: 1.5;
@@ -189,7 +189,8 @@
 }
 
 .stage-grid article:last-child {
-  background: var(--pine-dark);
+  border-color: var(--blue-medium);
+  background: var(--surface-blue);
 }
 
 .stage-grid article::after {
@@ -209,7 +210,7 @@
 
 .stage-grid span {
   color: var(--terracotta-dark);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -229,15 +230,15 @@
 }
 
 .stage-grid article:last-child span {
-  color: var(--honey);
+  color: var(--brand-blue);
 }
 
 .stage-grid article:last-child h3 {
-  color: var(--paper);
+  color: var(--text-primary);
 }
 
 .stage-grid article:last-child p {
-  color: rgba(249, 249, 249, 0.72);
+  color: var(--text-secondary);
 }
 
 .public-pattern-band {
@@ -261,7 +262,7 @@
 
 .responsibility-grid span {
   color: var(--honey);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -283,7 +284,7 @@
   display: inline-flex;
   margin-top: 18px;
   color: var(--honey);
-  font-size: 0.88rem;
+  font-size: var(--type-sm);
   font-weight: 800;
 }
 
@@ -362,7 +363,7 @@
 
 .process-list p {
   color: var(--ink-soft);
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
   line-height: 1.72;
 }
 
@@ -406,7 +407,7 @@
 .collection-context dd {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.9rem;
+  font-size: var(--type-sm);
   line-height: 1.7;
 }
 
@@ -537,7 +538,7 @@
 
 .data-use-note strong {
   color: var(--honey);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   letter-spacing: normal;
   text-transform: uppercase;
 }
@@ -635,7 +636,7 @@
   .process-list li > span {
     width: 38px;
     height: 38px;
-    font-size: 0.82rem;
+    font-size: var(--type-sm);
   }
 
   .process-list h2 {

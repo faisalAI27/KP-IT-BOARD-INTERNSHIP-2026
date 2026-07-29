@@ -34,7 +34,7 @@
 .future-use-grid span {
   color: var(--terracotta);
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: var(--type-sm);
   font-weight: 800;
 }
 
@@ -52,7 +52,7 @@
   padding-left: 15px;
   border-left: 3px solid var(--honey);
   color: var(--ink-soft);
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
   line-height: 1.7;
 }
 
@@ -95,7 +95,7 @@
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  font-size: 0.92rem;
+  font-size: var(--type-sm);
   font-weight: 750;
   text-align: left;
 }
@@ -135,7 +135,7 @@
   max-height: 0;
   overflow: hidden;
   color: var(--ink-soft);
-  font-size: 0.87rem;
+  font-size: var(--type-sm);
   line-height: 1.75;
   transition: max-height 0.28s ease;
 }
@@ -198,7 +198,7 @@
   display: inline-block;
   margin-bottom: 18px;
   color: var(--honey);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -217,7 +217,7 @@
   max-width: 610px;
   margin: 22px auto 30px;
   color: rgba(249, 249, 249, 0.7);
-  font-size: 0.96rem;
+  font-size: var(--type-base);
 }
 
 /* Footer */
@@ -242,7 +242,7 @@ footer .logo .brand-lockup {
   max-width: 390px;
   margin-top: 18px;
   color: rgba(249, 249, 249, 0.56);
-  font-size: 0.84rem;
+  font-size: var(--type-sm);
   line-height: 1.7;
 }
 
@@ -250,7 +250,7 @@ footer h3 {
   margin-bottom: 18px;
   color: var(--honey);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
   text-transform: uppercase;
@@ -262,7 +262,7 @@ footer li + li {
 
 footer li a {
   color: rgba(249, 249, 249, 0.64);
-  font-size: 0.81rem;
+  font-size: var(--type-xs);
   transition: color 0.2s ease;
 }
 
@@ -278,7 +278,7 @@ footer li a:hover {
   padding-top: 23px;
   border-top: 1px solid rgba(249, 249, 249, 0.1);
   color: rgba(249, 249, 249, 0.38);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   gap: 20px;
 }
 

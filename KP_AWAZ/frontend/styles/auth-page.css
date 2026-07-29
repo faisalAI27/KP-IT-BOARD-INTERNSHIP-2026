@@ -1,4 +1,4 @@
-@import url("./foundation.css?v=20260729-kpitb-system");
+@import url("./foundation.css?v=20260729-soft-system");
 
 :root {
   --auth-deep-green: var(--brand-navy);
@@ -11,7 +11,7 @@
   --auth-rust: var(--brand-green-strong);
   --auth-rust-dark: var(--brand-green-deep);
   --auth-gold: var(--brand-blue);
-  --auth-gold-pale: #f1f1f1;
+  --auth-gold-pale: var(--surface-section);
   --auth-charcoal: var(--brand-navy);
   --auth-muted: var(--brand-text-muted);
   --auth-line: rgba(0, 26, 51, 0.14);
@@ -21,7 +21,7 @@
   --auth-error: var(--brand-danger);
   --auth-success-bg: var(--brand-success-soft);
   --auth-success: var(--brand-success);
-  --auth-card-shadow: 0 28px 72px rgba(0, 26, 51, 0.4);
+  --auth-card-shadow: 0 22px 58px rgba(0, 26, 51, 0.28);
 }
 
 body.access-page {
@@ -168,9 +168,9 @@ body.access-page input {
 .access-card {
   width: min(100%, 520px);
   padding: clamp(27px, 3vw, 39px);
-  border: 1px solid rgba(59, 195, 178, 0.38);
+  border: 1px solid var(--border-active);
   border-radius: 26px;
-  background: rgba(255, 254, 250, 0.985);
+  background: rgba(255, 255, 255, 0.985);
   box-shadow: var(--auth-card-shadow);
 }
 
@@ -193,7 +193,7 @@ body[data-auth-view="otp"] .access-card {
   align-items: center;
   border-radius: 8px;
   color: var(--auth-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 780;
   gap: 7px;
 }
@@ -212,7 +212,7 @@ body[data-auth-view="otp"] .access-card {
   background: rgba(231, 248, 243, 0.8);
   color: var(--auth-deep-green);
   font-family: Georgia, "Noto Naskh Arabic", serif;
-  font-size: 0.86rem;
+  font-size: var(--type-sm);
 }
 
 .access-branding {
@@ -239,7 +239,7 @@ body[data-auth-view="otp"] .access-card {
   max-width: 360px;
   margin-top: 7px;
   color: var(--auth-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.45;
 }
 
@@ -260,7 +260,7 @@ body[data-auth-view="otp"] .access-card {
 
 .access-kicker {
   color: var(--auth-rust-dark);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
   letter-spacing: normal;
   line-height: 1.4;
@@ -278,7 +278,7 @@ body[data-auth-view="otp"] .access-card {
 .access-card-heading p {
   margin-top: 7px;
   color: var(--auth-muted);
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   line-height: 1.5;
 }
 
@@ -299,7 +299,7 @@ body[data-auth-view="otp"] .access-card {
   background: transparent;
   color: var(--auth-muted);
   cursor: pointer;
-  font-size: 0.79rem;
+  font-size: var(--type-sm);
   font-weight: 820;
 }
 
@@ -318,7 +318,7 @@ body[data-auth-view="otp"] .access-card {
   justify-content: center;
   border-radius: 11px;
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: var(--type-sm);
   font-weight: 820;
   transition:
     border-color 0.18s ease,
@@ -357,8 +357,8 @@ body[data-auth-view="otp"] .access-card {
   display: flex;
   align-items: center;
   margin: 17px 0;
-  color: #8e8378;
-  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-size: var(--type-xs);
   font-weight: 800;
   gap: 12px;
   letter-spacing: normal;
@@ -381,7 +381,7 @@ body[data-auth-view="otp"] .access-card {
 .access-form label {
   display: grid;
   color: var(--auth-charcoal);
-  font-size: 0.77rem;
+  font-size: var(--type-sm);
   font-weight: 780;
   gap: 6px;
 }
@@ -402,7 +402,7 @@ body[data-auth-view="otp"] .access-card {
 }
 
 .access-form input::placeholder {
-  color: #9f968e;
+  color: var(--text-muted);
 }
 
 .access-form input:hover {
@@ -446,7 +446,7 @@ body[data-auth-view="otp"] .access-card {
   background: var(--auth-cream);
   color: var(--auth-deep-green);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 820;
   transform: translateY(-50%);
 }
@@ -455,7 +455,7 @@ body[data-auth-view="otp"] .access-card {
   width: fit-content;
   margin-top: -6px;
   color: var(--auth-deep-green);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 820;
   text-decoration: underline;
   text-decoration-color: rgba(10, 101, 91, 0.34);
@@ -471,7 +471,7 @@ body[data-auth-view="otp"] .access-card {
 .field-helper,
 .access-terms {
   color: var(--auth-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.5;
 }
 
@@ -494,7 +494,7 @@ body[data-auth-view="otp"] .access-card {
   flex-wrap: wrap;
   margin-top: -4px;
   color: var(--auth-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   gap: 5px 13px;
 }
 
@@ -519,7 +519,7 @@ body[data-auth-view="otp"] .access-card {
 
 .password-feedback p[data-state="valid"] span::before,
 .password-feedback p[data-state="invalid"] span::before {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
 }
 
 .password-feedback p[data-state="valid"] span::before {
@@ -576,7 +576,7 @@ body[data-auth-view="otp"] .access-card {
 .access-mode-link {
   margin-top: 14px;
   color: var(--auth-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   text-align: center;
 }
 
@@ -601,7 +601,7 @@ body[data-auth-view="otp"] .access-card {
   position: relative;
   display: grid;
   justify-items: center;
-  color: #9e958d;
+  color: var(--text-muted);
   gap: 3px;
 }
 
@@ -624,12 +624,12 @@ body[data-auth-view="otp"] .access-card {
   border: 1px solid var(--auth-line-strong);
   border-radius: 50%;
   background: var(--auth-white);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 850;
 }
 
 .account-steps small {
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 760;
 }
 
@@ -682,7 +682,7 @@ body[data-auth-view="otp"] .access-card {
 .otp-stage > p {
   margin: 7px auto 16px;
   color: var(--auth-muted);
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
 }
 
 .otp-stage > p strong {
@@ -717,7 +717,7 @@ body[data-auth-view="otp"] .access-card {
   background: transparent;
   color: var(--auth-deep-green);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-decoration: underline;
   text-decoration-color: rgba(10, 101, 91, 0.24);
@@ -728,7 +728,7 @@ body[data-auth-view="otp"] .access-card {
   margin-top: 11px;
   padding: 9px 10px;
   border-radius: 9px;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.48;
 }
 
@@ -759,7 +759,7 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-deep-green);
   cursor: pointer;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -787,7 +787,7 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-deep-green);
   cursor: pointer;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -841,13 +841,13 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-deep-green);
   cursor: pointer;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--type-sm);
   font-weight: 800;
 }
 
 .existing-account-actions a {
   color: var(--auth-deep-green);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 800;
   text-underline-offset: 3px;
 }
@@ -899,7 +899,7 @@ body[data-auth-view="otp"] .access-card {
 .account-success small {
   margin-top: 19px;
   color: var(--auth-pine);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   font-weight: 780;
   letter-spacing: normal;
 }
@@ -919,7 +919,7 @@ body[data-auth-view="otp"] .access-card {
   border-radius: 999px;
   background: rgba(8, 34, 25, 0.76);
   color: rgba(255, 254, 250, 0.94);
-  font-size: 0.75rem;
+  font-size: var(--type-xs);
   line-height: 1.4;
   text-align: center;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.34);
@@ -1000,7 +1000,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-branding p {
     margin-top: 3px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-card-heading {
@@ -1013,7 +1013,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-card-heading p {
     margin-top: 4px;
-    font-size: 0.76rem;
+    font-size: var(--type-sm);
   }
 
   .access-tabs {
@@ -1049,7 +1049,7 @@ body[data-auth-view="otp"] .access-card {
   .access-terms {
     margin-top: 15px;
     padding-top: 10px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-cultural-note {
@@ -1078,7 +1078,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-back {
     min-height: 34px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-language {
@@ -1097,7 +1097,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-branding p {
     max-width: 280px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-card-heading {
@@ -1109,7 +1109,7 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .access-card-heading p {
-    font-size: 0.77rem;
+    font-size: var(--type-sm);
   }
 
   .access-google,
@@ -1129,18 +1129,18 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .account-steps small {
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-terms {
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .access-cultural-note {
     bottom: 14px;
     min-height: 38px;
     padding: 7px 13px;
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 }
 
@@ -1164,7 +1164,7 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .access-tabs button {
-    font-size: 0.75rem;
+    font-size: var(--type-xs);
   }
 
   .otp-actions {
