@@ -134,7 +134,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 54%;
+  object-position: 49% center;
+}
+
+.hero-cultural-frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .section-ridge {

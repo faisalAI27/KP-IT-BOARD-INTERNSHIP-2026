@@ -158,18 +158,11 @@
     transform: translateX(50%);
   }
 
-  .mission-grid,
-  .language-focus-inner,
   .trust-layout,
   .faq-layout {
     grid-template-columns: 1fr;
   }
 
-  .mission-card {
-    max-width: 620px;
-  }
-
-  .language-focus-copy,
   .trust-copy {
     max-width: 680px;
   }
@@ -350,35 +343,16 @@
   }
 
   .section-head h2,
-  .mission-copy h2,
   .trust-copy h2,
   .contribute-intro h2,
   .faq-intro h2 {
     font-size: clamp(2rem, 10vw, 2.75rem);
   }
 
-  .mission-grid {
-    gap: 48px;
-  }
-
-  .mission-card {
-    min-height: 440px;
-    padding: 145px 32px 88px;
-  }
-
-  .mission-card-foot {
-    right: 32px;
-    left: 32px;
-  }
-
   .future-use-grid,
   .steps,
   .trust-layout {
     grid-template-columns: 1fr;
-  }
-
-  .language-focus {
-    padding: 68px 0;
   }
 
   .steps {
@@ -627,16 +601,6 @@
 
   .hero-cultural-frame img {
     object-position: center 55%;
-  }
-
-  .mission-card {
-    border-radius: 26px 26px 85px 26px;
-  }
-
-  .mission-card-foot {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
   }
 
   .form-foot {

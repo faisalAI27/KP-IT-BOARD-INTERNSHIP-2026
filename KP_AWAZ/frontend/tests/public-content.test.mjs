@@ -7,39 +7,46 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
 
-test("homepage assembles every required public mission section", async () => {
+test("homepage assembles the focused public story in the required order", async () => {
   const index = await read("index.html");
 
-  for (const partial of [
+  const partials = [
     "sections/hero.html",
-    "sections/mission.html",
     "sections/why-it-matters.html",
     "sections/impact.html",
     "sections/how-it-works.html",
     "sections/trust.html",
+    "sections/faq.html",
     "sections/final-cta.html",
-  ]) {
-    assert.match(index, new RegExp(`data-partial="${partial.replace(".", "\\.")}"`));
+  ];
+
+  let previousIndex = -1;
+  for (const partial of partials) {
+    const currentIndex = index.indexOf(`data-partial="${partial}"`);
+    assert.ok(currentIndex > previousIndex, `${partial} should appear in the required order`);
+    previousIndex = currentIndex;
   }
+
+  assert.doesNotMatch(index, /sections\/(?:mission|languages|leaderboard)\.html/);
 });
 
 
 test("homepage content explains the present platform and careful future goal", async () => {
-  const [hero, mission, why, building, process, trust, closing] = await Promise.all([
+  const [hero, why, building, process, trust, closing] = await Promise.all([
     read("sections/hero.html"),
-    read("sections/mission.html"),
     read("sections/why-it-matters.html"),
     read("sections/impact.html"),
     read("sections/how-it-works.html"),
     read("sections/trust.html"),
     read("sections/final-cta.html"),
   ]);
-  const publicCopy = [hero, mission, why, building, process, trust, closing].join("\n");
+  const publicCopy = [hero, why, building, process, trust, closing].join("\n");
 
   assert.match(hero, /Let technology hear Khyber Pakhtunkhwa\./);
-  assert.match(hero, /href="#mission">Learn why it matters<\/a>/);
-  assert.match(mission, /A future where language is never a barrier\./);
-  assert.match(why, /Why does your voice matter\?/);
+  assert.match(hero, /href="#why-it-matters">Learn why it matters<\/a>/);
+  assert.match(why, /<h2 id="whyItMattersTitle">Why it matters<\/h2>/);
+  assert.equal((why.match(/Why it matters/g) ?? []).length, 1);
+  assert.doesNotMatch(why, /Why does your voice matter\?/);
   assert.match(why, /Local representation/);
   assert.match(why, /Better understanding/);
   assert.match(why, /Equal digital access/);
@@ -57,6 +64,21 @@ test("homepage content explains the present platform and careful future goal", a
   assert.doesNotMatch(publicCopy, /voice assistant is complete/i);
   assert.doesNotMatch(publicCopy, /recording will immediately train/i);
   assert.doesNotMatch(publicCopy, /guaranteed accuracy/i);
+});
+
+
+test("homepage bootstrap excludes leaderboard work while the dedicated page preserves it", async () => {
+  const [homepageApp, publicPageApp, leaderboardPage] = await Promise.all([
+    read("scripts/app.js"),
+    read("scripts/public-page-app.js"),
+    read("leaderboard.html"),
+  ]);
+
+  assert.doesNotMatch(homepageApp, /leaderboard/i);
+  assert.match(publicPageApp, /initializeLeaderboard/);
+  assert.match(publicPageApp, /initLeaderboardTemplateMotion/);
+  assert.match(publicPageApp, /destroyLeaderboard/);
+  assert.match(leaderboardPage, /sections\/leaderboard\.html/);
 });
 
 
@@ -89,10 +111,13 @@ test("About page states the Stage A and Stage B boundary", async () => {
   const about = await read("about.html");
 
   assert.match(about, /Technology should understand the language people actually speak\./);
-  assert.match(about, /Stage A presents phrases, preserves original browser-recorded audio/);
-  assert.match(about, /Stage B will later process eligible approved data/);
+  assert.match(about, /Stage A presents Pashto phrases, preserves original browser-recorded audio/);
+  assert.match(about, /Stage B may later prepare eligible approved data/);
   assert.match(about, /Verified acceptance of the current data-use policy is required before submission/);
   assert.match(about, /supported withdrawal process/);
+  assert.match(about, /Our mission is to build that foundation responsibly\./);
+  assert.match(about, /structured, reviewable and traceable/);
+  assert.match(about, /Audio processing, transcript synchronization and model work are not part/);
 });
 
 
@@ -152,7 +177,7 @@ test("public layouts include accessible structure and required responsive breakp
     read("styles/public-pages.css"),
   ]);
 
-  assert.match(hero, /alt="Three community members in Khyber Pakhtunkhwa record a voice together on a mountain veranda\."/);
+  assert.match(hero, /alt="Women attend a community education meeting in Lower Dir, Khyber Pakhtunkhwa\."/);
   assert.match(trust, /aria-labelledby="trustTitle"/);
   assert.match(trust, /aria-label="KP AWAZ trust commitments"/);
   assert.match(sectionsCss, /\.trust-layout/);

@@ -157,6 +157,10 @@
   line-height: 1.8;
 }
 
+.story-section-mission {
+  background: var(--paper-soft);
+}
+
 .stage-section {
   background: var(--paper-soft);
 }

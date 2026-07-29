@@ -316,8 +316,9 @@ async function settle() {
 
 
 test("leaderboard partial is public, semantic, and accessible", async () => {
-  const [html, index, header] = await Promise.all([
+  const [html, leaderboardPage, index, header] = await Promise.all([
     readFile(new URL("../sections/leaderboard.html", import.meta.url), "utf8"),
+    readFile(new URL("../leaderboard.html", import.meta.url), "utf8"),
     readFile(new URL("../index.html", import.meta.url), "utf8"),
     readFile(new URL("../sections/header.html", import.meta.url), "utf8"),
   ]);
@@ -336,7 +337,9 @@ test("leaderboard partial is public, semantic, and accessible", async () => {
   assert.match(html, /id="leaderboardPageChip"/);
   assert.match(html, /id="leaderboardToast"[^>]*aria-live="polite"/);
   assert.doesNotMatch(html, /Faisalimran|Dawar|data-count="[1234]"/);
-  assert.match(index, /sections\/leaderboard\.html/);
+  assert.match(leaderboardPage, /sections\/leaderboard\.html/);
+  assert.match(leaderboardPage, /scripts\/public-page-app\.js/);
+  assert.doesNotMatch(index, /sections\/leaderboard\.html/);
   assert.match(header, /href="leaderboard\.html"[^>]*>Leaderboard/);
   assert.equal(html.includes("authDialog"), false);
   assert.match(

@@ -27,7 +27,6 @@
 }
 
 .section-head h2,
-.mission-copy h2,
 .trust-copy h2,
 .contribute-intro h2,
 .faq-intro h2 {
@@ -83,233 +82,6 @@
 
 .centered-head > p + p {
   margin-top: 12px;
-}
-
-/* Mission */
-.mission {
-  background: var(--paper-soft);
-}
-
-.mission-grid {
-  display: grid;
-  align-items: center;
-  grid-template-columns: minmax(0, 1.12fr) minmax(350px, 0.88fr);
-  gap: clamp(60px, 8vw, 112px);
-}
-
-.mission-copy h2 {
-  max-width: 690px;
-}
-
-.mission-paragraphs {
-  display: grid;
-  max-width: 680px;
-  margin: 25px 0 28px;
-  gap: 15px;
-  font-size: 1rem;
-  line-height: 1.78;
-}
-
-.mission-card {
-  position: relative;
-  min-height: 470px;
-  overflow: hidden;
-  padding: 155px 46px 86px;
-  border-radius: 32px 32px 104px 32px;
-  background: var(--pine-dark);
-  color: var(--paper);
-  box-shadow: 22px 25px 0 rgba(62, 98, 89, 0.12);
-}
-
-.mission-card::before,
-.mission-card::after {
-  position: absolute;
-  border: 1px solid rgba(250, 246, 239, 0.1);
-  border-radius: 50%;
-  content: "";
-}
-
-.mission-card::before {
-  right: -110px;
-  bottom: -120px;
-  width: 300px;
-  height: 300px;
-}
-
-.mission-card::after {
-  right: -58px;
-  bottom: -65px;
-  width: 200px;
-  height: 200px;
-}
-
-.mission-arch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  display: grid;
-  width: 150px;
-  height: 125px;
-  place-items: center;
-  border: 1px solid rgba(231, 169, 76, 0.42);
-  border-top: 0;
-  border-radius: 0 0 75px 75px;
-  background: rgba(250, 246, 239, 0.055);
-  transform: translateX(-50%);
-}
-
-.mission-wave {
-  display: inline-flex;
-  height: 42px;
-  align-items: center;
-  gap: 5px;
-}
-
-.mission-wave i {
-  width: 3px;
-  height: 14px;
-  border-radius: 3px;
-  background: var(--honey);
-}
-
-.mission-wave i:nth-child(2),
-.mission-wave i:nth-child(6) {
-  height: 25px;
-}
-
-.mission-wave i:nth-child(3),
-.mission-wave i:nth-child(5) {
-  height: 38px;
-}
-
-.mission-wave i:nth-child(4) {
-  height: 20px;
-}
-
-.mission-card-kicker {
-  color: var(--honey);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.mission-card h3 {
-  max-width: 350px;
-  margin-top: 13px;
-  color: var(--paper);
-  font-size: clamp(1.75rem, 2.5vw, 2.35rem);
-  line-height: 1.18;
-}
-
-.mission-values {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 28px;
-  gap: 8px;
-}
-
-.mission-values li {
-  padding: 7px 11px;
-  border: 1px solid rgba(250, 246, 239, 0.15);
-  border-radius: 999px;
-  color: rgba(250, 246, 239, 0.76);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.mission-card-foot {
-  position: absolute;
-  right: 44px;
-  bottom: 34px;
-  left: 46px;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  color: rgba(250, 246, 239, 0.62);
-  font-size: 0.78rem;
-  line-height: 1.6;
-}
-
-.mini-wave {
-  display: inline-flex;
-  height: 24px;
-  align-items: center;
-  gap: 3px;
-}
-
-.mini-wave i {
-  width: 2px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--honey);
-}
-
-.mini-wave i:nth-child(2),
-.mini-wave i:nth-child(6) {
-  height: 14px;
-}
-
-.mini-wave i:nth-child(3),
-.mini-wave i:nth-child(5) {
-  height: 21px;
-}
-
-.mini-wave i:nth-child(4) {
-  height: 12px;
-}
-
-/* Current language focus */
-.language-focus {
-  position: relative;
-  overflow: hidden;
-  padding: 78px 0;
-  background: var(--pine-dark);
-  color: var(--paper);
-}
-
-.language-focus::after {
-  position: absolute;
-  right: -80px;
-  bottom: -120px;
-  width: 330px;
-  height: 240px;
-  border: 1px solid rgba(231, 169, 76, 0.18);
-  border-radius: 50% 50% 0 0;
-  content: "";
-  transform: rotate(-10deg);
-}
-
-.language-focus-inner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  align-items: start;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: clamp(44px, 8vw, 104px);
-}
-
-.language-focus h2 {
-  max-width: 510px;
-  color: var(--paper);
-  font-size: clamp(2.05rem, 3.6vw, 3.35rem);
-  line-height: 1.08;
-}
-
-.language-focus .eyebrow-line {
-  color: var(--honey);
-}
-
-.language-focus-copy {
-  display: grid;
-  max-width: 640px;
-  padding-top: 5px;
-  gap: 15px;
-  color: rgba(250, 246, 239, 0.75);
-  font-size: 0.98rem;
-  line-height: 1.78;
 }
 
 /* Why voice matters */
@@ -496,7 +268,8 @@
 .trust-section {
   position: relative;
   overflow: hidden;
-  background: var(--paper);
+  background: var(--forest-deep);
+  color: var(--paper);
 }
 
 .trust-section::before {
@@ -522,30 +295,54 @@
   max-width: 690px;
 }
 
+.trust-copy .eyebrow-line {
+  color: #ffd594;
+}
+
+.trust-copy h2 {
+  color: var(--paper);
+}
+
 .trust-copy > p {
   margin-top: 17px;
-  color: var(--ink-soft);
+  color: rgba(250, 246, 239, 0.84);
   line-height: 1.78;
 }
 
 .trust-copy .trust-privacy-note {
   padding-left: 17px;
   border-left: 3px solid var(--honey);
-  color: var(--ink);
+  color: var(--paper);
   font-weight: 700;
 }
 
 .trust-copy .text-link {
   margin-top: 25px;
+  color: #ffd594;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.trust-copy .text-link:visited {
+  color: #ffd594;
+}
+
+.trust-copy .text-link:hover {
+  color: var(--surface);
+}
+
+.trust-copy .text-link:focus-visible {
+  outline-color: #ffd594;
 }
 
 .trust-points {
   display: grid;
   padding: 30px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(250, 246, 239, 0.2);
   border-radius: var(--radius-lg);
-  background: var(--card);
-  box-shadow: var(--shadow-sm);
+  background: rgba(250, 246, 239, 0.08);
+  box-shadow: 0 22px 54px rgba(9, 31, 25, 0.22);
   gap: 0;
 }
 
@@ -554,11 +351,11 @@
   min-height: 60px;
   align-items: center;
   gap: 14px;
-  color: var(--ink-soft);
+  color: rgba(250, 246, 239, 0.88);
 }
 
 .trust-points li + li {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgba(250, 246, 239, 0.16);
 }
 
 .trust-points span {
@@ -568,13 +365,13 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  background: rgba(62, 98, 89, 0.1);
-  color: var(--pine-dark);
+  background: #ffd594;
+  color: var(--forest-deep);
   font-size: 0.82rem;
   font-weight: 900;
 }
 
 .trust-points strong {
-  color: var(--ink);
+  color: var(--paper);
   font-size: 0.9rem;
 }

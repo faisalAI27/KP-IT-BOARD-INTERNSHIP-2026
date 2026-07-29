@@ -83,7 +83,7 @@ test("final polish preserves approved artwork treatment and adds accessible moti
     read("sections/hero.html"),
   ]);
 
-  assert.match(hero, /src="assets\/images\/kp-community-voice-hero\.jpg"/);
+  assert.match(hero, /src="assets\/images\/lower-dir-community-meeting-1440\.webp"/);
   assert.doesNotMatch(css, /url\s*\(/i);
   assert.doesNotMatch(css, /\.hero-cultural-frame\s+img|\.cultural-hero\s+img|\.access-page\s+img/);
   assert.match(css, /:focus-visible/);

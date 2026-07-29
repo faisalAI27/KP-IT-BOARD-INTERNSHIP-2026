@@ -99,15 +99,12 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
   background: rgba(255, 255, 255, 0.38);
 }
 
-.mission-card,
-.language-focus,
 .trust-section,
 .public-pattern-band,
 .final-cta {
   background-color: var(--forest-deep);
 }
 
-.mission-card,
 .why-card,
 .step,
 .stage-grid article,
@@ -130,7 +127,6 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
     box-shadow var(--duration-standard) var(--ease-standard);
 }
 
-.mission-values li,
 .hero-principles,
 .trust-points,
 .collection-context dl,

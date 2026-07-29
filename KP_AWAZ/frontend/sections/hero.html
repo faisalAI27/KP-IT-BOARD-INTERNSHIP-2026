@@ -4,10 +4,9 @@
       <span class="hero-kicker">Community-powered voice data</span>
       <h1>Let technology hear Khyber Pakhtunkhwa.</h1>
       <p class="lede">
-        KP AWAZ is building a community-powered voice dataset for Pashto and the
-        local languages of Khyber Pakhtunkhwa. By contributing your voice, you
-        help create future technology that can understand people in the language
-        they naturally speak.
+        KP AWAZ is building a structured collection of community-contributed
+        Pashto speech. Each voluntary recording helps create a stronger
+        foundation for future local-language research and technology.
       </p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="auth.html?next=contribute.html" data-start-contributing>
@@ -16,7 +15,7 @@
             <path d="m7 5 5 5-5 5" />
           </svg>
         </a>
-        <a class="btn btn-outline" href="#mission">Learn why it matters</a>
+        <a class="btn btn-outline" href="#why-it-matters">Learn why it matters</a>
       </div>
       <div class="hero-principles" aria-label="How KP AWAZ works">
         <span>Voluntary</span>
@@ -27,14 +26,25 @@
 
     <figure class="hero-art">
       <div class="hero-cultural-frame">
-        <img
-          src="assets/images/kp-community-voice-hero.jpg"
-          width="864"
-          height="1821"
-          alt="Three community members in Khyber Pakhtunkhwa record a voice together on a mountain veranda."
-          decoding="async"
-          fetchpriority="high"
-        />
+        <picture>
+          <source
+            media="(max-width: 720px)"
+            srcset="assets/images/lower-dir-community-meeting-720.webp"
+          />
+          <img
+            src="assets/images/lower-dir-community-meeting-1440.webp"
+            srcset="
+              assets/images/lower-dir-community-meeting-720.webp 720w,
+              assets/images/lower-dir-community-meeting-1440.webp 1440w
+            "
+            sizes="(max-width: 900px) min(92vw, 445px), 445px"
+            width="1440"
+            height="1025"
+            alt="Women attend a community education meeting in Lower Dir, Khyber Pakhtunkhwa."
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
       </div>
     </figure>
   </div>
