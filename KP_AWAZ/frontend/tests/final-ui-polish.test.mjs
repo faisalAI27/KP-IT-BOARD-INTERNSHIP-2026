@@ -11,6 +11,11 @@ test("shared design foundation exposes the final KP AWAZ token system", async ()
   const css = await read("styles/foundation.css");
 
   for (const token of [
+    "--brand-navy",
+    "--brand-green",
+    "--brand-blue",
+    "--brand-grey",
+    "--brand-gradient",
     "--forest-deep",
     "--forest",
     "--ivory",
@@ -34,7 +39,7 @@ test("shared design foundation exposes the final KP AWAZ token system", async ()
 
 test("public, contributor, and admin pages load the final polish with cache-safe URLs", async () => {
   const mainCss = await read("styles/main.css");
-  assert.match(mainCss, /final-polish\.css\?v=20260720-final-polish/);
+  assert.match(mainCss, /final-polish\.css\?v=20260729-brand-system/);
   assert.ok(
     mainCss.indexOf("final-polish.css") > mainCss.indexOf("responsive.css"),
     "public polish must load after responsive component styles",
@@ -42,9 +47,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    const expectedMainVersion = page === "index.html"
-      ? "styles/main.css?v=20260729-wave-surface"
-      : "styles/main.css?v=20260726-leaderboard-history";
+    const expectedMainVersion = "styles/main.css?v=20260729-brand-system";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 
@@ -59,9 +62,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
   ]) {
     const html = await read(page);
     const stylesheets = [...html.matchAll(/href="(styles\/[^"]+\.css[^\"]*)"/g)].map((match) => match[1]);
-    const expectedPolish = page === "contribute.html"
-      ? "styles/final-polish.css?v=20260723-rabab-reading"
-      : "styles/final-polish.css?v=20260720-final-polish";
+    const expectedPolish = "styles/final-polish.css?v=20260729-brand-system";
     assert.equal(stylesheets.at(-1), expectedPolish);
   }
 });
@@ -102,11 +103,11 @@ test("dashboard keeps its production identity with the supplied refined surface"
     read("styles/final-polish.css"),
   ]);
 
-  assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?#173e34;[\s\S]*?}/);
+  assert.match(workspaceCss, /\.workspace-sidebar\s*{[\s\S]*?var\(--brand-navy\);[\s\S]*?}/);
   assert.match(dashboardCss, /\.dashboard-colorflow-shell\s*{[\s\S]*?rgba\(255, 255, 255, 0\.76\)[\s\S]*?}/);
   assert.match(dashboardCss, /\.dashboard-colorflow-shell::before\s*{[\s\S]*?repeating-linear-gradient/);
   assert.doesNotMatch(dashboardCss, /dashboard-(?:border-flow|text-flow|corner-drift)/);
-  assert.doesNotMatch(dashboardCss, /\.dashboard-colorflow-shell\s*{[^}]*background:\s*#173e34/s);
+  assert.doesNotMatch(dashboardCss, /\.dashboard-colorflow-shell\s*{[^}]*background:\s*var\(--brand-navy\)/s);
   assert.doesNotMatch(polishCss, /\.workspace-sidebar\s*{[^}]*background(?:-color|-image)?:/s);
   assert.doesNotMatch(polishCss, /\.dashboard-contribute-hub(?:,|::after)[\s\S]*?background(?:-color|-image)?:/);
   assert.doesNotMatch(polishCss, /\.rec-btn(?:\s*\{|:focus-visible)/);

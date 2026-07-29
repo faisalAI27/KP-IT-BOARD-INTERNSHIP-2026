@@ -1,23 +1,45 @@
 :root {
   color-scheme: light;
 
-  /* KP AWAZ palette: forest, earth, clay, gold, and warm paper. */
-  --forest-deep: #173e34;
-  --forest: #3e6259;
-  --forest-soft: #e9f0ec;
-  --pine: var(--forest);
-  --pine-dark: #2a4740;
-  --ivory: #faf6ef;
-  --cream: #f1eadb;
-  --surface: #ffffff;
-  --surface-muted: #f7f0e5;
-  --earth: #2e2620;
-  --earth-soft: #6b5d4f;
-  --clay: #c1613d;
-  --clay-dark: #9c4b2e;
-  --gold: #e7a94c;
+  /* Designer-approved KP AWAZ brand palette. */
+  --brand-navy: #002533;
+  --brand-green: #00be83;
+  --brand-blue: #00a0ef;
+  --brand-grey: #a8a8a8;
+  --brand-white: #ffffff;
+  --brand-gradient: linear-gradient(180deg, #00be83 0%, #00a0ef 100%);
 
-  /* Backward-compatible component tokens. */
+  /* Accessible supporting tones derived from the approved palette. */
+  --brand-navy-soft: #174754;
+  --brand-green-strong: #007a61;
+  --brand-green-deep: #005849;
+  --brand-blue-strong: #006fa8;
+  --brand-mint: #e7f8f3;
+  --brand-sky: #e7f5fc;
+  --brand-surface: #f7fbfa;
+  --brand-surface-strong: #edf6f4;
+  --brand-text-muted: #52676e;
+  --brand-danger: #9b3d33;
+  --brand-danger-soft: #fff0ed;
+  --brand-success: #006b55;
+  --brand-success-soft: #e5f7f1;
+
+  /* Backward-compatible semantic aliases used by existing components. */
+  --forest-deep: var(--brand-navy);
+  --forest: var(--brand-green-strong);
+  --forest-soft: var(--brand-mint);
+  --pine: var(--forest);
+  --pine-dark: var(--brand-green-deep);
+  --ivory: var(--brand-surface);
+  --cream: var(--brand-surface-strong);
+  --surface: var(--brand-white);
+  --surface-muted: #f2f8f6;
+  --earth: var(--brand-navy);
+  --earth-soft: var(--brand-text-muted);
+  --clay: var(--brand-green-strong);
+  --clay-dark: var(--brand-green-deep);
+  --gold: var(--brand-blue);
+
   --paper: var(--ivory);
   --paper-soft: var(--cream);
   --card: var(--surface);
@@ -27,10 +49,10 @@
   --terracotta-dark: var(--clay-dark);
   --honey: var(--gold);
 
-  --line: rgba(46, 38, 32, 0.12);
-  --line-strong: rgba(46, 38, 32, 0.2);
-  --line-forest: rgba(62, 98, 89, 0.22);
-  --focus-ring: rgba(193, 97, 61, 0.35);
+  --line: rgba(0, 37, 51, 0.12);
+  --line-strong: rgba(0, 37, 51, 0.2);
+  --line-forest: rgba(0, 122, 97, 0.22);
+  --focus-ring: #0078b5;
 
   /* Shared spacing rhythm. */
   --space-1: 0.25rem;
@@ -49,11 +71,11 @@
   --font-display: Georgia, "Times New Roman", serif;
   --font-pashto: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
 
-  --shadow-xs: 0 4px 14px rgba(46, 38, 32, 0.045);
-  --shadow-sm: 0 10px 30px rgba(46, 38, 32, 0.07);
-  --shadow-md: 0 22px 60px rgba(46, 38, 32, 0.12);
-  --shadow-lg: 0 30px 80px rgba(34, 43, 37, 0.16);
-  --shadow-focus: 0 0 0 4px rgba(62, 98, 89, 0.1);
+  --shadow-xs: 0 4px 14px rgba(0, 37, 51, 0.045);
+  --shadow-sm: 0 10px 30px rgba(0, 37, 51, 0.07);
+  --shadow-md: 0 22px 60px rgba(0, 37, 51, 0.12);
+  --shadow-lg: 0 30px 80px rgba(0, 37, 51, 0.16);
+  --shadow-focus: 0 0 0 4px rgba(0, 160, 239, 0.14);
 
   --radius-xs: 8px;
   --radius-sm: 12px;
@@ -140,8 +162,8 @@ svg {
 }
 
 ::selection {
-  background: var(--honey);
-  color: var(--ink);
+  background: var(--brand-green);
+  color: var(--brand-navy);
 }
 
 :focus-visible {
@@ -172,10 +194,10 @@ svg {
   width: min(100% - 32px, 620px);
   margin: 40px auto;
   padding: 20px;
-  border: 1px solid rgba(193, 97, 61, 0.24);
+  border: 1px solid rgba(155, 61, 51, 0.24);
   border-radius: var(--radius-sm);
   background: var(--card);
-  color: var(--terracotta-dark);
+  color: var(--brand-danger);
   box-shadow: var(--shadow-sm);
   gap: 5px;
 }
@@ -256,12 +278,12 @@ svg {
 .btn-primary {
   background: var(--terracotta);
   color: var(--card);
-  box-shadow: 0 10px 26px rgba(193, 97, 61, 0.28);
+  box-shadow: 0 10px 26px rgba(0, 122, 97, 0.24);
 }
 
 .btn-primary:hover {
   background: var(--terracotta-dark);
-  box-shadow: 0 14px 32px rgba(156, 75, 46, 0.3);
+  box-shadow: 0 14px 32px rgba(0, 88, 73, 0.28);
 }
 
 .btn-outline {
@@ -279,12 +301,12 @@ svg {
 .btn-light {
   background: var(--paper);
   color: var(--pine-dark);
-  box-shadow: 0 12px 30px rgba(46, 38, 32, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 37, 51, 0.2);
 }
 
 .btn-light:hover {
   background: var(--card);
-  box-shadow: 0 16px 38px rgba(46, 38, 32, 0.3);
+  box-shadow: 0 16px 38px rgba(0, 37, 51, 0.26);
 }
 
 .btn-quiet {

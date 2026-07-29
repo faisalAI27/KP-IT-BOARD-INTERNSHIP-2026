@@ -1,94 +1,119 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { test } from "node:test";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
+const readBinary = (path) => readFile(new URL(path, root));
 
-const logoAssets = [
-  "assets/images/logo.svg",
-  "assets/images/logo-primary.svg",
-  "assets/images/logo-horizontal.svg",
-  "assets/images/logo-stacked.svg",
-  "assets/images/logo-monochrome-dark.svg",
-  "assets/images/logo-monochrome-light.svg",
+const approvedLogos = [
+  {
+    path: "assets/images/brand/kp-awaz-lockup-horizontal-on-light.png",
+    width: 3403,
+    height: 536,
+    sha256: "9171b9e535eb9c0ff0b97e85229fc33c6f8f4a205dfe2470e5086f4a21635d44",
+  },
+  {
+    path: "assets/images/brand/kp-awaz-lockup-horizontal-on-dark.png",
+    width: 3403,
+    height: 536,
+    sha256: "8d6103d090388cf72bb6d3fbd0dd26b77a2040c6613e70f8d01668dd8b1591af",
+  },
+  {
+    path: "assets/images/brand/kp-awaz-lockup-stacked-on-light.png",
+    width: 3562,
+    height: 2084,
+    sha256: "24a78067d2ce36d70772a9ce903d01253793d0e8fc0f5a7cd6cc641fcc060386",
+  },
 ];
 
-test("brand system provides every scalable KP AWAZ logo variation", async () => {
-  for (const path of logoAssets) {
+test("designer-approved PNG masters are preserved byte-for-byte with transparency", async () => {
+  for (const logo of approvedLogos) {
     const [asset, metadata] = await Promise.all([
-      read(path),
-      stat(new URL(path, root)),
+      readBinary(logo.path),
+      stat(new URL(logo.path, root)),
     ]);
 
     assert.equal(metadata.isFile(), true);
-    assert.match(asset, /^<svg[^>]+viewBox=/);
-    assert.match(asset, /<title[^>]*>KP AWAZ/i);
-    assert.doesNotMatch(asset, /<linearGradient|<radialGradient|filter=/);
+    assert.equal(asset.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(asset.readUInt32BE(16), logo.width);
+    assert.equal(asset.readUInt32BE(20), logo.height);
+    assert.equal(asset[25], 6, `${logo.path} must remain an RGBA PNG`);
+    assert.equal(createHash("sha256").update(asset).digest("hex"), logo.sha256);
   }
 });
 
-test("full-color identity uses the approved earthy palette and integrated symbol", async () => {
-  const [mark, primary] = await Promise.all([
-    read("assets/images/logo.svg"),
-    read("assets/images/logo-primary.svg"),
-  ]);
+test("every visible branded surface uses the correct approved lockup and accessible home label", async () => {
+  const [header, footer, auth, workspace, recoveryCard, admin, navigationCss, closingCss, workspaceCss, authCss, adminCss] =
+    await Promise.all([
+      read("sections/header.html"),
+      read("sections/footer.html"),
+      read("auth.html"),
+      read("sections/workspace-sidebar.html"),
+      read("sections/password-recovery-card.html"),
+      read("admin.html"),
+      read("styles/navigation.css"),
+      read("styles/closing.css"),
+      read("styles/workspace.css"),
+      read("styles/auth-page.css"),
+      read("styles/admin.css"),
+    ]);
 
-  for (const color of ["#153f32", "#b65d3a", "#c89943", "#f7f1e6"]) {
-    assert.match(mark, new RegExp(color, "i"));
+  const horizontalLight = "assets/images/brand/kp-awaz-lockup-horizontal-on-light.png";
+  const horizontalDark = "assets/images/brand/kp-awaz-lockup-horizontal-on-dark.png";
+  const stackedLight = "assets/images/brand/kp-awaz-lockup-stacked-on-light.png";
+
+  assert.match(header, new RegExp(`aria-label="KP AWAZ home"[\\s\\S]*?${horizontalLight}`));
+  assert.match(footer, new RegExp(`aria-label="KP AWAZ home"[\\s\\S]*?${horizontalDark}`));
+  assert.match(auth, new RegExp(`aria-label="KP AWAZ home"[\\s\\S]*?${stackedLight}`));
+  assert.match(workspace, new RegExp(`aria-label="KP AWAZ public home"[\\s\\S]*?${horizontalDark}`));
+  assert.match(recoveryCard, new RegExp(`aria-label="KP AWAZ home"[\\s\\S]*?${stackedLight}`));
+  assert.match(admin, new RegExp(`aria-label="KP AWAZ home"[\\s\\S]*?${horizontalLight}`));
+
+  for (const html of [header, footer, auth, workspace, recoveryCard, admin]) {
+    assert.doesNotMatch(html, /<img[^>]+src="[^"]*khyber-voice-(?:logo|mark)/i);
   }
 
-  assert.match(mark, /gateway.*mountain.*voice wave/i);
-  assert.match(mark, /stroke-linecap="round"/);
-  assert.match(primary, /id="letter-k"/);
-  assert.match(primary, /id="letter-a"/);
-  assert.doesNotMatch(primary, /<text/);
-});
-
-test("the supplied Khyber Voice artwork is preserved as scalable production assets", async () => {
-  const [primary, light, mark] = await Promise.all([
-    read("assets/images/khyber-voice-logo.svg"),
-    read("assets/images/khyber-voice-logo-light.svg"),
-    read("assets/images/khyber-voice-mark.svg"),
-  ]);
-
-  for (const asset of [primary, light, mark]) {
-    assert.match(asset, /^<svg[^>]+viewBox=/);
-    assert.match(asset, /<title[^>]*>Khyber Voice/i);
-    assert.doesNotMatch(asset, /<text|<rect|filter=|href=/);
-  }
-  for (const color of ["#123F3A", "#B85C3D", "#D59C52", "#FFF7E8"]) {
-    assert.match(primary, new RegExp(color, "i"));
-  }
-  assert.match(light, /#FFF7E8/i);
-  assert.match(mark, /microphone with radiating voice waves/i);
-});
-
-test("the Khyber Voice logo is clickable on every branded surface", async () => {
-  const [header, footer, auth, workspace, forgot, reset, recoveryCard, admin, navigationCss] = await Promise.all([
-    read("sections/header.html"),
-    read("sections/footer.html"),
-    read("auth.html"),
-    read("sections/workspace-sidebar.html"),
-    read("forgot-password.html"),
-    read("reset-password.html"),
-    read("sections/password-recovery-card.html"),
-    read("admin.html"),
-    read("styles/navigation.css"),
-  ]);
-
-  assert.match(header, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
-  assert.match(footer, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo-light\.svg/);
-  assert.match(auth, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
-  assert.match(workspace, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice public home"[\s\S]*?khyber-voice-logo-light\.svg/);
-  assert.match(forgot, /sections\/password-recovery-card\.html/);
-  assert.match(reset, /sections\/password-recovery-card\.html/);
-  assert.match(recoveryCard, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-logo\.svg/);
-  assert.match(admin, /<a[^>]+href="index\.html"[^>]+aria-label="Khyber Voice home"[\s\S]*?khyber-voice-mark\.svg/);
+  assert.match(header, /width="3403"[\s\S]*?height="536"[\s\S]*?alt=""/);
+  assert.match(auth, /width="3562"[\s\S]*?height="2084"[\s\S]*?alt=""/);
   assert.match(navigationCss, /\.logo\s*\{[^}]*min-height:\s*44px/s);
+  assert.match(navigationCss, /width:\s*clamp\(220px,\s*18vw,\s*244px\)/);
+  assert.match(closingCss, /width:\s*clamp\(230px,\s*24vw,\s*270px\)/);
+  assert.match(workspaceCss, /width:\s*min\(100%,\s*224px\)/);
+  assert.match(authCss, /\.access-brand img\s*\{[^}]*width:\s*176px[^}]*height:\s*auto/s);
+  assert.match(adminCss, /width:\s*clamp\(205px,\s*20vw,\s*242px\)/);
 });
 
-test("every production page uses the Khyber Voice emblem as its favicon", async () => {
+test("the approved palette is the shared frontend source of truth", async () => {
+  const [foundation, auth, dashboard, leaderboard, settings, recorder] = await Promise.all([
+    read("styles/foundation.css"),
+    read("styles/auth-page.css"),
+    read("styles/dashboard.css"),
+    read("styles/leaderboard.css"),
+    read("styles/settings.css"),
+    read("styles/rabab-recorder.css"),
+  ]);
+
+  for (const declaration of [
+    "--brand-navy: #002533",
+    "--brand-green: #00be83",
+    "--brand-blue: #00a0ef",
+    "--brand-grey: #a8a8a8",
+    "--brand-white: #ffffff",
+    "--brand-gradient: linear-gradient(180deg, #00be83 0%, #00a0ef 100%)",
+  ]) {
+    assert.match(foundation.toLowerCase(), new RegExp(declaration.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+
+  for (const stylesheet of [auth, dashboard, leaderboard, settings, recorder]) {
+    assert.match(stylesheet, /var\(--brand-(?:navy|green|blue|surface|text|white)/);
+  }
+  assert.match(foundation, /--brand-danger:/);
+  assert.match(foundation, /--brand-success:/);
+});
+
+test("the legacy favicon remains temporary until an approved square mark is supplied", async () => {
   const pages = [
     "index.html",
     "about.html",
@@ -116,15 +141,17 @@ test("every production page uses the Khyber Voice emblem as its favicon", async 
   }
 });
 
-test("brand guidance records meaning, usage, minimum size, and accessibility", async () => {
+test("brand guidance records usage, intrinsic sizing, accessibility, and favicon limitation", async () => {
   const guide = await readFile(
     new URL("../../docs/brand-identity.md", import.meta.url),
     "utf8",
   );
 
-  assert.match(guide, /The Voice Gateway/);
-  assert.match(guide, /hujra/i);
-  assert.match(guide, /minimum displayed width/i);
+  assert.match(guide, /source of truth/i);
+  assert.match(guide, /Preserving Languages\. Empowering AI/);
+  assert.match(guide, /3403 × 536/);
+  assert.match(guide, /3562 × 2084/);
   assert.match(guide, /aria-label="KP AWAZ home"/);
+  assert.match(guide, /square\/icon-only KP AWAZ mark is still required/i);
   assert.match(guide, /Do not/);
 });

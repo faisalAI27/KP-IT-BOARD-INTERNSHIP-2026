@@ -4,7 +4,7 @@
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--line);
-  background: rgba(250, 246, 239, 0.98);
+  background: rgba(247, 251, 250, 0.98);
 }
 
 .nav-inner {
@@ -15,19 +15,20 @@
   align-items: center;
   margin-inline: auto;
   grid-template-columns: auto 1fr auto;
-  gap: 28px;
+  gap: clamp(18px, 2vw, 28px);
 }
 
 .logo {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
+  border-radius: 8px;
 }
 
 .logo .brand-lockup {
   display: block;
-  width: 141px;
-  height: 42px;
+  width: clamp(220px, 18vw, 244px);
+  height: auto;
   object-fit: contain;
 }
 
@@ -35,7 +36,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(18px, 2vw, 32px);
+  gap: clamp(14px, 1.6vw, 26px);
 }
 
 .links a,
@@ -65,7 +66,7 @@
   left: 0;
   height: 2px;
   border-radius: 2px;
-  background: var(--terracotta);
+  background: var(--brand-gradient);
   content: "";
   transform: scaleX(0);
   transition: transform 0.2s ease;
@@ -150,7 +151,7 @@
 .auth-header-button {
   min-width: 108px;
   max-width: 172px;
-  border-color: rgba(62, 98, 89, 0.2);
+  border-color: rgba(0, 37, 51, 0.18);
   background: rgba(255, 255, 255, 0.52);
   color: var(--pine-dark);
   white-space: nowrap;
@@ -170,13 +171,13 @@
 }
 
 .auth-header-button[data-auth-kind="account"] {
-  border-color: rgba(62, 98, 89, 0.28);
-  background: rgba(62, 98, 89, 0.09);
+  border-color: rgba(0, 122, 97, 0.28);
+  background: rgba(0, 190, 131, 0.09);
 }
 
 .auth-header-button[data-auth-kind="issue"] {
-  border-color: rgba(193, 97, 61, 0.26);
-  color: var(--terracotta-dark);
+  border-color: rgba(155, 61, 51, 0.26);
+  color: var(--brand-danger);
 }
 
 .auth-status-dot {

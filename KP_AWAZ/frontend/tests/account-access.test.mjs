@@ -109,7 +109,7 @@ test("member workspace is split into real pages with shared navigation", async (
 });
 
 
-test("workspace navigation reserves the gold treatment for the active page", async () => {
+test("workspace navigation reserves the brand treatment for the active page", async () => {
   const [workspaceCss, finalPolishCss] = await Promise.all([
     readFile(new URL("styles/workspace.css", projectRoot), "utf8"),
     readFile(new URL("styles/final-polish.css", projectRoot), "utf8"),

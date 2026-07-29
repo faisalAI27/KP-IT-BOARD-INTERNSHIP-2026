@@ -32,13 +32,13 @@
   padding: clamp(22px, 4vw, 42px);
   border-radius: 28px 7px 28px 28px;
   background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 20px 50px rgba(46, 38, 32, 0.06);
+  box-shadow: 0 20px 50px rgba(0, 37, 51, 0.06);
 }
 
 .workspace-main .my-contributions-summary {
   border-radius: 20px 6px 20px 20px;
   background:
-    linear-gradient(rgba(62, 98, 89, 0.065), rgba(62, 98, 89, 0.065)),
+    linear-gradient(rgba(0, 122, 97, 0.065), rgba(0, 122, 97, 0.065)),
     var(--card);
 }
 
@@ -48,5 +48,5 @@
 }
 
 .workspace-main .my-contribution-card {
-  background: #f7f0e5;
+  background: #f7fbfa;
 }

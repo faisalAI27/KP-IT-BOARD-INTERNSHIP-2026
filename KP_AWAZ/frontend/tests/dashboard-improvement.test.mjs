@@ -109,7 +109,7 @@ test("record voice implements the supplied focused recorder template and motion"
     read("scripts/modules/rabab-recorder-template.js"),
     read("scripts/modules/recorder.js"),
   ]);
-  assert.match(page, /styles\/rabab-recorder\.css\?v=20260726-focused-recorder/);
+  assert.match(page, /styles\/rabab-recorder\.css\?v=20260729-brand-system/);
   assert.match(page, /scripts\/contribute-page-app\.js\?v=20260726-focused-recorder/);
   assert.doesNotMatch(page, /styles\/mic-enhanced-template\.css|styles\/contribution\.css/);
   assert.doesNotMatch(page, /donate-text/);

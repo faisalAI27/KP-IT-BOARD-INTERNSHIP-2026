@@ -1,27 +1,27 @@
-@import url("./foundation.css?v=20260717-member-workspace");
+@import url("./foundation.css?v=20260729-brand-system");
 
 :root {
-  --auth-deep-green: #143a2d;
-  --auth-forest: #1c4939;
-  --auth-pine: #2f5d4b;
-  --auth-sage: #9bb8a7;
-  --auth-ivory: #fbf7ef;
-  --auth-cream: #f3eadb;
-  --auth-white: #fffefd;
-  --auth-rust: #b85f39;
-  --auth-rust-dark: #90462d;
-  --auth-gold: #dda74f;
-  --auth-gold-pale: #f3d69a;
-  --auth-charcoal: #29241f;
-  --auth-muted: #70665b;
-  --auth-line: rgba(41, 36, 31, 0.14);
-  --auth-line-strong: rgba(41, 36, 31, 0.24);
-  --auth-focus: rgba(47, 93, 75, 0.24);
-  --auth-error-bg: #fff0eb;
-  --auth-error: #873b26;
-  --auth-success-bg: #eaf4ee;
-  --auth-success: #245241;
-  --auth-card-shadow: 0 28px 72px rgba(4, 24, 18, 0.4);
+  --auth-deep-green: var(--brand-navy);
+  --auth-forest: var(--brand-navy-soft);
+  --auth-pine: var(--brand-green-strong);
+  --auth-sage: var(--brand-grey);
+  --auth-ivory: var(--brand-surface);
+  --auth-cream: var(--brand-surface-strong);
+  --auth-white: var(--brand-white);
+  --auth-rust: var(--brand-green-strong);
+  --auth-rust-dark: var(--brand-green-deep);
+  --auth-gold: var(--brand-blue);
+  --auth-gold-pale: #b9e9ff;
+  --auth-charcoal: var(--brand-navy);
+  --auth-muted: var(--brand-text-muted);
+  --auth-line: rgba(0, 37, 51, 0.14);
+  --auth-line-strong: rgba(0, 37, 51, 0.24);
+  --auth-focus: rgba(0, 160, 239, 0.24);
+  --auth-error-bg: var(--brand-danger-soft);
+  --auth-error: var(--brand-danger);
+  --auth-success-bg: var(--brand-success-soft);
+  --auth-success: var(--brand-success);
+  --auth-card-shadow: 0 28px 72px rgba(0, 37, 51, 0.4);
 }
 
 body.access-page {
@@ -120,10 +120,10 @@ body.access-page input {
   z-index: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 15%, rgba(243, 214, 154, 0.32), transparent 27%),
-    linear-gradient(135deg, rgba(221, 167, 79, 0.09) 25%, transparent 25%) 0 0 / 38px 38px,
-    linear-gradient(225deg, rgba(155, 184, 167, 0.08) 25%, transparent 25%) 0 0 / 38px 38px,
-    linear-gradient(180deg, #315c4c 0%, #1b4637 54%, #0f3328 100%);
+    radial-gradient(circle at 50% 15%, rgba(0, 190, 131, 0.25), transparent 27%),
+    linear-gradient(135deg, rgba(0, 160, 239, 0.09) 25%, transparent 25%) 0 0 / 38px 38px,
+    linear-gradient(225deg, rgba(0, 190, 131, 0.08) 25%, transparent 25%) 0 0 / 38px 38px,
+    linear-gradient(180deg, #07556a 0%, #003f50 54%, var(--brand-navy) 100%);
 }
 
 .cultural-hero-fallback::before,
@@ -133,7 +133,7 @@ body.access-page input {
   bottom: -5%;
   left: -6%;
   height: 54%;
-  background: rgba(8, 42, 31, 0.74);
+  background: rgba(0, 55, 62, 0.74);
   clip-path: polygon(0 69%, 12% 42%, 24% 61%, 39% 25%, 53% 56%, 68% 18%, 82% 58%, 93% 35%, 100% 64%, 100% 100%, 0 100%);
   content: "";
 }
@@ -142,16 +142,16 @@ body.access-page input {
   bottom: -22%;
   height: 58%;
   background:
-    linear-gradient(90deg, transparent 48%, rgba(221, 167, 79, 0.16) 49% 51%, transparent 52%) 0 0 / 44px 44px,
-    rgba(5, 31, 23, 0.9);
+    linear-gradient(90deg, transparent 48%, rgba(0, 160, 239, 0.16) 49% 51%, transparent 52%) 0 0 / 44px 44px,
+    rgba(0, 37, 51, 0.92);
   clip-path: polygon(0 45%, 17% 26%, 34% 60%, 52% 29%, 68% 63%, 83% 34%, 100% 58%, 100% 100%, 0 100%);
 }
 
 .access-background-overlay {
   z-index: -2;
   background:
-    radial-gradient(circle at 50% 46%, rgba(244, 229, 202, 0.09) 0, rgba(18, 53, 41, 0.2) 34%, rgba(8, 35, 26, 0.54) 100%),
-    linear-gradient(180deg, rgba(8, 32, 24, 0.2), rgba(8, 32, 24, 0.46));
+    radial-gradient(circle at 50% 46%, rgba(0, 190, 131, 0.08) 0, rgba(0, 61, 74, 0.2) 34%, rgba(0, 37, 51, 0.58) 100%),
+    linear-gradient(180deg, rgba(0, 37, 51, 0.18), rgba(0, 37, 51, 0.48));
 }
 
 .access-stage,
@@ -168,7 +168,7 @@ body.access-page input {
 .access-card {
   width: min(100%, 520px);
   padding: clamp(27px, 3vw, 39px);
-  border: 1px solid rgba(243, 214, 154, 0.54);
+  border: 1px solid rgba(0, 190, 131, 0.38);
   border-radius: 26px;
   background: rgba(255, 254, 250, 0.985);
   box-shadow: var(--auth-card-shadow);
@@ -207,9 +207,9 @@ body[data-auth-view="otp"] .access-card {
   width: 35px;
   height: 35px;
   place-items: center;
-  border: 1px solid rgba(47, 93, 75, 0.19);
+  border: 1px solid rgba(0, 122, 97, 0.22);
   border-radius: 50%;
-  background: rgba(243, 234, 219, 0.72);
+  background: rgba(231, 248, 243, 0.8);
   color: var(--auth-deep-green);
   font-family: Georgia, "Noto Naskh Arabic", serif;
   font-size: 0.86rem;
@@ -218,7 +218,7 @@ body[data-auth-view="otp"] .access-card {
 .access-branding {
   display: grid;
   justify-items: center;
-  margin: 7px 0 23px;
+  margin: 4px 0 19px;
   text-align: center;
 }
 
@@ -230,8 +230,8 @@ body[data-auth-view="otp"] .access-card {
 
 .access-brand img {
   display: block;
-  width: 154px;
-  height: 46px;
+  width: 176px;
+  height: auto;
   object-fit: contain;
 }
 
@@ -286,7 +286,7 @@ body[data-auth-view="otp"] .access-card {
   display: grid;
   margin-bottom: 15px;
   padding: 4px;
-  border: 1px solid rgba(41, 36, 31, 0.05);
+  border: 1px solid rgba(0, 37, 51, 0.06);
   border-radius: 13px;
   background: var(--auth-cream);
   grid-template-columns: 1fr 1fr;
@@ -306,7 +306,7 @@ body[data-auth-view="otp"] .access-card {
 .access-tabs button.is-active {
   background: var(--auth-white);
   color: var(--auth-deep-green);
-  box-shadow: 0 4px 13px rgba(41, 36, 31, 0.08);
+  box-shadow: 0 4px 13px rgba(0, 37, 51, 0.08);
 }
 
 .access-google,
@@ -406,17 +406,17 @@ body[data-auth-view="otp"] .access-card {
 }
 
 .access-form input:hover {
-  border-color: rgba(47, 93, 75, 0.54);
+  border-color: rgba(0, 122, 97, 0.54);
 }
 
 .access-form input:focus {
   border-color: var(--auth-pine);
   background: var(--auth-white);
-  box-shadow: 0 0 0 4px rgba(47, 93, 75, 0.11);
+  box-shadow: 0 0 0 4px rgba(0, 160, 239, 0.14);
 }
 
 .access-form input:user-invalid {
-  border-color: rgba(184, 95, 57, 0.72);
+  border-color: rgba(155, 61, 51, 0.72);
 }
 
 .access-form input:disabled,
@@ -458,7 +458,7 @@ body[data-auth-view="otp"] .access-card {
   font-size: 0.69rem;
   font-weight: 820;
   text-decoration: underline;
-  text-decoration-color: rgba(20, 58, 45, 0.34);
+  text-decoration-color: rgba(0, 122, 97, 0.34);
   text-underline-offset: 3px;
 }
 
@@ -480,8 +480,8 @@ body[data-auth-view="otp"] .access-card {
   align-items: flex-start;
   padding: 9px 10px;
   border-radius: 9px;
-  background: rgba(221, 167, 79, 0.12);
-  color: #695638;
+  background: rgba(0, 160, 239, 0.1);
+  color: var(--brand-navy-soft);
   gap: 7px;
 }
 
@@ -536,12 +536,12 @@ body[data-auth-view="otp"] .access-card {
   border: 1px solid var(--auth-deep-green);
   background: var(--auth-deep-green);
   color: var(--auth-white);
-  box-shadow: 0 9px 20px rgba(20, 58, 45, 0.18);
+  box-shadow: 0 9px 20px rgba(0, 37, 51, 0.18);
 }
 
 .access-primary:hover {
-  background: #0f3025;
-  box-shadow: 0 12px 25px rgba(20, 58, 45, 0.24);
+  background: var(--brand-green-deep);
+  box-shadow: 0 12px 25px rgba(0, 37, 51, 0.24);
   transform: translateY(-1px);
 }
 
@@ -646,16 +646,16 @@ body[data-auth-view="otp"] .access-card {
 
 .account-steps li[data-state="complete"] span {
   border-color: var(--auth-gold);
-  background: #fff5e3;
+  background: var(--brand-sky);
 }
 
 .otp-stage {
   padding: clamp(18px, 3vw, 26px);
-  border: 1px solid rgba(221, 167, 79, 0.39);
+  border: 1px solid rgba(0, 160, 239, 0.34);
   border-radius: 20px;
   background:
-    linear-gradient(rgba(255, 250, 240, 0.94), rgba(255, 250, 240, 0.99)),
-    radial-gradient(circle, rgba(184, 95, 57, 0.18) 1px, transparent 1px);
+    linear-gradient(rgba(247, 251, 250, 0.94), rgba(247, 251, 250, 0.99)),
+    radial-gradient(circle, rgba(0, 190, 131, 0.16) 1px, transparent 1px);
   background-size: auto, 18px 18px;
   text-align: center;
 }
@@ -671,7 +671,7 @@ body[data-auth-view="otp"] .access-card {
   background: var(--auth-deep-green);
   color: var(--auth-gold-pale);
   font-size: 1.12rem;
-  box-shadow: 0 0 0 6px rgba(221, 167, 79, 0.12);
+  box-shadow: 0 0 0 6px rgba(0, 160, 239, 0.12);
 }
 
 .otp-stage h3 {
@@ -720,7 +720,7 @@ body[data-auth-view="otp"] .access-card {
   font-size: 0.68rem;
   font-weight: 800;
   text-decoration: underline;
-  text-decoration-color: rgba(20, 58, 45, 0.24);
+  text-decoration-color: rgba(0, 122, 97, 0.24);
   text-underline-offset: 3px;
 }
 
@@ -745,9 +745,9 @@ body[data-auth-view="otp"] .access-card {
 .workspace-verification-actions {
   display: grid;
   padding: 12px;
-  border: 1px solid rgba(20, 58, 45, 0.16);
+  border: 1px solid rgba(0, 122, 97, 0.18);
   border-radius: 11px;
-  background: rgba(243, 234, 219, 0.56);
+  background: rgba(231, 248, 243, 0.62);
   gap: 8px;
 }
 
@@ -932,12 +932,12 @@ body[data-auth-view="otp"] .access-card {
 }
 
 .access-page :where(a, button, input):focus-visible {
-  outline: 3px solid rgba(243, 214, 154, 0.92);
+  outline: 3px solid #52c8ff;
   outline-offset: 3px;
 }
 
 .access-card :where(a, button, input):focus-visible {
-  outline-color: rgba(47, 93, 75, 0.72);
+  outline-color: var(--focus-ring);
 }
 
 @keyframes auth-spin {
@@ -961,8 +961,8 @@ body[data-auth-view="otp"] .access-card {
 
   .access-background-overlay {
     background:
-      radial-gradient(circle at 50% 38%, rgba(244, 229, 202, 0.06), rgba(9, 40, 29, 0.38) 48%, rgba(6, 29, 21, 0.67) 100%),
-      linear-gradient(180deg, rgba(8, 32, 24, 0.2), rgba(8, 32, 24, 0.48));
+      radial-gradient(circle at 50% 38%, rgba(0, 190, 131, 0.05), rgba(0, 55, 68, 0.38) 48%, rgba(0, 37, 51, 0.7) 100%),
+      linear-gradient(180deg, rgba(0, 37, 51, 0.2), rgba(0, 37, 51, 0.5));
   }
 
   .cultural-hero picture img {
@@ -994,8 +994,8 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .access-brand img {
-    width: 134px;
-    height: 40px;
+    width: 126px;
+    height: auto;
   }
 
   .access-branding p {
@@ -1091,8 +1091,8 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .access-brand img {
-    width: 141px;
-    height: 42px;
+    width: 146px;
+    height: auto;
   }
 
   .access-branding p {

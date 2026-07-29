@@ -1,5 +1,9 @@
 /* Responsive layout */
 @media (max-width: 1050px) {
+  .logo .brand-lockup {
+    width: 205px;
+  }
+
   .nav-text-link {
     display: none;
   }
@@ -85,7 +89,7 @@
     border: 1px solid var(--line);
     border-top: 0;
     border-radius: 0 0 18px 18px;
-    background: rgba(250, 246, 239, 0.98);
+    background: rgba(247, 251, 250, 0.98);
     box-shadow: var(--shadow-md);
     flex-direction: column;
     gap: 0;
@@ -230,8 +234,8 @@
   }
 
   .logo .brand-lockup {
-    width: 121px;
-    height: 36px;
+    width: clamp(155px, 43vw, 178px);
+    height: auto;
   }
 
   .nav-cta .btn {
@@ -675,6 +679,33 @@
   .foot-grid {
     grid-template-columns: 1fr 1fr;
     gap: 35px 24px;
+  }
+}
+
+@media (max-width: 350px) {
+  .nav-inner {
+    gap: 6px;
+  }
+
+  .nav-cta .auth-header-button {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    padding: 0;
+  }
+
+  .nav-cta .auth-header-button .auth-status-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .nav-cta .auth-header-button > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 

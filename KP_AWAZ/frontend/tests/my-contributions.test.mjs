@@ -435,7 +435,7 @@ test("My Contributions uses the supplied motion template and scoped responsive s
   ]);
 
   assert.match(page, /my-contributions-motion-body/);
-  assert.match(page, /my-contributions\.css\?v=20260723-contributions-motion/);
+  assert.match(page, /my-contributions\.css\?v=20260729-brand-system/);
   assert.match(html, /Private review trail/);
   assert.match(html, /Review your recordings, listen again, and follow their approval journey/);
   assert.match(html, /class="my-contributions-summary-grid"/);

@@ -1,15 +1,15 @@
-@import url("./foundation.css?v=20260720-final-polish");
+@import url("./foundation.css?v=20260729-brand-system");
 
 .admin-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(231, 169, 76, 0.14), transparent 32rem),
+    radial-gradient(circle at top left, rgba(0, 190, 131, 0.13), transparent 32rem),
     var(--paper);
 }
 
 .admin-header {
   border-bottom: 1px solid var(--line);
-  background: rgba(250, 246, 239, 0.92);
+  background: rgba(247, 251, 250, 0.94);
   backdrop-filter: blur(18px);
 }
 
@@ -34,12 +34,16 @@
 }
 
 .admin-brand img {
-  width: 48px;
-  height: 48px;
+  width: clamp(205px, 20vw, 242px);
+  height: auto;
+  object-fit: contain;
 }
 
-.admin-brand span {
+.admin-brand-context {
   display: grid;
+  color: var(--brand-navy);
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -60,9 +64,9 @@
 
 .admin-header__badge {
   padding: 7px 13px;
-  border: 1px solid rgba(62, 98, 89, 0.2);
+  border: 1px solid rgba(0, 122, 97, 0.2);
   border-radius: 999px;
-  background: rgba(62, 98, 89, 0.08);
+  background: rgba(0, 190, 131, 0.08);
   color: var(--pine-dark);
   font-weight: 750;
 }
@@ -92,7 +96,7 @@
   display: grid;
   align-content: center;
   background:
-    linear-gradient(145deg, rgba(62, 98, 89, 0.96), rgba(42, 71, 64, 0.98));
+    linear-gradient(145deg, rgba(0, 88, 73, 0.98), rgba(0, 37, 51, 0.99));
   color: var(--paper);
   gap: 16px;
 }
@@ -117,7 +121,7 @@
 }
 
 .admin-connect__copy .admin-eyebrow {
-  color: #f5c77d;
+  color: #8bdcff;
 }
 
 .admin-connect__form {
@@ -216,7 +220,7 @@
   border: 1px solid rgba(214, 164, 67, 0.3);
   border-radius: 999px;
   background: rgba(214, 164, 67, 0.11);
-  color: #704d16;
+  color: #00607f;
   font-size: 0.74rem;
   font-weight: 800;
   white-space: nowrap;
@@ -308,9 +312,9 @@
 }
 
 .admin-message--error {
-  border: 1px solid rgba(193, 97, 61, 0.24);
-  background: rgba(193, 97, 61, 0.07);
-  color: var(--terracotta-dark);
+  border: 1px solid rgba(155, 61, 51, 0.24);
+  background: var(--brand-danger-soft);
+  color: var(--brand-danger);
 }
 
 .admin-empty {
@@ -344,8 +348,8 @@
 
 .admin-contribution-card:hover,
 .admin-contribution-card.is-selected {
-  border-color: rgba(62, 98, 89, 0.52);
-  background: rgba(62, 98, 89, 0.055);
+  border-color: rgba(0, 122, 97, 0.52);
+  background: rgba(0, 122, 97, 0.055);
   transform: translateY(-1px);
 }
 
@@ -395,13 +399,13 @@
 }
 
 .admin-status-badge[data-status="approved"] {
-  background: rgba(62, 98, 89, 0.11);
+  background: rgba(0, 122, 97, 0.11);
   color: var(--pine-dark);
 }
 
 .admin-status-badge[data-status="rejected"] {
-  background: rgba(193, 97, 61, 0.1);
-  color: var(--terracotta-dark);
+  background: rgba(155, 61, 51, 0.1);
+  color: var(--brand-danger);
 }
 
 .admin-pagination {
@@ -549,7 +553,7 @@
   margin: 0 auto 18px;
   place-items: center;
   border-radius: 50%;
-  background: rgba(231, 169, 76, 0.18);
+  background: rgba(0, 160, 239, 0.18);
   color: var(--terracotta-dark);
   font-size: 1.15rem;
 }
@@ -604,8 +608,8 @@
 }
 
 .admin-text-card:has(.admin-text-detail) {
-  border-color: rgba(62, 98, 89, 0.46);
-  box-shadow: 0 10px 30px rgba(42, 71, 64, 0.08);
+  border-color: rgba(0, 122, 97, 0.46);
+  box-shadow: 0 10px 30px rgba(0, 88, 73, 0.08);
 }
 
 .admin-text-card__heading {
@@ -631,7 +635,7 @@
   padding: 4px 8px;
   border-radius: 999px;
   background: rgba(214, 164, 67, 0.13);
-  color: #704d16;
+  color: #00607f;
   font-size: 0.68rem;
   font-weight: 850;
   text-transform: uppercase;
@@ -985,7 +989,7 @@
 }
 
 .admin-status[data-tone="error"] {
-  color: var(--terracotta-dark);
+  color: var(--brand-danger);
 }
 
 .admin-status[data-tone="success"] {
@@ -1115,9 +1119,9 @@
 }
 
 .btn-danger {
-  border-color: var(--terracotta);
+  border-color: var(--brand-danger);
   background: transparent;
-  color: var(--terracotta-dark);
+  color: var(--brand-danger);
 }
 
 .btn-success:hover:not(:disabled),
@@ -1206,8 +1210,8 @@
 }
 
 @media (max-width: 480px) {
-  .admin-brand small {
-    display: none;
+  .admin-brand img {
+    width: min(58vw, 190px);
   }
 
   .admin-connect__copy,

@@ -1,4 +1,4 @@
-@import url("./foundation.css?v=20260720-final-polish");
+@import url("./foundation.css?v=20260729-brand-system");
 
 .sr-only {
   position: absolute;
@@ -13,9 +13,9 @@
 body.workspace-body {
   min-height: 100vh;
   background:
-    linear-gradient(90deg, rgba(62, 98, 89, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(62, 98, 89, 0.035) 1px, transparent 1px),
-    #fbf7f0;
+    linear-gradient(90deg, rgba(0, 37, 51, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(0, 37, 51, 0.035) 1px, transparent 1px),
+    var(--brand-surface);
   background-size: 42px 42px;
 }
 
@@ -28,8 +28,8 @@ body.workspace-body {
   flex-direction: column;
   padding: 28px 20px 20px;
   background:
-    radial-gradient(circle at 80% 10%, rgba(231, 169, 76, 0.1), transparent 15rem),
-    #173e34;
+    radial-gradient(circle at 80% 10%, rgba(0, 190, 131, 0.14), transparent 15rem),
+    var(--brand-navy);
   color: rgba(255, 255, 255, 0.72);
   box-shadow: none;
 }
@@ -42,12 +42,12 @@ body.workspace-body {
   color: white;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1.15rem;
-  gap: 11px;
+  gap: 0;
 }
 
 .workspace-brand img {
-  width: 141px;
-  height: 42px;
+  width: min(100%, 224px);
+  height: auto;
   object-fit: contain;
 }
 
@@ -112,7 +112,7 @@ body.workspace-body {
   left: 0;
   width: 3px;
   border-radius: 999px;
-  background: #f4ca84;
+  background: var(--brand-green);
   content: "";
   opacity: 0;
   transform: scaleY(0.35);
@@ -133,9 +133,9 @@ body.workspace-body {
 }
 
 .workspace-navigation a.is-active {
-  border-color: rgba(231, 169, 76, 0.2);
-  background: linear-gradient(90deg, rgba(231, 169, 76, 0.2), rgba(231, 169, 76, 0.08));
-  color: #ffdda5;
+  border-color: rgba(0, 190, 131, 0.32);
+  background: linear-gradient(90deg, rgba(0, 190, 131, 0.22), rgba(0, 160, 239, 0.1));
+  color: var(--brand-white);
 }
 
 .workspace-navigation a.is-active::before {
@@ -196,10 +196,10 @@ body.workspace-body {
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid rgba(231, 169, 76, 0.35);
+  border: 1px solid rgba(0, 190, 131, 0.42);
   border-radius: 50%;
-  background: rgba(231, 169, 76, 0.12);
-  color: #ffdda5;
+  background: rgba(0, 190, 131, 0.14);
+  color: #75f3cb;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
 }
@@ -265,9 +265,9 @@ body.workspace-body {
   height: clamp(150px, 24vw, 320px);
   opacity: 0.16;
   background:
-    linear-gradient(45deg, transparent 43%, rgba(193, 97, 61, 0.34) 44% 47%, transparent 48%),
-    linear-gradient(-45deg, transparent 43%, rgba(23, 62, 52, 0.24) 44% 47%, transparent 48%),
-    radial-gradient(circle, rgba(231, 169, 76, 0.45) 0 2px, transparent 2.5px);
+    linear-gradient(45deg, transparent 43%, rgba(0, 190, 131, 0.34) 44% 47%, transparent 48%),
+    linear-gradient(-45deg, transparent 43%, rgba(0, 160, 239, 0.24) 44% 47%, transparent 48%),
+    radial-gradient(circle, rgba(0, 37, 51, 0.3) 0 2px, transparent 2.5px);
   background-position: 0 0, 0 0, 9px 9px;
   background-size: 36px 36px, 36px 36px, 18px 18px;
   content: "";
@@ -322,7 +322,7 @@ body.workspace-body {
 .workspace-loading-mark {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(23, 62, 52, 0.18);
+  border: 3px solid rgba(0, 37, 51, 0.18);
   border-right-color: var(--terracotta);
   border-radius: 50%;
   animation: workspace-loading-spin 0.8s linear infinite;
@@ -346,10 +346,10 @@ body.workspace-body {
   max-width: 720px;
   margin: 0 auto 28px;
   padding: 18px 20px;
-  border: 1px solid rgba(193, 97, 61, 0.25);
+  border: 1px solid rgba(155, 61, 51, 0.25);
   border-radius: 14px;
-  background: #fff4ef;
-  color: var(--terracotta-dark);
+  background: var(--brand-danger-soft);
+  color: var(--brand-danger);
 }
 
 .workspace-guard strong,
@@ -454,8 +454,8 @@ body.workspace-body {
   padding: 11px;
   border: 0;
   border-radius: 12px;
-  background: #173e34;
-  box-shadow: 0 9px 24px rgba(19, 48, 40, 0.22);
+  background: var(--brand-navy);
+  box-shadow: 0 9px 24px rgba(0, 37, 51, 0.22);
   cursor: pointer;
 }
 
@@ -464,7 +464,7 @@ body.workspace-body {
   height: 2px;
   margin: 4px 0;
   border-radius: 2px;
-  background: #ffdda5;
+  background: var(--brand-green);
   transform-origin: center;
   transition:
     opacity 220ms var(--ease-standard),
@@ -488,7 +488,7 @@ body.workspace-body {
   z-index: 35;
   inset: 0;
   border: 0;
-  background: rgba(17, 36, 31, 0.72);
+  background: rgba(0, 37, 51, 0.72);
 }
 
 @keyframes workspace-loading-spin {

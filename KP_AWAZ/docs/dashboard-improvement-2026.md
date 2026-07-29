@@ -88,7 +88,7 @@ Stopping, resetting, changing sentence modes, destroying the module, or leaving 
 
 ## Visual and motion system
 
-The existing forest, ivory, cream, clay, and restrained gold palette remains intact. A low-opacity embroidery motif sits in two selected dashboard-workspace corners while the contribution panel keeps a clean edge. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
+The dashboard now inherits the approved KP AWAZ navy, green, blue, grey, and white system. A low-opacity geometric motif sits in two selected dashboard-workspace corners while the contribution panel keeps a clean edge. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
 
 Motion uses transform and opacity: four dashboard groups enter over 300–400 ms after ready, recent rows and statuses resolve once, statistics transition once from placeholders, and recorder states distinguish idle, permission request, live recording, processing, playback-ready, and success. The live waveform still reflects real Web Audio input. `prefers-reduced-motion` removes entry, breathing, pulse, spinner, status, and reveal animations.
 

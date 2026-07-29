@@ -5,7 +5,7 @@
   overflow: hidden;
   padding-top: 145px;
   background:
-    radial-gradient(circle at 80% 15%, rgba(231, 169, 76, 0.18), transparent 25%),
+    radial-gradient(circle at 80% 15%, rgba(0, 160, 239, 0.18), transparent 25%),
     var(--paper);
 }
 
@@ -16,7 +16,7 @@
   bottom: -190px;
   width: 420px;
   height: 310px;
-  border: 1px solid rgba(193, 97, 61, 0.1);
+  border: 1px solid rgba(0, 122, 97, 0.1);
   border-radius: 50% 50% 0 0;
   content: "";
   transform: rotate(-8deg);
@@ -69,7 +69,7 @@
   margin: 0;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid rgba(193, 97, 61, 0.28);
+  border: 1px solid rgba(0, 122, 97, 0.28);
   border-radius: 48% 48% 20px 20px;
   background: var(--pine-dark);
   box-shadow: var(--shadow-md);
@@ -96,7 +96,7 @@
   z-index: 1;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(35, 61, 54, 0.03), rgba(35, 61, 54, 0.22)),
+    linear-gradient(180deg, rgba(0, 88, 73, 0.03), rgba(0, 88, 73, 0.22)),
     linear-gradient(120deg, transparent 24%, rgba(255, 244, 222, 0.18) 46%, transparent 64%);
   content: "";
   pointer-events: none;
@@ -196,13 +196,13 @@
   bottom: -70px;
   width: 170px;
   height: 170px;
-  border: 1px solid rgba(193, 97, 61, 0.13);
+  border: 1px solid rgba(0, 122, 97, 0.13);
   border-radius: 50%;
   content: "";
 }
 
 .stage-grid article:last-child::after {
-  border-color: rgba(231, 169, 76, 0.18);
+  border-color: rgba(0, 160, 239, 0.18);
 }
 
 .stage-grid span {
@@ -235,7 +235,7 @@
 }
 
 .stage-grid article:last-child p {
-  color: rgba(250, 246, 239, 0.72);
+  color: rgba(247, 251, 250, 0.72);
 }
 
 .public-pattern-band {
@@ -334,7 +334,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 8px 24px rgba(46, 38, 32, 0.035);
+  box-shadow: 0 8px 24px rgba(0, 37, 51, 0.035);
   grid-template-columns: 58px 1fr;
   gap: 18px;
 }
@@ -345,7 +345,7 @@
   height: 48px;
   place-items: center;
   border-radius: 50%;
-  background: rgba(193, 97, 61, 0.1);
+  background: rgba(0, 122, 97, 0.1);
   color: var(--terracotta-dark);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 1rem;
@@ -458,7 +458,7 @@
 .data-use-hero {
   padding-top: 165px;
   background:
-    radial-gradient(circle at 82% 18%, rgba(231, 169, 76, 0.2), transparent 26%),
+    radial-gradient(circle at 82% 18%, rgba(0, 160, 239, 0.2), transparent 26%),
     var(--paper);
 }
 
@@ -494,7 +494,7 @@
   border: 1px solid var(--line);
   border-radius: 24px 6px 24px 24px;
   background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 16px 35px rgba(46, 38, 32, 0.05);
+  box-shadow: 0 16px 35px rgba(0, 37, 51, 0.05);
 }
 
 .data-use-grid article > span {
