@@ -14,12 +14,11 @@
   }
 
   .hero-art {
-    min-height: 500px;
+    min-height: 400px;
   }
 
   .hero-cultural-frame {
     right: 0;
-    height: 470px;
   }
 
   .steps {
@@ -152,15 +151,18 @@
 
   .hero-art {
     width: min(100%, 620px);
-    min-height: 530px;
+    min-height: 430px;
     margin: 10px auto 0;
   }
 
   .hero-cultural-frame {
     right: 50%;
     width: min(100%, 520px);
-    height: 498px;
     transform: translateX(50%);
+  }
+
+  .hero-cultural-frame img {
+    object-position: 50% 49%;
   }
 
   .trust-layout,
@@ -339,16 +341,18 @@
   }
 
   .hero-art {
-    min-height: 455px;
+    width: min(100%, 430px);
+    min-height: 0;
+    aspect-ratio: 5 / 4;
   }
 
   .hero-cultural-frame {
-    width: min(100%, 430px);
-    height: 415px;
+    width: 100%;
+    height: 100%;
   }
 
   .hero-cultural-frame img {
-    object-position: 50% 62%;
+    object-position: 51% 50%;
   }
 
   .section-head h2,
@@ -599,17 +603,17 @@
   }
 
   .hero-art {
-    min-height: 445px;
+    min-height: 0;
   }
 
   .hero-cultural-frame {
     width: 100%;
-    height: 420px;
+    height: 100%;
     border-width: 6px;
   }
 
   .hero-cultural-frame img {
-    object-position: center 65%;
+    object-position: 52% 50%;
   }
 
   .form-foot {

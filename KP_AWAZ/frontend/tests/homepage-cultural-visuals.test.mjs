@@ -22,30 +22,36 @@ test("homepage uses the final public mission heading exactly", async () => {
 test("cultural hero image is local, accessible, and practical for the web", async () => {
   const hero = await readFile(heroUrl, "utf8");
   const sources = [
-    "assets/images/qaqlasht-folk-singers-720.webp",
-    "assets/images/qaqlasht-folk-singers-1440.webp",
-    "assets/images/qaqlasht-folk-singers-1920.webp",
+    "assets/images/kp-awaz-cultural-gathering-720.webp",
+    "assets/images/kp-awaz-cultural-gathering-1440.webp",
   ];
 
   assert.match(hero, /<picture>/);
-  assert.match(hero, /srcset="assets\/images\/qaqlasht-folk-singers-720\.webp"/);
-  assert.match(hero, /qaqlasht-folk-singers-720\.webp 720w/);
-  assert.match(hero, /qaqlasht-folk-singers-1440\.webp 1440w/);
-  assert.match(hero, /qaqlasht-folk-singers-1920\.webp 1920w/);
-  assert.match(hero, /sizes="\(max-width: 680px\) min\(92vw, 430px\), \(max-width: 900px\) 520px, 510px"/);
-  assert.match(hero, /width="1920"\s+height="2400"/);
+  assert.match(hero, /srcset="assets\/images\/kp-awaz-cultural-gathering-720\.webp"/);
+  assert.match(hero, /kp-awaz-cultural-gathering-720\.webp 720w/);
+  assert.match(hero, /kp-awaz-cultural-gathering-1440\.webp 1440w/);
   assert.match(
     hero,
-    /alt="Folk singers gather on a hillside at the Qaqlasht Festival in Upper Chitral\."/,
+    /sizes="\(max-width: 680px\) min\(calc\(100vw - 32px\), 430px\), \(max-width: 900px\) 520px, 520px"/,
+  );
+  assert.match(hero, /width="1440"\s+height="1152"/);
+  assert.match(
+    hero,
+    /alt="An illustrative Pashtun community gathering in a traditional courtyard, with an elder sharing a story as others listen\."/,
   );
   assert.match(hero, /decoding="async"/);
   assert.match(hero, /fetchpriority="high"/);
+  assert.doesNotMatch(hero, /qaqlasht-folk-singers/);
 
-  for (const source of sources) {
+  for (const [index, source] of sources.entries()) {
     const asset = await stat(new URL(`../${source}`, import.meta.url));
     assert.equal(asset.isFile(), true);
     assert.ok(asset.size > 10_000, "hero asset should not be empty");
-    assert.ok(asset.size <= 900 * 1024, "hero asset should stay below 900 KiB");
+    const limit = index === 0 ? 250 : 650;
+    assert.ok(
+      asset.size <= limit * 1024,
+      `${source} should stay below ${limit} KiB`,
+    );
   }
 });
 
@@ -59,10 +65,11 @@ test("hero artwork has explicit responsive crop behavior without legacy art", as
 
   assert.match(hero, /<figure class="hero-art">/);
   assert.match(heroCss, /\.hero-cultural-frame img\s*{[^}]*object-fit:\s*cover;/s);
-  assert.match(heroCss, /object-position:\s*50% 64%;/);
+  assert.match(heroCss, /object-position:\s*50% 50%;/);
   assert.match(responsiveCss, /\.hero-cultural-frame\s*{/);
-  assert.match(responsiveCss, /object-position:\s*50% 62%;/);
-  assert.match(responsiveCss, /object-position:\s*center 65%;/);
+  assert.match(responsiveCss, /object-position:\s*50% 49%;/);
+  assert.match(responsiveCss, /object-position:\s*51% 50%;/);
+  assert.match(responsiveCss, /object-position:\s*52% 50%;/);
 
   const legacyNames = /art-frame|art-sun|sound-core|mountain-front|wave-line/;
   assert.doesNotMatch(hero, legacyNames);
@@ -71,17 +78,28 @@ test("hero artwork has explicit responsive crop behavior without legacy art", as
 });
 
 
-test("documented photo provenance matches the local hero asset", async () => {
+test("documented AI provenance matches the local hero asset", async () => {
   const credit = await readFile(
     new URL("../../docs/image-credits.md", import.meta.url),
     "utf8",
   );
 
-  assert.match(credit, /Folk singers gathered on a hillside/);
-  assert.match(credit, /aeledroos/);
-  assert.match(credit, /Upper Chitral/);
-  assert.match(credit, /Wikimedia Commons/);
-  assert.match(credit, /CC BY-SA 3\.0/);
-  assert.match(credit, /qaqlasht-folk-singers-1920\.webp/);
-  assert.doesNotMatch(credit, /Lower Dir|USAID Pakistan/);
+  assert.match(credit, /AI-generated illustrative hero image/);
+  assert.match(credit, /OpenAI image generation tool/);
+  assert.match(credit, /29 July 2026/);
+  assert.match(credit, /all depicted people are fictional/i);
+  assert.match(credit, /kp-awaz-cultural-gathering-720\.webp/);
+  assert.match(credit, /kp-awaz-cultural-gathering-1440\.webp/);
+  assert.doesNotMatch(credit, /photographer|actual event|Wikimedia Commons/i);
+});
+
+
+test("hero CTA routing and contribution hook remain unchanged", async () => {
+  const hero = await readFile(heroUrl, "utf8");
+
+  assert.match(
+    hero,
+    /href="auth\.html\?next=contribute\.html"\s+data-start-contributing/,
+  );
+  assert.match(hero, /href="#why-it-matters"/);
 });
