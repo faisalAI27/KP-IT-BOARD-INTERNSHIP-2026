@@ -5,7 +5,7 @@
  */
 
 body:not(.access-page) {
-  letter-spacing: -0.006em;
+  letter-spacing: normal;
 }
 
 body:not(.access-page) :where(input, select, textarea, button) {
@@ -36,7 +36,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 /* Public website */
 .nav {
-  box-shadow: 0 8px 30px rgba(0, 37, 51, 0.035);
+  box-shadow: 0 8px 30px rgba(0, 26, 51, 0.035);
   backdrop-filter: blur(18px) saturate(115%);
   -webkit-backdrop-filter: blur(18px) saturate(115%);
 }
@@ -47,7 +47,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
   bottom: -1px;
   left: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 160, 239, 0.72), transparent);
+  background: linear-gradient(90deg, transparent, rgba(51, 103, 154, 0.72), transparent);
   content: "";
   pointer-events: none;
 }
@@ -66,12 +66,12 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 .links a,
 .nav-private-link {
-  letter-spacing: 0.005em;
+  letter-spacing: normal;
 }
 
 .hero {
   background:
-    radial-gradient(circle at 8% 80%, rgba(0, 160, 239, 0.08), transparent 24rem),
+    radial-gradient(circle at 8% 80%, rgba(51, 103, 154, 0.08), transparent 24rem),
     linear-gradient(112deg, rgba(255, 255, 255, 0.28), transparent 58%);
 }
 
@@ -79,7 +79,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 .story-hero h1,
 .process-hero h1,
 .data-use-hero h1 {
-  color: #002533;
+  color: #001a33;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
@@ -88,13 +88,13 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 .eyebrow-line,
 .workspace-eyebrow,
 .admin-eyebrow {
-  letter-spacing: 0.145em;
+  letter-spacing: normal;
 }
 
 .hero-principles {
   width: fit-content;
   padding: 10px 14px;
-  border: 1px solid rgba(0, 122, 97, 0.12);
+  border: 1px solid rgba(10, 101, 91, 0.12);
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.38);
 }
@@ -112,7 +112,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 .future-use-grid li,
 .leaderboard-panel,
 .leaderboard-showcase {
-  border-color: rgba(0, 37, 51, 0.105);
+  border-color: rgba(0, 26, 51, 0.105);
 }
 
 .why-card,
@@ -136,7 +136,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 }
 
 .faq-item {
-  border-color: rgba(0, 37, 51, 0.11);
+  border-color: rgba(0, 26, 51, 0.11);
 }
 
 .faq-q {
@@ -155,13 +155,13 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 .foot-grid a:hover,
 .foot-bottom a:hover {
-  color: #8bdcff;
+  color: #d4d4d4;
 }
 
 .story-hero,
 .process-hero,
 .data-use-hero {
-  border-bottom: 1px solid rgba(0, 122, 97, 0.09);
+  border-bottom: 1px solid rgba(10, 101, 91, 0.09);
 }
 
 .process-list li,
@@ -179,7 +179,7 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
   bottom: -56px;
   width: 116px;
   height: 116px;
-  border: 1px solid rgba(0, 160, 239, 0.14);
+  border: 1px solid rgba(51, 103, 154, 0.14);
   border-radius: 50%;
   content: "";
   pointer-events: none;
@@ -187,11 +187,11 @@ body:not(.access-page) :where(.btn, .workspace-header-link, .workspace-link-butt
 
 /* Contributor workspace */
 body.workspace-body {
-  background-color: #f7fbfa;
+  background-color: #f9f9f9;
   background-image:
-    radial-gradient(circle at 92% 4%, rgba(0, 160, 239, 0.075), transparent 24rem),
-    linear-gradient(90deg, rgba(0, 122, 97, 0.032) 1px, transparent 1px),
-    linear-gradient(rgba(0, 122, 97, 0.032) 1px, transparent 1px);
+    radial-gradient(circle at 92% 4%, rgba(51, 103, 154, 0.075), transparent 24rem),
+    linear-gradient(90deg, rgba(10, 101, 91, 0.032) 1px, transparent 1px),
+    linear-gradient(rgba(10, 101, 91, 0.032) 1px, transparent 1px);
 }
 
 .workspace-sidebar {
@@ -199,7 +199,7 @@ body.workspace-body {
 }
 
 .workspace-navigation {
-  scrollbar-color: rgba(0, 160, 239, 0.28) transparent;
+  scrollbar-color: rgba(51, 103, 154, 0.28) transparent;
   scrollbar-width: thin;
 }
 
@@ -247,7 +247,7 @@ body.workspace-body {
 }
 
 .workspace-page-header h1 {
-  letter-spacing: -0.045em;
+  letter-spacing: normal;
 }
 
 .workspace-header-link,
@@ -266,7 +266,7 @@ body.workspace-body {
 .profile-consent-card,
 .workspace-profile-settings,
 .settings-card {
-  border-color: rgba(0, 37, 51, 0.105);
+  border-color: rgba(0, 26, 51, 0.105);
 }
 
 .dashboard-panel,
@@ -291,7 +291,7 @@ body.workspace-body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(120deg, transparent 0 62%, rgba(0, 160, 239, 0.035) 62% 63%, transparent 63%);
+  background: linear-gradient(120deg, transparent 0 62%, rgba(51, 103, 154, 0.035) 62% 63%, transparent 63%);
   background-size: 54px 54px;
   content: "";
   pointer-events: none;
@@ -316,7 +316,7 @@ body.workspace-body {
 .recent-voice-mark,
 .profile-portrait-avatar,
 .workspace-avatar {
-  box-shadow: inset 0 0 0 1px rgba(0, 122, 97, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(10, 101, 91, 0.08);
 }
 
 .dashboard-panel-status,
@@ -325,13 +325,13 @@ body.workspace-body {
 .profile-consent-facts > div,
 .profile-private-facts div,
 .settings-withdrawal-history li {
-  border-color: rgba(0, 37, 51, 0.095);
+  border-color: rgba(0, 26, 51, 0.095);
 }
 
 /* Contribution studio */
 .contribute-page-content .contribute-section {
   padding: clamp(1.25rem, 3vw, 2.25rem);
-  border: 1px solid rgba(0, 37, 51, 0.08);
+  border: 1px solid rgba(0, 26, 51, 0.08);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.38);
   box-shadow: var(--shadow-xs);
@@ -356,13 +356,13 @@ body.workspace-body {
 }
 
 .form-panel {
-  border-color: rgba(0, 37, 51, 0.11);
+  border-color: rgba(0, 26, 51, 0.11);
   box-shadow: var(--shadow-lg);
 }
 
 .form-panel-head,
 .flow-progress {
-  background-color: rgba(247, 251, 250, 0.62);
+  background-color: rgba(249, 249, 249, 0.62);
 }
 
 .provided-sentence-card,
@@ -370,7 +370,7 @@ body.workspace-body {
 .review-card,
 .rec-box,
 .sentence-choice {
-  border-color: rgba(0, 122, 97, 0.16);
+  border-color: rgba(10, 101, 91, 0.16);
 }
 
 .pashto-sentence,
@@ -387,7 +387,7 @@ body.workspace-body {
 }
 
 .consent-check {
-  border: 1px solid rgba(0, 160, 239, 0.19);
+  border: 1px solid rgba(51, 103, 154, 0.19);
 }
 
 /* Private history, profile, and settings */
@@ -404,7 +404,7 @@ body.workspace-body {
 .workspace-main .my-contribution-card:focus-visible,
 .workspace-main .my-contribution-card:hover {
   border-color: var(--line-forest);
-  box-shadow: 0 12px 28px rgba(0, 37, 51, 0.08);
+  box-shadow: 0 12px 28px rgba(0, 26, 51, 0.08);
 }
 
 .workspace-profile-settings :where(input, select),
@@ -426,7 +426,7 @@ body.workspace-body {
   right: -36px;
   width: 104px;
   height: 104px;
-  border: 1px solid rgba(0, 160, 239, 0.18);
+  border: 1px solid rgba(51, 103, 154, 0.18);
   border-radius: 50%;
   content: "";
   pointer-events: none;
@@ -443,12 +443,12 @@ body.workspace-body {
 }
 
 .leaderboard-podium-card {
-  border-color: rgba(0, 160, 239, 0.17);
+  border-color: rgba(51, 103, 154, 0.17);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .leaderboard-table-wrapper {
-  border-color: rgba(247, 251, 250, 0.12);
+  border-color: rgba(249, 249, 249, 0.12);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
@@ -460,9 +460,9 @@ body.workspace-body {
 .admin-page {
   background-color: var(--paper);
   background-image:
-    radial-gradient(circle at top left, rgba(0, 160, 239, 0.13), transparent 32rem),
-    linear-gradient(90deg, rgba(0, 122, 97, 0.026) 1px, transparent 1px),
-    linear-gradient(rgba(0, 122, 97, 0.026) 1px, transparent 1px);
+    radial-gradient(circle at top left, rgba(51, 103, 154, 0.13), transparent 32rem),
+    linear-gradient(90deg, rgba(10, 101, 91, 0.026) 1px, transparent 1px),
+    linear-gradient(rgba(10, 101, 91, 0.026) 1px, transparent 1px);
   background-size: auto, 48px 48px, 48px 48px;
 }
 
@@ -470,7 +470,7 @@ body.workspace-body {
   position: sticky;
   z-index: 45;
   top: 0;
-  box-shadow: 0 8px 28px rgba(0, 37, 51, 0.045);
+  box-shadow: 0 8px 28px rgba(0, 26, 51, 0.045);
 }
 
 .admin-connect,
@@ -479,7 +479,7 @@ body.workspace-body {
 .admin-selection-prompt,
 .admin-withdrawals,
 .admin-phrases {
-  border-color: rgba(0, 37, 51, 0.105);
+  border-color: rgba(0, 26, 51, 0.105);
   box-shadow: var(--shadow-sm);
 }
 
@@ -494,9 +494,9 @@ body.workspace-body {
   bottom: -72px;
   width: 210px;
   height: 210px;
-  border: 1px solid rgba(0, 160, 239, 0.16);
+  border: 1px solid rgba(51, 103, 154, 0.16);
   border-radius: 50%;
-  box-shadow: 0 0 0 30px rgba(0, 160, 239, 0.025);
+  box-shadow: 0 0 0 30px rgba(51, 103, 154, 0.025);
   content: "";
   pointer-events: none;
 }
@@ -517,7 +517,7 @@ body.workspace-body {
 
 .admin-section-tab.is-active,
 .admin-filter.is-active {
-  box-shadow: 0 7px 18px rgba(0, 88, 73, 0.19);
+  box-shadow: 0 7px 18px rgba(3, 69, 59, 0.19);
 }
 
 .admin-contribution-card.is-selected {
@@ -546,7 +546,7 @@ body.workspace-body {
 }
 
 .admin-phrase-table tbody tr:hover {
-  background: rgba(0, 122, 97, 0.045);
+  background: rgba(10, 101, 91, 0.045);
 }
 
 .admin-phrase-dialog {
@@ -562,7 +562,7 @@ body.workspace-body {
   .review-compass article:hover,
   .dashboard-actions a:hover {
     border-color: var(--line-forest);
-    box-shadow: 0 17px 42px rgba(0, 37, 51, 0.085);
+    box-shadow: 0 17px 42px rgba(0, 26, 51, 0.085);
     transform: translateY(-3px);
   }
 

@@ -18,22 +18,22 @@
   min-height: 150px;
   align-content: space-between;
   padding: 23px;
-  border: 1px solid rgba(0, 37, 51, 0.08);
+  border: 1px solid rgba(0, 26, 51, 0.08);
   border-radius: var(--radius);
   background: var(--card);
-  box-shadow: 0 8px 24px rgba(0, 37, 51, 0.035);
+  box-shadow: 0 8px 24px rgba(0, 26, 51, 0.035);
   gap: 25px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .future-use-grid li:hover {
-  border-color: rgba(0, 122, 97, 0.22);
+  border-color: rgba(10, 101, 91, 0.22);
   box-shadow: var(--shadow-sm);
 }
 
 .future-use-grid span {
   color: var(--terracotta);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -41,7 +41,7 @@
 .future-use-grid strong {
   max-width: 220px;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: 1.18rem;
   line-height: 1.3;
 }
@@ -106,7 +106,7 @@
   height: 32px;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: rgba(0, 122, 97, 0.09);
+  background: rgba(10, 101, 91, 0.09);
 }
 
 .plus::before,
@@ -156,7 +156,7 @@
 .final-cta::before,
 .final-cta::after {
   position: absolute;
-  border: 1px solid rgba(247, 251, 250, 0.1);
+  border: 1px solid rgba(249, 249, 249, 0.1);
   border-radius: 50%;
   content: "";
 }
@@ -166,7 +166,7 @@
   left: -120px;
   width: 540px;
   height: 540px;
-  box-shadow: 0 0 0 55px rgba(247, 251, 250, 0.025);
+  box-shadow: 0 0 0 55px rgba(249, 249, 249, 0.025);
 }
 
 .final-cta::after {
@@ -174,7 +174,7 @@
   bottom: -235px;
   width: 500px;
   height: 500px;
-  box-shadow: 0 0 0 55px rgba(0, 160, 239, 0.025);
+  box-shadow: 0 0 0 55px rgba(51, 103, 154, 0.025);
 }
 
 .final-cta-pattern {
@@ -184,8 +184,8 @@
   left: 0;
   height: 88px;
   background:
-    linear-gradient(135deg, transparent 66%, rgba(0, 122, 97, 0.45) 66%) 0 0 / 82px 88px repeat-x,
-    linear-gradient(45deg, rgba(0, 122, 97, 0.45) 34%, transparent 34%) 0 0 / 82px 88px repeat-x;
+    linear-gradient(135deg, transparent 66%, rgba(10, 101, 91, 0.45) 66%) 0 0 / 82px 88px repeat-x,
+    linear-gradient(45deg, rgba(10, 101, 91, 0.45) 34%, transparent 34%) 0 0 / 82px 88px repeat-x;
 }
 
 .final-cta-inner {
@@ -198,9 +198,9 @@
   display: inline-block;
   margin-bottom: 18px;
   color: var(--honey);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: normal;
   text-transform: uppercase;
 }
 
@@ -208,15 +208,15 @@
   max-width: 920px;
   margin-inline: auto;
   color: var(--paper);
-  font-size: clamp(2.55rem, 5vw, 4.25rem);
-  letter-spacing: -0.045em;
+  font-size: clamp(2.55rem, 5vw, 4rem);
+  letter-spacing: normal;
   line-height: 1.03;
 }
 
 .final-cta p {
   max-width: 610px;
   margin: 22px auto 30px;
-  color: rgba(247, 251, 250, 0.7);
+  color: rgba(249, 249, 249, 0.7);
   font-size: 0.96rem;
 }
 
@@ -241,7 +241,7 @@ footer .logo .brand-lockup {
 .foot-brand .desc {
   max-width: 390px;
   margin-top: 18px;
-  color: rgba(247, 251, 250, 0.56);
+  color: rgba(249, 249, 249, 0.56);
   font-size: 0.84rem;
   line-height: 1.7;
 }
@@ -250,9 +250,9 @@ footer h3 {
   margin-bottom: 18px;
   color: var(--honey);
   font-family: inherit;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: normal;
   text-transform: uppercase;
 }
 
@@ -261,7 +261,7 @@ footer li + li {
 }
 
 footer li a {
-  color: rgba(247, 251, 250, 0.64);
+  color: rgba(249, 249, 249, 0.64);
   font-size: 0.81rem;
   transition: color 0.2s ease;
 }
@@ -276,9 +276,9 @@ footer li a:hover {
   justify-content: space-between;
   margin-top: 55px;
   padding-top: 23px;
-  border-top: 1px solid rgba(247, 251, 250, 0.1);
-  color: rgba(247, 251, 250, 0.38);
-  font-size: 0.7rem;
+  border-top: 1px solid rgba(249, 249, 249, 0.1);
+  color: rgba(249, 249, 249, 0.38);
+  font-size: 0.75rem;
   gap: 20px;
 }
 

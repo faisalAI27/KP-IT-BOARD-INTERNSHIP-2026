@@ -4,13 +4,13 @@
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 251, 250, 0.98);
+  background: rgba(255, 255, 255, 0.98);
 }
 
 .nav-inner {
   position: relative;
   display: grid;
-  width: min(100% - 48px, 1200px);
+  width: min(100% - 48px, 1296px);
   min-height: 76px;
   align-items: center;
   margin-inline: auto;
@@ -43,9 +43,11 @@
 .nav-private-link,
 .nav-text-link {
   position: relative;
-  color: var(--ink-soft);
-  font-size: 0.86rem;
-  font-weight: 700;
+  color: #000;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
   white-space: nowrap;
   transition: color 0.2s ease;
 }
@@ -66,7 +68,7 @@
   left: 0;
   height: 2px;
   border-radius: 2px;
-  background: var(--brand-gradient);
+  background: var(--brand-green);
   content: "";
   transform: scaleX(0);
   transition: transform 0.2s ease;
@@ -114,15 +116,15 @@
 
 .menu-toggle {
   display: none;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 5px;
   border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--paper);
+  border-radius: var(--radius-xs);
+  background: var(--brand-green);
   cursor: pointer;
 }
 
@@ -151,7 +153,7 @@
 .auth-header-button {
   min-width: 108px;
   max-width: 172px;
-  border-color: rgba(0, 37, 51, 0.18);
+  border-color: rgba(0, 26, 51, 0.18);
   background: rgba(255, 255, 255, 0.52);
   color: var(--pine-dark);
   white-space: nowrap;
@@ -171,12 +173,12 @@
 }
 
 .auth-header-button[data-auth-kind="account"] {
-  border-color: rgba(0, 122, 97, 0.28);
-  background: rgba(0, 190, 131, 0.09);
+  border-color: rgba(10, 101, 91, 0.28);
+  background: rgba(59, 195, 178, 0.09);
 }
 
 .auth-header-button[data-auth-kind="issue"] {
-  border-color: rgba(155, 61, 51, 0.26);
+  border-color: rgba(220, 53, 69, 0.26);
   color: var(--brand-danger);
 }
 

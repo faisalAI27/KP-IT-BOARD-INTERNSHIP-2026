@@ -85,7 +85,7 @@ test("every visible branded surface uses the correct approved lockup and accessi
   assert.match(adminCss, /width:\s*clamp\(205px,\s*20vw,\s*242px\)/);
 });
 
-test("the approved palette is the shared frontend source of truth", async () => {
+test("the live KPITB palette and typography are the shared frontend source of truth", async () => {
   const [foundation, auth, dashboard, leaderboard, settings, recorder] = await Promise.all([
     read("styles/foundation.css"),
     read("styles/auth-page.css"),
@@ -96,12 +96,15 @@ test("the approved palette is the shared frontend source of truth", async () => 
   ]);
 
   for (const declaration of [
-    "--brand-navy: #002533",
-    "--brand-green: #00be83",
-    "--brand-blue: #00a0ef",
-    "--brand-grey: #a8a8a8",
+    "--brand-navy: #001a33",
+    "--brand-green: #3bc3b2",
+    "--brand-blue: #33679a",
+    "--brand-grey: #9d9d9d",
     "--brand-white: #ffffff",
-    "--brand-gradient: linear-gradient(180deg, #00be83 0%, #00a0ef 100%)",
+    "--brand-gradient: linear-gradient(205deg, #3bc3b2 0%, #001a33 90.26%)",
+    '--font-body: "unineue"',
+    '--font-display: "unineue"',
+    '--font-ui: "inter"',
   ]) {
     assert.match(foundation.toLowerCase(), new RegExp(declaration.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
@@ -111,6 +114,27 @@ test("the approved palette is the shared frontend source of truth", async () => 
   }
   assert.match(foundation, /--brand-danger:/);
   assert.match(foundation, /--brand-success:/);
+});
+
+test("the exact live KPITB webfont files are self-hosted with swap behavior", async () => {
+  const fontFiles = [
+    ["assets/fonts/kpitb/Inter-Latin-Variable.woff2", "dd8a4575be9806105ac3decd02805cd2782fe7c05abb02c582316bc436ce03ae"],
+    ["assets/fonts/kpitb/Inter-Latin-Variable-Italic.woff2", "124b693f9bb5663329a23e21e3b702ed9ae20a8298a1a7213cd56fc187a16800"],
+    ["assets/fonts/kpitb/UniNeue-Trial-Bold.ttf", "5be0472894007f42d8eadc6d0916d5c85837d93089e18151c6cee4ce04c6265c"],
+    ["assets/fonts/kpitb/UniNeue-Trial-Heavy.ttf", "a687aff84fa94c32ee0f22360a8813500a48082d86286c86f4c6093eb0feeaa1"],
+    ["assets/fonts/kpitb/UniNeue-Trial-Regular.ttf", "4a84d0b08b7a3aaf72db17719fee17176c822d286fbfd41be7c7d9cbaa5a7cd1"],
+    ["assets/fonts/kpitb/UniNeue-Trial-Light.ttf", "a9f89995807250cfeddb9307d25afedf7ac301b0e6ee29ff91e8a55cbaf3c0b5"],
+  ];
+  const foundation = await read("styles/foundation.css");
+
+  for (const [path, checksum] of fontFiles) {
+    const asset = await readBinary(path);
+    assert.equal(createHash("sha256").update(asset).digest("hex"), checksum);
+  }
+
+  assert.match(foundation, /font-family:\s*"UniNeue"/);
+  assert.match(foundation, /font-family:\s*"Inter"/);
+  assert.equal((foundation.match(/font-display:\s*swap/g) ?? []).length, 6);
 });
 
 test("the legacy favicon remains temporary until an approved square mark is supplied", async () => {
@@ -152,6 +176,10 @@ test("brand guidance records usage, intrinsic sizing, accessibility, and favicon
   assert.match(guide, /3403 × 536/);
   assert.match(guide, /3562 × 2084/);
   assert.match(guide, /aria-label="KP AWAZ home"/);
+  assert.match(guide, /UniNeue/);
+  assert.match(guide, /Inter/);
+  assert.match(guide, /#001A33/);
+  assert.match(guide, /#3BC3B2/);
   assert.match(guide, /square\/icon-only KP AWAZ mark is still required/i);
   assert.match(guide, /Do not/);
 });

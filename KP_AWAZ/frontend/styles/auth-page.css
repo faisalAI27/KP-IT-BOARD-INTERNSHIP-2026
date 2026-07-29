@@ -1,4 +1,4 @@
-@import url("./foundation.css?v=20260729-brand-system");
+@import url("./foundation.css?v=20260729-kpitb-system");
 
 :root {
   --auth-deep-green: var(--brand-navy);
@@ -11,17 +11,17 @@
   --auth-rust: var(--brand-green-strong);
   --auth-rust-dark: var(--brand-green-deep);
   --auth-gold: var(--brand-blue);
-  --auth-gold-pale: #b9e9ff;
+  --auth-gold-pale: #f1f1f1;
   --auth-charcoal: var(--brand-navy);
   --auth-muted: var(--brand-text-muted);
-  --auth-line: rgba(0, 37, 51, 0.14);
-  --auth-line-strong: rgba(0, 37, 51, 0.24);
-  --auth-focus: rgba(0, 160, 239, 0.24);
+  --auth-line: rgba(0, 26, 51, 0.14);
+  --auth-line-strong: rgba(0, 26, 51, 0.24);
+  --auth-focus: rgba(51, 103, 154, 0.24);
   --auth-error-bg: var(--brand-danger-soft);
   --auth-error: var(--brand-danger);
   --auth-success-bg: var(--brand-success-soft);
   --auth-success: var(--brand-success);
-  --auth-card-shadow: 0 28px 72px rgba(0, 37, 51, 0.4);
+  --auth-card-shadow: 0 28px 72px rgba(0, 26, 51, 0.4);
 }
 
 body.access-page {
@@ -120,10 +120,10 @@ body.access-page input {
   z-index: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 15%, rgba(0, 190, 131, 0.25), transparent 27%),
-    linear-gradient(135deg, rgba(0, 160, 239, 0.09) 25%, transparent 25%) 0 0 / 38px 38px,
-    linear-gradient(225deg, rgba(0, 190, 131, 0.08) 25%, transparent 25%) 0 0 / 38px 38px,
-    linear-gradient(180deg, #07556a 0%, #003f50 54%, var(--brand-navy) 100%);
+    radial-gradient(circle at 50% 15%, rgba(59, 195, 178, 0.25), transparent 27%),
+    linear-gradient(135deg, rgba(51, 103, 154, 0.09) 25%, transparent 25%) 0 0 / 38px 38px,
+    linear-gradient(225deg, rgba(59, 195, 178, 0.08) 25%, transparent 25%) 0 0 / 38px 38px,
+    linear-gradient(180deg, #33679a 0%, #001a34 54%, var(--brand-navy) 100%);
 }
 
 .cultural-hero-fallback::before,
@@ -142,16 +142,16 @@ body.access-page input {
   bottom: -22%;
   height: 58%;
   background:
-    linear-gradient(90deg, transparent 48%, rgba(0, 160, 239, 0.16) 49% 51%, transparent 52%) 0 0 / 44px 44px,
-    rgba(0, 37, 51, 0.92);
+    linear-gradient(90deg, transparent 48%, rgba(51, 103, 154, 0.16) 49% 51%, transparent 52%) 0 0 / 44px 44px,
+    rgba(0, 26, 51, 0.92);
   clip-path: polygon(0 45%, 17% 26%, 34% 60%, 52% 29%, 68% 63%, 83% 34%, 100% 58%, 100% 100%, 0 100%);
 }
 
 .access-background-overlay {
   z-index: -2;
   background:
-    radial-gradient(circle at 50% 46%, rgba(0, 190, 131, 0.08) 0, rgba(0, 61, 74, 0.2) 34%, rgba(0, 37, 51, 0.58) 100%),
-    linear-gradient(180deg, rgba(0, 37, 51, 0.18), rgba(0, 37, 51, 0.48));
+    radial-gradient(circle at 50% 46%, rgba(59, 195, 178, 0.08) 0, rgba(0, 61, 74, 0.2) 34%, rgba(0, 26, 51, 0.58) 100%),
+    linear-gradient(180deg, rgba(0, 26, 51, 0.18), rgba(0, 26, 51, 0.48));
 }
 
 .access-stage,
@@ -168,7 +168,7 @@ body.access-page input {
 .access-card {
   width: min(100%, 520px);
   padding: clamp(27px, 3vw, 39px);
-  border: 1px solid rgba(0, 190, 131, 0.38);
+  border: 1px solid rgba(59, 195, 178, 0.38);
   border-radius: 26px;
   background: rgba(255, 254, 250, 0.985);
   box-shadow: var(--auth-card-shadow);
@@ -193,7 +193,7 @@ body[data-auth-view="otp"] .access-card {
   align-items: center;
   border-radius: 8px;
   color: var(--auth-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 780;
   gap: 7px;
 }
@@ -207,7 +207,7 @@ body[data-auth-view="otp"] .access-card {
   width: 35px;
   height: 35px;
   place-items: center;
-  border: 1px solid rgba(0, 122, 97, 0.22);
+  border: 1px solid rgba(10, 101, 91, 0.22);
   border-radius: 50%;
   background: rgba(231, 248, 243, 0.8);
   color: var(--auth-deep-green);
@@ -239,7 +239,7 @@ body[data-auth-view="otp"] .access-card {
   max-width: 360px;
   margin-top: 7px;
   color: var(--auth-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -260,9 +260,9 @@ body[data-auth-view="otp"] .access-card {
 
 .access-kicker {
   color: var(--auth-rust-dark);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 850;
-  letter-spacing: 0.14em;
+  letter-spacing: normal;
   line-height: 1.4;
   text-transform: uppercase;
 }
@@ -272,7 +272,7 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-charcoal);
   font-size: clamp(1.9rem, 3vw, 2.45rem);
   line-height: 1.05;
-  letter-spacing: -0.025em;
+  letter-spacing: normal;
 }
 
 .access-card-heading p {
@@ -286,7 +286,7 @@ body[data-auth-view="otp"] .access-card {
   display: grid;
   margin-bottom: 15px;
   padding: 4px;
-  border: 1px solid rgba(0, 37, 51, 0.06);
+  border: 1px solid rgba(0, 26, 51, 0.06);
   border-radius: 13px;
   background: var(--auth-cream);
   grid-template-columns: 1fr 1fr;
@@ -306,7 +306,7 @@ body[data-auth-view="otp"] .access-card {
 .access-tabs button.is-active {
   background: var(--auth-white);
   color: var(--auth-deep-green);
-  box-shadow: 0 4px 13px rgba(0, 37, 51, 0.08);
+  box-shadow: 0 4px 13px rgba(0, 26, 51, 0.08);
 }
 
 .access-google,
@@ -329,15 +329,15 @@ body[data-auth-view="otp"] .access-card {
 
 .access-google {
   padding: 0 12px;
-  border: 1px solid #747775;
+  border: 1px solid #6c757d;
   background: #fff;
-  color: #1f1f1f;
+  color: #212529;
   gap: 10px;
 }
 
 .access-google:hover {
-  border-color: #4f5152;
-  background: #f8fafd;
+  border-color: #212529;
+  background: #f9f9f9;
   box-shadow: 0 3px 10px rgba(31, 31, 31, 0.1);
 }
 
@@ -358,10 +358,10 @@ body[data-auth-view="otp"] .access-card {
   align-items: center;
   margin: 17px 0;
   color: #8e8378;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 800;
   gap: 12px;
-  letter-spacing: 0.09em;
+  letter-spacing: normal;
   text-transform: uppercase;
 }
 
@@ -406,17 +406,17 @@ body[data-auth-view="otp"] .access-card {
 }
 
 .access-form input:hover {
-  border-color: rgba(0, 122, 97, 0.54);
+  border-color: rgba(10, 101, 91, 0.54);
 }
 
 .access-form input:focus {
   border-color: var(--auth-pine);
   background: var(--auth-white);
-  box-shadow: 0 0 0 4px rgba(0, 160, 239, 0.14);
+  box-shadow: 0 0 0 4px rgba(51, 103, 154, 0.14);
 }
 
 .access-form input:user-invalid {
-  border-color: rgba(155, 61, 51, 0.72);
+  border-color: rgba(220, 53, 69, 0.72);
 }
 
 .access-form input:disabled,
@@ -446,7 +446,7 @@ body[data-auth-view="otp"] .access-card {
   background: var(--auth-cream);
   color: var(--auth-deep-green);
   cursor: pointer;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 820;
   transform: translateY(-50%);
 }
@@ -455,10 +455,10 @@ body[data-auth-view="otp"] .access-card {
   width: fit-content;
   margin-top: -6px;
   color: var(--auth-deep-green);
-  font-size: 0.69rem;
+  font-size: 0.75rem;
   font-weight: 820;
   text-decoration: underline;
-  text-decoration-color: rgba(0, 122, 97, 0.34);
+  text-decoration-color: rgba(10, 101, 91, 0.34);
   text-underline-offset: 3px;
 }
 
@@ -471,7 +471,7 @@ body[data-auth-view="otp"] .access-card {
 .field-helper,
 .access-terms {
   color: var(--auth-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -480,7 +480,7 @@ body[data-auth-view="otp"] .access-card {
   align-items: flex-start;
   padding: 9px 10px;
   border-radius: 9px;
-  background: rgba(0, 160, 239, 0.1);
+  background: rgba(51, 103, 154, 0.1);
   color: var(--brand-navy-soft);
   gap: 7px;
 }
@@ -494,7 +494,7 @@ body[data-auth-view="otp"] .access-card {
   flex-wrap: wrap;
   margin-top: -4px;
   color: var(--auth-muted);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   gap: 5px 13px;
 }
 
@@ -519,7 +519,7 @@ body[data-auth-view="otp"] .access-card {
 
 .password-feedback p[data-state="valid"] span::before,
 .password-feedback p[data-state="invalid"] span::before {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .password-feedback p[data-state="valid"] span::before {
@@ -536,12 +536,12 @@ body[data-auth-view="otp"] .access-card {
   border: 1px solid var(--auth-deep-green);
   background: var(--auth-deep-green);
   color: var(--auth-white);
-  box-shadow: 0 9px 20px rgba(0, 37, 51, 0.18);
+  box-shadow: 0 9px 20px rgba(0, 26, 51, 0.18);
 }
 
 .access-primary:hover {
   background: var(--brand-green-deep);
-  box-shadow: 0 12px 25px rgba(0, 37, 51, 0.24);
+  box-shadow: 0 12px 25px rgba(0, 26, 51, 0.24);
   transform: translateY(-1px);
 }
 
@@ -576,7 +576,7 @@ body[data-auth-view="otp"] .access-card {
 .access-mode-link {
   margin-top: 14px;
   color: var(--auth-muted);
-  font-size: 0.71rem;
+  font-size: 0.75rem;
   text-align: center;
 }
 
@@ -624,12 +624,12 @@ body[data-auth-view="otp"] .access-card {
   border: 1px solid var(--auth-line-strong);
   border-radius: 50%;
   background: var(--auth-white);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   font-weight: 850;
 }
 
 .account-steps small {
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 760;
 }
 
@@ -651,11 +651,11 @@ body[data-auth-view="otp"] .access-card {
 
 .otp-stage {
   padding: clamp(18px, 3vw, 26px);
-  border: 1px solid rgba(0, 160, 239, 0.34);
+  border: 1px solid rgba(51, 103, 154, 0.34);
   border-radius: 20px;
   background:
-    linear-gradient(rgba(247, 251, 250, 0.94), rgba(247, 251, 250, 0.99)),
-    radial-gradient(circle, rgba(0, 190, 131, 0.16) 1px, transparent 1px);
+    linear-gradient(rgba(249, 249, 249, 0.94), rgba(249, 249, 249, 0.99)),
+    radial-gradient(circle, rgba(59, 195, 178, 0.16) 1px, transparent 1px);
   background-size: auto, 18px 18px;
   text-align: center;
 }
@@ -671,7 +671,7 @@ body[data-auth-view="otp"] .access-card {
   background: var(--auth-deep-green);
   color: var(--auth-gold-pale);
   font-size: 1.12rem;
-  box-shadow: 0 0 0 6px rgba(0, 160, 239, 0.12);
+  box-shadow: 0 0 0 6px rgba(51, 103, 154, 0.12);
 }
 
 .otp-stage h3 {
@@ -696,10 +696,10 @@ body[data-auth-view="otp"] .access-card {
   min-height: 61px;
   padding-left: 0.32em;
   text-align: center;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: clamp(1.5rem, 4vw, 1.9rem);
   font-weight: 700;
-  letter-spacing: 0.32em;
+  letter-spacing: normal;
 }
 
 .otp-actions {
@@ -717,10 +717,10 @@ body[data-auth-view="otp"] .access-card {
   background: transparent;
   color: var(--auth-deep-green);
   cursor: pointer;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: underline;
-  text-decoration-color: rgba(0, 122, 97, 0.24);
+  text-decoration-color: rgba(10, 101, 91, 0.24);
   text-underline-offset: 3px;
 }
 
@@ -728,7 +728,7 @@ body[data-auth-view="otp"] .access-card {
   margin-top: 11px;
   padding: 9px 10px;
   border-radius: 9px;
-  font-size: 0.71rem;
+  font-size: 0.75rem;
   line-height: 1.48;
 }
 
@@ -745,7 +745,7 @@ body[data-auth-view="otp"] .access-card {
 .workspace-verification-actions {
   display: grid;
   padding: 12px;
-  border: 1px solid rgba(0, 122, 97, 0.18);
+  border: 1px solid rgba(10, 101, 91, 0.18);
   border-radius: 11px;
   background: rgba(231, 248, 243, 0.62);
   gap: 8px;
@@ -759,7 +759,7 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-deep-green);
   cursor: pointer;
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -787,7 +787,7 @@ body[data-auth-view="otp"] .access-card {
   color: var(--auth-deep-green);
   cursor: pointer;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -815,7 +815,7 @@ body[data-auth-view="otp"] .access-card {
 .existing-account-panel h3 {
   margin: 10px 0 7px;
   color: var(--auth-charcoal);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
   font-size: 1.28rem;
 }
 
@@ -847,7 +847,7 @@ body[data-auth-view="otp"] .access-card {
 
 .existing-account-actions a {
   color: var(--auth-deep-green);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-underline-offset: 3px;
 }
@@ -899,9 +899,9 @@ body[data-auth-view="otp"] .access-card {
 .account-success small {
   margin-top: 19px;
   color: var(--auth-pine);
-  font-size: 0.69rem;
+  font-size: 0.75rem;
   font-weight: 780;
-  letter-spacing: 0.05em;
+  letter-spacing: normal;
 }
 
 .access-cultural-note {
@@ -919,7 +919,7 @@ body[data-auth-view="otp"] .access-card {
   border-radius: 999px;
   background: rgba(8, 34, 25, 0.76);
   color: rgba(255, 254, 250, 0.94);
-  font-size: 0.73rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   text-align: center;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.34);
@@ -932,7 +932,7 @@ body[data-auth-view="otp"] .access-card {
 }
 
 .access-page :where(a, button, input):focus-visible {
-  outline: 3px solid #52c8ff;
+  outline: 3px solid #33679a;
   outline-offset: 3px;
 }
 
@@ -961,8 +961,8 @@ body[data-auth-view="otp"] .access-card {
 
   .access-background-overlay {
     background:
-      radial-gradient(circle at 50% 38%, rgba(0, 190, 131, 0.05), rgba(0, 55, 68, 0.38) 48%, rgba(0, 37, 51, 0.7) 100%),
-      linear-gradient(180deg, rgba(0, 37, 51, 0.2), rgba(0, 37, 51, 0.5));
+      radial-gradient(circle at 50% 38%, rgba(59, 195, 178, 0.05), rgba(0, 55, 68, 0.38) 48%, rgba(0, 26, 51, 0.7) 100%),
+      linear-gradient(180deg, rgba(0, 26, 51, 0.2), rgba(0, 26, 51, 0.5));
   }
 
   .cultural-hero picture img {
@@ -1000,7 +1000,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-branding p {
     margin-top: 3px;
-    font-size: 0.66rem;
+    font-size: 0.75rem;
   }
 
   .access-card-heading {
@@ -1049,7 +1049,7 @@ body[data-auth-view="otp"] .access-card {
   .access-terms {
     margin-top: 15px;
     padding-top: 10px;
-    font-size: 0.64rem;
+    font-size: 0.75rem;
   }
 
   .access-cultural-note {
@@ -1078,7 +1078,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-back {
     min-height: 34px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 
   .access-language {
@@ -1097,7 +1097,7 @@ body[data-auth-view="otp"] .access-card {
 
   .access-branding p {
     max-width: 280px;
-    font-size: 0.67rem;
+    font-size: 0.75rem;
   }
 
   .access-card-heading {
@@ -1125,22 +1125,22 @@ body[data-auth-view="otp"] .access-card {
   .access-form .otp-input {
     min-height: 58px;
     font-size: 1.55rem;
-    letter-spacing: 0.24em;
+    letter-spacing: normal;
   }
 
   .account-steps small {
-    font-size: 0.57rem;
+    font-size: 0.75rem;
   }
 
   .access-terms {
-    font-size: 0.64rem;
+    font-size: 0.75rem;
   }
 
   .access-cultural-note {
     bottom: 14px;
     min-height: 38px;
     padding: 7px 13px;
-    font-size: 0.66rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -1164,7 +1164,7 @@ body[data-auth-view="otp"] .access-card {
   }
 
   .access-tabs button {
-    font-size: 0.74rem;
+    font-size: 0.75rem;
   }
 
   .otp-actions {

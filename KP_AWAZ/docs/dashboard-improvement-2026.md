@@ -62,7 +62,7 @@ The production dashboard repeated its contribution call to action, gave a large 
 
 - The “Want to share a longer story instead?” disclosure, its plus trigger, and its long-form recorder were removed from the Record Voice page so the experience ends cleanly after the primary sentence workflow.
 - The contributor-facing module now initializes and releases only the primary recorder. The existing `/open-recording` backend contract remains available but is no longer exposed on this page.
-- The green, yellow, cream, and clay thread at the bottom of the primary Record Voice card now travels horizontally with the same seven-second continuous weave used by My Contributions. Reduced-motion keeps the thread static.
+- The mint, institutional blue, cream, and deep-navy thread at the bottom of the primary Record Voice card travels horizontally with the same seven-second continuous weave used by My Contributions. Reduced-motion keeps the thread static.
 
 ## New recording journey
 
@@ -88,7 +88,7 @@ Stopping, resetting, changing sentence modes, destroying the module, or leaving 
 
 ## Visual and motion system
 
-The dashboard now inherits the approved KP AWAZ navy, green, blue, grey, and white system. A low-opacity geometric motif sits in two selected dashboard-workspace corners while the contribution panel keeps a clean edge. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
+The dashboard now combines the approved KP AWAZ artwork with the audited KPITB mint, deep-navy, institutional-blue, neutral, and white interface system. A low-opacity geometric motif sits in two selected dashboard-workspace corners while the contribution panel keeps a clean edge. The dashboard body override removes the shared graph-paper treatment without affecting other workspace routes. The former sidebar-edge textile strip, right border, and side shadow remain removed at every breakpoint.
 
 Motion uses transform and opacity: four dashboard groups enter over 300–400 ms after ready, recent rows and statuses resolve once, statistics transition once from placeholders, and recorder states distinguish idle, permission request, live recording, processing, playback-ready, and success. The live waveform still reflects real Web Audio input. `prefers-reduced-motion` removes entry, breathing, pulse, spinner, status, and reveal animations.
 

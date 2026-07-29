@@ -1,28 +1,80 @@
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/Inter-Latin-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/Inter-Latin-Variable-Italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "UniNeue";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/UniNeue-Trial-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "UniNeue";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/UniNeue-Trial-Heavy.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "UniNeue";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/UniNeue-Trial-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "UniNeue";
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("../assets/fonts/kpitb/UniNeue-Trial-Light.ttf") format("truetype");
+}
+
 :root {
   color-scheme: light;
 
-  /* Designer-approved KP AWAZ brand palette. */
-  --brand-navy: #002533;
-  --brand-green: #00be83;
-  --brand-blue: #00a0ef;
-  --brand-grey: #a8a8a8;
+  /* Live KPITB institutional palette, applied to the approved KP AWAZ identity. */
+  --brand-navy: #001a33;
+  --brand-green: #3bc3b2;
+  --brand-blue: #33679a;
+  --brand-grey: #9d9d9d;
   --brand-white: #ffffff;
-  --brand-gradient: linear-gradient(180deg, #00be83 0%, #00a0ef 100%);
+  --brand-gradient: linear-gradient(205deg, #3bc3b2 0%, #001a33 90.26%);
+  --brand-news-gradient: linear-gradient(251.19deg, #3bc3b2 -11.64%, #001a34 91.73%);
 
-  /* Accessible supporting tones derived from the approved palette. */
-  --brand-navy-soft: #174754;
-  --brand-green-strong: #007a61;
-  --brand-green-deep: #005849;
-  --brand-blue-strong: #006fa8;
-  --brand-mint: #e7f8f3;
-  --brand-sky: #e7f5fc;
-  --brand-surface: #f7fbfa;
-  --brand-surface-strong: #edf6f4;
-  --brand-text-muted: #52676e;
-  --brand-danger: #9b3d33;
-  --brand-danger-soft: #fff0ed;
-  --brand-success: #006b55;
-  --brand-success-soft: #e5f7f1;
+  /* Supporting tones also present in the live KPITB styles. */
+  --brand-navy-soft: #001a34;
+  --brand-green-strong: #0a655b;
+  --brand-green-deep: #03453b;
+  --brand-blue-strong: #243d7d;
+  --brand-mint: #f1f9f8;
+  --brand-sky: #f1f1f1;
+  --brand-surface: #ffffff;
+  --brand-surface-strong: #f9f9f9;
+  --brand-text: #212529;
+  --brand-text-muted: #6c757d;
+  --brand-border: #ececec;
+  --brand-border-strong: #d4d4d4;
+  --brand-danger: #dc3545;
+  --brand-danger-soft: #fff2f3;
+  --brand-success: #198754;
+  --brand-success-soft: #eef8f2;
 
   /* Backward-compatible semantic aliases used by existing components. */
   --forest-deep: var(--brand-navy);
@@ -33,8 +85,8 @@
   --ivory: var(--brand-surface);
   --cream: var(--brand-surface-strong);
   --surface: var(--brand-white);
-  --surface-muted: #f2f8f6;
-  --earth: var(--brand-navy);
+  --surface-muted: var(--brand-surface-strong);
+  --earth: var(--brand-text);
   --earth-soft: var(--brand-text-muted);
   --clay: var(--brand-green-strong);
   --clay-dark: var(--brand-green-deep);
@@ -49,10 +101,10 @@
   --terracotta-dark: var(--clay-dark);
   --honey: var(--gold);
 
-  --line: rgba(0, 37, 51, 0.12);
-  --line-strong: rgba(0, 37, 51, 0.2);
-  --line-forest: rgba(0, 122, 97, 0.22);
-  --focus-ring: #0078b5;
+  --line: rgba(0, 0, 0, 0.125);
+  --line-strong: var(--brand-border-strong);
+  --line-forest: rgba(59, 195, 178, 0.4);
+  --focus-ring: var(--brand-blue);
 
   /* Shared spacing rhythm. */
   --space-1: 0.25rem;
@@ -63,24 +115,24 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4rem;
-  --space-9: 6rem;
-  --space-10: 7rem;
+  --space-9: 5rem;
+  --space-10: 6.25rem;
 
-  --font-body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
-  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: "UniNeue", Arial, sans-serif;
+  --font-display: "UniNeue", Arial, sans-serif;
+  --font-ui: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-pashto: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
 
-  --shadow-xs: 0 4px 14px rgba(0, 37, 51, 0.045);
-  --shadow-sm: 0 10px 30px rgba(0, 37, 51, 0.07);
-  --shadow-md: 0 22px 60px rgba(0, 37, 51, 0.12);
-  --shadow-lg: 0 30px 80px rgba(0, 37, 51, 0.16);
-  --shadow-focus: 0 0 0 4px rgba(0, 160, 239, 0.14);
+  --shadow-xs: 0 4px 14px rgba(0, 26, 51, 0.04);
+  --shadow-sm: 0 10px 30px rgba(0, 26, 51, 0.07);
+  --shadow-md: 0 18px 48px rgba(0, 26, 51, 0.1);
+  --shadow-lg: 0 24px 64px rgba(0, 26, 51, 0.14);
+  --shadow-focus: 0 0 0 4px rgba(51, 103, 154, 0.2);
 
-  --radius-xs: 8px;
-  --radius-sm: 12px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
   --radius: 20px;
-  --radius-lg: 30px;
+  --radius-lg: 24px;
   --radius-pill: 999px;
 
   --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -107,7 +159,8 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.65;
+  font-weight: 400;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -194,7 +247,7 @@ svg {
   width: min(100% - 32px, 620px);
   margin: 40px auto;
   padding: 20px;
-  border: 1px solid rgba(155, 61, 51, 0.24);
+  border: 1px solid rgba(220, 53, 69, 0.24);
   border-radius: var(--radius-sm);
   background: var(--card);
   color: var(--brand-danger);
@@ -208,12 +261,12 @@ svg {
 }
 
 .wrap {
-  width: min(100% - 48px, 1200px);
+  width: min(100% - 48px, 1296px);
   margin-inline: auto;
 }
 
 .section-pad {
-  padding: 112px 0;
+  padding: 100px 0;
 }
 
 .band-soft {
@@ -227,17 +280,18 @@ svg {
 /* Buttons and links */
 .btn {
   display: inline-flex;
-  min-height: 48px;
+  min-height: 46px;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 12px 22px;
-  border: 1.5px solid transparent;
-  border-radius: 999px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.92rem;
-  font-weight: 750;
-  line-height: 1;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
@@ -276,14 +330,16 @@ svg {
 }
 
 .btn-primary {
-  background: var(--terracotta);
-  color: var(--card);
-  box-shadow: 0 10px 26px rgba(0, 122, 97, 0.24);
+  background: var(--brand-green);
+  color: #000;
+  box-shadow: 0 10px 26px rgba(0, 26, 51, 0.12);
 }
 
 .btn-primary:hover {
-  background: var(--terracotta-dark);
-  box-shadow: 0 14px 32px rgba(0, 88, 73, 0.28);
+  background: var(--brand-white);
+  border-color: var(--brand-green);
+  color: var(--brand-navy);
+  box-shadow: 0 14px 32px rgba(0, 26, 51, 0.16);
 }
 
 .btn-outline {
@@ -301,12 +357,12 @@ svg {
 .btn-light {
   background: var(--paper);
   color: var(--pine-dark);
-  box-shadow: 0 12px 30px rgba(0, 37, 51, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 26, 51, 0.2);
 }
 
 .btn-light:hover {
   background: var(--card);
-  box-shadow: 0 16px 38px rgba(0, 37, 51, 0.26);
+  box-shadow: 0 16px 38px rgba(0, 26, 51, 0.26);
 }
 
 .btn-quiet {
@@ -321,7 +377,7 @@ svg {
 }
 
 .btn-sm {
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 17px;
   font-size: 0.84rem;
 }
@@ -332,5 +388,5 @@ svg {
   gap: 7px;
   color: var(--terracotta-dark);
   font-size: 0.91rem;
-  font-weight: 750;
+  font-weight: 700;
 }

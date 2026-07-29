@@ -39,7 +39,7 @@ test("shared design foundation exposes the final KP AWAZ token system", async ()
 
 test("public, contributor, and admin pages load the final polish with cache-safe URLs", async () => {
   const mainCss = await read("styles/main.css");
-  assert.match(mainCss, /final-polish\.css\?v=20260729-brand-system/);
+  assert.match(mainCss, /final-polish\.css\?v=20260729-kpitb-system/);
   assert.ok(
     mainCss.indexOf("final-polish.css") > mainCss.indexOf("responsive.css"),
     "public polish must load after responsive component styles",
@@ -47,7 +47,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    const expectedMainVersion = "styles/main.css?v=20260729-brand-system";
+    const expectedMainVersion = "styles/main.css?v=20260729-kpitb-system";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 
@@ -62,7 +62,7 @@ test("public, contributor, and admin pages load the final polish with cache-safe
   ]) {
     const html = await read(page);
     const stylesheets = [...html.matchAll(/href="(styles\/[^"]+\.css[^\"]*)"/g)].map((match) => match[1]);
-    const expectedPolish = "styles/final-polish.css?v=20260729-brand-system";
+    const expectedPolish = "styles/final-polish.css?v=20260729-kpitb-system";
     assert.equal(stylesheets.at(-1), expectedPolish);
   }
 });

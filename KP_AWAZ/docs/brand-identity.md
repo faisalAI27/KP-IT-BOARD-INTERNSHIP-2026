@@ -20,14 +20,37 @@ Do not repeat the tagline as nearby HTML text. The stacked lockup must not be us
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--brand-navy` | `#002533` | Primary text, dark surfaces, high-contrast actions |
-| `--brand-green` | `#00BE83` | Waveform identity, decorative emphasis, progress and success accents |
-| `--brand-blue` | `#00A0EF` | Waveform identity, information and secondary accents |
-| `--brand-grey` | `#A8A8A8` | Logo tagline and restrained neutral details |
+| `--brand-navy` | `#001A33` | Dark institutional surfaces and high-contrast actions |
+| `--brand-green` | `#3BC3B2` | KPITB mint emphasis, statistics, active states, and primary controls |
+| `--brand-blue` | `#33679A` | KPITB institutional blue, focus and secondary accents |
+| `--brand-grey` | `#9D9D9D` | Restrained neutral details |
 | `--brand-white` | `#FFFFFF` | Light surfaces and reverse artwork |
-| `--brand-gradient` | green → blue | Brand-led decorative fills; never apply it to the logo image itself |
+| `--brand-gradient` | mint → deep navy | KPITB programme-section treatment; never apply it to the logo image itself |
+| `--brand-text` | `#212529` | Standard text on light surfaces |
+| `--brand-text-muted` | `#6C757D` | Supporting and utility text |
+| `--brand-surface-strong` | `#F9F9F9` | Quiet alternate sections |
+| `--brand-border` | `#ECECEC` | Light dividers and boundaries |
 
-Darkened green and blue supporting tokens are provided for accessible text and controls. The bright approved green and blue should not be used for small text on white when contrast would be insufficient. Red remains reserved for errors, destructive actions, and rejected contributions.
+The interface palette and mint-to-navy gradient were measured from the live
+KPITB website. The approved KP AWAZ PNG artwork keeps its own embedded colours
+unchanged. Dark mint values found in the KPITB stylesheet are used when small
+text needs stronger contrast. Bootstrap red and green remain reserved for
+errors/destructive actions and confirmed success states.
+
+## Typography
+
+KP AWAZ uses the same split typography observed on the live KPITB website:
+
+- `UniNeue` for headings, body copy, statistics, buttons, contributor
+  interfaces and administration content;
+- `Inter` for public navigation and compact utility/listing labels;
+- the existing Pashto font stack for Pashto and other Arabic-script content.
+
+The locally hosted font files in `frontend/assets/fonts/kpitb/` mirror the
+files loaded by the reference site. Standard body copy is 16px/24px. The
+desktop institutional scale is 64px for the largest headings, 48px for major
+section headings, 32px for card/feature headings, 20px for compact headings,
+and 16px for body text and buttons.
 
 ## Frontend implementation
 
