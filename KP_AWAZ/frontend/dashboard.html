@@ -6,8 +6,8 @@
     <meta name="description" content="Your private KP AWAZ contributor overview." />
     <title>Contributor overview — KP AWAZ</title>
     <link rel="icon" href="assets/images/khyber-voice-mark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles/workspace.css?v=20260729-soft-system" />
-    <link rel="stylesheet" href="styles/dashboard.css?v=20260729-soft-system" />
+    <link rel="stylesheet" href="styles/workspace.css?v=20260730-dashboard-controls" />
+    <link rel="stylesheet" href="styles/dashboard.css?v=20260730-dashboard-controls" />
     <link rel="stylesheet" href="styles/final-polish.css?v=20260729-soft-system" />
     <link rel="stylesheet" href="styles/mobile-refinement.css?v=20260730-mobile-first" />
   </head>
@@ -83,7 +83,15 @@
                 </div>
                 <h2 id="recentVoicesTitle">Your three most recent recordings</h2>
               </div>
-              <a class="dashboard-text-link" href="my-contributions.html">View all recordings <span aria-hidden="true">→</span></a>
+              <a class="dashboard-text-link" href="my-contributions.html">
+                <span>View all recordings</span>
+                <span class="dashboard-text-link-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 12h14"></path>
+                    <path d="m13 5 7 7-7 7"></path>
+                  </svg>
+                </span>
+              </a>
             </div>
             <p class="dashboard-panel-status" id="dashboardRecentStatus" role="status">
               Loading your recent recordings…
@@ -113,19 +121,33 @@
 
               <div class="dashboard-stat-strip" aria-label="Contribution review statistics">
                 <article class="dashboard-stat-card" data-tone="all">
-                  <span class="dashboard-stat-mark" aria-hidden="true">All</span>
+                  <span class="dashboard-stat-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M6 7h12M6 12h12M6 17h12"></path>
+                    </svg>
+                  </span>
                   <strong id="dashboardTotalCount">—</strong>
                   <p>Voices shared</p>
                   <small>All recordings</small>
                 </article>
                 <article class="dashboard-stat-card" data-tone="pending">
-                  <span class="dashboard-stat-mark" aria-hidden="true">···</span>
+                  <span class="dashboard-stat-mark" aria-hidden="true">
+                    <svg class="dashboard-dot-icon" viewBox="0 0 24 24" focusable="false">
+                      <circle cx="6" cy="12" r="1.6"></circle>
+                      <circle cx="12" cy="12" r="1.6"></circle>
+                      <circle cx="18" cy="12" r="1.6"></circle>
+                    </svg>
+                  </span>
                   <strong id="dashboardPendingCount">—</strong>
                   <p>Under review</p>
                   <small>Awaiting approval</small>
                 </article>
                 <article class="dashboard-stat-card" data-tone="approved">
-                  <span class="dashboard-stat-mark" aria-hidden="true">✓</span>
+                  <span class="dashboard-stat-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="m5 12 4 4L19 6"></path>
+                    </svg>
+                  </span>
                   <strong id="dashboardApprovedCount">—</strong>
                   <p>Approved</p>
                   <small>Counted in score</small>
@@ -137,6 +159,6 @@
       </div>
     </main>
 
-    <script type="module" src="scripts/dashboard-app.js?v=20260723-auth-config-v2"></script>
+    <script type="module" src="scripts/dashboard-app.js?v=20260730-dashboard-controls"></script>
   </body>
 </html>

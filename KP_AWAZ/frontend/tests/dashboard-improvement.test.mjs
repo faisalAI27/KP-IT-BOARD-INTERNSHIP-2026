@@ -23,6 +23,28 @@ test("dashboard presents exactly two direct recording choices", async () => {
   assert.doesNotMatch(html, /leaderboard preview|voice-orbit|profile-compass|rejected count/i);
 });
 
+test("dashboard controls use font-independent icons instead of text glyphs", async () => {
+  const [html, sidebar, source, dashboardCss, workspaceCss] = await Promise.all([
+    read("dashboard.html"),
+    read("sections/workspace-sidebar.html"),
+    read("scripts/dashboard-app.js"),
+    read("styles/dashboard.css"),
+    read("styles/workspace.css"),
+  ]);
+
+  assert.doesNotMatch(html, />\s*(?:→|✓|···)\s*</);
+  assert.doesNotMatch(sidebar, />\s*→\s*</);
+  assert.doesNotMatch(source, /mark\.textContent\s*=\s*safeStatus/);
+  assert.match(source, /document\.createElementNS\(namespace, "svg"\)/);
+  assert.match(html, /class="dashboard-text-link-icon"[\s\S]*?<svg/);
+  assert.match(html, /class="dashboard-stat-mark"[\s\S]*?<svg/);
+  assert.match(sidebar, /class="workspace-nav-arrow"[\s\S]*?<svg/);
+  assert.match(sidebar, /class="workspace-sign-out-icon"[\s\S]*?<svg/);
+  assert.match(dashboardCss, /\.dashboard-mini-icon svg,[\s\S]*?stroke:\s*currentColor/);
+  assert.match(dashboardCss, /\.dashboard-stat-card strong\s*{[\s\S]*?font-family:\s*var\(--font-ui\)/);
+  assert.match(workspaceCss, /\.workspace-nav-arrow svg,[\s\S]*?stroke:\s*currentColor/);
+});
+
 test("recording route mode is predictable and safe", () => {
   assert.equal(normalizeContributionMode("?mode=guided"), "guided");
   assert.equal(normalizeContributionMode("?mode=custom"), "guided");

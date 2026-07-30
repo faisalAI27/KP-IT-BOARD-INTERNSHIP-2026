@@ -44,6 +44,41 @@ function formatDuration(value) {
 }
 
 
+function createStatusIcon(status) {
+  const namespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(namespace, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+
+  if (status === "approved") {
+    const path = document.createElementNS(namespace, "path");
+    path.setAttribute("d", "m5 12 4 4L19 6");
+    svg.append(path);
+  } else if (status === "rejected") {
+    const line = document.createElementNS(namespace, "path");
+    line.setAttribute("d", "M12 7v6");
+    const dot = document.createElementNS(namespace, "circle");
+    dot.setAttribute("cx", "12");
+    dot.setAttribute("cy", "17");
+    dot.setAttribute("r", "1.35");
+    dot.classList.add("dashboard-status-dot");
+    svg.append(line, dot);
+  } else {
+    svg.classList.add("dashboard-dot-icon");
+    for (const cx of ["6", "12", "18"]) {
+      const dot = document.createElementNS(namespace, "circle");
+      dot.setAttribute("cx", cx);
+      dot.setAttribute("cy", "12");
+      dot.setAttribute("r", "1.6");
+      svg.append(dot);
+    }
+  }
+
+  return svg;
+}
+
+
 function renderRecent(response) {
   const list = document.getElementById("dashboardRecentList");
   const status = document.getElementById("dashboardRecentStatus");
@@ -64,7 +99,8 @@ function renderRecent(response) {
     row.dataset.status = safeStatus;
     const mark = document.createElement("span");
     mark.className = "dashboard-mini-icon";
-    mark.textContent = safeStatus === "approved" ? "✓" : safeStatus === "rejected" ? "!" : "···";
+    mark.setAttribute("aria-hidden", "true");
+    mark.append(createStatusIcon(safeStatus));
     const copy = document.createElement("div");
     copy.className = "dashboard-mini-copy";
     const heading = document.createElement("strong");

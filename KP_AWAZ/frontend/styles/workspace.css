@@ -166,6 +166,7 @@ body.workspace-body {
   display: block;
   margin-top: 2px;
   color: rgba(247, 251, 252, 0.62);
+  font-family: var(--font-ui);
   font-size: var(--type-xs);
   font-weight: 550;
 }
@@ -174,8 +175,37 @@ body.workspace-body {
   min-height: 64px;
 }
 
-.workspace-record-link b {
-  font-size: 1.15rem;
+.workspace-nav-arrow,
+.workspace-sign-out-icon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.workspace-navigation a .workspace-nav-arrow {
+  flex: 0 0 auto;
+}
+
+.workspace-nav-arrow svg,
+.workspace-sign-out-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.workspace-nav-arrow {
+  transition: transform 220ms var(--ease-standard);
+}
+
+.workspace-record-link:hover .workspace-nav-arrow,
+.workspace-record-link:focus-visible .workspace-nav-arrow {
+  transform: translateX(2px);
 }
 
 .workspace-identity {
@@ -236,6 +266,7 @@ body.workspace-body {
   background: transparent;
   color: rgba(247, 251, 252, 0.76);
   cursor: pointer;
+  font-family: var(--font-ui);
   font-size: var(--type-sm);
   font-weight: 760;
 }

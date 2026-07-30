@@ -343,18 +343,36 @@ body.workspace-body.dashboard-body {
   min-height: 44px;
   align-items: center;
   color: var(--dashboard-green-900);
+  font-family: var(--font-ui);
   font-size: var(--type-sm);
   font-weight: 900;
   gap: 8px;
   white-space: nowrap;
 }
 
-.dashboard-text-link span {
+.dashboard-text-link-icon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
   transition: transform 220ms ease;
 }
 
-.dashboard-text-link:hover span,
-.dashboard-text-link:focus-visible span {
+.dashboard-text-link-icon svg,
+.dashboard-mini-icon svg,
+.dashboard-stat-mark svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.dashboard-text-link:hover .dashboard-text-link-icon,
+.dashboard-text-link:focus-visible .dashboard-text-link-icon {
   transform: translateX(3px);
 }
 
@@ -423,8 +441,18 @@ body.workspace-body.dashboard-body {
   border-radius: 16px;
   background: var(--dashboard-status-bg);
   color: var(--dashboard-status-color);
-  font-size: 1.2rem;
-  font-weight: 900;
+}
+
+.dashboard-mini-icon .dashboard-dot-icon,
+.dashboard-stat-mark .dashboard-dot-icon {
+  stroke: none;
+}
+
+.dashboard-mini-icon .dashboard-dot-icon circle,
+.dashboard-stat-mark .dashboard-dot-icon circle,
+.dashboard-mini-icon .dashboard-status-dot {
+  fill: currentColor;
+  stroke: none;
 }
 
 .dashboard-mini-copy {
@@ -446,6 +474,7 @@ body.workspace-body.dashboard-body {
 
 .dashboard-mini-copy small {
   color: var(--text-secondary);
+  font-family: var(--font-ui);
   font-size: var(--type-xs);
   line-height: 1.45;
 }
@@ -456,6 +485,7 @@ body.workspace-body.dashboard-body {
   border-radius: var(--radius-pill);
   background: var(--dashboard-status-bg);
   color: var(--dashboard-status-color);
+  font-family: var(--font-ui);
   font-size: var(--type-xs);
   font-weight: 900;
   white-space: nowrap;
@@ -583,9 +613,6 @@ body.workspace-body.dashboard-body {
   border-radius: 50%;
   background: var(--dashboard-stat-chip-bg);
   color: var(--dashboard-stat-accent);
-  font-family: var(--font-display);
-  font-size: var(--type-xs);
-  font-weight: 900;
 }
 
 .dashboard-stat-card strong {
@@ -593,8 +620,9 @@ body.workspace-body.dashboard-body {
   margin: 14px 0 4px;
   overflow-wrap: anywhere;
   color: var(--dashboard-green-950);
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-size: 2.5rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -602,6 +630,7 @@ body.workspace-body.dashboard-body {
 .dashboard-stat-card p {
   margin: 0;
   color: var(--text-secondary);
+  font-family: var(--font-ui);
   font-size: var(--type-xs);
 }
 
@@ -609,6 +638,7 @@ body.workspace-body.dashboard-body {
   display: block;
   margin-top: 9px;
   color: var(--text-secondary);
+  font-family: var(--font-ui);
   font-size: var(--type-xs);
   font-weight: 800;
   letter-spacing: normal;
@@ -770,7 +800,7 @@ body.workspace-body.dashboard-body {
   .dashboard-choice-arrow,
   .dashboard-mini-record,
   .dashboard-stat-card,
-  .dashboard-text-link span {
+  .dashboard-text-link-icon {
     transition: none;
   }
 
