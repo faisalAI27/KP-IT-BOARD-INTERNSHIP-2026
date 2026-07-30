@@ -1003,6 +1003,7 @@ test("markup keeps sign-in fields minimal and create fields complete", async () 
   const signIn = html.match(/<section\s+id="passwordSignInPanel"[\s\S]*?<\/section>/)?.[0] ?? "";
   const create = html.match(/<section\s+id="createAccountPanel"[\s\S]*?<\/section>/)?.[0] ?? "";
   assert.match(signIn, /id="passwordSignInEmail"/);
+  assert.match(signIn, /for="passwordSignInEmail">\s*Email\s*<input/);
   assert.match(
     signIn,
     /id="passwordSignInEmail"[\s\S]*?inputmode="email"[\s\S]*?autocapitalize="none"[\s\S]*?autocorrect="off"[\s\S]*?spellcheck="false"/,
@@ -1010,12 +1011,25 @@ test("markup keeps sign-in fields minimal and create fields complete", async () 
   assert.match(signIn, /id="passwordSignInPassword"/);
   assert.doesNotMatch(signIn, /createDisplayName|signupOtpInput/);
   assert.match(create, /id="createDisplayName"/);
+  assert.match(create, /for="createEmail">\s*Email\s*<input/);
   assert.match(
     create,
     /id="createEmail"[\s\S]*?inputmode="email"[\s\S]*?autocapitalize="none"[\s\S]*?autocorrect="off"[\s\S]*?spellcheck="false"/,
   );
   assert.match(create, /id="createPassword"/);
   assert.match(create, /id="confirmPassword"/);
+});
+
+
+test("email and password fields use reliable input glyphs and masking", async () => {
+  const [html, css] = await Promise.all([
+    readProjectFile("auth.html"),
+    readProjectFile("styles/auth-page.css"),
+  ]);
+
+  assert.doesNotMatch(html, /Email address/);
+  assert.match(css, /\.access-form input\[type="email"\][\s\S]*?font-family:\s*var\(--font-ui\)/);
+  assert.match(css, /\.access-form input\[type="password"\][\s\S]*?-webkit-text-security:\s*disc/);
 });
 
 

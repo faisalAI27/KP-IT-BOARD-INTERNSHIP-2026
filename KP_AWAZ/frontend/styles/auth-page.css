@@ -435,6 +435,13 @@ body[data-auth-view="otp"] .access-card {
 .access-form input[type="email"] {
   appearance: none;
   -webkit-appearance: none;
+  font-family: var(--font-ui);
+  font-variant-ligatures: none;
+}
+
+.access-form input[type="password"] {
+  font-family: var(--font-ui);
+  -webkit-text-security: disc;
 }
 
 .access-form input[type="email"]::-webkit-contacts-auto-fill-button,
