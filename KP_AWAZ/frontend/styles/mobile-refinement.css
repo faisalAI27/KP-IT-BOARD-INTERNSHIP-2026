@@ -140,7 +140,6 @@
   }
 
   .access-back,
-  .access-language,
   .access-password-toggle,
   .password-control button,
   .access-mode-link,
@@ -161,11 +160,6 @@
   .recovery-cancel {
     display: inline-flex;
     align-items: center;
-  }
-
-  .access-language {
-    width: 44px;
-    height: 44px;
   }
 
   .access-password-toggle,

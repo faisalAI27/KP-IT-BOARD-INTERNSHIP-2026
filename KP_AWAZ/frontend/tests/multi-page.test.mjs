@@ -145,6 +145,9 @@ test("recovery pages use Supabase-only password controls and generic account mes
   assert.match(recoveryCard, /Send recovery code/);
   assert.match(recoveryCard, /autocomplete="new-password"/);
   assert.match(recoveryCard, /id="recoveryPasswordConfirm"/);
+  assert.doesNotMatch(recoveryCard, /Our voices, our language, our Khyber Pakhtunkhwa\./);
+  assert.doesNotMatch(recoveryCard, /class="access-language"|Pashto word for voice/);
+  assert.match(recoveryCard, /class="access-back"[\s\S]*?<svg[\s\S]*?<span>Back<\/span>/);
   assert.match(recoverySource, /verifyRecoveryOtp/);
   assert.match(recoverySource, /updatePassword\(this\._elements\.password\.value\)/);
   assert.doesNotMatch(`${forgotSource}\n${resetSource}\n${recoverySource}`, /localStorage|document\.cookie|console\./);

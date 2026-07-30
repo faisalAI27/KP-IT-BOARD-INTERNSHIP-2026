@@ -13,8 +13,9 @@ test("homepage uses the final public mission heading exactly", async () => {
 
   assert.match(
     hero,
-    /<h1>Let technology hear Khyber Pakhtunkhwa\.<\/h1>/,
+    /<h1>preserving languages, empowering AI\.<\/h1>/,
   );
+  assert.doesNotMatch(hero, /Let technology hear Khyber Pakhtunkhwa\./);
   assert.doesNotMatch(
     hero,
     /Community-powered voice data|Community-led|Human-reviewed|hero-principles|hero-kicker/,

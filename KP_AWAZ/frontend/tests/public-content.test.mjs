@@ -43,7 +43,8 @@ test("homepage content explains the present platform and careful future goal", a
   ]);
   const publicCopy = [hero, why, building, process, trust, closing].join("\n");
 
-  assert.match(hero, /Let technology hear Khyber Pakhtunkhwa\./);
+  assert.match(hero, /preserving languages, empowering AI\./);
+  assert.doesNotMatch(hero, /Let technology hear Khyber Pakhtunkhwa\./);
   assert.match(hero, /href="#why-it-matters">Learn why it matters<\/a>/);
   assert.match(why, /<h2 id="whyItMattersTitle">Why it matters<\/h2>/);
   assert.equal((why.match(/Why it matters/g) ?? []).length, 1);

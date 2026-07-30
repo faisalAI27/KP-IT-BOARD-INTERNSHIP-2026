@@ -215,19 +215,6 @@ body[data-auth-view="otp"] .access-card {
   stroke-width: 2;
 }
 
-.access-language {
-  display: grid;
-  width: 35px;
-  height: 35px;
-  place-items: center;
-  border: 1px solid rgba(10, 101, 91, 0.22);
-  border-radius: 50%;
-  background: rgba(231, 248, 243, 0.8);
-  color: var(--auth-deep-green);
-  font-family: Georgia, "Noto Naskh Arabic", serif;
-  font-size: var(--type-sm);
-}
-
 .access-branding {
   display: grid;
   justify-items: center;
@@ -246,14 +233,6 @@ body[data-auth-view="otp"] .access-card {
   width: 176px;
   height: auto;
   object-fit: contain;
-}
-
-.access-branding p {
-  max-width: 360px;
-  margin-top: 7px;
-  color: var(--auth-muted);
-  font-size: var(--type-xs);
-  line-height: 1.45;
 }
 
 .auth-view-context {
@@ -962,11 +941,6 @@ body[data-auth-view="otp"] .access-card {
     min-height: 30px;
   }
 
-  .access-language {
-    width: 31px;
-    height: 31px;
-  }
-
   .access-branding {
     margin: 0 0 14px;
   }
@@ -974,11 +948,6 @@ body[data-auth-view="otp"] .access-card {
   .access-brand img {
     width: 126px;
     height: auto;
-  }
-
-  .access-branding p {
-    margin-top: 3px;
-    font-size: var(--type-xs);
   }
 
   .access-card-heading {
@@ -1067,11 +1036,6 @@ body[data-auth-view="otp"] .access-card {
     font-size: var(--type-xs);
   }
 
-  .access-language {
-    width: 33px;
-    height: 33px;
-  }
-
   .access-branding {
     margin: 5px 0 19px;
   }
@@ -1079,11 +1043,6 @@ body[data-auth-view="otp"] .access-card {
   .access-brand img {
     width: 146px;
     height: auto;
-  }
-
-  .access-branding p {
-    max-width: 280px;
-    font-size: var(--type-xs);
   }
 
   .access-card-heading {
