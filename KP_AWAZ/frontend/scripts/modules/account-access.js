@@ -62,7 +62,7 @@ const ACCESS_VIEW_CONTENT = Object.freeze({
     storyTitle: "Our voices belong in the digital future.",
     storyMessage:
       "Continue preserving the voices and languages of Khyber Pakhtunkhwa.",
-    cardKicker: "Contributor sign in",
+    cardKicker: "",
     cardTitle: "Welcome back.",
     cardSubtitle: "Sign in to continue your contribution journey.",
   }),
@@ -993,6 +993,7 @@ export class AccountAccess {
     this._elements.storyTitle.textContent = view.storyTitle;
     this._elements.storyMessage.textContent = view.storyMessage;
     this._elements.cardKicker.textContent = view.cardKicker;
+    this._elements.cardKicker.hidden = !view.cardKicker;
     this._elements.cardTitle.textContent = view.cardTitle;
     this._elements.cardSubtitle.textContent = view.cardSubtitle;
     this._elements.interactiveContent.hidden = this._success;

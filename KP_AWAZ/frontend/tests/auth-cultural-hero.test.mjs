@@ -139,7 +139,7 @@ test("CSS fallback and full background stay outside the accessibility tree", asy
 test("centered page keeps the cultural mission in concise real HTML", async () => {
   const html = await readProjectFile("auth.html");
   assert.match(html, /Our voices belong in the digital future\./);
-  assert.match(html, /Our voices, our language, our Khyber Pakhtunkhwa\./);
+  assert.doesNotMatch(html, /Our voices, our language, our Khyber Pakhtunkhwa\./);
   assert.match(html, /Every voice carries a story\. Every language carries a community\./);
   assert.doesNotMatch(html, /class="access-story"|class="story-impact"/);
 });

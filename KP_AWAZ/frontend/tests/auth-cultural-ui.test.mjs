@@ -328,7 +328,9 @@ test("cultural authentication markup communicates the KP AWAZ mission", async ()
   const html = await readProjectFile("auth.html");
   assert.match(html, /id="authCulturalPanel"/);
   assert.match(html, /languages of\s+Khyber Pakhtunkhwa/i);
-  assert.match(html, /Our voices, our language, our Khyber Pakhtunkhwa\./);
+  assert.doesNotMatch(html, /Our voices, our language, our Khyber Pakhtunkhwa\./);
+  assert.doesNotMatch(html, />غږ</);
+  assert.match(html, /class="access-back"[\s\S]*?<svg viewBox="0 0 24 24"/);
   assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
 });
 
@@ -1001,9 +1003,17 @@ test("markup keeps sign-in fields minimal and create fields complete", async () 
   const signIn = html.match(/<section\s+id="passwordSignInPanel"[\s\S]*?<\/section>/)?.[0] ?? "";
   const create = html.match(/<section\s+id="createAccountPanel"[\s\S]*?<\/section>/)?.[0] ?? "";
   assert.match(signIn, /id="passwordSignInEmail"/);
+  assert.match(
+    signIn,
+    /id="passwordSignInEmail"[\s\S]*?inputmode="email"[\s\S]*?autocapitalize="none"[\s\S]*?autocorrect="off"[\s\S]*?spellcheck="false"/,
+  );
   assert.match(signIn, /id="passwordSignInPassword"/);
   assert.doesNotMatch(signIn, /createDisplayName|signupOtpInput/);
   assert.match(create, /id="createDisplayName"/);
+  assert.match(
+    create,
+    /id="createEmail"[\s\S]*?inputmode="email"[\s\S]*?autocapitalize="none"[\s\S]*?autocorrect="off"[\s\S]*?spellcheck="false"/,
+  );
   assert.match(create, /id="createPassword"/);
   assert.match(create, /id="confirmPassword"/);
 });
@@ -1016,7 +1026,7 @@ test("OTP, errors, and trust links are accessible in markup", async () => {
   assert.match(html, /maxlength="6"/);
   assert.match(html, /aria-describedby="signupOtpHelp signupOtpMessage"/);
   assert.match(html, /role="alert"[\s\S]*?aria-live="polite"/);
-  assert.match(html, /href="index\.html"[\s\S]*?Back to KP AWAZ/);
+  assert.match(html, /href="index\.html" aria-label="Back to KP AWAZ"/);
   assert.match(
     html,
     /href="data-use\.html">Read our privacy and data-use explanation<\/a>/,

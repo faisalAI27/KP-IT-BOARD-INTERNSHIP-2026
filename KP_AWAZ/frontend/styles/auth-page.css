@@ -158,6 +158,7 @@ body.access-page input {
 .access-form-side {
   display: grid;
   width: 100%;
+  min-width: 0;
   place-items: center;
 }
 
@@ -167,6 +168,8 @@ body.access-page input {
 
 .access-card {
   width: min(100%, 520px);
+  min-width: 0;
+  max-width: 100%;
   padding: clamp(27px, 3vw, 39px);
   border: 1px solid var(--border-active);
   border-radius: 26px;
@@ -183,7 +186,7 @@ body[data-auth-view="otp"] .access-card {
   display: flex;
   min-height: 36px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
 }
 
@@ -200,6 +203,16 @@ body[data-auth-view="otp"] .access-card {
 
 .access-back:hover {
   color: var(--auth-rust-dark);
+}
+
+.access-back svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .access-language {
@@ -415,8 +428,22 @@ body[data-auth-view="otp"] .access-card {
   box-shadow: 0 0 0 4px rgba(51, 103, 154, 0.14);
 }
 
-.access-form input:user-invalid {
+.access-form input:user-invalid:not(:focus) {
   border-color: rgba(220, 53, 69, 0.72);
+}
+
+.access-form input[type="email"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.access-form input[type="email"]::-webkit-contacts-auto-fill-button,
+.access-form input[type="email"]::-webkit-credentials-auto-fill-button {
+  position: absolute;
+  right: 0;
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .access-form input:disabled,
@@ -1067,6 +1094,8 @@ body[data-auth-view="otp"] .access-card {
   body[data-auth-view="create"] .access-card,
   body[data-auth-view="otp"] .access-card {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: 22px 19px 25px;
     border-radius: 22px;
     box-shadow: 0 20px 48px rgba(4, 24, 18, 0.34);
@@ -1074,6 +1103,12 @@ body[data-auth-view="otp"] .access-card {
 
   .access-card-topbar {
     min-height: 34px;
+  }
+
+  .access-tabs button {
+    min-width: 0;
+    padding-inline: 8px;
+    white-space: normal;
   }
 
   .access-back {
