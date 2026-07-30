@@ -263,7 +263,7 @@
                           minlength="8"
                           maxlength="72"
                           placeholder="At least 8 characters"
-                          aria-describedby="createPasswordHelp passwordLengthFeedback createAccountMessage"
+                          aria-describedby="createAccountMessage"
                           required
                         />
                         <button
@@ -285,7 +285,7 @@
                           minlength="8"
                           maxlength="72"
                           placeholder="Repeat password"
-                          aria-describedby="passwordMatchFeedback createAccountMessage"
+                          aria-describedby="createAccountMessage"
                           required
                         />
                         <button
@@ -298,23 +298,8 @@
                     </label>
                   </div>
 
-                  <div class="password-feedback" aria-live="polite">
-                    <p id="passwordLengthFeedback" data-state="neutral">
-                      <span aria-hidden="true">○</span> 8–72 characters
-                    </p>
-                    <p id="passwordMatchFeedback" data-state="neutral">
-                      <span aria-hidden="true">○</span> Both passwords match
-                    </p>
-                  </div>
-
-                  <p class="field-helper" id="createPasswordHelp">
-                    Your password is handled only by Supabase Auth.
-                  </p>
-
-                  <p class="field-helper email-verification-note">
-                    <span aria-hidden="true">✦</span>
-                    We will send a six-digit code to verify your email address.
-                  </p>
+                  <span id="passwordLengthFeedback" data-state="neutral" hidden></span>
+                  <span id="passwordMatchFeedback" data-state="neutral" hidden></span>
 
                   <button class="access-primary" id="createAccountSubmit" type="submit">
                     <span id="createAccountSubmitLabel">Create account</span>

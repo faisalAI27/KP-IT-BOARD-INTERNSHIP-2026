@@ -502,66 +502,10 @@ body[data-auth-view="otp"] .access-card {
   gap: 11px;
 }
 
-.field-helper,
 .access-terms {
   color: var(--auth-muted);
   font-size: var(--type-xs);
   line-height: 1.5;
-}
-
-.email-verification-note {
-  display: flex;
-  align-items: flex-start;
-  padding: 9px 10px;
-  border-radius: 9px;
-  background: rgba(51, 103, 154, 0.1);
-  color: var(--brand-navy-soft);
-  gap: 7px;
-}
-
-.email-verification-note span {
-  color: var(--auth-rust);
-}
-
-.password-feedback {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: -4px;
-  color: var(--auth-muted);
-  font-size: var(--type-xs);
-  gap: 5px 13px;
-}
-
-.password-feedback p {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.password-feedback p[data-state="valid"] {
-  color: var(--auth-success);
-}
-
-.password-feedback p[data-state="invalid"] {
-  color: var(--auth-error);
-}
-
-.password-feedback p[data-state="valid"] span,
-.password-feedback p[data-state="invalid"] span {
-  font-size: 0;
-}
-
-.password-feedback p[data-state="valid"] span::before,
-.password-feedback p[data-state="invalid"] span::before {
-  font-size: var(--type-xs);
-}
-
-.password-feedback p[data-state="valid"] span::before {
-  content: "✓";
-}
-
-.password-feedback p[data-state="invalid"] span::before {
-  content: "!";
 }
 
 .access-primary {

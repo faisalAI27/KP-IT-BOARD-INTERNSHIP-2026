@@ -1033,6 +1033,18 @@ test("email and password fields use reliable input glyphs and masking", async ()
 });
 
 
+test("create account keeps validation but removes helper copy from the card", async () => {
+  const html = await readProjectFile("auth.html");
+
+  assert.doesNotMatch(html, /8–72 characters|Both passwords match/);
+  assert.doesNotMatch(html, /Your password is handled only by Supabase Auth/);
+  assert.doesNotMatch(html, /We will send a six-digit code to verify your email address/);
+  assert.match(html, /id="passwordLengthFeedback"[^>]*hidden/);
+  assert.match(html, /id="passwordMatchFeedback"[^>]*hidden/);
+  assert.match(html, /id="createPassword"[\s\S]*?minlength="8"[\s\S]*?maxlength="72"/);
+});
+
+
 test("OTP, errors, and trust links are accessible in markup", async () => {
   const html = await readProjectFile("auth.html");
   assert.match(html, /id="signupOtpInput"[\s\S]*?inputmode="numeric"/);
