@@ -66,7 +66,7 @@ test("public, contributor, and admin pages load polish layers with cache-safe UR
 
   for (const page of ["index.html", "about.html", "data-use.html", "how-it-works.html", "leaderboard.html"]) {
     const html = await read(page);
-    const expectedMainVersion = "styles/main.css?v=20260729-soft-system";
+    const expectedMainVersion = "styles/main.css?v=20260730-font-safety";
     assert.match(html, new RegExp(expectedMainVersion.replace(/[.?]/g, "\\$&")));
   }
 

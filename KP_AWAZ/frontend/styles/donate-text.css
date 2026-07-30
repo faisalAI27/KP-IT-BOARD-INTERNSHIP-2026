@@ -239,7 +239,16 @@
   border-radius: 50%;
   background: var(--text-paper);
   color: var(--text-green-900);
-  font-size: 1.35rem;
+}
+
+.donate-text-choice-arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .donate-text-content-grid {

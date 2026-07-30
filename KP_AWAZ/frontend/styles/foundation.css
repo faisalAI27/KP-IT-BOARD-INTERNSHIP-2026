@@ -20,6 +20,7 @@
   font-weight: 700;
   font-display: swap;
   src: url("../assets/fonts/kpitb/UniNeue-Trial-Bold.ttf") format("truetype");
+  unicode-range: U+0041-005A, U+0061-007A;
 }
 
 @font-face {
@@ -28,6 +29,7 @@
   font-weight: 800;
   font-display: swap;
   src: url("../assets/fonts/kpitb/UniNeue-Trial-Heavy.ttf") format("truetype");
+  unicode-range: U+0041-005A, U+0061-007A;
 }
 
 @font-face {
@@ -36,6 +38,7 @@
   font-weight: 300;
   font-display: swap;
   src: url("../assets/fonts/kpitb/UniNeue-Trial-Regular.ttf") format("truetype");
+  unicode-range: U+0041-005A, U+0061-007A;
 }
 
 @font-face {
@@ -44,6 +47,7 @@
   font-weight: 200;
   font-display: swap;
   src: url("../assets/fonts/kpitb/UniNeue-Trial-Light.ttf") format("truetype");
+  unicode-range: U+0041-005A, U+0061-007A;
 }
 
 :root {
@@ -146,8 +150,8 @@
   --space-9: 5rem;
   --space-10: 6.25rem;
 
-  --font-body: "UniNeue", Arial, sans-serif;
-  --font-display: "UniNeue", Arial, sans-serif;
+  --font-body: "UniNeue", "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-display: "UniNeue", "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-ui: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-pashto: Tahoma, "Noto Sans Arabic", Arial, sans-serif;
 
@@ -233,6 +237,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-family: var(--font-ui);
 }
 
 button {

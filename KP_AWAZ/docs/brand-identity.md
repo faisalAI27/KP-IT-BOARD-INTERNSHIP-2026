@@ -57,12 +57,15 @@ KP AWAZ uses the same split typography observed on the live KPITB website:
 - the existing Pashto font stack for Pashto and other Arabic-script content.
 
 The locally hosted font files in `frontend/assets/fonts/kpitb/` mirror the
-files loaded by the reference site. Standard body copy is 16px/24px. The
-interface scale uses 13px compact metadata, 14px supporting labels, 16px body
-copy, 18–24px compact headings, 32px feature headings, 44px section headings,
-and 56px product-page headings. A 64px display size remains available only
-for the largest public storytelling headline when its supporting copy is at
-least 16px.
+files loaded by the reference site. Because the supplied UniNeue files are
+trial builds, production CSS limits them to alphabetic Latin characters.
+Numbers, punctuation, symbols, form controls and utility text fall back to
+the locally hosted Inter family so trial-watermark glyphs can never appear in
+the interface. Standard body copy is 16px/24px. The interface scale uses 13px
+compact metadata, 14px supporting labels, 16px body copy, 18–24px compact
+headings, 32px feature headings, 44px section headings, and 56px product-page
+headings. A 64px display size remains available only for the largest public
+storytelling headline when its supporting copy is at least 16px.
 
 ## Frontend implementation
 

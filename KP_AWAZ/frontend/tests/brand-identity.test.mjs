@@ -135,6 +135,16 @@ test("the exact live KPITB webfont files are self-hosted with swap behavior", as
   assert.match(foundation, /font-family:\s*"UniNeue"/);
   assert.match(foundation, /font-family:\s*"Inter"/);
   assert.equal((foundation.match(/font-display:\s*swap/g) ?? []).length, 6);
+  assert.equal(
+    (foundation.match(/unicode-range:\s*U\+0041-005A,\s*U\+0061-007A/g) ?? []).length,
+    4,
+  );
+  assert.match(foundation, /--font-body:\s*"UniNeue",\s*"Inter"/);
+  assert.match(foundation, /--font-display:\s*"UniNeue",\s*"Inter"/);
+  assert.match(
+    foundation,
+    /button,\s*\ninput,\s*\nselect,\s*\ntextarea\s*{[\s\S]*?font-family:\s*var\(--font-ui\)/,
+  );
 });
 
 test("the legacy favicon remains temporary until an approved square mark is supplied", async () => {
@@ -178,6 +188,7 @@ test("brand guidance records usage, intrinsic sizing, accessibility, and favicon
   assert.match(guide, /aria-label="KP AWAZ home"/);
   assert.match(guide, /UniNeue/);
   assert.match(guide, /Inter/);
+  assert.match(guide, /trial-watermark glyphs can never appear/i);
   assert.match(guide, /#001A33/);
   assert.match(guide, /#3BC3B2/);
   assert.match(guide, /square\/icon-only KP AWAZ mark is still required/i);

@@ -51,6 +51,21 @@ test("Donate Text has its own protected workspace page beside Record Voice", asy
   );
 });
 
+test("Donate Text uses SVG controls and production-safe numeric typography", async () => {
+  const [markup, css, foundation] = await Promise.all([
+    read("sections/donate-text.html"),
+    read("styles/donate-text.css"),
+    read("styles/foundation.css"),
+  ]);
+
+  assert.equal((markup.match(/class="donate-text-choice-arrow"/g) ?? []).length, 2);
+  assert.equal((markup.match(/class="donate-text-choice-arrow"[^<]*<svg/g) ?? []).length, 2);
+  assert.doesNotMatch(markup, /class="donate-text-choice-arrow"[^>]*>\s*→/);
+  assert.match(css, /\.donate-text-choice-arrow svg\s*{[\s\S]*?stroke:\s*currentColor/);
+  assert.match(foundation, /unicode-range:\s*U\+0041-005A,\s*U\+0061-007A/);
+  assert.match(foundation, /--font-body:\s*"UniNeue",\s*"Inter"/);
+});
+
 
 test("Donate Text file validation accepts bounded supported files", () => {
   assert.equal(
